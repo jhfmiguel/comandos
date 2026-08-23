@@ -1,0 +1,1 @@
+export { useWeaponService } from './weapon.service'
