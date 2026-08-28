@@ -5,4 +5,5 @@ export interface Weapon {
     name?: string;
     description?: string;
     price?: number;
+    priceFormatted?: string;
 }

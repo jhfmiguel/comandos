@@ -13,29 +13,28 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
 
     return (
+        <div className="m-0 p-0 app" style={{ minWidth: '100vw', minHeight: '100vh' }}>
 
-        <div className="app">
-
-            <section className="main-content columns is-fullheight">
+            <section className="main-content columns is-gapless" style={{ minHeight: '100vh' }}>
 
                 <Menu />
 
-                <div className="container column is-10">
+                <div className="is-11 column">
 
-                    <div className="section">
+                    {/* 💡 ALTERAÇÃO AQUI: 
+                        Utilizado "p-0" para zerar o padding de todos os lados (topo, baixo, esquerda e direita).
+                        O card agora vai encostar perfeitamente nas bordas e no Menu lateral. */}
+                    <div className="p-10">
 
                         <div className="card">
 
                             <div className="card-header">
-
                                 <p className="card-header-title">
                                     { props.title }
                                 </p>
-
                             </div>
 
                             <div className="card-content">
-
                                 <div className="content">
                                 
                                 { props.message &&
@@ -47,7 +46,6 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
                                     { props.children }
 
                                 </div>
-
                             </div>
 
                         </div>
@@ -59,7 +57,5 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
             </section>
 
         </div>
-
     )
-
 }

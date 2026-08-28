@@ -17,7 +17,6 @@ import { Alert } from 'components/common/message'
 export const WeaponsList: React.FC = () => {
 
     const router = useRouter()
-
     const service = useWeaponService();
 
     const [ message, setMessage ] = useState<Array<Alert>>([])
@@ -25,15 +24,13 @@ export const WeaponsList: React.FC = () => {
 
     
     // --- RETURN ALL DATA FROM THE WEAPONS TABLE ---
-
-    const weapons: Weapon[] = []
+    // SWR busca os dados na API Spring que agora retorna o DTO WeaponFormRequest com o 'priceFormatted'
     const { data, error } = 
         useSWR<AxiosResponse<Weapon[]>>
         ( '/api/weapons', (url: string) => httpClient.get( url ) )
 
 
-    // ---  ---
-
+    // --- UPDATE INTERNAL STATE WHEN DATA ARRIVES ---
     useEffect( () => {
 
         setList( data?.data || [] )
@@ -42,7 +39,6 @@ export const WeaponsList: React.FC = () => {
 
     
     // --- EDIT A WEAPON ---
-    
     const editWeapon = ( weapon: Weapon ) => {
         
         const url = `/registrations/weapons?id=${weapon.id}`
@@ -50,8 +46,7 @@ export const WeaponsList: React.FC = () => {
 
     }
 
-    // --- DELETS A WEAPON ---
-    
+    // --- DELETE A WEAPON ---
     const deleteWeapon = ( weapon: Weapon ) => {
         
         service.deleteWeapon( weapon.id ).then( response => {
@@ -61,11 +56,10 @@ export const WeaponsList: React.FC = () => {
             ])
 
             const newList: Weapon[] = list?.filter( p => p.id != weapon.id)
-            setList (newList)
+            setList(newList)
 
         })
     }
-    
     
     return (
 
@@ -75,7 +69,7 @@ export const WeaponsList: React.FC = () => {
         >
 
             <Link href = "/registrations/weapons">
-                <button className="button is-info">New</button>
+                <button className="button is-link">New</button>
             </Link>
 
             <br />
@@ -83,6 +77,7 @@ export const WeaponsList: React.FC = () => {
 
             <Loader show = { !data } />
 
+            {/* A tabela interna agora renderizará de forma automática a string 'priceFormatted' enviada pelo Spring */}
             <WeaponsTable
                 onEditWeapon = { editWeapon }
                 onDeleteWeapon = { deleteWeapon }

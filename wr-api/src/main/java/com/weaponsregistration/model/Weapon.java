@@ -75,81 +75,52 @@ public class Weapon {
     
     //--- CONSTRUCTORS ---
     
-	public Weapon() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
+	public Weapon() { super(); }
 	
 	public Weapon(LocalDateTime creationDate, String sku, String name, String description, 
 			BigDecimal price) {
+		
 		super();
 		this.creationDate = creationDate;
 		this.sku = sku;
 		this.name = name;
 		this.description = description;
 		this.price = price;
+		
 	}
 	
 	public Weapon(Long id, String sku, String name, String description, 
 			BigDecimal price) {
+		
 		super();
 		this.id = id;
 		this.sku = sku;
 		this.name = name;
 		this.description = description;
 		this.price = price;
+		
 	}
 
     
     // --- GETTERS AND SETTERS ---
     
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
+	public Long getId() { return id; }
+	public void setId( Long id ) { this.id = id; }
 	
-	public LocalDateTime getCreationDate() {
-		return creationDate;
-	}
-
-	public void setCreationDate(LocalDateTime creationDate) {
-		this.creationDate = creationDate;
-	}
-
-	public String getSku() {
-		return sku;
-	}
-
-	public void setSku(String sku) {
-		this.sku = sku;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
+	public LocalDateTime getCreationDate() { return creationDate; }
+	public void setCreationDate( LocalDateTime creationDate ) { this.creationDate = creationDate; }
 	
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public BigDecimal getPrice() {
-		return price;
-	}
-
-	public void setPrice(BigDecimal price) {
-		this.price = price;
-	}
+	public String getSku() { return sku; }
+	public void setSku( String sku ) { this.sku = sku; }
+	
+	public String getName() { return name; }
+	public void setName( String name ) { this.name = name;}
+	
+	public String getDescription() { return description; }
+	public void setDescription( String description ) { this.description = description; }
+	
+	public BigDecimal getPrice() { return price; }
+	public void setPrice( BigDecimal price ) { this.price = price; }
 
 	
 	 // --- TOSTRING ---

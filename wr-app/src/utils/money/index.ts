@@ -1,19 +1,27 @@
-export const convertToBigDecimal = (value: any) : number => {
-    if(!value){
-        return 0;
-    }
-    return value.replace(".", "").replace(",", ".")
+export const convertToBigDecimal = (value: string | number | undefined | null): number => {
+    if (!value) return 0;
+    
+    // Ensures the input is treated as a string before applying replacements
+    const stringValue = String(value).replace(/\D/g, '');
+    
+    // Converts the raw cents string into a proper decimal number (e.g., "150075" -> 1500.75)
+    return Number(stringValue) / 100;
 }
 
-export const formatReal = ( value: any ) => {
-    const v = ((value.replace(/\D/g, '') / 100).toFixed(2) + '').split('.');
 
-    const m = v[0].split('').reverse().join('').match(/.{1,3}/g) || [];
+export const formatReal = (value: string | number | undefined | null): string => {
+    
+    if (!value) return '0,00';
 
-    for (let i = 0; i < m.length; i++)
-        m[i] = m[i].split('').reverse().join('') + '.';
+    // Cleans the input to extract only digits and converts it to a standard cents value
+    const cleanDigits = String(value).replace(/\D/g, '');
+    const numericValue = Number(cleanDigits) / 100;
 
-    const r = m.reverse().join('');
+    // Uses the native browser/Node API to format currency perfectly according to pt-BR standards
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(numericValue);
 
-    return r.substring(0, r.lastIndexOf('.')) + ',' + v[1];
 }
+

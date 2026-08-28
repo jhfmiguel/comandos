@@ -4,6 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.weaponsregistration.model.Weapon;
 
-public interface WeaponRepository extends JpaRepository<Weapon, Long> {
+public interface WeaponRepository extends JpaRepository< Weapon, Long > {
 
 }

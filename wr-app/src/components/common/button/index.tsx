@@ -1,28 +1,32 @@
-import { ButtonHTMLAttributes } from 'react'
+import React from 'react'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>{
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     label: string
-    onClick?: (e: any) => void
     columnClasses?: string
 }
 
-export const Button: React.FC<ButtonProps> = ( {
-    label,
-    onClick,
-    columnClasses,
-    ... buttonProps
-}: ButtonProps ) => {
 
-    return (
+export const Button: React.FC<ButtonProps> = ({ 
+    
+    label, 
+    columnClasses, 
+    type = 'button', 
+    disabled, 
+    ...props 
 
-        <div className = "control">
+}) => {
+    
+        return (
+
             <button 
-                className = {` button ${columnClasses}`}
-                onClick={ onClick }
-            >{ label }
+                type={type} 
+                className={`button ${columnClasses} ${disabled ? 'is-loading' : ''}`} 
+                disabled={disabled} 
+                {...props}
+            >
+                {label}
+                
             </button>
-        </div>
-
-    )
-
+        )
 }
+

@@ -2,10 +2,8 @@ import { TextareaHTMLAttributes } from 'react'
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     
-    onChange?: ( value: any ) => void
     label: string
     columnClasses?: string
-    value: string
     id: string
     error?: string
 
@@ -13,13 +11,11 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 export const Textarea: React.FC<TextareaProps> = ( {
 
-    onChange,
     label,
     columnClasses,
-    value,
     id,
     error,
-    ... textareaProps
+    ...textareaProps
 
 }: TextareaProps ) => {
 
@@ -36,17 +32,9 @@ export const Textarea: React.FC<TextareaProps> = ( {
             
             <div className = "control">
                 <textarea
-                    { ... textareaProps }
+                     id = { id }
                     className = "textarea" 
-                    id = { id }
-                    value={ value }
-                    onChange = { 
-                        event => {
-                            if( onChange ) {
-                                onChange( event.target.value )
-                            } 
-                        }   
-                    }
+                    { ... textareaProps }                                    
                 />
 
                 { error &&

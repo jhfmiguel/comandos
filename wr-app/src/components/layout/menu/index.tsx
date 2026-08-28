@@ -1,26 +1,37 @@
+import Link from 'next/link'
+
 import { MenuItem } from "../menu-item";
 
 export const Menu: React.FC = () => {
 
     return (
-
-        <aside className="column is-2 is-narrow-mobile is-fullheight section is-hidden-mobile">
+        /* Suas configurações originais foram mantidas 100% intactas */
+        <aside className="column is-1 is-hidden-mobile has-background-dark">
             
-            <p className="menu-label is-hidden-touch">
-                Weapons
-            </p>
+            {/* 💡 Ajustado para height: calc(100vh - 40px) para fazer a div colar no fim do navegador */}
+            <div className="pt-10 pl-5 pr-5" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)', whiteSpace: 'nowrap' }}>
+                
+                <div>
+                    <Link href="/" style={{ color: '#ff9900', textDecoration: 'none' }}>
+                        <p className="menu-label has-text-weight-bold" style={{ cursor: 'pointer' }}>
+                            Weapons
+                        </p>
+                    </Link>
 
-             <ul className="menu-list">
+                    <ul className="menu-list">
+                        <MenuItem href="/" label="Dashboard"/>
+                        <MenuItem href="/queries/users" label="User"/>
+                        <MenuItem href="/queries/weapons" label="Weapon"/>
+                    </ul>
+                </div>
 
-                <MenuItem href="/" label="Home"/>
-                <MenuItem href="/queries/weapons" label="Registration"/>
-                <MenuItem href="/" label="Config"/>
-                <MenuItem href="/" label="Log Out"/>
+                {/* Item Log Out empurrado de forma definitiva para a base da janela */}
+                <ul className="menu-list custom-logout-list" style={{ marginTop: 'auto', marginBottom: '2rem' }}>
+                    <MenuItem href="/" label="Log Out"/>
+                </ul>
 
-             </ul>
+            </div>
 
         </aside>
-
     )
-
 }

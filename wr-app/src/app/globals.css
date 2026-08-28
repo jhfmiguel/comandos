@@ -1,3 +1,5 @@
+
+
 @import "tailwindcss";
 
 :root {
@@ -31,4 +33,44 @@ body {
 .has-text-dark-red {
     background: #ed2100 !important;
     color: #ffffff !important;
+}
+
+
+.menu-list a:hover {
+    color: #ff9900 !important;   /* Muda a cor do texto para o vermelho do Bulma, por exemplo */
+}
+
+
+.custom-logout-list a:hover {
+    color: #ed2100 !important; /* Vermelho padrão do Bulma */
+}
+
+.input:focus, 
+.textarea:focus {
+    border-color: #ff9900 !important; /* Cor da borda quando selecionado */
+    box-shadow: 0 0 0 0.125em rgba(255, 153, 0, 0.25) !important; /* Sombra suave ao redor (Laranja translúcido) */
+}
+
+/* Quando o mouse passar por cima (:hover), reduz a luminosidade em 15% (fica mais escuro) */
+.my-custom-button:hover:not(:disabled) {
+    filter: brightness(0.85);
+    transition: filter 0.2s ease-in-out; /* Adiciona uma transição suave ao escurecer */
+}
+
+/* Garante que o efeito também aconteça se o usuário navegar pelo teclado usando Tab */
+.my-custom-button:focus:not(:disabled) {
+    filter: brightness(0.85);
+}
+
+/* Restaura o efeito hover para qualquer cor customizada que você aplicou */
+.button:hover:not(:disabled) {
+    filter: brightness(0.88); /* Reduz a claridade em 12%, deixando a sua cor mais escura */
+    transition: filter 0.15s ease-in-out; /* Deixa o efeito visual suave ao passar o mouse */
+    cursor: pointer;
+}
+
+/* Garante o mesmo efeito visual se o usuário navegar usando a tecla Tab (Foco) */
+.button:focus:not(:disabled) {
+    filter: brightness(0.88);
+    outline: none;
 }
