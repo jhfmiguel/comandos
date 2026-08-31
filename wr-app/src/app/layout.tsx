@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "bulma/css/bulma.css";
 
+
 import "components/common/loader/loader.css"
 
 import PrimeSSRProvider from '../../prime-ssr-provider'

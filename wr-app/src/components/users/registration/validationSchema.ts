@@ -5,6 +5,16 @@ import { formatOnlyNumbers, validateCPF } from "utils/numeric"
 import { User } from "api/models/users"
 import { formikScheme } from "./form"
 
+// --- INTERFACES ---
+// Adicionada a interface Page para suportar a tipagem do Axios
+export interface Page<T> {
+    content         : Array<T>
+    first           : number
+    size            : number
+    number          : number
+    totalElements   : number
+}
+
 // Static error message configurations
 const requiredField = 'Required field.'
 const invalidCPF    = 'Invalid CPF.'
@@ -103,8 +113,12 @@ export const getValidationScheme = (user?: User) => {
 
                             try {
                                 const cleanCpf = formatOnlyNumbers(value);
-                                const response = await axios.get<User[]>(`http://localhost:8080/api/users`);
-                                const users = response.data || [];
+                                
+                                // FIXED: Tipado para receber a estrutura paginada Page<User>
+                                const response = await axios.get<Page<User>>(`http://localhost:8080/api/users`);
+                                
+                                // FIXED: Extrai o array de registros de dentro da propriedade content
+                                const users = response.data?.content || [];
                                 
                                 const isDuplicated = users.some(u => formatOnlyNumbers(u.cpf) === cleanCpf);
                                 if (isDuplicated) {
@@ -123,3 +137,4 @@ export const getValidationScheme = (user?: User) => {
                         .max( 15, invalidPhone ), 
     });
 };
+

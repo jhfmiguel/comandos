@@ -3,7 +3,7 @@ import { Weapon } from 'api/models/weapons'
 
 import { AxiosResponse } from 'axios'
 
-const resourceURL: string = "/api/weapons"
+const resourceURL: string = "api/weapons"
 
 export const useWeaponService = () => {
 

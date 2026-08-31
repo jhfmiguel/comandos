@@ -5,7 +5,7 @@ import { User } from 'api/models/users'
 import { Page }  from 'api/models/common/page'
 
 
-const resourceURL: string = "/api/users"
+const resourceURL: string = "api/users"
 
 export const useUserService = () => {
 
