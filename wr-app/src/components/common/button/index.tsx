@@ -20,7 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
 
             <button 
                 type={type} 
-                className={`button ${columnClasses} ${disabled ? 'is-loading' : ''}`} 
+                className={`comandos-action-button ${columnClasses ?? ""} ${disabled ? "opacity-60 cursor-wait" : ""}`} 
                 disabled={disabled} 
                 {...props}
             >

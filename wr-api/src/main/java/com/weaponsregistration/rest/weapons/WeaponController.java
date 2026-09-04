@@ -1,10 +1,11 @@
 package com.weaponsregistration.rest.weapons;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.weaponsregistration.model.Weapon;
@@ -22,78 +24,135 @@ import com.weaponsregistration.model.repository.WeaponRepository;
 @RequestMapping("/api/weapons")
 @CrossOrigin("*")
 public class WeaponController {
-	
-	private final WeaponRepository repository;
 
-	WeaponController(WeaponRepository repository) {
-		this.repository = repository;
-	}
-	
-	@PostMapping
-	public WeaponFormRequest save( @RequestBody WeaponFormRequest weapon ) {
-		
-		Weapon weaponEntity = weapon.toModel();
-		repository.save(weaponEntity);
-		return WeaponFormRequest.fromModel( weaponEntity );
-		
-	}
-	
-	@PutMapping("{id}")
-	public ResponseEntity<Void> update( @PathVariable Long id, @RequestBody WeaponFormRequest weapon ) {
-		
-		Optional<Weapon> existingWeapon = repository.findById(id);
-		
-		if ( existingWeapon.isEmpty() ) {
-			return ResponseEntity.notFound().build();
-		}
-		
-		Weapon entity = weapon.toModel();
-		entity.setId( id );
-		repository.save( entity );
+    private final WeaponRepository repository;
 
-		return ResponseEntity.ok().build();
-	}
-	
-	@GetMapping
-	public List<WeaponFormRequest> getList() {
-		
-		return repository
-				.findAll()
-				.stream()
-				.map( WeaponFormRequest::fromModel )
-				.collect(Collectors.toList());
-	}
-	
-	@GetMapping("{id}")
-	public ResponseEntity<WeaponFormRequest> getById (@PathVariable Long id) {
-		
-		Optional<Weapon> existingWeapon = repository.findById(id);
-		
-		if( existingWeapon.isEmpty() ) {
-			return ResponseEntity.notFound().build();
-		}
-		
-		var weapon = existingWeapon
-				.map( WeaponFormRequest::fromModel )
-				.get();
-		
-		return ResponseEntity.ok( weapon );
-		
-	}
-	
-	@DeleteMapping("{id}")
-	public ResponseEntity<Void> delete( @PathVariable Long id ) {
-		
-		Optional<Weapon> existingWeapon = repository.findById(id);
-		
-		if( existingWeapon.isEmpty() ) {
-			return ResponseEntity.notFound().build();
-		}
-		
-		repository.delete( existingWeapon.get() );
-		
-		return ResponseEntity.noContent().build();
-		
-	}
+    public WeaponController(
+        WeaponRepository repository
+    ) {
+        this.repository = repository;
+    }
 
+    @PostMapping
+    @Transactional
+    public WeaponFormRequest save(
+        @RequestBody WeaponFormRequest request
+    ) {
+        Weapon weapon = request.toModel();
+
+        repository.save(weapon);
+
+        return WeaponFormRequest.fromModel(
+            weapon
+        );
+    }
+
+    @PutMapping("{id}")
+    @Transactional
+    public ResponseEntity<Void> update(
+        @PathVariable Long id,
+        @RequestBody WeaponFormRequest request
+    ) {
+        Optional<Weapon> existingWeapon =
+            repository.findById(id);
+
+        if (existingWeapon.isEmpty()) {
+            return ResponseEntity
+                .notFound()
+                .build();
+        }
+
+        Weapon weapon = request.toModel();
+
+        weapon.setId(id);
+
+        repository.save(weapon);
+
+        return ResponseEntity
+            .noContent()
+            .build();
+    }
+
+    @GetMapping
+    public Page<WeaponFormRequest> getList(
+        @RequestParam(
+            required = false,
+            defaultValue = ""
+        )
+        String sku,
+
+        @RequestParam(
+            required = false,
+            defaultValue = ""
+        )
+        String name,
+
+        @RequestParam(
+            required = false,
+            defaultValue = ""
+        )
+        String price,
+
+        @RequestParam(
+            required = false,
+            defaultValue = ""
+        )
+        String description,
+
+        Pageable pageable
+    ) {
+        return repository
+            .search(
+                sku,
+                name,
+                price,
+                description,
+                pageable
+            )
+            .map(
+                WeaponFormRequest::fromModel
+            );
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<WeaponFormRequest> getById(
+        @PathVariable Long id
+    ) {
+        return repository
+            .findById(id)
+            .map(
+                WeaponFormRequest::fromModel
+            )
+            .map(
+                ResponseEntity::ok
+            )
+            .orElseGet(
+                () -> ResponseEntity
+                    .notFound()
+                    .build()
+            );
+    }
+
+    @DeleteMapping("{id}")
+    @Transactional
+    public ResponseEntity<Void> delete(
+        @PathVariable Long id
+    ) {
+        Optional<Weapon> existingWeapon =
+            repository.findById(id);
+
+        if (existingWeapon.isEmpty()) {
+            return ResponseEntity
+                .notFound()
+                .build();
+        }
+
+        repository.delete(
+            existingWeapon.get()
+        );
+
+        return ResponseEntity
+            .noContent()
+            .build();
+    }
 }

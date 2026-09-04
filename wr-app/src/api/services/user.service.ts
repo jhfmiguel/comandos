@@ -1,58 +1,82 @@
-import { AxiosResponse } from 'axios'
+import type { AxiosResponse } from "axios";
 
-import { httpClient } from 'api/http'
-import { User } from 'api/models/users'
-import { Page }  from 'api/models/common/page'
+import { httpClient } from "api/http";
+import type { Page } from "api/models/common/page";
+import type { User } from "api/models/users";
 
 
-const resourceURL: string = "api/users"
+const resourceURL = "api/users";
+
 
 export const useUserService = () => {
+  
 
-    const saveUser = async ( user: User ) : Promise<User> => {
+    const saveUser = async ( user: User ): Promise<User> => {
         
-        const response: AxiosResponse<User> = await httpClient.post<User>( resourceURL, user )
-        return response.data
+        const response: AxiosResponse< User > = await httpClient.post< User >( resourceURL, user );
+        return response.data;
 
-    }
+    };
 
-    const updateUser = async ( user: User ) : Promise<void> => {
 
-        const url: string = `${resourceURL}/${user.id}`
-        await httpClient.put<User>( url, user)
-
-    }
-
-    const loadUser = async ( id: any ): Promise<User> => {
+    const updateUser = async ( user: User ): Promise<void> => {
         
-        const url: string = `${resourceURL}/${id}`
-        const response: AxiosResponse<User> = await httpClient.get( url )
-        return response.data
-
-    }
-
-     const deleteUser = async ( id: any ): Promise<void> => {
+        if (user.id === undefined) { throw new Error( "The user ID is required." ); }
+        await httpClient.put< User >( `${resourceURL}/${user.id}`, user);
         
-        const url: string = `${resourceURL}/${id}`
-        await httpClient.delete( url )
+    };
 
-    }
 
-    const findUser = async ( 
+    const loadUser = async ( id: string | number ): Promise< User > => {
         
-        name: string = "", 
+        const response: AxiosResponse< User > = await httpClient.get< User >( `${resourceURL}/${id}` );
+        return response.data;
+    
+    };
+
+
+    const deleteUser = async ( id: string | number ): Promise<void> => {
+        
+        await httpClient.delete( `${resourceURL}/${id}` );
+    
+    };
+
+
+    const findUser = async (
+        
+        name: string = "",
         cpf: string = "",
         page: number = 0,
-        size: number = 0 
+        size: number = 20,
+        birth: string = "",
+        address: string = "",
+        email: string = "",
+        phone: string = ""
+        
+    ): Promise<Page<User>> => {
+        
+        const formattedBirth = /^\d{4}-\d{2}-\d{2}$/.test(birth)
+            ? birth.split("-").reverse().join("/")
+            : birth;
 
-    ) : Promise< Page< User > > => {
+        const response: AxiosResponse<Page<User>> = await httpClient.get< Page< User >>( resourceURL,
+            {
+                params: 
+                {
+                    name,
+                    cpf,
+                    birth: formattedBirth,
+                    address,
+                    email,
+                    phone,
+                    page,
+                    size
+                }
+            }
+        );
 
-        const url = `${resourceURL}?name=${name}&cpf=${cpf}&page=${page}&size=${size}`
-        const response: AxiosResponse< Page< User > > = await httpClient.get(url)
-        return response.data
-
-
-    }
+        return response.data;
+    };
 
 
     return {
@@ -62,7 +86,8 @@ export const useUserService = () => {
         loadUser,
         deleteUser,
         findUser
-        
-    }
 
-}
+    };
+    
+
+};

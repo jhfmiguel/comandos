@@ -1,11 +1,14 @@
 export const convertToBigDecimal = (value: string | number | undefined | null): number => {
     if (!value) return 0;
-    
-    // Ensures the input is treated as a string before applying replacements
-    const stringValue = String(value).replace(/\D/g, '');
-    
-    // Converts the raw cents string into a proper decimal number (e.g., "150075" -> 1500.75)
-    return Number(stringValue) / 100;
+
+    if (typeof value === "number") return value;
+
+    // Converts a Brazilian formatted monetary value into a decimal number
+    const normalizedValue = value.includes(",")
+        ? value.replace(/\./g, "").replace(",", ".")
+        : value;
+
+    return Number(normalizedValue) || 0;
 }
 
 

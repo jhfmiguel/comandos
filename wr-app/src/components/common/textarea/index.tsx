@@ -1,4 +1,6 @@
 import { TextareaHTMLAttributes } from 'react'
+import { Label } from '@primereact/ui/label'
+import { Textarea as PrimeTextarea } from '@primereact/ui/textarea'
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     
@@ -21,25 +23,26 @@ export const Textarea: React.FC<TextareaProps> = ( {
 
     return (
 
-        <div className = {`field column ${columnClasses}`}>
+        <div className = {`field ${columnClasses ?? ""}`}>
 
-            <label 
-                className = "label"
+            <Label 
+                className = "block font-semibold mb-2"
                 htmlFor = { id }
             >
             { label }
-            </label>
+            </Label>
             
-            <div className = "control">
-                <textarea
-                     id = { id }
-                    className = "textarea" 
-                    { ... textareaProps }                                    
+            <div className = "w-full">
+
+                <PrimeTextarea
+                    id = { id }
+                    className = "comandos-input w-full" 
+                    { ... textareaProps }                                   
                 />
 
                 { error &&
                 
-                    <p className = "help is-danger" >{ error }</p>
+                    <p className = "text-red-500 text-sm mt-1" >{ error }</p>
                 
                 }
 

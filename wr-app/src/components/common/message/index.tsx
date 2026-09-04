@@ -18,8 +18,8 @@ export const Message: React.FC<MessageProps> = ({
     
     return (
 
-        <article className = { `message is-${type}` }>
-            <div className = "message-body">
+        <article className = { `comandos-message comandos-message-${type}` }>
+            <div className = "comandos-message-body">
                 { field && `${ field }: `}{ text }
             </div>
         </article>

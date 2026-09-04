@@ -6,7 +6,7 @@ import { User } from "api/models/users"
 import { formikScheme } from "./form"
 
 // --- INTERFACES ---
-// Adicionada a interface Page para suportar a tipagem do Axios
+// Defines the paginated response returned by the API
 export interface Page<T> {
     content         : Array<T>
     first           : number
@@ -115,7 +115,16 @@ export const getValidationScheme = (user?: User) => {
                                 const cleanCpf = formatOnlyNumbers(value);
                                 
                                 // FIXED: Tipado para receber a estrutura paginada Page<User>
-                                const response = await axios.get<Page<User>>(`http://localhost:8080/api/users`);
+                                const response = await axios.get<Page<User>>(
+                                    `http://localhost:8080/api/users`,
+                                    {
+                                        params: {
+                                            cpf: cleanCpf,
+                                            page: 0,
+                                            size: 1
+                                        }
+                                    }
+                                );
                                 
                                 // FIXED: Extrai o array de registros de dentro da propriedade content
                                 const users = response.data?.content || [];

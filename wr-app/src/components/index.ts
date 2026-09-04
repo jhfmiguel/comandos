@@ -1,5 +1,3 @@
-export { Layout } from './layout'
-
 export { 
 
     Input, 
@@ -14,9 +12,12 @@ export {
     Message, 
     Loader 
 
-} from './common'
+} from "./common"
 
-export { UserRegistration, UsersList } from './users'
+export { Layout } from "./layout"
 
-export { WeaponsRegistration, WeaponsList } from './weapons'
+export { Sales } from "./sales"
 
+export { UserRegistration, UsersList } from "./users"
+
+export { WeaponsRegistration, WeaponsList } from "./weapons"

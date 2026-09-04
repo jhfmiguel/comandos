@@ -1,5 +1,3 @@
-
-
 @import "tailwindcss";
 
 :root {
@@ -30,47 +28,494 @@ body {
 
 /* RED BUTTON */
 
-.has-text-dark-red {
+.comandos-red-button {
     background: #ed2100 !important;
     color: #ffffff !important;
 }
 
 
-.menu-list a:hover {
-    color: #ff9900 !important;   /* Muda a cor do texto para o vermelho do Bulma, por exemplo */
+
+.comandos-input:focus,
+.p-inputtext:focus,
+.p-datatable input:focus,
+[data-scope="datatable"] input:focus {
+    border-color: #ff9900 !important;
+    box-shadow: 0 0 0 1px #ff9900 !important;
+    outline: none !important;
 }
 
 
-.custom-logout-list a:hover {
-    color: #ed2100 !important; /* Vermelho padrão do Bulma */
+/* SIDEBAR */
+
+.comandos-sidebar {
+    position: relative !important;
+    z-index: 10000 !important;
+    overflow: visible !important;
 }
 
-.input:focus, 
-.textarea:focus {
-    border-color: #ff9900 !important; /* Cor da borda quando selecionado */
-    box-shadow: 0 0 0 0.125em rgba(255, 153, 0, 0.25) !important; /* Sombra suave ao redor (Laranja translúcido) */
+.comandos-sidebar-main {
+    position: relative !important;
+    z-index: 1 !important;
 }
 
-/* Quando o mouse passar por cima (:hover), reduz a luminosidade em 15% (fica mais escuro) */
+.comandos-main-card {
+    border: 1px solid var(--p-content-border-color, #dee2e6) !important;
+    border-radius: 0.5rem !important;
+    background-color: var(--p-content-background, #ffffff) !important;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.16) !important;
+}
+
+.comandos-main-card-header {
+    border-bottom: 1px solid var(--p-content-border-color, #dee2e6) !important;
+}
+
+.comandos-datatable-paginator {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.comandos-sidebar-aside {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 10000 !important;
+}
+
+.comandos-sidebar-panel {
+    display: flex !important;
+    flex-direction: column;
+    height: 100vh;
+    overflow: visible !important;
+    background-color: #363636 !important;
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-content {
+    flex: 1 1 auto;
+    overflow: visible !important;
+}
+
+.comandos-sidebar-footer {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.comandos-sidebar-brand {
+    color: #ff9900 !important;
+    text-decoration: none !important;
+    border-radius: 0.375rem !important;
+    transition: background-color 0.2s ease-in-out !important;
+}
+
+.comandos-sidebar-brand span {
+    color: #ff9900 !important;
+    text-shadow:
+        0 0 2px rgba(255, 153, 0, 0.9),
+        0 0 5px rgba(255, 153, 0, 0.55);
+}
+
+.comandos-sidebar-brand:hover,
+.comandos-sidebar-brand:focus {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ff9900 !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.comandos-sidebar-brand:hover span,
+.comandos-sidebar-brand:focus span {
+    color: #ff9900 !important;
+    text-shadow:
+        0 0 3px rgba(255, 153, 0, 1),
+        0 0 7px rgba(255, 153, 0, 0.7);
+}
+
+.comandos-sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 0.25rem;
+    background-color: #363636;
+    color: #ff9900 !important;
+    box-shadow: none;
+}
+
+.comandos-sidebar-skull {
+    display: block;
+    width: 1.4rem;
+    height: 1.4rem;
+    min-width: 1.4rem;
+    min-height: 1.4rem;
+    flex-shrink: 0;
+    fill: none;
+    stroke: #ff9900 !important;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter:
+        drop-shadow(0 0 2px rgba(255, 153, 0, 0.9))
+        drop-shadow(0 0 5px rgba(255, 153, 0, 0.55));
+}
+
+.comandos-sidebar-skull-detail {
+    fill: #363636 !important;
+    stroke: none !important;
+}
+
+.comandos-sidebar-brand:hover .comandos-sidebar-skull,
+.comandos-sidebar-brand:focus .comandos-sidebar-skull {
+    filter:
+        drop-shadow(0 0 3px rgba(255, 153, 0, 1))
+        drop-shadow(0 0 7px rgba(255, 153, 0, 0.7));
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-brand {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-brand > span,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-menu-button > span,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-user > span,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-label {
+    display: none !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-menu-button,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-user {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-user-chevron {
+    display: none !important;
+}
+
+.comandos-sidebar-submenu {
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100% - 1rem) !important;
+    margin-left: 1rem !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.comandos-sidebar-submenu .comandos-sidebar-menu-button {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+.comandos-sidebar-label {
+    color: #ffffff !important;
+    opacity: 0.7;
+}
+
+.comandos-sidebar-menu-item {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.comandos-sidebar-menu-button,
+.comandos-sidebar-menu-button svg,
+.comandos-sidebar-menu-button span {
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-menu-button {
+    background-color: transparent !important;
+    text-decoration: none !important;
+    border-radius: 0.375rem !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease-in-out !important;
+}
+
+.comandos-sidebar-menu-button:hover,
+.comandos-sidebar-menu-button:focus,
+.comandos-sidebar-menu-button:active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.comandos-sidebar-menu-button-active {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-menu-button-active:hover,
+.comandos-sidebar-menu-button-active:focus,
+.comandos-sidebar-menu-button-active:active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-popup {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 0.25rem);
+    z-index: 10001 !important;
+    display: none;
+    min-width: 11rem;
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.5rem;
+    background-color: #363636;
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.35);
+}
+
+.comandos-sidebar-menu-item:hover .comandos-sidebar-popup,
+.comandos-sidebar-menu-item:focus-within .comandos-sidebar-popup {
+    display: block;
+}
+
+.comandos-sidebar-popup-title {
+    padding: 0.4rem 0.6rem;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.comandos-sidebar-popup-link {
+    display: block;
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.375rem;
+    background-color: transparent;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.comandos-sidebar-popup-link:hover,
+.comandos-sidebar-popup-link:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    outline: none;
+}
+
+.comandos-sidebar-popup-link-active {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-user,
+.comandos-sidebar-user svg,
+.comandos-sidebar-user span {
+    color: #ffffff !important;
+}
+
+.comandos-sidebar-user {
+    background-color: transparent !important;
+    text-decoration: none !important;
+    border-radius: 0.375rem !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease-in-out !important;
+}
+
+.comandos-sidebar-user:hover,
+.comandos-sidebar-user:focus,
+.comandos-sidebar-user:active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.comandos-sidebar-avatar {
+    background-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    font-weight: 700 !important;
+}
+
+.comandos-sidebar-user-positioner {
+    z-index: 10002 !important;
+}
+
+.comandos-sidebar-user-popup {
+    min-width: 13rem !important;
+}
+
+
+/* Reduces brightness by 15% on hover */
+
 .my-custom-button:hover:not(:disabled) {
     filter: brightness(0.85);
-    transition: filter 0.2s ease-in-out; /* Adiciona uma transição suave ao escurecer */
+    transition: filter 0.2s ease-in-out;
 }
 
-/* Garante que o efeito também aconteça se o usuário navegar pelo teclado usando Tab */
+
+/* Applies the same effect during keyboard navigation */
+
 .my-custom-button:focus:not(:disabled) {
     filter: brightness(0.85);
 }
 
-/* Restaura o efeito hover para qualquer cor customizada que você aplicou */
+
+/* Applies the hover effect to custom button colors */
+
 .button:hover:not(:disabled) {
-    filter: brightness(0.88); /* Reduz a claridade em 12%, deixando a sua cor mais escura */
-    transition: filter 0.15s ease-in-out; /* Deixa o efeito visual suave ao passar o mouse */
+    filter: brightness(0.88);
+    transition: filter 0.15s ease-in-out;
     cursor: pointer;
 }
 
-/* Garante o mesmo efeito visual se o usuário navegar usando a tecla Tab (Foco) */
+
+/* Applies the same visual effect during keyboard navigation */
+
 .button:focus:not(:disabled) {
     filter: brightness(0.88);
     outline: none;
+}
+
+
+.prime-yellow-button {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+}
+
+.prime-yellow-button:hover {
+    background-color: #e68a00 !important;
+    border-color: #e68a00 !important;
+    color: #1f1f1f !important;
+}
+
+.prime-yellow-button:focus {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 153, 0, 0.25) !important;
+}
+
+.prime-yellow-button:disabled {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    opacity: 0.6;
+}
+/* SHARED COMPONENTS */
+
+.comandos-input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #ffffff;
+    color: #171717;
+}
+
+.comandos-input-addon {
+    border-color: var(--p-inputtext-border-color, #d1d5db) !important;
+    background-color: var(--p-inputtext-background, #ffffff) !important;
+    color: var(--p-inputtext-color, #171717) !important;
+    font-weight: 400 !important;
+}
+
+.comandos-currency-input {
+    width: 100%;
+    border-radius: 0.375rem;
+}
+
+.comandos-currency-input .comandos-currency-value {
+    width: 100%;
+    border-color: var(--p-inputtext-border-color, #d1d5db) !important;
+    background-color: var(--p-inputtext-background, #ffffff) !important;
+    color: var(--p-inputtext-color, #171717) !important;
+}
+
+.comandos-currency-input .comandos-currency-value::placeholder {
+    color: var(--p-inputtext-placeholder-color, #6b7280) !important;
+}
+
+.comandos-currency-input:focus-within {
+    box-shadow: 0 0 0 1px #ff9900 !important;
+}
+
+.comandos-currency-input:focus-within .comandos-input-addon,
+.comandos-currency-input:focus-within .comandos-currency-value {
+    border-color: #ff9900 !important;
+}
+
+.comandos-currency-input:focus-within .comandos-currency-value {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.comandos-action-button {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    cursor: pointer;
+}
+
+.comandos-message {
+    margin-bottom: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.comandos-message-body {
+    padding: 1rem;
+}
+
+.comandos-message-success {
+    border-color: #22c55e;
+    background-color: #f0fdf4;
+    color: #166534;
+}
+
+.comandos-message-danger,
+.comandos-message-error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.comandos-message-warning {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+    color: #92400e;
+}
+
+.comandos-message-info {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    color: #1e40af;
+}
+
+.comandos-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.comandos-table th,
+.comandos-table td {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    vertical-align: middle;
+}
+
+.comandos-table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.comandos-table tbody tr:hover {
+    background-color: #f1f5f9;
 }

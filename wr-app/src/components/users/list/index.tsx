@@ -6,16 +6,24 @@ import React, {
     useRef,
     useState
 } from "react";
-import { useFormik } from "formik";
 
-import { DataTable } from "@primereact/ui/datatable";
+import { useRouter } from "next/navigation";
+
+import {
+    DataTable,
+    FilterMatchMode
+} from "@primereact/ui/datatable";
+
 import type {
     DataTableEditingEvent,
+    DataTableFilterInstance,
+    DataTableFilterMeta,
     DataTablePaginationInstance,
     DataTableRowEditEvent
 } from "@primereact/ui/datatable";
 
 import { Paginator } from "@primereact/ui/paginator";
+
 import type {
     PaginatorPagesInstance,
     PaginatorRootChangeEvent
@@ -25,78 +33,409 @@ import { InputText } from "@primereact/ui/inputtext";
 import { Dialog } from "@primereact/ui/dialog";
 import { Button as PrimeButton } from "@primereact/ui/button";
 
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
 import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
 import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
 import { AngleLeft } from "@primeicons/react/angle-left";
 import { AngleRight } from "@primeicons/react/angle-right";
-import { Pencil } from "@primeicons/react/pencil";
 import { Check } from "@primeicons/react/check";
+import { EllipsisH } from "@primeicons/react/ellipsis-h";
+import { Pencil } from "@primeicons/react/pencil";
+import { Plus } from "@primeicons/react/plus";
 import { Times } from "@primeicons/react/times";
 import { Trash } from "@primeicons/react/trash";
 
-import {
-    Layout,
-    Input,
-    InputCPF,
-    Button,
-    Loader
-} from "components";
+import { Layout, Loader } from "components";
 
 import { User } from "api/models/users";
 import { useUserService } from "api/services/user.service";
-
-interface QueryUserForm {
-    name: string;
-    cpf: string;
-}
 
 interface DialogOpenChangeEvent {
     value?: boolean;
 }
 
+interface DataTableFilterEvent {
+    filters: DataTableFilterMeta;
+}
+
+interface UserSearchFilters {
+    name: string;
+    cpf: string;
+    birth: string;
+    address: string;
+    email: string;
+    phone: string;
+}
+
+const INITIAL_FILTERS: DataTableFilterMeta = {
+    name: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    },
+    cpf: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    },
+    birth: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    },
+    address: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    },
+    email: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    },
+    phone: {
+        value: null,
+        matchMode: FilterMatchMode.Contains
+    }
+};
+
+const EMPTY_SEARCH_FILTERS: UserSearchFilters = {
+    name: "",
+    cpf: "",
+    birth: "",
+    address: "",
+    email: "",
+    phone: ""
+};
+
+const onlyNumbers = (
+    value: string | number | null | undefined
+): string => {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value).replace(/\D/g, "");
+};
+
+const formatCPF = (
+    value: string | number | null | undefined
+): string => {
+    const numbers = onlyNumbers(value).slice(0, 11);
+
+    if (!numbers) {
+        return "";
+    }
+
+    return numbers
+        .replace(/^(\d{3})(\d)/, "$1.$2")
+        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(
+            /^(\d{3})\.(\d{3})\.(\d{3})(\d)/,
+            "$1.$2.$3-$4"
+        );
+};
+
+const formatPhone = (
+    value: string | number | null | undefined
+): string => {
+    const numbers = onlyNumbers(value).slice(0, 11);
+
+    if (!numbers) {
+        return "";
+    }
+
+    if (numbers.length <= 10) {
+        return numbers
+            .replace(/^(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{4})(\d)/, "$1-$2");
+    }
+
+    return numbers
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2");
+};
+
+const getFilterValue = (
+    filters: DataTableFilterMeta,
+    field: string
+): string => {
+    const filter = filters[field];
+
+    if (
+        filter === null ||
+        filter === undefined ||
+        typeof filter !== "object"
+    ) {
+        return "";
+    }
+
+    if (!("value" in filter)) {
+        return "";
+    }
+
+    const value = filter.value;
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value);
+};
+
+const createSearchFilters = (
+    filters: DataTableFilterMeta
+): UserSearchFilters => {
+    return {
+        name: getFilterValue(
+            filters,
+            "name"
+        ).trim(),
+
+        cpf: onlyNumbers(
+            getFilterValue(
+                filters,
+                "cpf"
+            )
+        ),
+
+        birth: getFilterValue(
+            filters,
+            "birth"
+        ).trim(),
+
+        address: getFilterValue(
+            filters,
+            "address"
+        ).trim(),
+
+        email: getFilterValue(
+            filters,
+            "email"
+        ).trim(),
+
+        phone: onlyNumbers(
+            getFilterValue(
+                filters,
+                "phone"
+            )
+        )
+    };
+};
+
+const normalizeText = (
+    value: unknown
+): string => {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .toLocaleLowerCase("pt-BR")
+        .trim();
+};
+
+const filterUsers = (
+    users: User[],
+    filters: UserSearchFilters
+): User[] => {
+    return users.filter((user) => {
+        const birthFilter =
+            normalizeText(filters.birth);
+
+        const addressFilter =
+            normalizeText(filters.address);
+
+        const emailFilter =
+            normalizeText(filters.email);
+
+        const phoneFilter =
+            onlyNumbers(filters.phone);
+
+        const matchesBirth =
+            !birthFilter ||
+            normalizeText(user.birth).includes(
+                birthFilter
+            );
+
+        const matchesAddress =
+            !addressFilter ||
+            normalizeText(user.address).includes(
+                addressFilter
+            );
+
+        const matchesEmail =
+            !emailFilter ||
+            normalizeText(user.email).includes(
+                emailFilter
+            );
+
+        const matchesPhone =
+            !phoneFilter ||
+            onlyNumbers(user.phone).includes(
+                phoneFilter
+            );
+
+        return (
+            matchesBirth &&
+            matchesAddress &&
+            matchesEmail &&
+            matchesPhone
+        );
+    });
+};
+
+const formatDate = (
+    dateString?: string
+): string => {
+    if (!dateString) {
+        return "-";
+    }
+
+    try {
+        if (dateString.includes("-")) {
+            const datePart =
+                dateString.split("T")[0];
+
+            const [
+                year,
+                month,
+                day
+            ] = datePart.split("-");
+
+            if (
+                year &&
+                month &&
+                day
+            ) {
+                return `${day}/${month}/${year}`;
+            }
+        }
+
+        return new Date(
+            dateString
+        ).toLocaleDateString(
+            "pt-BR"
+        );
+    } catch {
+        return dateString;
+    }
+};
+
 export const UsersList: React.FC = () => {
-    const userService = useUserService();
+    const router = useRouter();
 
-    const [loading, setLoading] = useState<boolean>(false);
-    const [users, setUsers] = useState<User[]>([]);
-    const [totalRecords, setTotalRecords] = useState<number>(0);
-    const [rows, setRows] = useState<number>(10);
-    const [currentPage, setCurrentPage] = useState<number>(0);
+    const userService =
+        useUserService();
 
-    const [deleteUserId, setDeleteUserId] = useState<
+    const [loading, setLoading] =
+        useState<boolean>(false);
+
+    const [
+        originalUsers,
+        setOriginalUsers
+    ] = useState<User[]>([]);
+
+    const [users, setUsers] =
+        useState<User[]>([]);
+
+    const [
+        totalRecords,
+        setTotalRecords
+    ] = useState<number>(0);
+
+    const [rows, setRows] =
+        useState<number>(10);
+
+    const [
+        currentPage,
+        setCurrentPage
+    ] = useState<number>(0);
+
+    const [filters, setFilters] =
+        useState<DataTableFilterMeta>(
+            INITIAL_FILTERS
+        );
+
+    const [
+        deleteUserId,
+        setDeleteUserId
+    ] = useState<
         string | number | null
     >(null);
 
-    const [editingKeys, setEditingKeys] = useState<
+    const [
+        editingKeys,
+        setEditingKeys
+    ] = useState<
         Record<string, boolean>
     >({});
 
     const draftRef = useRef<
-        Record<string, Partial<User>>
+        Record<
+            string,
+            Partial<User>
+        >
     >({});
+
+    const filterTimeoutRef = useRef<
+        ReturnType<typeof setTimeout> | null
+    >(null);
 
     const fetchUsers = useCallback(
         async (
-            name: string,
-            cpf: string,
+            searchFilters: UserSearchFilters,
             pageIndex: number,
             pageSize: number
-        ) => {
+        ): Promise<void> => {
             setLoading(true);
 
             try {
-                const data = await userService.findUser(
-                    name,
-                    cpf,
-                    pageIndex,
-                    pageSize
+                const data =
+                    await userService.findUser(
+                        searchFilters.name,
+                        searchFilters.cpf,
+                        pageIndex,
+                        pageSize,
+                        searchFilters.birth,
+                        searchFilters.address,
+                        searchFilters.email,
+                        searchFilters.phone
+                    );
+
+                const content =
+                    data?.content ?? [];
+
+                const sortedContent = [
+                    ...content
+                ].sort(
+                    (a, b) =>
+                        Number(a.id ?? 0) -
+                        Number(b.id ?? 0)
                 );
 
-                setUsers(data?.content || []);
-                setTotalRecords(data?.totalElements || 0);
+                setOriginalUsers(
+                    sortedContent
+                );
+
+                setUsers(
+                    filterUsers(
+                        sortedContent,
+                        searchFilters
+                    )
+                );
+
+                setTotalRecords(
+                    data?.totalElements ?? 0
+                );
             } catch (error) {
-                console.error("Failed to fetch users:", error);
+                console.error(
+                    "Failed to fetch users:",
+                    error
+                );
             } finally {
                 setLoading(false);
             }
@@ -104,161 +443,304 @@ export const UsersList: React.FC = () => {
         [userService]
     );
 
-    const userSubmit = async (
-        filterValues: QueryUserForm
-    ) => {
-        setCurrentPage(0);
-
-        await fetchUsers(
-            filterValues.name,
-            filterValues.cpf,
-            0,
-            rows
-        );
-    };
-
     useEffect(() => {
-        fetchUsers("", "", 0, 10);
+        fetchUsers(
+            EMPTY_SEARCH_FILTERS,
+            0,
+            10
+        );
+
+        return () => {
+            if (
+                filterTimeoutRef.current
+            ) {
+                clearTimeout(
+                    filterTimeoutRef.current
+                );
+            }
+        };
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const {
-        handleSubmit: formikSubmit,
-        values: filter,
-        handleChange: formikChange
-    } = useFormik<QueryUserForm>({
-        onSubmit: userSubmit,
-        initialValues: {
-            name: "",
-            cpf: ""
-        }
-    });
+    const handleFilterChange =
+        useCallback(
+            (
+                nextFilters:
+                    DataTableFilterMeta
+            ): void => {
+                setFilters(
+                    nextFilters
+                );
+
+                setCurrentPage(0);
+
+                if (
+                    filterTimeoutRef.current
+                ) {
+                    clearTimeout(
+                        filterTimeoutRef.current
+                    );
+                }
+
+                filterTimeoutRef.current =
+                    setTimeout(() => {
+                        const searchFilters =
+                            createSearchFilters(
+                                nextFilters
+                            );
+
+                        fetchUsers(
+                            searchFilters,
+                            0,
+                            rows
+                        );
+                    }, 400);
+            },
+            [
+                fetchUsers,
+                rows
+            ]
+        );
+
+    const handleTableFilter = (
+        event: DataTableFilterEvent
+    ): void => {
+        handleFilterChange(
+            event.filters
+        );
+    };
 
     const handleSave = useCallback(
-        async (event: DataTableRowEditEvent) => {
-            const id = event.data.id as
-                | string
-                | number
-                | undefined;
+        async (
+            event:
+                DataTableRowEditEvent
+        ): Promise<void> => {
+            const userId =
+                event.data.id as
+                    | string
+                    | number
+                    | undefined;
 
-            if (id === undefined || id === null) {
+            if (
+                userId === undefined ||
+                userId === null
+            ) {
                 return;
             }
 
-            const stringId = id.toString();
-            const patch = draftRef.current[stringId];
+            const rowId =
+                userId.toString();
 
-            if (patch && Object.keys(patch).length > 0) {
-                setLoading(true);
+            const patch =
+                draftRef.current[
+                    rowId
+                ];
 
-                try {
-                    const updatedData = {
-                        ...event.data,
-                        ...patch
-                    } as User;
+            if (
+                patch === undefined ||
+                Object.keys(patch)
+                    .length === 0
+            ) {
+                delete draftRef
+                    .current[rowId];
 
-                    await userService.updateUser(updatedData);
+                return;
+            }
 
-                    setUsers((previousUsers) => {
-                        const updatedUsers = previousUsers.map(
-                            (user) =>
-                                user.id === id
-                                    ? updatedData
-                                    : user
-                        );
+            const updatedUser: User = {
+                ...(event.data as User),
+                ...patch
+            };
 
-                        return [...updatedUsers].sort(
-                            (a, b) =>
-                                Number(a.id ?? 0) -
-                                Number(b.id ?? 0)
-                        );
-                    });
-                } catch (error) {
-                    console.error(
-                        "Failed to update user:",
-                        error
-                    );
-                } finally {
-                    setLoading(false);
+            setLoading(true);
+
+            try {
+                await userService.updateUser(
+                    updatedUser
+                );
+
+                setEditingKeys(
+                    (current) => {
+                        const next = {
+                            ...current
+                        };
+
+                        delete next[
+                            rowId
+                        ];
+
+                        return next;
+                    }
+                );
+
+                await fetchUsers(
+                    createSearchFilters(
+                        filters
+                    ),
+                    currentPage,
+                    rows
+                );
+            } catch (error) {
+                console.error(
+                    "Failed to update user:",
+                    error
+                );
+            } finally {
+                delete draftRef
+                    .current[rowId];
+
+                setLoading(false);
+            }
+        },
+        [
+            userService,
+            fetchUsers,
+            filters,
+            currentPage,
+            rows
+        ]
+    );
+
+    const handleCancel =
+        useCallback(
+            (
+                event:
+                    DataTableRowEditEvent
+            ): void => {
+                const userId =
+                    event.data.id as
+                        | string
+                        | number
+                        | undefined;
+
+                if (
+                    userId === undefined ||
+                    userId === null
+                ) {
+                    return;
                 }
-            }
 
-            delete draftRef.current[stringId];
-        },
-        [userService]
-    );
+                const rowId =
+                    userId.toString();
 
-    const handleCancel = useCallback(
-        (event: DataTableRowEditEvent) => {
-            const id = event.data.id as
-                | string
-                | number
-                | undefined;
+                delete draftRef.current[
+                    rowId
+                ];
 
-            if (id === undefined || id === null) {
-                return;
-            }
+                setEditingKeys(
+                    (current) => {
+                        const next = {
+                            ...current
+                        };
 
-            delete draftRef.current[id.toString()];
-        },
-        []
-    );
+                        delete next[
+                            rowId
+                        ];
 
-    const handleDelete = useCallback(
-        (id: string | number) => {
-            setDeleteUserId(id);
-        },
-        []
-    );
+                        return next;
+                    }
+                );
+            },
+            []
+        );
+
+    const handleDelete =
+        useCallback(
+            (
+                id:
+                    | string
+                    | number
+            ): void => {
+                setDeleteUserId(
+                    id
+                );
+            },
+            []
+        );
 
     const handleDeleteDialogOpenChange = (
         event: DialogOpenChangeEvent
     ): void => {
-        if (event.value === false) {
-            setDeleteUserId(null);
+        if (
+            event.value === false
+        ) {
+            setDeleteUserId(
+                null
+            );
         }
     };
 
-    const confirmDelete = useCallback(async () => {
-        if (deleteUserId === null) {
-            return;
-        }
+    const confirmDelete = useCallback(
+        async (): Promise<void> => {
+            if (
+                deleteUserId === null
+            ) {
+                return;
+            }
 
-        const targetId = deleteUserId;
+            setLoading(true);
 
-        setLoading(true);
+            try {
+                await userService.deleteUser(
+                    deleteUserId
+                );
 
-        try {
-            await userService.deleteUser(
-                targetId.toString()
-            );
+                setDeleteUserId(
+                    null
+                );
 
-            setDeleteUserId(null);
+                const nextTotal =
+                    Math.max(
+                        totalRecords - 1,
+                        0
+                    );
 
-            await fetchUsers(
-                filter.name,
-                filter.cpf,
-                currentPage,
-                rows
-            );
-        } catch (error) {
-            console.error(
-                "Failed to delete user:",
-                error
-            );
-        } finally {
-            setLoading(false);
-        }
-    }, [
-        userService,
-        deleteUserId,
-        filter.name,
-        filter.cpf,
-        currentPage,
-        rows,
-        fetchUsers
-    ]);
+                const maxPage =
+                    Math.max(
+                        Math.ceil(
+                            nextTotal /
+                                rows
+                        ) - 1,
+                        0
+                    );
+
+                const nextPage =
+                    Math.min(
+                        currentPage,
+                        maxPage
+                    );
+
+                setCurrentPage(
+                    nextPage
+                );
+
+                await fetchUsers(
+                    createSearchFilters(
+                        filters
+                    ),
+                    nextPage,
+                    rows
+                );
+            } catch (error) {
+                console.error(
+                    "Failed to delete user:",
+                    error
+                );
+            } finally {
+                setLoading(false);
+            }
+        },
+        [
+            userService,
+            deleteUserId,
+            totalRecords,
+            currentPage,
+            fetchUsers,
+            filters,
+            rows
+        ]
+    );
 
     return (
         <Layout title="Users">
@@ -269,46 +751,42 @@ export const UsersList: React.FC = () => {
                 }}
             >
                 {loading && (
-                    <Loader show={loading} />
+                    <Loader
+                        show={loading}
+                    />
                 )}
 
-                <form onSubmit={formikSubmit}>
-                    <div className="columns">
-                        <Input
-                            label="Name"
-                            columnClasses="is-half"
-                            id="name"
-                            name="name"
-                            onChange={formikChange}
-                            value={filter.name}
-                            autoComplete="off"
-                        />
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        marginBottom: "1rem"
+                    }}
+                >
+                    <PrimeButton
+                        type="button"
+                        className="registration-yellow-button"
+                        onClick={() => {
+                            router.push(
+                                "/registrations/users"
+                            );
+                        }}
+                    >
+                        <Plus size={18} />
 
-                        <InputCPF
-                            label="CPF"
-                            columnClasses="is-half"
-                            id="cpf"
-                            name="cpf"
-                            onChange={formikChange}
-                            value={filter.cpf}
-                            autoComplete="off"
-                        />
-                    </div>
+                        <span
+                            style={{
+                                marginLeft: "0.5rem"
+                            }}
+                        >
+                            New User
+                        </span>
+                    </PrimeButton>
+                </div>
 
-                    <div className="field is-grouped">
-                        <div className="control is-link">
-                            <Button
-                                label="Find"
-                                type="submit"
-                                columnClasses=""
-                            />
-                        </div>
-                    </div>
-                </form>
-
-                <div className="columns">
+                <div className="formgrid grid">
                     <div
-                        className="column is-full"
+                        className="col-12"
                         style={{
                             width: "100%"
                         }}
@@ -319,36 +797,41 @@ export const UsersList: React.FC = () => {
                             lazy
                             paginator
                             rows={rows}
-                            totalRecords={totalRecords}
-                            first={currentPage * rows}
-                            style={{
-                                width: "100%"
-                            }}
-                            loading={loading}
+                            totalRecords={
+                                totalRecords
+                            }
+                            first={
+                                currentPage *
+                                rows
+                            }
+                            filters={
+                                filters
+                            }
+                            onFilter={
+                                handleTableFilter
+                            }
                             editMode="row"
-                            editingKeys={editingKeys}
+                            editingKeys={
+                                editingKeys
+                            }
                             onEditingKeysChange={(
-                                event: DataTableEditingEvent
+                                event:
+                                    DataTableEditingEvent
                             ) => {
                                 setEditingKeys(
                                     event.value
                                 );
                             }}
-                            onRowEditSave={handleSave}
-                            onRowEditCancel={handleCancel}
+                            onRowEditSave={
+                                handleSave
+                            }
+                            onRowEditCancel={
+                                handleCancel
+                            }
+                            style={{
+                                width: "100%"
+                            }}
                         >
-                            <DataTable.Loading />
-
-                            <div
-                                className="p-3 font-bold"
-                                style={{
-                                    borderBottom:
-                                        "1px solid #e5e7eb"
-                                }}
-                            >
-                                Search Results
-                            </div>
-
                             <DataTable.TableContainer
                                 style={{
                                     width: "100%",
@@ -358,7 +841,7 @@ export const UsersList: React.FC = () => {
                                 <DataTable.Table
                                     style={{
                                         width: "100%",
-                                        minWidth: "100%",
+                                        minWidth: "1250px",
                                         tableLayout: "auto"
                                     }}
                                 >
@@ -401,6 +884,219 @@ export const UsersList: React.FC = () => {
                                                 Actions
                                             </DataTable.THeadCell>
                                         </DataTable.THeadRow>
+
+                                        <DataTable.THeadRow>
+                                            <DataTable.THeadCell />
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="name"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            value={
+                                                                (value as string) ??
+                                                                ""
+                                                            }
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                onChange(
+                                                                    event,
+                                                                    event.target.value
+                                                                );
+                                                            }}
+                                                            placeholder="Search name..."
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="cpf"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            value={formatCPF(
+                                                                (value as string) ??
+                                                                    ""
+                                                            )}
+                                                            inputMode="numeric"
+                                                            maxLength={14}
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                const maskedValue =
+                                                                    formatCPF(
+                                                                        event.target.value
+                                                                    );
+
+                                                                onChange(
+                                                                    event,
+                                                                    maskedValue
+                                                                );
+                                                            }}
+                                                            placeholder="000.000.000-00"
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="birth"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            type="date"
+                                                            value={
+                                                                (value as string) ??
+                                                                ""
+                                                            }
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                onChange(
+                                                                    event,
+                                                                    event.target.value
+                                                                );
+                                                            }}
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="address"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            value={
+                                                                (value as string) ??
+                                                                ""
+                                                            }
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                onChange(
+                                                                    event,
+                                                                    event.target.value
+                                                                );
+                                                            }}
+                                                            placeholder="Search address..."
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="email"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            type="email"
+                                                            value={
+                                                                (value as string) ??
+                                                                ""
+                                                            }
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                onChange(
+                                                                    event,
+                                                                    event.target.value
+                                                                );
+                                                            }}
+                                                            placeholder="Search e-mail..."
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell>
+                                                <DataTable.Filter
+                                                    field="phone"
+                                                    display="row"
+                                                    dataType="text"
+                                                >
+                                                    {({
+                                                        value,
+                                                        onChange
+                                                    }: DataTableFilterInstance) => (
+                                                        <InputText
+                                                            value={formatPhone(
+                                                                (value as string) ??
+                                                                    ""
+                                                            )}
+                                                            inputMode="numeric"
+                                                            maxLength={15}
+                                                            onChange={(
+                                                                event:
+                                                                    React.ChangeEvent<HTMLInputElement>
+                                                            ) => {
+                                                                const maskedValue =
+                                                                    formatPhone(
+                                                                        event.target.value
+                                                                    );
+
+                                                                onChange(
+                                                                    event,
+                                                                    maskedValue
+                                                                );
+                                                            }}
+                                                            placeholder="(00) 00000-0000"
+                                                            size="small"
+                                                            fluid
+                                                        />
+                                                    )}
+                                                </DataTable.Filter>
+                                            </DataTable.THeadCell>
+
+                                            <DataTable.THeadCell />
+                                        </DataTable.THeadRow>
                                     </DataTable.THead>
 
                                     <DataTable.TBody>
@@ -411,16 +1107,20 @@ export const UsersList: React.FC = () => {
                                             item: User;
                                             index: number;
                                         }) => {
-                                            const id =
-                                                item.id?.toString() ?? "";
-                                            const isEditing =
-                                                Boolean(editingKeys[id]);
+                                            const userId =
+                                                item.id;
 
-                                            /*
-                                             * O PrimeReact espera
-                                             * Record<string, unknown>
-                                             * no rowData.
-                                             */
+                                            const rowId =
+                                                userId?.toString() ??
+                                                "";
+
+                                            const isEditing =
+                                                Boolean(
+                                                    editingKeys[
+                                                        rowId
+                                                    ]
+                                                );
+
                                             const rowData: Record<
                                                 string,
                                                 unknown
@@ -428,101 +1128,24 @@ export const UsersList: React.FC = () => {
                                                 ...item
                                             };
 
-                                            const formatDate = (
-                                                dateString?: string
-                                            ): string => {
-                                                if (!dateString) {
-                                                    return "-";
-                                                }
-
-                                                try {
-                                                    if (
-                                                        dateString.includes(
-                                                            "-"
-                                                        )
-                                                    ) {
-                                                        const datePart =
-                                                            dateString.split(
-                                                                "T"
-                                                            )[0];
-
-                                                        const [
-                                                            year,
-                                                            month,
-                                                            day
-                                                        ] =
-                                                            datePart.split(
-                                                                "-"
-                                                            );
-
-                                                        return `${day}/${month}/${year}`;
-                                                    }
-
-                                                    return new Date(
-                                                        dateString
-                                                    ).toLocaleDateString(
-                                                        "pt-BR"
-                                                    );
-                                                } catch {
-                                                    return dateString;
-                                                }
-                                            };
-
-                                            const formatCPF = (
-                                                rawCpf?:
-                                                    | string
-                                                    | number
-                                            ): string => {
-                                                if (
-                                                    rawCpf ===
-                                                        undefined ||
-                                                    rawCpf === null ||
-                                                    rawCpf === ""
-                                                ) {
-                                                    return "-";
-                                                }
-
-                                                const originalValue =
-                                                    rawCpf.toString();
-
-                                                const clean =
-                                                    originalValue.replace(
-                                                        /\D/g,
-                                                        ""
-                                                    );
-
-                                                if (
-                                                    clean.length === 11
-                                                ) {
-                                                    return clean.replace(
-                                                        /(\d{3})(\d{3})(\d{3})(\d{2})/,
-                                                        "$1.$2.$3-$4"
-                                                    );
-                                                }
-
-                                                return originalValue;
-                                            };
-
                                             return (
                                                 <DataTable.Row
                                                     key={
-                                                        item.id ??
-                                                        ""
+                                                        userId ??
+                                                        index
                                                     }
                                                 >
                                                     <DataTable.RowEditor
                                                         rowKey={
-                                                            item.id ??
-                                                            ""
+                                                            userId ??
+                                                            index
                                                         }
                                                         rowData={
                                                             rowData
                                                         }
                                                     >
                                                         <DataTable.Cell>
-                                                            {
-                                                                item.id
-                                                            }
+                                                            {item.id}
                                                         </DataTable.Cell>
 
                                                         <DataTable.Cell>
@@ -536,39 +1159,31 @@ export const UsersList: React.FC = () => {
                                                                 }
                                                             >
                                                                 <DataTable.CellEditorDisplay>
-                                                                    <span className="font-medium">
-                                                                        {
-                                                                            item.name
-                                                                        }
-                                                                    </span>
+                                                                    {item.name ??
+                                                                        "-"}
                                                                 </DataTable.CellEditorDisplay>
 
                                                                 <DataTable.CellEditorContent>
                                                                     <InputText
                                                                         defaultValue={
-                                                                            item.name
+                                                                            item.name ??
+                                                                            ""
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    name:
-                                                                                        event
-                                                                                            .target
-                                                                                            .value
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                name:
+                                                                                    event.target.value
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
@@ -587,37 +1202,48 @@ export const UsersList: React.FC = () => {
                                                                 <DataTable.CellEditorDisplay>
                                                                     {formatCPF(
                                                                         item.cpf
-                                                                    )}
+                                                                    ) ||
+                                                                        "-"}
                                                                 </DataTable.CellEditorDisplay>
 
                                                                 <DataTable.CellEditorContent>
                                                                     <InputText
-                                                                        defaultValue={
-                                                                            item.cpf?.toString()
+                                                                        defaultValue={formatCPF(
+                                                                            item.cpf
+                                                                        )}
+                                                                        inputMode="numeric"
+                                                                        maxLength={
+                                                                            14
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
+                                                                            const cpf =
+                                                                                onlyNumbers(
+                                                                                    event.target.value
+                                                                                ).slice(
+                                                                                    0,
+                                                                                    11
+                                                                                );
+
+                                                                            event.target.value =
+                                                                                formatCPF(
+                                                                                    cpf
+                                                                                );
+
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    cpf:
-                                                                                        event.target.value.replace(
-                                                                                            /\D/g,
-                                                                                            ""
-                                                                                        ) ||
-                                                                                        undefined
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                cpf:
+                                                                                    cpf ||
+                                                                                    undefined
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
@@ -643,30 +1269,27 @@ export const UsersList: React.FC = () => {
                                                                     <InputText
                                                                         type="date"
                                                                         defaultValue={
-                                                                            item.birth
+                                                                            item.birth?.split(
+                                                                                "T"
+                                                                            )[0] ??
+                                                                            ""
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    birth:
-                                                                                        event
-                                                                                            .target
-                                                                                            .value ||
-                                                                                        undefined
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                birth:
+                                                                                    event.target.value ||
+                                                                                    undefined
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
@@ -683,36 +1306,31 @@ export const UsersList: React.FC = () => {
                                                                 }
                                                             >
                                                                 <DataTable.CellEditorDisplay>
-                                                                    {item.address ||
+                                                                    {item.address ??
                                                                         "-"}
                                                                 </DataTable.CellEditorDisplay>
 
                                                                 <DataTable.CellEditorContent>
                                                                     <InputText
                                                                         defaultValue={
-                                                                            item.address
+                                                                            item.address ??
+                                                                            ""
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    address:
-                                                                                        event
-                                                                                            .target
-                                                                                            .value
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                address:
+                                                                                    event.target.value
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
@@ -729,36 +1347,32 @@ export const UsersList: React.FC = () => {
                                                                 }
                                                             >
                                                                 <DataTable.CellEditorDisplay>
-                                                                    {item.email ||
+                                                                    {item.email ??
                                                                         "-"}
                                                                 </DataTable.CellEditorDisplay>
 
                                                                 <DataTable.CellEditorContent>
                                                                     <InputText
+                                                                        type="email"
                                                                         defaultValue={
-                                                                            item.email
+                                                                            item.email ??
+                                                                            ""
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    email:
-                                                                                        event
-                                                                                            .target
-                                                                                            .value
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                email:
+                                                                                    event.target.value
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
@@ -775,86 +1389,121 @@ export const UsersList: React.FC = () => {
                                                                 }
                                                             >
                                                                 <DataTable.CellEditorDisplay>
-                                                                    {item.phone ||
+                                                                    {formatPhone(
+                                                                        item.phone
+                                                                    ) ||
                                                                         "-"}
                                                                 </DataTable.CellEditorDisplay>
 
                                                                 <DataTable.CellEditorContent>
                                                                     <InputText
-                                                                        defaultValue={
-                                                                            item.phone?.toString()
+                                                                        defaultValue={formatPhone(
+                                                                            item.phone
+                                                                        )}
+                                                                        inputMode="numeric"
+                                                                        maxLength={
+                                                                            15
                                                                         }
-                                                                        style={{
-                                                                            width:
-                                                                                "100%"
-                                                                        }}
                                                                         onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                                            event:
+                                                                                React.ChangeEvent<HTMLInputElement>
                                                                         ) => {
+                                                                            const phone =
+                                                                                onlyNumbers(
+                                                                                    event.target.value
+                                                                                ).slice(
+                                                                                    0,
+                                                                                    11
+                                                                                );
+
+                                                                            event.target.value =
+                                                                                formatPhone(
+                                                                                    phone
+                                                                                );
+
                                                                             draftRef.current[
-                                                                                id
-                                                                            ] =
-                                                                                {
-                                                                                    ...draftRef
-                                                                                        .current[
-                                                                                        id
-                                                                                    ],
-                                                                                    phone:
-                                                                                        event.target.value.replace(
-                                                                                            /\D/g,
-                                                                                            ""
-                                                                                        ) ||
-                                                                                        undefined
-                                                                                };
+                                                                                rowId
+                                                                            ] = {
+                                                                                ...draftRef.current[
+                                                                                    rowId
+                                                                                ],
+                                                                                phone:
+                                                                                    phone ||
+                                                                                    undefined
+                                                                            };
                                                                         }}
+                                                                        fluid
                                                                     />
                                                                 </DataTable.CellEditorContent>
                                                             </DataTable.CellEditor>
                                                         </DataTable.Cell>
 
                                                         <DataTable.Cell>
-                                                            <div className="flex gap-2 justify-center items-center">
-                                                                <DataTable.RowEditorInit
-                                                                    as={PrimeButton}
-                                                                    variant="text"
-                                                                    severity="secondary"
-                                                                    title="Edit user"
-                                                                    aria-label="Edit user"
-                                                                >
+                                                            <div
+                                                                style={{
+                                                                    display:
+                                                                        "flex",
+                                                                    alignItems:
+                                                                        "center",
+                                                                    justifyContent:
+                                                                        "center",
+                                                                    gap:
+                                                                        "0.5rem"
+                                                                }}
+                                                            >
+                                                                {!isEditing && (
+                                                                    <DataTable.RowEditorInit
+                                                                        as={
+                                                                            PrimeButton
+                                                                        }
+                                                                        variant="text"
+                                                                        severity="secondary"
+                                                                        title="Edit user"
+                                                                        aria-label="Edit user"
+                                                                    >
                                                                         <Pencil
                                                                             size={
                                                                                 20
                                                                             }
                                                                         />
-                                                                </DataTable.RowEditorInit>
+                                                                    </DataTable.RowEditorInit>
+                                                                )}
 
-                                                                <DataTable.RowEditorSave
-                                                                    as={PrimeButton}
-                                                                    variant="text"
-                                                                    severity="success"
-                                                                    title="Save changes"
-                                                                    aria-label="Save changes"
-                                                                >
-                                                                        <Check
-                                                                            size={
-                                                                                20
+                                                                {isEditing && (
+                                                                    <>
+                                                                        <DataTable.RowEditorSave
+                                                                            as={
+                                                                                PrimeButton
                                                                             }
-                                                                        />
-                                                                </DataTable.RowEditorSave>
+                                                                            variant="text"
+                                                                            severity="success"
+                                                                            title="Save changes"
+                                                                            aria-label="Save changes"
+                                                                        >
+                                                                            <Check
+                                                                                size={
+                                                                                    20
+                                                                                }
+                                                                            />
+                                                                        </DataTable.RowEditorSave>
 
-                                                                <DataTable.RowEditorCancel
-                                                                    as={PrimeButton}
-                                                                    variant="text"
-                                                                    severity="danger"
-                                                                    title="Cancel editing"
-                                                                    aria-label="Cancel editing"
-                                                                >
-                                                                        <Times
-                                                                            size={
-                                                                                20
+                                                                        <DataTable.RowEditorCancel
+                                                                            as={
+                                                                                PrimeButton
                                                                             }
-                                                                        />
-                                                                </DataTable.RowEditorCancel>
+                                                                            variant="text"
+                                                                            severity="secondary"
+                                                                            title="Cancel editing"
+                                                                            aria-label="Cancel editing"
+                                                                        >
+                                                                            <Times
+                                                                                size={
+                                                                                    20
+                                                                                }
+                                                                            />
+                                                                        </DataTable.RowEditorCancel>
+                                                                    </>
+                                                                )}
 
                                                                 {!isEditing && (
                                                                     <PrimeButton
@@ -864,22 +1513,23 @@ export const UsersList: React.FC = () => {
                                                                         title="Delete user"
                                                                         aria-label="Delete user"
                                                                         onClick={(
-                                                                            event: React.MouseEvent<HTMLButtonElement>
+                                                                            event:
+                                                                                React.MouseEvent<HTMLButtonElement>
                                                                         ) => {
-                                                                            event.stopPropagation();
                                                                             event.preventDefault();
+                                                                            event.stopPropagation();
 
                                                                             if (
-                                                                                item.id ===
+                                                                                userId ===
                                                                                     undefined ||
-                                                                                item.id ===
+                                                                                userId ===
                                                                                     null
                                                                             ) {
                                                                                 return;
                                                                             }
 
                                                                             handleDelete(
-                                                                                item.id
+                                                                                userId
                                                                             );
                                                                         }}
                                                                     >
@@ -897,149 +1547,116 @@ export const UsersList: React.FC = () => {
                                             );
                                         }}
                                     </DataTable.TBody>
-
-                                    <DataTable.EmptyTBody>
-                                        <DataTable.Row>
-                                            <DataTable.Cell
-                                                colSpan={8}
-                                            >
-                                                <div
-                                                    style={{
-                                                        textAlign:
-                                                            "center",
-                                                        padding:
-                                                            "2rem",
-                                                        color:
-                                                            "#9ca3af"
-                                                    }}
-                                                >
-                                                    No records
-                                                    found. Try
-                                                    adjusting your
-                                                    search filters.
-                                                </div>
-                                            </DataTable.Cell>
-                                        </DataTable.Row>
-                                    </DataTable.EmptyTBody>
                                 </DataTable.Table>
                             </DataTable.TableContainer>
 
                             <DataTable.Pagination>
                                 {({
-                                    rows: currentRows
-                                }: DataTablePaginationInstance) => {
-                                    return (
-                                        <Paginator.Root
-                                            className="py-3 px-3.5 border-t border-surface-200 dark:border-surface-700"
-                                            page={
-                                                currentPage +
-                                                1
-                                            }
-                                            total={
-                                                totalRecords
-                                            }
-                                            itemsPerPage={
-                                                rows
-                                            }
-                                            onPageChange={(
-                                                event: PaginatorRootChangeEvent
-                                            ) => {
-                                                const nextPage =
-                                                    event.value -
-                                                    1;
+                                    rows:
+                                        currentRows
+                                }: DataTablePaginationInstance) => (
+                                    <Paginator.Root
+                                        className="comandos-datatable-paginator"
+                                        page={
+                                            currentPage +
+                                            1
+                                        }
+                                        total={
+                                            totalRecords
+                                        }
+                                        itemsPerPage={
+                                            rows
+                                        }
+                                        onPageChange={(
+                                            event:
+                                                PaginatorRootChangeEvent
+                                        ) => {
+                                            const nextPage =
+                                                event.value -
+                                                1;
 
-                                                const nextRows =
-                                                    currentRows ??
-                                                    rows;
+                                            const nextRows =
+                                                currentRows ??
+                                                rows;
 
-                                                setRows(
-                                                    nextRows
-                                                );
+                                            setCurrentPage(
+                                                nextPage
+                                            );
 
-                                                setCurrentPage(
-                                                    nextPage
-                                                );
+                                            setRows(
+                                                nextRows
+                                            );
 
-                                                fetchUsers(
-                                                    filter.name,
-                                                    filter.cpf,
-                                                    nextPage,
-                                                    nextRows
-                                                );
-                                            }}
-                                            style={{
-                                                display:
-                                                    "flex",
-                                                alignItems:
-                                                    "center",
-                                                justifyContent:
-                                                    "center",
-                                                gap:
-                                                    "0.5rem",
-                                                padding:
-                                                    "0.5rem"
-                                            }}
-                                        >
-                                            <Paginator.Content>
-                                                <Paginator.First>
-                                                    <AngleDoubleLeft />
-                                                </Paginator.First>
+                                            fetchUsers(
+                                                createSearchFilters(
+                                                    filters
+                                                ),
+                                                nextPage,
+                                                nextRows
+                                            );
+                                        }}
+                                    >
+                                        <Paginator.Content>
+                                            <Paginator.First>
+                                                <AngleDoubleLeft />
+                                            </Paginator.First>
 
-                                                <Paginator.Prev>
-                                                    <AngleLeft />
-                                                </Paginator.Prev>
+                                            <Paginator.Prev>
+                                                <AngleLeft />
+                                            </Paginator.Prev>
 
-                                                <Paginator.Pages>
-                                                    {({
-                                                        paginator
-                                                    }: PaginatorPagesInstance) =>
-                                                        paginator?.pages.map(
-                                                            (
-                                                                page,
-                                                                pageIndex
-                                                            ) =>
-                                                                page.type ===
-                                                                "page" ? (
-                                                                    <Paginator.Page
-                                                                        key={
-                                                                            pageIndex
-                                                                        }
-                                                                        value={
-                                                                            page.value
-                                                                        }
-                                                                    />
-                                                                ) : (
-                                                                    <Paginator.Ellipsis
-                                                                        key={
-                                                                            pageIndex
-                                                                        }
-                                                                    >
-                                                                        <EllipsisH />
-                                                                    </Paginator.Ellipsis>
-                                                                )
-                                                        )
-                                                    }
-                                                </Paginator.Pages>
+                                            <Paginator.Pages>
+                                                {({
+                                                    paginator
+                                                }: PaginatorPagesInstance) =>
+                                                    paginator?.pages.map(
+                                                        (
+                                                            page,
+                                                            pageIndex
+                                                        ) =>
+                                                            page.type ===
+                                                            "page" ? (
+                                                                <Paginator.Page
+                                                                    key={
+                                                                        pageIndex
+                                                                    }
+                                                                    value={
+                                                                        page.value
+                                                                    }
+                                                                />
+                                                            ) : (
+                                                                <Paginator.Ellipsis
+                                                                    key={
+                                                                        pageIndex
+                                                                    }
+                                                                >
+                                                                    <EllipsisH />
+                                                                </Paginator.Ellipsis>
+                                                            )
+                                                    )
+                                                }
+                                            </Paginator.Pages>
 
-                                                <Paginator.Next>
-                                                    <AngleRight />
-                                                </Paginator.Next>
+                                            <Paginator.Next>
+                                                <AngleRight />
+                                            </Paginator.Next>
 
-                                                <Paginator.Last>
-                                                    <AngleDoubleRight />
-                                                </Paginator.Last>
-                                            </Paginator.Content>
-                                        </Paginator.Root>
-                                    );
-                                }}
+                                            <Paginator.Last>
+                                                <AngleDoubleRight />
+                                            </Paginator.Last>
+                                        </Paginator.Content>
+                                    </Paginator.Root>
+                                )}
                             </DataTable.Pagination>
 
                             <div
-                                className="p-2 text-right"
                                 style={{
+                                    padding: "0.5rem",
+                                    textAlign: "right",
                                     borderTop:
                                         "1px solid #e5e7eb",
-                                    fontSize: "0.875rem"
+                                    fontSize:
+                                        "0.875rem"
                                 }}
                             >
                                 Total records:{" "}
@@ -1051,7 +1668,9 @@ export const UsersList: React.FC = () => {
             </div>
 
             <Dialog.Root
-                open={deleteUserId !== null}
+                open={
+                    deleteUserId !== null
+                }
                 onOpenChange={
                     handleDeleteDialogOpenChange
                 }
@@ -1082,18 +1701,11 @@ export const UsersList: React.FC = () => {
                                 >
                                     <p
                                         style={{
-                                            color:
-                                                "#6b7280",
-                                            fontSize:
-                                                "0.875rem",
                                             margin: 0
                                         }}
                                     >
-                                        This action cannot
-                                        be undone. All of
-                                        this user's data
-                                        will be permanently
-                                        removed.
+                                        Are you sure you want
+                                        to delete this user?
                                     </p>
 
                                     <div
@@ -1101,82 +1713,38 @@ export const UsersList: React.FC = () => {
                                             display: "flex",
                                             justifyContent:
                                                 "flex-end",
-                                            gap: "0.5rem",
-                                            marginTop:
-                                                "0.5rem"
+                                            gap: "0.5rem"
                                         }}
                                     >
-                                        <button
+                                        <PrimeButton
                                             type="button"
+                                            severity="secondary"
+                                            disabled={
+                                                loading
+                                            }
                                             onClick={() => {
                                                 setDeleteUserId(
                                                     null
                                                 );
                                             }}
+                                        >
+                                            Cancel
+                                        </PrimeButton>
+
+                                        <PrimeButton
+                                            type="button"
+                                            severity="danger"
                                             disabled={
                                                 loading
                                             }
-                                            style={{
-                                                padding:
-                                                    "0.5rem 1rem",
-                                                background:
-                                                    "#f3f4f6",
-                                                color:
-                                                    "#111827",
-                                                border:
-                                                    "none",
-                                                borderRadius:
-                                                    "4px",
-                                                cursor:
-                                                    loading
-                                                        ? "not-allowed"
-                                                        : "pointer",
-                                                fontSize:
-                                                    "0.875rem",
-                                                opacity:
-                                                    loading
-                                                        ? 0.7
-                                                        : 1
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
-
-                                        <button
-                                            type="button"
                                             onClick={
                                                 confirmDelete
                                             }
-                                            disabled={
-                                                loading
-                                            }
-                                            style={{
-                                                padding:
-                                                    "0.5rem 1rem",
-                                                background:
-                                                    "#dc2626",
-                                                color:
-                                                    "#ffffff",
-                                                border:
-                                                    "none",
-                                                borderRadius:
-                                                    "4px",
-                                                cursor:
-                                                    loading
-                                                        ? "not-allowed"
-                                                        : "pointer",
-                                                fontSize:
-                                                    "0.875rem",
-                                                opacity:
-                                                    loading
-                                                        ? 0.7
-                                                        : 1
-                                            }}
                                         >
                                             {loading
                                                 ? "Deleting..."
                                                 : "Delete"}
-                                        </button>
+                                        </PrimeButton>
                                     </div>
                                 </div>
                             </Dialog.Content>
@@ -1184,6 +1752,49 @@ export const UsersList: React.FC = () => {
                     </Dialog.Positioner>
                 </Dialog.Portal>
             </Dialog.Root>
-        </Layout>
+            
+        
+            <style jsx global>{`
+                .registration-yellow-button {
+                    background-color: #ff9900 !important;
+                    border-color: #ff9900 !important;
+                    color: #1f1f1f !important;
+                    font-weight: 600;
+                    transition:
+                        background-color 0.2s ease,
+                        border-color 0.2s ease,
+                        box-shadow 0.2s ease;
+                }
+
+                .registration-yellow-button:hover:not(:disabled) {
+                    background-color: #e68a00 !important;
+                    border-color: #e68a00 !important;
+                    color: #1f1f1f !important;
+                }
+
+                .registration-yellow-button:active:not(:disabled) {
+                    background-color: #cc7a00 !important;
+                    border-color: #cc7a00 !important;
+                    color: #1f1f1f !important;
+                }
+
+                .registration-yellow-button:focus {
+                    background-color: #ff9900 !important;
+                    border-color: #ff9900 !important;
+                    color: #1f1f1f !important;
+                    box-shadow: 0 0 0 0.2rem rgba(255, 153, 0, 0.3) !important;
+                }
+
+                .registration-yellow-button:disabled {
+                    background-color: #ff9900 !important;
+                    border-color: #ff9900 !important;
+                    color: #1f1f1f !important;
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
+</Layout>
+
+        
     );
 };

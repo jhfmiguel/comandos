@@ -17,9 +17,9 @@ export const WeaponsTable: React.FC<WeaponsTableProps> = ( {
     const cellStyle = { verticalAlign: 'middle' };
 
     return (
-        <div className="table-container">
-            <table className="table is-bordered is-vcentered is-striped is-hoverable is-fullwidth" style={{ tableLayout: 'fixed' }}>
-                <thead className="is-size-6">
+        <div className="overflow-x-auto">
+            <table className="comandos-table w-full" style={{ tableLayout: 'fixed' }}>
+                <thead className="text-base">
                     {/* 💡 DISTRIBUIÇÃO ATUALIZADA COM COLSPAN:
                         Code, SKU e Price = 8% cada (total 24%)
                         Name = 28% 
@@ -27,16 +27,16 @@ export const WeaponsTable: React.FC<WeaponsTableProps> = ( {
                         Célula Mesclada de Ações = 16% (Soma das duas de 8%)
                         Total Geral = 100% */}
                     <tr>
-                        <th className="has-text-centered" style={{ ...cellStyle, width: '8%' }}>Code</th>
-                        <th className="has-text-centered" style={{ ...cellStyle, width: '8%' }}>SKU</th>
-                        <th className="has-text-centered" style={{ ...cellStyle, width: '28%' }}>Name</th>
-                        <th className="has-text-centered" style={{ ...cellStyle, width: '8%' }}>Price</th>
-                        <th className="has-text-centered" style={{ ...cellStyle, width: '32%' }}>Description</th>
+                        <th className="text-center" style={{ ...cellStyle, width: '8%' }}>Code</th>
+                        <th className="text-center" style={{ ...cellStyle, width: '8%' }}>SKU</th>
+                        <th className="text-center" style={{ ...cellStyle, width: '28%' }}>Name</th>
+                        <th className="text-center" style={{ ...cellStyle, width: '8%' }}>Price</th>
+                        <th className="text-center" style={{ ...cellStyle, width: '32%' }}>Description</th>
                         {/* 💡 ALTERAÇÃO AQUI: As duas THs foram unidas em uma só com colSpan={2} e width de 16% */}
-                        <th className="has-text-centered" colSpan={2} style={{ ...cellStyle, width: '16%' }}>Actions</th>
+                        <th className="text-center" colSpan={2} style={{ ...cellStyle, width: '16%' }}>Actions</th>
                     </tr>
                 </thead>
-                <tbody className="is-size-6">
+                <tbody className="text-base">
                 {
                     weapons.map( weapon => 
                         <WeaponRow
@@ -82,8 +82,8 @@ const WeaponRow: React.FC<WeaponRowProps> = ( {
 
     return (
         <tr>
-            <td className="has-text-centered" style={ cellStyle }>{ weapon.id }</td>
-            <td className="has-text-centered" style={ cellStyle }>{ weapon.sku }</td>
+            <td className="text-center" style={ cellStyle }>{ weapon.id }</td>
+            <td className="text-center" style={ cellStyle }>{ weapon.sku }</td>
             
             <td 
                 style={{ 
@@ -94,7 +94,7 @@ const WeaponRow: React.FC<WeaponRowProps> = ( {
                 }}
             >{ weapon.name }</td>
             <td 
-                className="has-text-right" 
+                className="text-right" 
                 style={ cellStyle }
             >{ weapon.priceFormatted || 'R$ 0,00' }</td>
             <td 
@@ -110,28 +110,28 @@ const WeaponRow: React.FC<WeaponRowProps> = ( {
             
             {/* Mantidas as duas TDs de dados abaixo para que os botões continuem divididos corretamente em suas respectivas colunas */}
             {!deleting ? (
-                <td className="has-text-centered" style={cellStyle}>
+                <td className="text-center" style={cellStyle}>
                     <Button
                         label = 'Edit'
-                        columnClasses='is-warning is-rounded m-0'
+                        columnClasses='bg-yellow-500 text-gray-900 border-round m-0'
                         onClick = { e => onEditWeapon( weapon ) } 
                     />
                 </td>
             ) : <></>}
             
-            <td className="has-text-centered" style={cellStyle}>
+            <td className="text-center" style={cellStyle}>
                 <Button
                     label = { deleting ? 'Yes' : 'Delete' }
-                    columnClasses='has-text-dark-red is-rounded m-0'
+                    columnClasses='comandos-red-button border-round m-0'
                     onClick = { e => onDeleteConfirmation( weapon ) } 
                 />
             </td>
             
             {deleting ? (
-                <td className="has-text-centered" style={cellStyle}>
+                <td className="text-center" style={cellStyle}>
                     <Button
                         label = 'No'
-                        columnClasses='is-rounded is-primary m-0'
+                        columnClasses='bg-primary text-primary-contrast border-round m-0'
                         onClick = { cancelDelete } 
                     />
                 </td>
