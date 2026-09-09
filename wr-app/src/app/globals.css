@@ -45,6 +45,41 @@ body {
 }
 
 
+.sales-form input#user,
+.sales-form input#code,
+.sales-form input#weapon,
+.sales-form input#quantity {
+    height: 3.5rem;
+    box-sizing: border-box;
+}
+
+.sales-payment-yellow {
+    color: #ff9900 !important;
+}
+
+.sales-payment-value,
+.sales-payment-option {
+    color: var(--p-inputtext-color, #171717) !important;
+}
+
+.sales-payment-option:hover,
+.sales-payment-option[aria-selected="true"] {
+    background-color: #ff9900 !important;
+    color: var(--p-inputtext-color, #171717) !important;
+}
+
+.sales-form .p-select:focus-within,
+.sales-form [data-scope="select"][data-part="root"]:focus-within {
+    border-color: #ff9900 !important;
+    box-shadow: 0 0 0 1px #ff9900 !important;
+    outline: none !important;
+}
+
+.sales-form .p-floatlabel:focus-within label,
+.sales-form [data-scope="floatlabel"]:focus-within label {
+    color: #ff9900 !important;
+}
+
 /* SIDEBAR */
 
 .comandos-sidebar {
@@ -384,6 +419,41 @@ body {
     outline: none;
 }
 
+
+.registration-yellow-button {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    font-weight: 600;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.registration-yellow-button:hover:not(:disabled) {
+    background-color: #e68a00 !important;
+    border-color: #e68a00 !important;
+    color: #1f1f1f !important;
+}
+
+.registration-yellow-button:active:not(:disabled) {
+    background-color: #cc7a00 !important;
+    border-color: #cc7a00 !important;
+    color: #1f1f1f !important;
+}
+
+.registration-yellow-button:focus {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 153, 0, 0.3) !important;
+}
+
+.registration-yellow-button:disabled {
+    background-color: #ff9900 !important;
+    border-color: #ff9900 !important;
+    color: #1f1f1f !important;
+    opacity: 0.55;
+    cursor: not-allowed;
+}
 
 .prime-yellow-button {
     background-color: #ff9900 !important;

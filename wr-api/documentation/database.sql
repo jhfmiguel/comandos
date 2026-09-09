@@ -18,7 +18,7 @@ SELECT * FROM weapon WHERE ID = 1
 
 ------
 
-CREATE TABLE weapon_model (
+CREATE TABLE user (
 	id BIGSERIAL NOT NULL PRIMARY KEY,
 	creation_date DATE,
 	birth DATE NOT NULL,
