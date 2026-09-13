@@ -236,6 +236,7 @@ public final class InventoryCatalog {
             new Field("openingLocationId", "Opening location", "reference", true, "locations", List.of(), false, true),
             new Field("lotNumber", "Lot number", "text", true, null, List.of(), false, true),
             new Field("initialQuantity", "Opening quantity", "decimal", true, null, List.of(), false, true),
+            new Field("openingPackaging", "Opening boxes (boxes x rounds)", "text", false, null, List.of(), true, false),
             new Field("availableQuantity", "Available quantity", "decimal", false, null, List.of(), true, false),
             new Field("validUntil", "Valid until", "date", false, null, List.of(), false, false)
         ), false),

@@ -61,11 +61,69 @@ class CustodyApiTests {
     }
 
     @Test
+    void organizationalUnitReceivesEquipmentAndReturnsItWithRecipientSnapshot() throws Exception {
+        var s = setup();
+        long receivingUnit = create("core/units", Map.of("organizationId", s.organization(), "code", unique(),
+            "name", "Receiving battalion", "type", "Unit"));
+        var data = issue(s, List.of(s.first(), s.second()));
+        data.remove("recipientId"); data.put("recipientUnitId", receivingUnit);
+        var issued = request("POST", "custodies", data);
+        assertEquals(200, issued.status(), issued.raw());
+        long id = issued.body().get("id").asLong();
+        assertTrue(issued.body().get("recipientId").isNull());
+        assertEquals("UNIT", issued.body().get("recipientType").asText());
+        assertEquals(receivingUnit, issued.body().get("recipientUnitId").asLong());
+        assertEquals(s.unit(), issued.body().get("unitId").asLong());
+        assertEquals(id, request("POST", "custodies", data).body().get("id").asLong());
+        data.put("recipientUnitId", s.unit());
+        assertEquals(409, request("POST", "custodies", data).status());
+        jdbc.update("update erp_organizational_unit set name = 'Renamed battalion' where id = ?", receivingUnit);
+        var detail = request("GET", "custodies/" + id, null);
+        assertEquals("Receiving battalion", detail.body().get("recipientName").asText());
+        assertEquals("UNIT", request("GET", "custodies?organizationId=" + s.organization(), null)
+            .body().get("content").get(0).get("recipientType").asText());
+        long first = issued.body().get("items").get(0).get("id").asLong();
+        long second = issued.body().get("items").get(1).get("id").asLong();
+        var partial = request("POST", "custodies/" + id + "/returns", Map.of("requestId", unique(), "itemIds", List.of(first)));
+        assertEquals(200, partial.status(), partial.raw());
+        assertEquals("PARTIALLY_RETURNED", partial.body().get("status").asText());
+        var returned = request("POST", "custodies/" + id + "/returns", Map.of("requestId", unique(), "itemIds", List.of(second)));
+        assertEquals(200, returned.status(), returned.raw());
+        assertEquals("RETURNED", returned.body().get("status").asText());
+        assertEquals(receivingUnit, returned.body().get("recipientUnitId").asLong());
+        assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.first()));
+        assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.second()));
+        var other = setup();
+        var move = request("PUT", "core/units/" + receivingUnit, Map.of("organizationId", other.organization(),
+            "code", unique(), "name", "Moved battalion", "type", "Unit", "version", 0));
+        assertEquals(400, move.status(), move.raw());
+    }
+
+    @Test
+    void recipientMustBeExactlyOnePersonOrUnitInTheOrganization() throws Exception {
+        var s = setup(); var other = setup();
+        var data = issue(s, List.of(s.first()));
+        data.put("recipientUnitId", s.unit());
+        assertEquals(400, request("POST", "custodies", data).status());
+        data.remove("recipientId"); data.remove("recipientUnitId");
+        assertEquals(400, request("POST", "custodies", data).status());
+        for (long invalid : List.of(other.unit(), -1L, Long.MAX_VALUE)) {
+            data.put("recipientUnitId", invalid);
+            assertEquals(400, request("POST", "custodies", data).status());
+        }
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_custody where request_id = ?", Long.class, data.get("requestId")));
+        assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.first()));
+    }
+
+    @Test
     void issueAndPartialReturnsMoveFirearmsAndRemainIdempotent() throws Exception {
         var s = setup(); var data = issue(s, List.of(s.first(), s.second()));
         var issued = request("POST", "custodies", data); assertEquals(200, issued.status(), issued.raw());
         long custody = issued.body().get("id").asLong();
         assertEquals("ACTIVE", issued.body().get("status").asText());
+        assertEquals("PERSON", issued.body().get("recipientType").asText());
+        assertEquals(s.recipient(), issued.body().get("recipientId").asLong());
+        assertTrue(issued.body().get("recipientUnitId").isNull());
         assertEquals(2, issued.body().get("items").size());
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_ISSUE' and location_id = ?", Long.class, s.location()));
         assertEquals("CUSTODIED", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.first()));

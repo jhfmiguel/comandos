@@ -1,4 +1,4 @@
-﻿package com.weaponsregistration.maintenance.service;
+package com.weaponsregistration.maintenance.service;
 import com.weaponsregistration.audit.service.AuditService;import com.weaponsregistration.core.model.*;import com.weaponsregistration.custody.model.CustodyReturnItem;import com.weaponsregistration.inventory.model.*;import com.weaponsregistration.maintenance.dto.MaintenanceContract.*;import com.weaponsregistration.maintenance.model.*;import com.weaponsregistration.security.service.AccessPolicy;import jakarta.persistence.*;import java.math.*;import java.nio.charset.StandardCharsets;import java.security.*;import java.time.*;import java.util.*;import org.springframework.http.HttpStatus;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import org.springframework.web.server.ResponseStatusException;
 @Service@Transactional(readOnly=true)public class MaintenanceService{
  private final EntityManager em;private final AccessPolicy access;private final AuditService audit;public MaintenanceService(EntityManager em,AccessPolicy access,AuditService audit){this.em=em;this.access=access;this.audit=audit;}

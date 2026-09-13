@@ -12,6 +12,7 @@ import { inventorySalesService as sales } from "api/services/inventory-sales.ser
 import type { ErpField, ErpValue } from "api/models/erp";
 import type { InventorySale, SaleRequest, SaleReturnRequest, SalesPage, StockOption } from "api/models/erp/sales";
 import styles from "../shared/workspace.module.css";
+import { QuantityInput } from "components/erp/shared/quantity-input";
 
 const core = createErpService("core");
 const inventory = createErpService("inventory");
@@ -123,9 +124,9 @@ function SalesForm({ onNewSale }: { onNewSale: () => void }) {
                 <table><caption>Sale items</caption><thead><tr><th>Item / code</th><th>Location</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th><th>Actions</th></tr></thead>
                     <tbody>{cart.map(item => <tr key={keyOf(item)}>
                         <td>{item.modelName}<br />{item.code}</td><td>{item.locationName}</td>
-                        <td><div className={styles.field}><input type="number" aria-label={`Quantity for ${item.code}`} required min="0.0001" step="0.0001"
-                            max={item.available} value={item.quantity} disabled={locked || item.kind === "ASSET"}
-                            onChange={event => setCart(cart.map(line => keyOf(line) === keyOf(item) ? { ...line, quantity: event.target.value } : line))} /></div>{item.unitOfMeasure}</td>
+                        <td><div className={styles.field}><QuantityInput code={item.code} max={item.available} value={item.quantity}
+                            disabled={locked} individual={item.kind === "ASSET"}
+                            onChange={quantity => setCart(cart.map(line => keyOf(line) === keyOf(item) ? { ...line, quantity } : line))} /></div>{item.unitOfMeasure}</td>
                         <td>{item.unitPrice}</td><td>{amount(subtotal(item))}</td>
                         <td><Button type="button" severity="secondary" disabled={locked} aria-label={`Remove ${item.code}`}
                             onClick={() => setCart(cart.filter(line => keyOf(line) !== keyOf(item)))}>Remove</Button></td>

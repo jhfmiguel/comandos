@@ -41,6 +41,7 @@ function TransferForm({ onNew }: { onNew: () => void }) {
     const [busy, setBusy] = React.useState(false);
     const [error, setError] = React.useState("");
     const [refresh, setRefresh] = React.useState(0);
+    const submitting = React.useRef(false);
     const organizationId = organization ? Number(organization) : undefined;
     const sourceUnitId = sourceUnit ? Number(sourceUnit) : undefined;
     const destinationUnitId = destinationUnit ? Number(destinationUnit) : undefined;
@@ -53,6 +54,7 @@ function TransferForm({ onNew }: { onNew: () => void }) {
 
     async function finalize(event: React.FormEvent) {
         event.preventDefault();
+        if (submitting.current || completed) return;
         if (!organizationId || !sourceUnitId || !destinationUnitId || !destinationLocation || !purpose.trim()
                 || sourceUnitId === destinationUnitId || !validItems || !canCreate || busy) return;
         const request = pending ?? {
@@ -62,6 +64,7 @@ function TransferForm({ onNew }: { onNew: () => void }) {
                 ? { assetId: item.stockId, quantity: 1 }
                 : { balanceId: item.stockId, quantity: Number(item.quantity) })
         };
+        submitting.current = true;
         setBusy(true);
         setPending(request);
         setError("");
@@ -71,9 +74,10 @@ function TransferForm({ onNew }: { onNew: () => void }) {
             setRefresh(value => value + 1);
         } catch (caught) {
             const status = axios.isAxiosError(caught) ? caught.response?.status : undefined;
-            if (status && status >= 400 && status < 500) setPending(null);
+            if (!pending && status && status >= 400 && status < 500) setPending(null);
             setError(errorText(caught));
         } finally {
+            submitting.current = false;
             setBusy(false);
         }
     }
@@ -102,8 +106,10 @@ function TransferForm({ onNew }: { onNew: () => void }) {
                 <div className={styles.field}><label htmlFor="transfer-purpose">Purpose *</label><input id="transfer-purpose"
                     required maxLength={255} value={purpose} onChange={event => setPurpose(event.target.value)} /></div>
             </fieldset>
-            {organizationId && sourceUnitId && canRead && canCreate && !completed && <StockPicker organizationId={organizationId}
-                sourceUnitId={sourceUnitId} selected={selected} onAdd={item => setSelected([...selected, { ...item, quantity: "1" }])} />}
+            {organizationId && sourceUnitId && canRead && canCreate && !completed && <fieldset disabled={busy || !!pending}>
+                <StockPicker organizationId={organizationId} sourceUnitId={sourceUnitId} selected={selected}
+                    onAdd={item => setSelected([...selected, { ...item, quantity: "1" }])} />
+            </fieldset>}
             <div className={styles.tableContainer}><table><caption>Transfer items</caption><thead><tr>
                 <th>Item</th><th>Source location</th><th>Available</th><th>Quantity</th><th>Actions</th>
             </tr></thead><tbody>{selected.map(item => <tr key={`${item.kind}-${item.stockId}`}>

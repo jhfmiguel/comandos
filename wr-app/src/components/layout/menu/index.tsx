@@ -10,6 +10,7 @@ import {
     ChevronUp,
     Cog,
     Home,
+    ListCheck,
     Shield,
     SignOut,
     Users
@@ -236,6 +237,16 @@ export const Menu: React.FC = () => {
                                         href="/"
                                         label="Dashboard"
                                         icon={Home}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="command-center"
+                                        href="/bot"
+                                        label="Command Center"
+                                        icon={ListCheck}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}

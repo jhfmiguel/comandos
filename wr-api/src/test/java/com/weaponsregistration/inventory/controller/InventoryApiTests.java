@@ -60,6 +60,104 @@ class InventoryApiTests {
     }
 
     @Test
+    void assetBatchPreservesPairsCountsSerialsAndRecoversAnIdenticalRetry() throws Exception {
+        var s = setup(false);
+        var common = assetData(s); common.remove("assetCode"); common.remove("serialNumber");
+        String code = unique(); String serial = unique();
+        var rows = List.of(Map.of("assetCode", code, "serialNumber", serial), Map.of("assetCode", unique(), "serialNumber", unique()));
+        var payload = new HashMap<String, Object>(Map.of("requestId", unique(), "common", common, "items", rows));
+        var result = request("POST", "inventory/assets/batch", payload);
+        assertEquals(200, result.status(), result.raw());
+        assertEquals("2", result.body().get("quantity").asText());
+        assertEquals(2, result.body().get("recordIds").size());
+        long first = result.body().get("recordIds").get(0).asLong();
+        assertEquals(code, jdbc.queryForObject("select asset_code from erp_asset_item where id=?", String.class, first));
+        assertEquals(serial, jdbc.queryForObject("select serial_number from erp_asset_item where id=?", String.class, first));
+        var retry = request("POST", "inventory/assets/batch", payload);
+        assertEquals(200, retry.status(), retry.raw());
+        assertEquals(result.body(), retry.body());
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where location_id=?", Long.class, s.location()));
+        common.put("currentValue", "999");
+        assertEquals(409, request("POST", "inventory/assets/batch", payload).status());
+    }
+
+    @Test
+    void invalidBatchRowRollsBackAssetsMovementsAndAuditAndCanBeCorrected() throws Exception {
+        var s = setup(false);
+        var common = assetData(s); common.remove("assetCode"); common.remove("serialNumber");
+        String serial = unique();
+        var payload = new HashMap<String, Object>(Map.of("requestId", unique(), "common", common,
+            "items", List.of(Map.of("assetCode", unique(), "serialNumber", serial), Map.of("assetCode", unique(), "serialNumber", serial))));
+        var invalid = request("POST", "inventory/assets/batch", payload);
+        assertEquals(400, invalid.status(), invalid.raw()); assertTrue(invalid.raw().contains("Row 2"));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where location_id=?", Long.class, s.location()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_intake where request_id=?", Long.class, payload.get("requestId")));
+        payload.put("items", List.of(Map.of("assetCode", unique(), "serialNumber", " ")));
+        assertEquals(400, request("POST", "inventory/assets/batch", payload).status());
+        payload.put("items", List.of(Map.of("assetCode", unique(), "serialNumber", serial)));
+        assertEquals(200, request("POST", "inventory/assets/batch", payload).status());
+        payload.put("requestId", unique());
+        payload.put("items", List.of(Map.of("assetCode", unique(), "serialNumber", serial)));
+        var duplicate = request("POST", "inventory/assets/batch", payload);
+        assertEquals(400, duplicate.status(), duplicate.raw()); assertTrue(duplicate.raw().contains("Row 1"));
+    }
+
+    @Test
+    void batchDuplicateSerialReportsItsRowForNumericStringModelIds() throws Exception {
+        var s = setup(false);
+        var registered = assetData(s);
+        create("inventory/assets", registered);
+        var common = assetData(s); common.remove("assetCode"); common.remove("serialNumber");
+        common.put("modelId", "0" + s.model());
+        var payload = Map.of("requestId", unique(), "common", common, "items", List.of(
+            Map.of("assetCode", unique(), "serialNumber", unique()),
+            Map.of("assetCode", unique(), "serialNumber", registered.get("serialNumber"))));
+        var result = request("POST", "inventory/assets/batch", payload);
+        assertEquals(400, result.status(), result.raw());
+        assertTrue(result.raw().contains("Row 2"), result.raw());
+        assertTrue(result.raw().contains("Serial number is already registered"), result.raw());
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where location_id=?", Long.class, s.location()));
+    }
+
+    @Test
+    void ammunitionBoxesCalculateAndPersistMixedBoxSizesAsRounds() throws Exception {
+        var s = setup(true);
+        jdbc.update("update erp_item_category set family='AMMUNITION' where id=?", s.category());
+        var payload = new HashMap<String, Object>(Map.of("requestId", unique(), "modelId", s.model(),
+            "openingLocationId", s.location(), "lotNumber", unique(),
+            "boxes", List.of(Map.of("boxes", "10", "roundsPerBox", "50"), Map.of("boxes", "2", "roundsPerBox", "25"))));
+        var created = request("POST", "inventory/lots/from-boxes", payload);
+        assertEquals(200, created.status(), created.raw());
+        assertEquals("550", created.body().get("quantity").asText());
+        long lot = created.body().get("recordIds").get(0).asLong();
+        assertEquals(550, jdbc.queryForObject("select available from erp_stock_balance where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
+        assertEquals(550, jdbc.queryForObject("select quantity from erp_stock_movement where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
+        assertEquals("10 x 50 + 2 x 25", request("GET", "inventory/lots/" + lot, null).body().get("openingPackaging").asText());
+        assertEquals(created.body(), request("POST", "inventory/lots/from-boxes", payload).body());
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where lot_id=?", Long.class, lot));
+        payload.put("boxes", List.of(Map.of("boxes", "11", "roundsPerBox", "50")));
+        assertEquals(409, request("POST", "inventory/lots/from-boxes", payload).status());
+    }
+
+    @Test
+    void ammunitionBoxEntryRejectsFractionsZeroOverflowAndOtherModels() throws Exception {
+        var s = setup(true);
+        var payload = new HashMap<String, Object>(Map.of("requestId", unique(), "modelId", s.model(), "openingLocationId", s.location(),
+            "lotNumber", unique(), "boxes", List.of(Map.of("boxes", "10", "roundsPerBox", "50"))));
+        assertEquals(400, request("POST", "inventory/lots/from-boxes", payload).status());
+        jdbc.update("update erp_item_category set family='AMMUNITION' where id=?", s.category());
+        for (String invalid : List.of("0", "-1", "1.5", "", "1e2", "999999999999999")) {
+            payload.put("boxes", List.of(Map.of("boxes", invalid, "roundsPerBox", "50")));
+            assertEquals(400, request("POST", "inventory/lots/from-boxes", payload).status());
+        }
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_lot where model_id=?", Long.class, s.model()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where location_id=?", Long.class, s.location()));
+    }
+
+    @Test
     void catalogAndSearchCoverEveryResourceAndStockHistoryIsReadOnly() throws Exception {
         var catalog = request("GET", "inventory/catalog", null);
         assertEquals(200, catalog.status());

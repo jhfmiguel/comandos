@@ -10,6 +10,7 @@ import { Dialog } from "@primereact/ui/dialog";
 import { InputText } from "@primereact/ui/inputtext";
 
 import { Layout } from "components/layout";
+import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
 import { Message } from "components/common/message";
 import { useSession } from "components/auth/session-provider";
 import type { ErpField, ErpPage, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
@@ -109,6 +110,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     const [revision, setRevision] = React.useState(0);
     const [notice, setNotice] = React.useState<{ type: string; text: string } | null>(null);
     const [editor, setEditor] = React.useState<{ record?: ErpRecord } | null>(null);
+    const [intake, setIntake] = React.useState(false);
     const [deleting, setDeleting] = React.useState<ErpRecord | null>(null);
     const [busy, setBusy] = React.useState(false);
 
@@ -158,10 +160,12 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                 
                 <h1 id="resource-title">{resource.label}</h1>
                 {allowed("CREATE") && 
-                <Button type="button" className="registration-yellow-button" onClick={() => setEditor({})}>
+                <Button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
                     <Plus size={16} /><span>New record</span>
                 </Button>
                 }
+                {resource.key === "lots" && allowed("CREATE") && <Button type="button" className="registration-yellow-button"
+                    onClick={() => setIntake(true)}>Receive ammunition boxes</Button>}
             </div>
             
             {notice && 
@@ -266,7 +270,10 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
             
             </div>
 
-            {editor && 
+            {intake && <StockIntakeEditor resource={resource} service={service} onCancel={() => setIntake(false)}
+                onSaved={quantity => { setIntake(false); setNotice({ type: "success", text: resource.key === "assets"
+                    ? `${quantity} individual assets registered successfully.` : `${quantity} rounds received successfully.` }); refresh(); }} />}
+            {editor &&
             <RecordEditor 
                 resource={resource} 
                 service={service} 

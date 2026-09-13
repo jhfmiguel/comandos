@@ -75,6 +75,15 @@ public class InventoryService {
 
     @Transactional
     public Map<String, Object> save(String resource, Long id, Map<String, Object> data) {
+        return save(resource, id, data, null);
+    }
+
+    @Transactional
+    public Map<String, Object> receiveBoxes(Map<String, Object> data, String packaging) {
+        return save("lots", null, data, packaging);
+    }
+
+    private Map<String, Object> save(String resource, Long id, Map<String, Object> data, String packaging) {
         var spec = InventoryCatalog.get(resource);
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("inventory/" + resource, action);
@@ -106,6 +115,7 @@ public class InventoryService {
         access.requireEntity("inventory/" + resource, action, entity);
         rules.validate(entity, previous);
         if (id == null) {
+            if (entity instanceof StockLot lot) lot.openingPackaging = packaging;
             if (entity instanceof StockLot lot) lot.availableQuantity = lot.initialQuantity;
             em.persist(entity);
             createOpening(entity);

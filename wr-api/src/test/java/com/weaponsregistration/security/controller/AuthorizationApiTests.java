@@ -102,6 +102,29 @@ class AuthorizationApiTests {
     }
 
     @Test
+    void reservationExpirationAndCancellationRequireTheirOwnActions() throws Exception {
+        for (String action : List.of("EXPIRE", "CANCEL")) {
+            var f = fixture();
+            for (String grantAction : List.of("CREATE", "READ", action)) grant(f, "reservations", grantAction, "UNIT", f.unit());
+            login(f);
+            var created = request("POST", "/api/erp/reservations", Map.of("requestId", UUID.randomUUID().toString(),
+                "organizationId", f.organization(), "unitId", f.unit(), "purpose", "Scoped reservation",
+                "startsAt", LocalDateTime.now().toString(), "endsAt", LocalDateTime.now().plusDays(1).toString(),
+                "items", List.of(Map.of("assetId", f.asset(), "quantity", 1))));
+            assertEquals(200, created.status(), created.raw());
+            long id = created.body().get("id").asLong();
+            jdbc.update("update erp_inventory_reservation set ends_at=? where id=?", LocalDateTime.now().minusMinutes(1), id);
+            String denied = action.equals("EXPIRE") ? "cancel" : "expire";
+            assertEquals(403, request("POST", "/api/erp/reservations/" + id + "/" + denied, null).status());
+            assertEquals("BLOCKED", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, f.asset()));
+            var released = request("POST", "/api/erp/reservations/" + id + "/" + action.toLowerCase(Locale.ROOT), null);
+            assertEquals(200, released.status(), released.raw());
+            assertEquals(action.equals("EXPIRE") ? "EXPIRED" : "CANCELLED", released.body().get("statusCode").asText());
+            assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, f.asset()));
+        }
+    }
+
+    @Test
     void authenticatedAccountWithoutGrantsCannotUseBusinessApis() throws Exception {
         var f = fixture(); login(f);
         for (String path : List.of("/api/erp/core/people", "/api/erp/inventory/assets", "/api/erp/sales?organizationId=" + f.organization(), "/api/users", "/api/weapons"))
@@ -315,6 +338,48 @@ class AuthorizationApiTests {
         assertEquals(0, request("GET", "/api/erp/sales?organizationId=" + f.organization() + "&unitId=" + f.unit(), null).body().get("totalElements").asInt());
         assertEquals(403, request("GET", "/api/erp/sales/" + result.body().get("id").asLong(), null).status());
         assertEquals(403, request("POST", "/api/erp/sales", data).status());
+    }
+
+    @Test
+    void assetBatchHonorsCreateScopeAndRetryCannotBypassRevocation() throws Exception {
+        var f = fixture();
+        long createGrant = grant(f, "inventory/assets", "CREATE", "UNIT", f.unit());
+        grant(f, "inventory/assets", "READ", "UNIT", f.unit());
+        grant(f, "inventory/models", "READ", "SYSTEM", null);
+        grant(f, "inventory/locations", "READ", "SYSTEM", null); login(f);
+        var common = new HashMap<String, Object>(Map.of("modelId", f.model(), "locationId", f.otherLocation(),
+            "condition", "GOOD", "status", "DRAFT", "currentValue", "0"));
+        var payload = Map.of("requestId", UUID.randomUUID().toString(), "common", common,
+            "items", List.of(Map.of("assetCode", UUID.randomUUID().toString(), "serialNumber", UUID.randomUUID().toString())));
+        assertEquals(403, request("POST", "/api/erp/inventory/assets/batch", payload).status());
+        common.put("locationId", f.location());
+        var result = request("POST", "/api/erp/inventory/assets/batch", payload);
+        assertEquals(200, result.status(), result.raw());
+        jdbc.update("delete from erp_profile_permission where id=?", createGrant);
+        assertEquals(403, request("POST", "/api/erp/inventory/assets/batch", payload).status());
+    }
+
+    @Test
+    void custodyReceivingUnitRequiresReadPermissionWithoutChangingIssuingScope() throws Exception {
+        var f = fixture();
+        for (String action : List.of("READ", "CREATE", "RETURN")) grant(f, "custodies", action, "UNIT", f.unit());
+        grant(f, "core/people", "READ", "SYSTEM", null); login(f);
+        var data = Map.of("requestId", UUID.randomUUID().toString(), "organizationId", f.organization(),
+            "unitId", f.unit(), "recipientUnitId", f.unit(), "authorizerId", f.person(),
+            "purpose", "Unit custody", "assetIds", List.of(f.asset()));
+        assertEquals(403, request("POST", "/api/erp/custodies", data).status());
+        assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, f.asset()));
+        grant(f, "core/units", "READ", "UNIT", f.unit());
+        var issued = request("POST", "/api/erp/custodies", data);
+        assertEquals(200, issued.status(), issued.raw());
+        assertEquals("UNIT", issued.body().get("recipientType").asText());
+        long custody = issued.body().get("id").asLong();
+        long item = issued.body().get("items").get(0).get("id").asLong();
+        assertEquals(403, request("GET", "/api/erp/custodies?organizationId=" + f.organization(), null).status());
+        var returned = request("POST", "/api/erp/custodies/" + custody + "/returns",
+            Map.of("requestId", UUID.randomUUID().toString(), "itemIds", List.of(item)));
+        assertEquals(200, returned.status(), returned.raw());
+        assertEquals("RETURNED", returned.body().get("status").asText());
     }
 
     @Test

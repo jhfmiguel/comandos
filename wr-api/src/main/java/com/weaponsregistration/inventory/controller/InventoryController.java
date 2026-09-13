@@ -14,7 +14,22 @@ import org.springframework.web.bind.annotation.*;
 public class InventoryController {
     private final InventoryService service;
     private final AccessPolicy access;
-    public InventoryController(InventoryService service, AccessPolicy access) { this.service = service; this.access = access; }
+    private final com.weaponsregistration.inventory.service.StockIntakeService intake;
+    public InventoryController(InventoryService service, AccessPolicy access, com.weaponsregistration.inventory.service.StockIntakeService intake) {
+        this.service = service; this.access = access; this.intake = intake;
+    }
+
+    @PostMapping("/assets/batch")
+    public com.weaponsregistration.inventory.service.StockIntakeService.Receipt createAssets(
+            @RequestBody com.weaponsregistration.inventory.service.StockIntakeService.AssetsRequest request) {
+        return intake.assets(request);
+    }
+
+    @PostMapping("/lots/from-boxes")
+    public com.weaponsregistration.inventory.service.StockIntakeService.Receipt receiveBoxes(
+            @RequestBody com.weaponsregistration.inventory.service.StockIntakeService.BoxesRequest request) {
+        return intake.boxes(request);
+    }
 
     @GetMapping("/catalog")
     public List<Map<String, Object>> catalog() {

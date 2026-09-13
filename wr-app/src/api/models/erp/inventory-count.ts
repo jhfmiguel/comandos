@@ -1,3 +1,13 @@
 export interface InventoryCountItem{id:number;kind:"ASSET"|"LOT";assetId:number|null;lotId:number|null;modelName:string;sku:string;stockCode:string;unitOfMeasure:string;systemQuantity:string;countedQuantity:string|null;differenceQuantity:string|null;resultCode:string|null;resultName:string|null;notes:string|null}
 export interface InventoryCount{id:number;organizationId:number;organizationName:string;unitId:number|null;unitName:string|null;locationId:number;locationName:string;purpose:string;statusCode:string;statusName:string;openedAt:string;countedAt:string|null;approvedAt:string|null;openedByLogin:string|null;approvedByLogin:string|null;items:InventoryCountItem[]}
 export interface InventoryCountPage<T>{content:T[];totalElements:number;page:number;size:number}
+export interface InventoryCountOpenRequest {
+    requestId: string;
+    organizationId: number;
+    unitId?: number;
+    locationId: number;
+    purpose: string;
+}
+export interface InventoryCountSubmission {
+    items: { itemId: number; countedQuantity: string; notes: string | null }[];
+}

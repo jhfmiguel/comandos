@@ -136,10 +136,42 @@ intermediárias são respostas 403 injetadas pelo teste. As verificações norma
 permissão usam respostas reais da API protegida. Esse ambiente local não valida
 o comportamento de cookies em HTTPS ou em domínios distintos.
 
+## Rodada de estoque e cautela — 13/09/2026
+
+Validação executada com Edge headless, build de produção na porta 3100 e API
+real na porta 8180, usando somente o PostgreSQL `wr_validation_20260912`.
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm.cmd run lint` | Aprovado, sem erros ou avisos |
+| `npm.cmd run build` | Compilação, TypeScript e geração das páginas aprovados |
+| `validate-stock-intake.mjs` | Pares patrimônio/série, quantidade automática, duplicidades, caixas de tamanhos distintos e cautela para unidade com devolução aprovados |
+| `validate-stock-workflows.mjs` | Reserva e cancelamento, inventário com bloqueio de faltante e transferência de ativo e lote aprovados |
+
+Os cenários verificaram recuperação após perda da resposta de uma gravação e
+recusa intermediária simulada com HTTP 403: o pedido permaneceu idêntico e não
+houve duplicação das operações. Também conferiram os saldos persistidos, a
+reversão de ajuste incompatível com estoque reservado e o destino da transferência.
+Nenhuma exceção JavaScript foi capturada pelas duas suítes.
+
+Dados para inspeção: organização 22 no cadastro/cautela; organização 23,
+reserva 3, inventário 2 e transferência 4 nos fluxos de estoque.
+
+Para reproduzir, inicie as instâncias separadas conforme a seção de ambiente
+e execute em `wr-app`:
+
+```powershell
+$env:NODE_PATH = (Resolve-Path ../wr-api/target/browser-validation/node_modules).Path
+node scripts/validate-stock-intake.mjs
+node scripts/validate-stock-workflows.mjs
+```
+
+Esta rodada usa o modo de preparação sem login; o HTTP 403 injetado testa
+recuperação de falha, não substitui a validação de permissões reais.
+
 ## Próximas verificações para homologação
 
-- Executar os demais fluxos completos no navegador com PostgreSQL: kits,
-  inventário, reservas, transferências, doações,
+- Executar os demais fluxos completos no navegador com PostgreSQL: kits, doações,
   consumo, baixa/destruição e conclusão de manutenção.
 - Validar expiração por inatividade, alterações de permissões durante a sessão,
   demais perfis e configuração de sessão na infraestrutura de produção.

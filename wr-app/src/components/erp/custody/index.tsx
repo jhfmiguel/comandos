@@ -21,6 +21,7 @@ const reference = (name: string, label: string, resource: string, required = tru
 const organizationField = reference("organizationId", "Organization", "organizations");
 const unitField = reference("unitId", "Unit", "units", false);
 const recipientField = reference("recipientId", "Recipient", "people");
+const recipientUnitField = reference("recipientUnitId", "Receiving organizational unit", "units");
 const authorizerField = reference("authorizerId", "Authorizer", "people");
 const returnConditionField = reference("returnConditionTypeId", "Return condition", "custody-return-condition-types");
 const errorText = (error: unknown) => axios.isAxiosError(error) && typeof error.response?.data?.detail === "string"
@@ -36,6 +37,8 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
     const [organization, setOrganization] = React.useState<ErpValue>(null);
     const [unit, setUnit] = React.useState<ErpValue>(null);
     const [recipient, setRecipient] = React.useState<ErpValue>(null);
+    const [recipientType, setRecipientType] = React.useState<"PERSON" | "UNIT">("PERSON");
+    const [recipientUnit, setRecipientUnit] = React.useState<ErpValue>(null);
     const [authorizer, setAuthorizer] = React.useState<ErpValue>(null);
     const [purpose, setPurpose] = React.useState("");
     const [dueAt, setDueAt] = React.useState("");
@@ -54,21 +57,23 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
 
     async function issue(event: React.FormEvent) {
         event.preventDefault();
-        if (!organizationId || !recipient || !authorizer || selected.length + selectedSets.length === 0 || !canCreate || busy) return;
+        if (!organizationId || !(recipientType === "PERSON" ? recipient : recipientUnit) || !authorizer
+            || selected.length + selectedSets.length === 0 || !canCreate || busy || completed) return;
         const request = pending ?? { requestId: crypto.randomUUID(), organizationId, unitId,
-            recipientId: Number(recipient), authorizerId: Number(authorizer), purpose, dueAt: dueAt || undefined,
+            ...(recipientType === "PERSON" ? { recipientId: Number(recipient) } : { recipientUnitId: Number(recipientUnit) }),
+            authorizerId: Number(authorizer), purpose, dueAt: dueAt || undefined,
             assetIds: selected.map(item => item.assetId), equipmentSetIds: selectedSets.map(item => item.equipmentSetId) };
         setBusy(true); setPending(request); setError("");
         try { setCompleted(await api.issue(request)); setPending(null); setRefresh(value => value + 1); }
         catch (error) {
             const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-            if (status && status >= 400 && status < 500) setPending(null);
+            if (!pending && status && status >= 400 && status < 500) setPending(null);
             setError(errorText(error));
         } finally { setBusy(false); }
     }
 
     return <div className={styles.workspace}>
-        <p className={styles.intro}>Issue available individual equipment to a recipient and record each return with stock history.</p>
+        <p className={styles.intro}>Issue available equipment to a person or an organizational unit and record each return with stock history.</p>
         {error && <Message type="error" text={error} onClose={() => setError("")} />}
         {pending && !busy && <Message type="warn" text="The result could not be confirmed. Retry with the same request to avoid issuing twice." />}
         {completed && <Message type="success" text={`Custody #${completed.id} issued successfully.`} />}
@@ -76,12 +81,21 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
             <fieldset className={styles.fields} disabled={busy || !!pending || !!completed}>
                 <div className={styles.field}><label htmlFor="core-organizationId">Organization *</label>
                     <ReferenceField service={core} field={organizationField} value={organization} organizationId={null}
-                        onChange={value => { setOrganization(value); setUnit(null); setSelected([]); setSelectedSets([]); }} /></div>
-                <div className={styles.field}><label htmlFor="core-unitId">Unit</label>
+                        onChange={value => { setOrganization(value); setUnit(null); setRecipientUnit(null); setSelected([]); setSelectedSets([]); }} /></div>
+                <div className={styles.field}><label htmlFor="core-unitId">Issuing unit</label>
                     <ReferenceField key={String(organization)} service={core} field={unitField} value={unit} organizationId={organization}
                         onChange={value => { setUnit(value); setSelected([]); setSelectedSets([]); }} /></div>
-                <div className={styles.field}><label htmlFor="core-recipientId">Recipient *</label>
-                    <ReferenceField service={core} field={recipientField} value={recipient} organizationId={null} onChange={setRecipient} /></div>
+                <div className={styles.field}><label htmlFor="custody-recipient-type">Recipient type *</label>
+                    <select id="custody-recipient-type" value={recipientType}
+                        onChange={event => { setRecipientType(event.target.value as "PERSON" | "UNIT"); setRecipient(null); setRecipientUnit(null); }}>
+                        <option value="PERSON">Person</option><option value="UNIT">Organizational unit</option>
+                    </select></div>
+                {recipientType === "PERSON"
+                    ? <div className={styles.field}><label htmlFor="core-recipientId">Recipient *</label>
+                        <ReferenceField service={core} field={recipientField} value={recipient} organizationId={null} onChange={setRecipient} /></div>
+                    : <div className={styles.field}><label htmlFor="core-recipientUnitId">Receiving organizational unit *</label>
+                        <ReferenceField key={String(organization)} service={core} field={recipientUnitField} value={recipientUnit}
+                            organizationId={organization} onChange={setRecipientUnit} /></div>}
                 <div className={styles.field}><label htmlFor="core-authorizerId">Authorizer *</label>
                     <ReferenceField service={core} field={authorizerField} value={authorizer} organizationId={null} onChange={setAuthorizer} /></div>
                 <div className={styles.field}><label htmlFor="custody-purpose">Purpose *</label>
@@ -89,10 +103,12 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
                 <div className={styles.field}><label htmlFor="custody-due">Due date and time</label>
                     <input id="custody-due" type="datetime-local" value={dueAt} onChange={event => setDueAt(event.target.value)} /></div>
             </fieldset>
+            <fieldset disabled={busy || !!pending || !!completed}>
             {organizationId && canRead && canCreate && !completed && <StockPicker key={scopeKey} organizationId={organizationId} unitId={unitId}
                 selected={selected} onAdd={item => setSelected([...selected, item])} />}
             {organizationId && canRead && canCreate && !completed && <EquipmentSetPicker key={`sets-${scopeKey}`} organizationId={organizationId}
                 unitId={unitId} selected={selectedSets} onAdd={item => setSelectedSets([...selectedSets, item])} />}
+            </fieldset>
             <div className={styles.tableContainer}><table><caption>Selected equipment sets</caption><thead><tr>
                 <th>Code / name</th><th>Components</th><th>Actions</th></tr></thead><tbody>
                 {selectedSets.map(item => <tr key={item.equipmentSetId}><td>{item.code}<br />{item.name}</td><td>{item.componentCount}</td>
@@ -206,7 +222,8 @@ function CustodyHistory({ organizationId, unitId, refresh }: { organizationId: n
                 <input id="custody-inspection-notes" maxLength={500} value={inspectionNotes} onChange={event => setInspectionNotes(event.target.value)} /></div></div>}
         {result?.content.map(custody => { const outstanding = custody.items.filter(item => !item.returnedAt); return <details key={custody.id}>
             <summary>Custody #{custody.id} · {custody.recipientName} · {custody.status}</summary>
-            <div className={styles.tableContainer}><p>{custody.organizationName} · Unit: {custody.unitName || "Organization-wide"}</p>
+            <div className={styles.tableContainer}><p>{custody.organizationName} · Issuing unit: {custody.unitName || "Organization-wide"}</p>
+                <p>{custody.recipientType === "UNIT" ? "Receiving organizational unit" : "Recipient"}: {custody.recipientName}</p>
                 <p>Purpose: {custody.purpose} · Delivered: {custody.deliveredAt.replace("T", " ")} · Due: {custody.dueAt?.replace("T", " ") || "Not set"}</p>
                 <p>Authorized by: {custody.authorizerName} · Issued by: {custody.issuedByLogin || "Not recorded"}</p>
                 <table><thead><tr><th>Equipment / model</th><th>Set / role</th><th>Quantity</th><th>Location</th><th>Return</th></tr></thead><tbody>

@@ -83,17 +83,23 @@ public class CustodyService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different custody.");
             return view(existing.get());
         }
-        var recipient = locked(Person.class, request.recipientId());
+        var recipient = request.recipientId() == null ? null : locked(Person.class, request.recipientId());
+        var recipientUnit = request.recipientUnitId() == null ? null : locked(OrganizationalUnit.class, request.recipientUnitId());
         var authorizer = locked(Person.class, request.authorizerId());
-        access.requireEntity("core/people", "READ", recipient);
+        if (recipient != null) access.requireEntity("core/people", "READ", recipient);
+        if (recipientUnit != null) {
+            access.requireEntity("core/units", "READ", recipientUnit);
+            if (!recipientUnit.organization.id.equals(organization.id)) bad("The receiving unit must belong to the selected organization.");
+        }
         access.requireEntity("core/people", "READ", authorizer);
-        if (!organization.active || !recipient.active || !authorizer.active) bad("Organization, recipient and authorizer must be active.");
+        if (!organization.active || recipient != null && !recipient.active || !authorizer.active) bad("Organization, recipient and authorizer must be active.");
         var deliveredAt = LocalDateTime.now();
         var dueAt = parseDueAt(request.dueAt(), deliveredAt);
         var custody = new Custody();
         custody.organization = organization; custody.unit = unit; custody.recipient = recipient; custody.authorizer = authorizer;
+        custody.recipientUnit = recipientUnit;
         custody.organizationName = organization.name; custody.unitName = unit == null ? null : unit.name;
-        custody.recipientName = recipient.fullName; custody.authorizerName = authorizer.fullName;
+        custody.recipientName = recipient == null ? recipientUnit.name : recipient.fullName; custody.authorizerName = authorizer.fullName;
         custody.purpose = request.purpose().trim(); custody.deliveredAt = deliveredAt; custody.dueAt = dueAt;
         custody.requestId = request.requestId(); custody.requestFingerprint = fingerprint;
         var actor = audit.actor(); custody.issuedById = actor.id(); custody.issuedByLogin = actor.login();
@@ -248,7 +254,10 @@ public class CustodyService {
                 r.returnedById, r.returnedByLogin, em.createQuery("select i.custodyItem.id from CustodyReturnItem i where i.custodyReturn.id = :return order by i.id", Long.class)
                     .setParameter("return", r.id).getResultList())).toList();
         return new CustodyView(custody.id, custody.organization.id, custody.organizationName,
-            custody.unit == null ? null : custody.unit.id, custody.unitName, custody.recipient.id, custody.recipientName,
+            custody.unit == null ? null : custody.unit.id, custody.unitName,
+            custody.recipient == null ? null : custody.recipient.id,
+            custody.recipientUnit == null ? null : custody.recipientUnit.id,
+            custody.recipientUnit == null ? "PERSON" : "UNIT", custody.recipientName,
             custody.authorizer.id, custody.authorizerName, custody.purpose, custody.status, text(custody.deliveredAt),
             text(custody.dueAt), text(custody.completedAt), custody.issuedById, custody.issuedByLogin, items, returns);
     }
@@ -341,8 +350,10 @@ public class CustodyService {
         return unit;
     }
     private void validateIssue(IssueRequest request) {
-        if (request == null || request.organizationId() == null || request.recipientId() == null || request.authorizerId() == null
+        if (request == null || request.organizationId() == null || request.authorizerId() == null
                 || request.purpose() == null || request.purpose().isBlank()) bad("Organization, recipient, authorizer and purpose are required.");
+        if ((request.recipientId() == null) == (request.recipientUnitId() == null))
+            bad("Select exactly one recipient: a person or an organizational unit.");
         uuid(request.requestId());
         if (request.purpose().trim().length() > 255) bad("Purpose must contain at most 255 characters.");
         var assets = values(request.assetIds()); var sets = values(request.equipmentSetIds());
@@ -365,7 +376,9 @@ public class CustodyService {
         catch (RuntimeException ex) { bad("Due date must be a valid future date and time."); return null; }
     }
     private static String issueFingerprint(IssueRequest request) {
-        return hash(request.organizationId() + "|" + request.unitId() + "|" + request.recipientId() + "|" + request.authorizerId()
+        // Keep the existing fingerprint for person recipients so pre-upgrade retries still work.
+        String recipientKey = request.recipientUnitId() == null ? String.valueOf(request.recipientId()) : "unit:" + request.recipientUnitId();
+        return hash(request.organizationId() + "|" + request.unitId() + "|" + recipientKey + "|" + request.authorizerId()
             + "|" + request.purpose().trim() + "|" + request.dueAt() + "|" + values(request.assetIds()).stream().sorted().toList()
             + "|" + values(request.equipmentSetIds()).stream().sorted().toList());
     }

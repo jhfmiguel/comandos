@@ -15,12 +15,13 @@ export interface CustodyReturn {
 }
 export interface Custody {
     id: number; organizationId: number; organizationName: string; unitId: number | null; unitName: string | null;
-    recipientId: number; recipientName: string; authorizerId: number; authorizerName: string; purpose: string;
+    recipientId: number | null; recipientUnitId: number | null; recipientType: "PERSON" | "UNIT";
+    recipientName: string; authorizerId: number; authorizerName: string; purpose: string;
     status: string; deliveredAt: string; dueAt: string | null; completedAt: string | null;
     issuedById: number | null; issuedByLogin: string | null; items: CustodyItem[]; returns: CustodyReturn[];
 }
 export interface CustodyIssueRequest {
-    requestId: string; organizationId: number; unitId?: number; recipientId: number; authorizerId: number;
+    requestId: string; organizationId: number; unitId?: number; recipientId?: number; recipientUnitId?: number; authorizerId: number;
     purpose: string; dueAt?: string; assetIds: number[]; equipmentSetIds: number[];
 }
 export interface CustodyPage<T> { content: T[]; totalElements: number; page: number; size: number }

@@ -25,6 +25,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = React.useState<Session | null>(null);
     const [error, setError] = React.useState("");
     const pathname = usePathname();
+    const isBot = pathname === "/bot";
     const router = useRouter();
     const refresh = React.useCallback(async () => {
         try {
@@ -36,6 +37,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
     React.useEffect(() => {
+        if (isBot) return;
         const controller = new AbortController();
         httpClient.get<Session>("/api/auth/session", { signal: controller.signal }).then(response => {
             if (!controller.signal.aborted) { setSession(response.data); setError(""); }
@@ -53,18 +55,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             window.removeEventListener("access-changed", accessChanged);
             window.removeEventListener("focus", accessChanged);
         };
-    }, [refresh]);
+    }, [refresh, isBot]);
     React.useEffect(() => {
-        if (session?.requireLogin && !session.user && pathname !== "/login") {
+        if (!isBot && session?.requireLogin && !session.user && pathname !== "/login") {
             router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
         }
-    }, [session, pathname, router]);
+    }, [session, pathname, router, isBot]);
     async function signOut() {
         await httpClient.post("/api/auth/logout");
         await refresh();
         router.replace("/login");
     }
-    const canDisplay = pathname === "/login" || session && (!session.requireLogin || session.user);
+    const canDisplay = isBot || pathname === "/login" || session && (!session.requireLogin || session.user);
     const can = (resource: string, action: string, organizationId?: number, unitId?: number) => !session?.access?.enforced || session.access.grants.some(grant =>
         (grant.resource === resource || grant.resource === "*") && (grant.action === action || grant.action === "*") &&
         (grant.scope === "SYSTEM" || grant.scope === "ORGANIZATION" && (organizationId === undefined || grant.organizationId === organizationId)
@@ -72,7 +74,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 && grant.organizationId === organizationId && grant.unitId === unitId));
     return <SessionContext.Provider value={{ session, refresh, signOut, can }}>
         {canDisplay ? <>
-            {pathname !== "/login" && !session?.requireLogin && <div className="px-4 pt-3"><Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." /></div>}
+            {!isBot && pathname !== "/login" && !session?.requireLogin && <div className="px-4 pt-3"><Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." /></div>}
             {children}
         </> : <main className="max-w-lg mx-auto p-6">
             {error ? <><Message type="error" text={error} /><Button onClick={() => { setError(""); void refresh(); }}>Retry</Button></> : <p role="status">Checking session…</p>}

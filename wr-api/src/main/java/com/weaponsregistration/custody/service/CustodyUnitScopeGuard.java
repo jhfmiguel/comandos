@@ -12,7 +12,8 @@ public class CustodyUnitScopeGuard implements UnitScopeGuard {
     public CustodyUnitScopeGuard(EntityManager em) { this.em = em; }
     @Override
     public void validateOrganizationChange(long unitId, long organizationId) {
-        long count = em.createQuery("select count(c) from Custody c where c.unit.id = :unit and c.organization.id <> :organization", Long.class)
+        long count = em.createQuery("select count(c) from Custody c left join c.unit u left join c.recipientUnit r "
+            + "where (u.id = :unit or r.id = :unit) and c.organization.id <> :organization", Long.class)
             .setParameter("unit", unitId).setParameter("organization", organizationId).getSingleResult();
         if (count > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "The unit has custody records in its current organization.");

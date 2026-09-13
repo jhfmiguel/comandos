@@ -11,8 +11,10 @@ public class Custody extends CoreEntity {
     public Organization organization;
     @ManyToOne @JoinColumn(name = "unit_id")
     public OrganizationalUnit unit;
-    @ManyToOne(optional = false) @JoinColumn(name = "recipient_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "recipient_id")
     public Person recipient;
+    @ManyToOne @JoinColumn(name = "recipient_unit_id")
+    public OrganizationalUnit recipientUnit;
     @ManyToOne(optional = false) @JoinColumn(name = "authorizer_id", nullable = false)
     public Person authorizer;
     @Column(nullable = false) public String organizationName;

@@ -1,0 +1,129 @@
+"use client";
+
+import * as React from "react";
+import axios from "axios";
+import { Button } from "@primereact/ui/button";
+import { Dialog } from "@primereact/ui/dialog";
+import { Message } from "components/common/message";
+import { ReferenceField } from "components/erp/shared/record-workspace";
+import { httpClient } from "api/http";
+import type { ErpResource, ErpValue } from "api/models/erp";
+import type { ErpService } from "api/services/erp.service";
+import styles from "components/erp/shared/workspace.module.css";
+
+type Pair = { first: string; second: string };
+type Payload = { requestId: string; [key: string]: unknown };
+const emptyRow = (): Pair => ({ first: "", second: "" });
+const whole = /^[1-9][0-9]{0,14}$/;
+
+export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
+    resource: ErpResource; service: ErpService; onCancel: () => void; onSaved: (quantity: string) => void;
+}) {
+    const assets = resource.key === "assets";
+    const fields = resource.fields.filter(field => !field.readOnly && !(assets
+        ? ["assetCode", "serialNumber"].includes(field.name) : field.name === "initialQuantity"));
+    const [values, setValues] = React.useState<Record<string, ErpValue>>({ condition: "GOOD", status: "AVAILABLE", currentValue: "0" });
+    const [rows, setRows] = React.useState<Pair[]>([emptyRow()]);
+    const [paste, setPaste] = React.useState("");
+    const [looseUnits, setLooseUnits] = React.useState("0");
+    const [error, setError] = React.useState("");
+    const [busy, setBusy] = React.useState(false);
+    const [pending, setPending] = React.useState<Payload | null>(null);
+    const saving = React.useRef(false);
+    const locked = busy || !!pending;
+    const normalized = rows.map(row => ({ first: row.first.trim(), second: row.second.trim() }));
+    const serials = normalized.map(row => row.second).filter(Boolean);
+    const codes = normalized.map(row => row.first).filter(Boolean);
+    const duplicate = assets && (new Set(serials).size !== serials.length || new Set(codes).size !== codes.length);
+    const validRows = (!assets || normalized.length > 0) && normalized.length <= 1000 && normalized.every(row => assets
+        ? row.first.length > 0 && row.first.length <= 255 && row.second.length > 0 && row.second.length <= 255
+        : whole.test(row.first) && whole.test(row.second));
+    const validLoose = /^(0|[1-9][0-9]{0,14})$/.test(looseUnits);
+    const total = assets ? String(new Set(serials).size) : validRows && validLoose
+        ? normalized.reduce((sum, row) => sum + BigInt(row.first) * BigInt(row.second), BigInt(looseUnits)).toString() : "0";
+    const valid = validRows && !duplicate && (assets || validLoose && total !== "0" && total.length <= 15);
+
+    function update(index: number, column: keyof Pair, value: string) {
+        setRows(current => current.map((row, i) => i === index ? { ...row, [column]: value } : row));
+    }
+    function importPairs() {
+        const lines = paste.trim().split(/\r?\n/).filter(line => line.trim());
+        const parsed = lines.map(line => line.split(/\t|;/));
+        if (!paste.trim() || parsed.some(row => row.length !== 2 || row.some(cell => !cell.trim()))) {
+            setError("Paste two columns per line: asset code and serial number, separated by a tab or semicolon."); return;
+        }
+        const existing = rows.filter(row => row.first.trim() || row.second.trim());
+        if (existing.length + parsed.length > 1000) { setError("An entry can contain at most 1000 assets."); return; }
+        setRows([...existing, ...parsed.map(([first, second]) => ({ first: first.trim(), second: second.trim() }))]);
+        setPaste(""); setError("");
+    }
+    async function submit(event: React.FormEvent) {
+        event.preventDefault();
+        if (saving.current || !valid) return;
+        const common = Object.fromEntries(fields.map(field => [field.name, values[field.name] ?? ""]));
+        const payload = pending ?? (assets
+            ? { requestId: crypto.randomUUID(), common, items: normalized.map(row => ({ assetCode: row.first, serialNumber: row.second })) }
+            : { requestId: crypto.randomUUID(), ...common, looseUnits, boxes: normalized.map(row => ({ boxes: row.first, roundsPerBox: row.second })) });
+        saving.current = true; setBusy(true); setPending(payload); setError("");
+        try {
+            const result = await httpClient.post<{ quantity: string }>(`/api/erp/inventory/${assets ? "assets/batch" : "lots/from-boxes"}`, payload);
+            onSaved(result.data.quantity);
+        } catch (failure) {
+            const status = axios.isAxiosError(failure) ? failure.response?.status : undefined;
+            if (!pending && status && status >= 400 && status < 500) setPending(null);
+            setError(axios.isAxiosError(failure) && typeof failure.response?.data?.detail === "string"
+                ? failure.response.data.detail : "The entry result could not be confirmed. Retry to recover the same entry.");
+        } finally { saving.current = false; setBusy(false); }
+    }
+    return <Dialog.Root open onOpenChange={(event: { value?: boolean }) => { if (!event.value && !locked) onCancel(); }}>
+        <Dialog.Portal><Dialog.Backdrop /><Dialog.Positioner><Dialog.Popup className={styles.dialog}>
+            <Dialog.Header><Dialog.Title>{assets ? "Register individual assets" : "Receive ammunition boxes"}</Dialog.Title></Dialog.Header>
+            <Dialog.Content><form className={styles.form} onSubmit={submit}>
+                <p>{assets ? "Choose the common model and location, then enter one asset code / serial number pair per unit."
+                    : "Choose the ammunition model and lot. Enter boxes, loose rounds or both. Remove box rows to receive only loose rounds."}</p>
+                {error && <Message type="error" text={error} />}
+                {pending && !busy && <Message type="warn" text="Retry this entry to confirm its result without registering the stock twice." />}
+                <fieldset className={styles.fields} disabled={locked}>
+                    {fields.map(field => <div className={styles.field} key={field.name}>
+                        <label htmlFor={`core-${field.name}`}>{field.label}{field.required ? " *" : ""}</label>
+                        {field.type === "reference" ? <ReferenceField service={service} field={field} value={values[field.name] ?? null}
+                            organizationId={null} onChange={value => setValues(current => ({ ...current, [field.name]: value }))} />
+                            : field.type === "choice" ? <select id={`core-${field.name}`} required={field.required}
+                                value={String(values[field.name] ?? "")} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))}>
+                                <option value="">Select an option</option>{field.choices.filter(choice => field.name !== "status" || ["DRAFT", "AVAILABLE", "BLOCKED"].includes(choice))
+                                    .map(choice => <option key={choice} value={choice}>{choice.replaceAll("_", " ")}</option>)}</select>
+                                : <input id={`core-${field.name}`} required={field.required} type={field.type === "decimal" ? "number" : field.type}
+                                    min={field.type === "decimal" ? "0" : undefined} step={field.type === "decimal" ? "0.0001" : undefined}
+                                    maxLength={255} value={String(values[field.name] ?? "")}
+                                    onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
+                    </div>)}
+                </fieldset>
+                <fieldset disabled={locked}>
+                    {assets && <details><summary>Paste a list from a spreadsheet</summary>
+                        <label htmlFor="asset-pairs-paste">Asset code and serial number (two columns, no header)</label>
+                        <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
+                        <Button type="button" onClick={importPairs}>Add pasted rows</Button></details>}
+                    <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Boxes and rounds"}</caption>
+                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th>Actions</th></tr></thead>
+                        <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
+                            {(["first", "second"] as const).map(column => <td key={column}><input required
+                                aria-label={`${assets ? column === "first" ? "Asset code" : "Serial number" : column === "first" ? "Number of boxes" : "Rounds per box"} ${index + 1}`}
+                                type="text" inputMode={assets ? "text" : "numeric"} maxLength={assets ? 255 : 15}
+                                value={row[column]} onChange={event => update(index, column, event.target.value)} /></td>)}
+                            <td><Button type="button" severity="secondary" aria-label={`Remove row ${index + 1}`}
+                                onClick={() => setRows(current => current.filter((_, i) => i !== index))}>Remove</Button></td></tr>)}</tbody></table></div>
+                    <Button type="button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>Add row</Button>
+                    {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
+                        <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
+                            onChange={event => setLooseUnits(event.target.value)} /></div>}
+                </fieldset>
+                <p role="status">{assets ? "Quantity (serial numbers)" : "Total rounds"}: <strong>{total}</strong></p>
+                {duplicate && <Message type="error" text="Each asset code and serial number must be unique in this list." />}
+                {!assets && (!validRows || total.length > 15) && <small>Enter positive whole quantities; the total can contain at most 15 digits.</small>}
+                <div className={styles.actions}><Button type="button" severity="secondary" disabled={locked} onClick={onCancel}>Cancel</Button>
+                    <Button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
+                        {busy ? "Saving..." : pending ? "Retry entry" : assets ? "Register assets" : "Receive boxes"}</Button></div>
+            </form></Dialog.Content>
+        </Dialog.Popup></Dialog.Positioner></Dialog.Portal>
+    </Dialog.Root>;
+}
