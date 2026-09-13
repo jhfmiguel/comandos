@@ -47,6 +47,18 @@ Para listar as tarefas disponíveis:
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -ListTasks
 ```
 
+Para acompanhar a fila com nome, estado, descrição, data e status do worker:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\automation\watch-armamento.ps1
+```
+
+Para mostrar uma fotografia única da fila, sem atualização contínua:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\automation\watch-armamento.ps1 -Once
+```
+
 Para escolher exatamente uma tarefa:
 
 ```powershell

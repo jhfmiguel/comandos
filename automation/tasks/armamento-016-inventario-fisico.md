@@ -3,8 +3,17 @@
 ## Objetivo
 Implementar conferência física de armamentos.
 
+## Contexto e dependências
+O inventário compara o estado físico com unidade, localização, custódia, serial number e status registrados. A reconciliação não pode eliminar evidências da contagem.
+
 ## Escopo
 Planejamento, contagem por unidade/local, divergências, reconciliação, justificativa, aprovação e auditoria.
+
+## Regras técnicas
+- Congelar ou versionar o recorte contado para evitar mudança silenciosa durante a conferência.
+- Identificar itens encontrados, ausentes, excedentes e não reconhecidos.
+- Exigir justificativa e aprovação para ajustes.
+- Permitir recontagem sem sobrescrever a primeira evidência.
 
 ## Critérios de aceite
 - [ ] Inventário pode ser aberto, contado e encerrado.

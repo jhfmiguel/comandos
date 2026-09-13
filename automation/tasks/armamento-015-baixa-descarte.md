@@ -3,8 +3,17 @@
 ## Objetivo
 Implementar baixa, descarte e inativação segura de armamentos.
 
+## Contexto e dependências
+São operações potencialmente irreversíveis e precisam de confirmação, autorização e evidência. Devem respeitar cautela, estoque, manutenção e inventário ativos.
+
 ## Escopo
 Motivos, autorização, evidências, confirmação, efeitos no estoque/status e trilha de auditoria.
+
+## Regras técnicas
+- Separar baixa lógica, inativação e descarte físico se forem conceitos diferentes.
+- Bloquear item em cautela ou transferência pendente sem encerramento formal.
+- Impedir reativação silenciosa e manter histórico imutável.
+- Validar permissões elevadas e motivo obrigatório.
 
 ## Critérios de aceite
 - [ ] Operações irreversíveis exigem autorização e confirmação.

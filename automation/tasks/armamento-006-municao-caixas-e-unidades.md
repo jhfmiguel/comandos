@@ -4,6 +4,10 @@
 
 Implementar o controle de munições do ERP COMANDOS permitindo registrar entradas por caixas e quantidades, controlar caixas individualmente quando necessário e também movimentar munições por unidade, sem perder rastreabilidade ou saldo.
 
+## Contexto e prioridade
+
+Esta é uma regra central do estoque de munição. O sistema precisa servir tanto ao controle logístico agregado quanto ao controle físico detalhado, sem misturar os dois modelos de forma silenciosa.
+
 ## Regra de negócio definida pelo usuário
 
 A entrada de estoque deve permitir informar caixas e quantidades. O sistema deve suportar os dois modos:
@@ -59,6 +63,15 @@ Inspecionar os modelos, serviços, endpoints, telas e testes existentes de inven
 - Derivar a quantidade do Individual Asset contando os números de série associados.
 - Impedir quantidade manual divergente da quantidade de seriais.
 - Validar unicidade dos números de série e dos asset codes.
+
+## Decisões de implementação
+
+- Modelar o modo de rastreabilidade explicitamente: caixa identificada ou saldo agregado.
+- Nunca gerar identificadores de caixa fictícios para uma entrada agregada.
+- Reservar e baixar saldo com concorrência segura para impedir saldo negativo.
+- Definir comportamento de conversão, fracionamento, devolução e estorno antes de codificar.
+- Exibir ao usuário a origem do saldo e a unidade mínima de movimentação.
+- Reutilizar auditoria, autorização, lote e unidade existentes.
 
 ## Critérios de aceite
 

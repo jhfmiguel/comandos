@@ -4,6 +4,10 @@
 
 Tornar o cadastro de Individual Assets eficiente para grandes quantidades de armamentos, permitindo cadastrar uma lista de armas de uma mesma família, como Beretta APX, sem repetir manualmente o formulário para cada unidade.
 
+## Contexto e prioridade
+
+Esta é a primeira melhoria de produtividade depois da validação do frontend. O caso principal é cadastrar várias Berettas APX em uma única operação, sem perder o pareamento entre cada asset code e seu serial number.
+
 ## Prioridade do usuário
 
 Esta é a próxima melhoria prioritária após as etapas atuais do workstream de armamento. Preservar as alterações já existentes no workspace e começar pelo fluxo atual de Individual Assets.
@@ -23,6 +27,15 @@ Implementar no backend e no frontend um cadastro em lote de Individual Assets co
 - Operação transacional: não criar registros parcialmente quando o lote inteiro não puder ser validado, salvo se a API já seguir um padrão explícito de processamento parcial.
 
 Preferir uma experiência de tabela editável ou importação estruturada compatível com os padrões atuais do projeto. Não substituir o cadastro unitário se ele continuar necessário para correções pontuais.
+
+## Regras técnicas adicionais
+
+- A linha é a unidade mínima do lote e deve manter `assetCode` e `serialNumber` juntos.
+- Validar duplicidades dentro do lote e contra registros já persistidos.
+- Exibir erros por linha sem apagar as linhas válidas antes da revisão.
+- Definir claramente se a confirmação é atômica; preferir transação completa.
+- Auditar usuário, data, modelo/família, quantidade de linhas e resultado.
+- Não aceitar quantidade livre que contradiga a quantidade de seriais cadastrados.
 
 ## Critérios de aceite
 

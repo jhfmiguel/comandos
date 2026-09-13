@@ -4,6 +4,10 @@
 
 Permitir que uma cautela de armamento seja recebida por uma unidade organizacional, além do recebimento individual já existente.
 
+## Contexto e prioridade
+
+Esta correção resolve uma lacuna do fluxo de cautela: nem todo armamento é entregue a uma pessoa; uma unidade pode ser a recebedora institucional, mantendo o responsável operacional quando o domínio exigir.
+
 ## Prioridade do usuário
 
 Esta é uma correção prioritária: atualmente não é possível selecionar uma unidade organizacional como recebedora da cautela. Implementar esta etapa depois de `armamento-004-cadastro-em-lote-assets.md`.
@@ -23,6 +27,14 @@ Inspecionar o fluxo atual de cautela e custódia no backend e frontend. Ajustar 
 - Cobrir o fluxo na interface com estados de carregamento, vazio, erro e sucesso.
 
 Não mascarar a diferença entre pessoa responsável e unidade recebedora. Se o modelo atual precisar de uma decisão de negócio para representar responsabilidade interna da unidade, registrar o bloqueio antes de alterar a persistência.
+
+## Regras técnicas adicionais
+
+- Usar um discriminador explícito para pessoa versus unidade.
+- Não apagar o recebedor individual já existente nem migrar dados silenciosamente.
+- Validar unidade ativa, contexto organizacional e permissão do operador.
+- Cautela por unidade deve permitir consulta, devolução, encerramento e auditoria.
+- Mensagens devem explicar se falta unidade, responsável interno ou autorização.
 
 ## Critérios de aceite
 

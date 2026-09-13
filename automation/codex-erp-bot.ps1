@@ -17,9 +17,6 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$utf8Output = New-Object System.Text.UTF8Encoding($false)
-[Console]::OutputEncoding = $utf8Output
-$OutputEncoding = $utf8Output
 
 if (-not $TaskDirectory) {
     $TaskDirectory = Join-Path $PSScriptRoot 'tasks'
@@ -90,7 +87,7 @@ function Get-PendingTask {
 }
 
 function New-CodexPrompt([string]$taskPath) {
-    $task = Get-Content -Raw -Path $taskPath
+    $task = Get-Content -Raw -Encoding UTF8 -Path $taskPath
     foreach ($requiredSection in @('## Objetivo', '## Escopo', '## Critérios de aceite', '## Condição de parada')) {
         if ($task -notmatch [regex]::Escape($requiredSection)) {
             throw "Task '$taskPath' does not contain the required section '$requiredSection'."
@@ -156,7 +153,7 @@ function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
         $process.Dispose()
     }
     $codexOutput | Tee-Object -FilePath $logPath
-    $outputText = (Get-Content -Raw -Path $logPath) + "`n" + ($codexOutput -join "`n")
+    $outputText = (Get-Content -Raw -Encoding UTF8 -Path $logPath) + "`n" + ($codexOutput -join "`n")
     if ($outputText -match '(?i)rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') {
         throw 'CODEX_UNAVAILABLE'
     }
