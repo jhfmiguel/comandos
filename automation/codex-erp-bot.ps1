@@ -194,6 +194,7 @@ while ($true) {
             Fail-Task $workingTask
         }
         Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $task.Name`nConsulte: $logPath"
+        break
     }
 
     if ($taskLimit -gt 0 -and $processedTasks -ge $taskLimit) { break }
