@@ -13,7 +13,7 @@ function Get-TaskDescription([string]$path) {
     if ($content -match '(?ms)^## Objetivo\s*\r?\n+(.+?)(?:\r?\n##|\z)') {
         return (($matches[1] -replace '\s+', ' ').Trim())
     }
-    return 'Descrição não informada.'
+    return ('Descri' + [char]0x00E7 + [char]0x00E3 + 'o nao informada.')
 }
 
 function Get-TaskProgress([string]$path, [string]$state) {
@@ -25,7 +25,7 @@ function Get-TaskProgress([string]$path, [string]$state) {
     }
     switch ($state) {
         'Fazendo' { return 50 }
-        'Concluída' { return 100 }
+        ('Conclu' + [char]0x00ED + 'da') { return 100 }
         default { return 0 }
     }
 }
@@ -34,7 +34,7 @@ function Get-TaskRows {
     $groups = @(
         @{ Path = $taskRoot; State = 'Pendente' },
         @{ Path = Join-Path $taskRoot 'working'; State = 'Fazendo' },
-        @{ Path = Join-Path $taskRoot 'completed'; State = 'Concluída' },
+        @{ Path = Join-Path $taskRoot 'completed'; State = 'Conclu' + [char]0x00ED + 'da' },
         @{ Path = Join-Path $taskRoot 'failed'; State = 'Falhou' }
     )
     foreach ($group in $groups) {
@@ -55,7 +55,7 @@ function Get-TaskRows {
 function Get-StateColor([string]$state) {
     switch ($state) {
         'Fazendo' { return 'Yellow' }
-        'Concluída' { return 'Green' }
+        ('Conclu' + [char]0x00ED + 'da') { return 'Green' }
         'Falhou' { return 'Red' }
         default { return 'Gray' }
     }
@@ -63,7 +63,7 @@ function Get-StateColor([string]$state) {
 
 function Write-ProgressSummary($rows) {
     $total = @($rows).Count
-    $done = @($rows | Where-Object Estado -eq 'Concluída').Count
+    $done = @($rows | Where-Object Estado -eq ('Conclu' + [char]0x00ED + 'da')).Count
     $doing = @($rows | Where-Object Estado -eq 'Fazendo').Count
     $failed = @($rows | Where-Object Estado -eq 'Falhou').Count
     $pending = @($rows | Where-Object Estado -eq 'Pendente').Count
@@ -89,7 +89,8 @@ function Write-HorizontalQueue($rows) {
     $progressWidth = 8
     $updatedWidth = 16
     $descriptionWidth = [math]::Max(20, $terminalWidth - $stateWidth - $nameWidth - $progressWidth - $updatedWidth - 8)
-    $header = 'Estado'.PadRight($stateWidth) + ' ' + 'Nome'.PadRight($nameWidth) + ' ' + 'Descrição'.PadRight($descriptionWidth) + ' ' + 'Progresso'.PadRight($progressWidth) + ' ' + 'Atualizado'.PadRight($updatedWidth)
+    $descriptionLabel = 'Descri' + [char]0x00E7 + [char]0x00E3 + 'o'
+    $header = 'Estado'.PadRight($stateWidth) + ' ' + 'Nome'.PadRight($nameWidth) + ' ' + $descriptionLabel.PadRight($descriptionWidth) + ' ' + 'Progresso'.PadRight($progressWidth) + ' ' + 'Atualizado'.PadRight($updatedWidth)
     Write-Host $header -ForegroundColor Cyan
     Write-Host ('-' * [math]::Min($terminalWidth - 1, 120)) -ForegroundColor DarkGray
     foreach ($row in $rows) {
@@ -110,7 +111,11 @@ while ($true) {
     Write-Host ''
     if (Test-Path $statusPath) {
         $status = Get-Content -Raw -Encoding UTF8 $statusPath | ConvertFrom-Json
-        Write-Host ('Worker: {0} | Etapa: {1} | Mensagem: {2}' -f $status.state, $status.taskName, $status.message)
+        $statusMessage = $status.message
+        if ($statusMessage -match 'Codex est.*trabalhando') {
+            $statusMessage = 'Codex est' + [char]0x00E1 + ' trabalhando na etapa atual.'
+        }
+        Write-Host ('Worker: {0} | Etapa: {1} | Mensagem: {2}' -f $status.state, $status.taskName, $statusMessage)
     } else {
         Write-Host 'Worker: sem status ainda' -ForegroundColor Yellow
     }
