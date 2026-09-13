@@ -91,7 +91,7 @@ function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
         $ErrorActionPreference = $previousErrorActionPreference
     }
     $codexOutput | Tee-Object -FilePath $logPath
-    $outputText = $codexOutput -join "`n"
+    $outputText = (Get-Content -Raw -Path $logPath) + "`n" + ($codexOutput -join "`n")
     if ($outputText -match '(?i)rate limit|out of codex|resets on|add credits|temporarily unavailable') {
         throw 'CODEX_UNAVAILABLE'
     }
