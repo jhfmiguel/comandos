@@ -88,7 +88,7 @@ function Get-PendingTask {
 
 function New-CodexPrompt([string]$taskPath) {
     $task = Get-Content -Raw -Encoding UTF8 -Path $taskPath
-    foreach ($requiredSection in @('## Objetivo', '## Escopo', '## Critérios de aceite', '## Condição de parada')) {
+    foreach ($requiredSection in @('## Objetivo', '## Escopo', '## Crit', '## Condi')) {
         if ($task -notmatch [regex]::Escape($requiredSection)) {
             throw "Task '$taskPath' does not contain the required section '$requiredSection'."
         }
@@ -134,7 +134,7 @@ function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     $process.StandardInput.BaseStream.Write($promptBytes, 0, $promptBytes.Length)
     $process.StandardInput.BaseStream.Flush()
     $process.StandardInput.Close()
-    Write-BotStatus 'working' 'Codex está trabalhando na etapa atual.' (Split-Path $taskPath -Leaf)
+    Write-BotStatus 'working' ('Codex est' + [char]0x00E1 + ' trabalhando na etapa atual.') (Split-Path $taskPath -Leaf)
     try {
         while (-not $process.HasExited) {
             $control = Get-Control
@@ -256,7 +256,7 @@ while ($true) {
     if ($null -eq $task) {
         if ($Once -or $processedTasks -gt 0) {
             Write-BotStatus 'completed' 'Não há mais tarefas no escopo.'
-            Show-CompletionNotice 'COMANDOS Codex Bot finalizado' "Tarefas processadas: $processedTasks. Não há mais tarefas no escopo."
+            Show-CompletionNotice 'COMANDOS Codex Bot finalizado' ('Tarefas processadas: ' + $processedTasks + '. N' + [char]0x00E3 + 'o h' + [char]0x00E1 + ' mais tarefas no escopo.')
             break
         }
         Write-BotStatus 'waiting' 'Aguardando tarefas ou disponibilidade do Codex.'
