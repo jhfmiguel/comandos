@@ -154,7 +154,7 @@ function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     }
     $codexOutput | Tee-Object -FilePath $logPath
     $outputText = (Get-Content -Raw -Path $logPath) + "`n" + ($codexOutput -join "`n")
-    if ($outputText -match '(?i)rate limit|out of codex|resets on|add credits|temporarily unavailable') {
+    if ($outputText -match '(?i)rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') {
         throw 'CODEX_UNAVAILABLE'
     }
     if ($exitCode -ne 0) {
@@ -269,7 +269,7 @@ while ($true) {
     } catch {
         $errorText = $_ | Out-String
         $errorText | Tee-Object -FilePath $logPath -Append
-        if ($errorText -match 'CODEX_UNAVAILABLE|rate limit|out of codex|resets on|add credits|temporarily unavailable') {
+        if ($errorText -match 'CODEX_UNAVAILABLE|rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') {
             Move-Item -Force -Path $workingTask -Destination (Join-Path $TaskDirectory $task.Name)
             Write-BotStatus 'waiting' 'Rate limit do Codex; etapa preservada na fila.' $task.Name
             Start-Sleep -Seconds $PollSeconds
