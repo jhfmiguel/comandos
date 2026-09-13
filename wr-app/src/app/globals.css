@@ -54,7 +54,15 @@ body {
 }
 
 .sales-payment-yellow {
-    color: #ff9900 !important;
+    --p-select-hover-border-color: #ff9900;
+    --p-select-focus-border-color: #ff9900;
+    --p-select-focus-ring-color: #ff9900;
+    --p-select-option-focus-background: #fff3cd;
+    --p-select-option-selected-background: #ff9900;
+    --p-select-option-selected-focus-background: #ff9900;
+    --p-select-option-focus-color: #171717;
+    --p-select-option-selected-color: #171717;
+    --p-select-option-selected-focus-color: #171717;
 }
 
 .sales-payment-value,
@@ -73,6 +81,11 @@ body {
     border-color: #ff9900 !important;
     box-shadow: 0 0 0 1px #ff9900 !important;
     outline: none !important;
+}
+
+.sales-form .p-floatlabel,
+.sales-form [data-scope="floatlabel"] {
+    --p-floatlabel-focus-color: #ff9900;
 }
 
 .sales-form .p-floatlabel:focus-within label,

@@ -114,7 +114,7 @@ const WeaponRow: React.FC<WeaponRowProps> = ( {
                     <Button
                         label = 'Edit'
                         columnClasses='bg-yellow-500 text-gray-900 border-round m-0'
-                        onClick = { e => onEditWeapon( weapon ) } 
+                        onClick = { () => onEditWeapon( weapon ) }
                     />
                 </td>
             ) : <></>}
@@ -123,7 +123,7 @@ const WeaponRow: React.FC<WeaponRowProps> = ( {
                 <Button
                     label = { deleting ? 'Yes' : 'Delete' }
                     columnClasses='comandos-red-button border-round m-0'
-                    onClick = { e => onDeleteConfirmation( weapon ) } 
+                    onClick = { () => onDeleteConfirmation( weapon ) }
                 />
             </td>
             

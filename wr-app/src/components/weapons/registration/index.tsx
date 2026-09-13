@@ -263,7 +263,6 @@ export const WeaponsRegistration: React.FC = () => {
                         placeholder="Type the price"
                         maxLength={18}
                         error={messageError.price}
-                        currency
                     />
                 </div>
 

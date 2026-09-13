@@ -21,6 +21,7 @@ import type { MenuRootOpenChangeEvent } from "@primereact/ui/menu"
 import { Sidebar } from "@primereact/ui/sidebar"
 
 import { MenuItem } from "../menu-item"
+import { useSession } from "components/auth/session-provider"
 
 interface SidebarOpenChangeEvent {
     originalEvent?: React.SyntheticEvent
@@ -133,19 +134,23 @@ const SkullIcon = (): React.JSX.Element => {
 
 export const Menu: React.FC = () => {
 
+    const { session, signOut, can } = useSession()
+    const [signOutError, setSignOutError] = React.useState("")
+    const [signingOut, setSigningOut] = React.useState(false)
+
     const pathname = usePathname()
 
     const [sidebarOpen, setSidebarOpen] = React.useState(persistedSidebarOpen)
 
-    const [selectedMenu, setSelectedMenu] = React.useState<string | null>(null)
+    const [selection, setSelection] = React.useState<{ pathname: string; menu: string | null }>({ pathname, menu: null })
+    const selectedMenu = selection.pathname === pathname ? selection.menu : null
+    const setSelectedMenu = (menu: string | null) => setSelection({ pathname, menu })
 
     const [userMenuOpen, setUserMenuOpen] = React.useState(false)
 
-    React.useEffect(() => {
-
-        setSelectedMenu(null)
-
-    }, [pathname])
+    if (selection.pathname !== pathname) {
+        setSelection({ pathname, menu: null })
+    }
 
     return (
 
@@ -247,6 +252,102 @@ export const Menu: React.FC = () => {
                                     />
 
                                     <MenuItem
+                                        menuKey="institutional-core"
+                                        href="/erp/core"
+                                        label="Institutional core"
+                                        icon={Cog}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="inventory"
+                                        href="/erp/inventory"
+                                        label="Assets and inventory"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="inventory-sales"
+                                        href="/erp/sales"
+                                        label="Inventory sales"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="firearm-custody"
+                                        href="/erp/custody"
+                                        label="Equipment custody"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="ammunition-consumption"
+                                        href="/erp/ammunition-consumption"
+                                        label="Ammunition consumption"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="donations"
+                                        href="/erp/donations"
+                                        label="Donations"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="inventory-transfers"
+                                        href="/erp/transfers"
+                                        label="Inventory transfers"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+
+                                    <MenuItem
+                                        menuKey="asset-disposal"
+                                        href="/erp/disposals"
+                                        label="Asset disposal"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />
+                                    <MenuItem menuKey="maintenance" href="/erp/maintenance" label="Maintenance and inspection" icon={Shield}
+                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
+                                    <MenuItem menuKey="reservations" href="/erp/reservations" label="Inventory reservations" icon={Shield}
+                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
+                                    <MenuItem menuKey="inventory-counts" href="/erp/inventory-counts" label="Physical inventory" icon={Shield}
+                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
+
+                                    {can("audit", "READ") && <MenuItem
+                                        menuKey="audit"
+                                        href="/erp/audit"
+                                        label="Audit history"
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
+                                    />}
+
+                                    <MenuItem
                                         menuKey="weapons"
                                         label="Weapons"
                                         icon={Shield}
@@ -299,11 +400,11 @@ export const Menu: React.FC = () => {
                                             className="comandos-sidebar-avatar size-7! shrink-0! text-xs!"
                                             shape="circle"
                                         >
-                                            <Avatar.Fallback>JD</Avatar.Fallback>
+                                            <Avatar.Fallback>{session?.user?.name.slice(0, 2).toUpperCase() || "G"}</Avatar.Fallback>
                                         </Avatar.Root>
 
                                         <span>
-                                            John Doe
+                                            {session?.user?.name || "Guest"}
                                         </span>
 
                                         {userMenuOpen
@@ -327,7 +428,7 @@ export const Menu: React.FC = () => {
                                                 <PopupMenu.List>
 
                                                     <PopupMenu.Label>
-                                                        john@acme.com
+                                                        {session?.user?.login || "Setup mode"}
                                                     </PopupMenu.Label>
 
                                                     <PopupMenu.Separator />
@@ -344,18 +445,16 @@ export const Menu: React.FC = () => {
 
                                                     <PopupMenu.Separator />
 
-                                                    <PopupMenu.Item
-                                                        as={Link}
-                                                        href="/"
-                                                        onClick={() => {
-
-                                                            setSelectedMenu(null)
-
-                                                        }}
-                                                    >
-                                                        <SignOut />
-                                                        Sign out
-                                                    </PopupMenu.Item>
+                                                    {session?.user ? <PopupMenu.Item disabled={signingOut}
+                                                        onClick={async () => {
+                                                            setSigningOut(true)
+                                                            setSignOutError("")
+                                                            try { await signOut() }
+                                                            catch { setSignOutError("Unable to sign out. Please try again.") }
+                                                            finally { setSigningOut(false) }
+                                                        }}>
+                                                        <SignOut />{signingOut ? "Signing out…" : "Sign out"}
+                                                    </PopupMenu.Item> : <PopupMenu.Item as={Link} href="/login"><SignOut />Sign in</PopupMenu.Item>}
 
                                                 </PopupMenu.List>
 
@@ -374,6 +473,7 @@ export const Menu: React.FC = () => {
                     </Sidebar.Footer>
 
                     <Sidebar.Rail />
+                    {signOutError && <p role="alert" className="px-3 text-sm">{signOutError}</p>}
 
                 </Sidebar.Panel>
 

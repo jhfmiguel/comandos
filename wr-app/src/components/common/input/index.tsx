@@ -34,7 +34,7 @@ export const Input: React.FC<InputProps> = ( {
     ... inputProps
 }: InputProps ) => {
 
-    const onInputChange = ( event: any ) => {
+    const onInputChange = ( event: React.ChangeEvent<HTMLInputElement> ) => {
         let value = event.target.value
         const name = event.target.name
 
@@ -117,8 +117,8 @@ export const Input: React.FC<InputProps> = ( {
     )
 }
 
-export const InputMoney: React.FC<InputProps> = (props: InputProps) => {
-    const { value, onChange, name, id, label, columnClasses, error, currency, ...restProps } = props
+export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
+    const { value, onChange, name, id, label, columnClasses, error, ...restProps } = props
 
     const safeValue = typeof value === "object" ? "" : (value ?? "")
 

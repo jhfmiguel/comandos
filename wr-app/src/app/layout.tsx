@@ -5,6 +5,7 @@ import "primeflex/primeflex.css";
 
 import "components/common/loader/loader.css";
 import PrimeSSRProvider from "../../prime-ssr-provider";
+import { SessionProvider } from "components/auth/session-provider";
 
 export const metadata: Metadata = {
   title: "Comandos",
@@ -27,7 +28,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
 
         <PrimeSSRProvider>
-          { children }
+          <SessionProvider>{ children }</SessionProvider>
         </PrimeSSRProvider>
 
       </body>

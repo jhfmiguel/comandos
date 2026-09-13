@@ -227,7 +227,7 @@ export const WeaponsList: React.FC = () => {
     const weaponService = useWeaponService();
 
     const [loading, setLoading] =
-        useState<boolean>(false);
+        useState<boolean>(true);
 
     const [weapons, setWeapons] =
         useState<Weapon[]>([]);
@@ -266,21 +266,22 @@ export const WeaponsList: React.FC = () => {
         ReturnType<typeof setTimeout> | null
     >(null);
 
-    const fetchWeapons = useCallback(
-        async (
+    const requestRef = useRef<AbortController | null>(null);
+
+    const loadWeapons = useCallback(
+        (
             searchFilters: WeaponSearchFilters,
             pageIndex: number,
-            pageSize: number
+            pageSize: number,
+            signal: AbortSignal
         ): Promise<void> => {
-            setLoading(true);
-
-            try {
-                const data =
-                    await weaponService.findWeapon(
+            return weaponService.findWeapon(
                         searchFilters,
                         pageIndex,
-                        pageSize
-                    );
+                        pageSize,
+                        signal
+                    ).then(data => {
+                if (signal.aborted) return;
 
                 const content =
                     data?.content ?? [];
@@ -296,26 +297,39 @@ export const WeaponsList: React.FC = () => {
                 setTotalRecords(
                     data?.totalElements ?? 0
                 );
-            } catch (error) {
+            }).catch(error => {
+                if (signal.aborted) return;
                 console.error(
                     "Failed to fetch weapons:",
                     error
                 );
-            } finally {
-                setLoading(false);
-            }
+            }).finally(() => {
+                if (!signal.aborted) setLoading(false);
+            });
         },
         [weaponService]
     );
 
+    const fetchWeapons = useCallback((searchFilters: WeaponSearchFilters, pageIndex: number, pageSize: number) => {
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+        setLoading(true);
+        return loadWeapons(searchFilters, pageIndex, pageSize, controller.signal);
+    }, [loadWeapons]);
+
     useEffect(() => {
-        fetchWeapons(
+        const controller = new AbortController();
+        requestRef.current = controller;
+        void loadWeapons(
             EMPTY_SEARCH_FILTERS,
             0,
-            10
+            10,
+            controller.signal
         );
 
         return () => {
+            requestRef.current?.abort();
             if (
                 filterTimeoutRef.current
             ) {
@@ -325,8 +339,7 @@ export const WeaponsList: React.FC = () => {
             }
         };
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadWeapons]);
 
     const handleFilterChange =
         useCallback(

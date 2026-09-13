@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
 import { Layout } from "components"
 import { UserForm } from "./form"
 import { User } from "api/models/users"
@@ -38,10 +39,10 @@ export const UserRegistration: React.FC = () => {
                 setUser( savedUser ) 
                 setMessage( [{ type: 'success', text: 'User successfully registered' }] )
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("[DEBUG] Network server transmission error caught:", error);
             
-            const status = error?.response?.status;
+            const status = axios.isAxiosError(error) ? error.response?.status : undefined;
             if ( status === 500 || status === 409 || status === 400 ) {
                 throw new Error("CPF_DUPLICATED")
             }

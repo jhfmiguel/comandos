@@ -332,12 +332,7 @@ export const UsersList: React.FC = () => {
         useUserService();
 
     const [loading, setLoading] =
-        useState<boolean>(false);
-
-    const [
-        originalUsers,
-        setOriginalUsers
-    ] = useState<User[]>([]);
+        useState<boolean>(true);
 
     const [users, setUsers] =
         useState<User[]>([]);
@@ -385,17 +380,16 @@ export const UsersList: React.FC = () => {
         ReturnType<typeof setTimeout> | null
     >(null);
 
-    const fetchUsers = useCallback(
-        async (
+    const requestRef = useRef<AbortController | null>(null);
+
+    const loadUsers = useCallback(
+        (
             searchFilters: UserSearchFilters,
             pageIndex: number,
-            pageSize: number
+            pageSize: number,
+            signal: AbortSignal
         ): Promise<void> => {
-            setLoading(true);
-
-            try {
-                const data =
-                    await userService.findUser(
+            return userService.findUser(
                         searchFilters.name,
                         searchFilters.cpf,
                         pageIndex,
@@ -403,8 +397,10 @@ export const UsersList: React.FC = () => {
                         searchFilters.birth,
                         searchFilters.address,
                         searchFilters.email,
-                        searchFilters.phone
-                    );
+                        searchFilters.phone,
+                        signal
+                    ).then(data => {
+                if (signal.aborted) return;
 
                 const content =
                     data?.content ?? [];
@@ -417,10 +413,6 @@ export const UsersList: React.FC = () => {
                         Number(b.id ?? 0)
                 );
 
-                setOriginalUsers(
-                    sortedContent
-                );
-
                 setUsers(
                     filterUsers(
                         sortedContent,
@@ -431,26 +423,39 @@ export const UsersList: React.FC = () => {
                 setTotalRecords(
                     data?.totalElements ?? 0
                 );
-            } catch (error) {
+            }).catch(error => {
+                if (signal.aborted) return;
                 console.error(
                     "Failed to fetch users:",
                     error
                 );
-            } finally {
-                setLoading(false);
-            }
+            }).finally(() => {
+                if (!signal.aborted) setLoading(false);
+            });
         },
         [userService]
     );
 
+    const fetchUsers = useCallback((searchFilters: UserSearchFilters, pageIndex: number, pageSize: number) => {
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+        setLoading(true);
+        return loadUsers(searchFilters, pageIndex, pageSize, controller.signal);
+    }, [loadUsers]);
+
     useEffect(() => {
-        fetchUsers(
+        const controller = new AbortController();
+        requestRef.current = controller;
+        void loadUsers(
             EMPTY_SEARCH_FILTERS,
             0,
-            10
+            10,
+            controller.signal
         );
 
         return () => {
+            requestRef.current?.abort();
             if (
                 filterTimeoutRef.current
             ) {
@@ -460,8 +465,7 @@ export const UsersList: React.FC = () => {
             }
         };
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadUsers]);
 
     const handleFilterChange =
         useCallback(
