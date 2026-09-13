@@ -4,14 +4,34 @@ O `codex-erp-bot.ps1` processa tarefas Markdown em segundo plano quando o execut
 
 ## Preparação
 
-1. Instale e autentique o Codex CLI conforme a distribuição liberada para sua conta.
-2. Verifique no PowerShell:
+1. Instale o Codex CLI oficial globalmente:
+
+```powershell
+npm.cmd install --global @openai/codex
+```
+
+2. Feche e abra o PowerShell novamente, depois autentique sua conta:
+
+```powershell
+codex login
+```
+
+3. Verifique no PowerShell:
 
 ```powershell
 codex --version
 ```
 
-3. Coloque uma tarefa em `automation/tasks/`, por exemplo `001-inventario.md`.
+Se o comando ainda não for encontrado, confirme o PATH e diagnostique a instalação:
+
+```powershell
+where.exe codex
+codex doctor
+```
+
+O diretório global padrão do npm no Windows é `%APPDATA%\npm`. Ele precisa estar no PATH do usuário. Depois de alterá-lo, abra um novo terminal.
+
+4. Coloque uma tarefa em `automation/tasks/`, por exemplo `001-inventario.md`.
 
 ## Execução contínua
 
@@ -19,7 +39,7 @@ codex --version
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1
 ```
 
-O worker aguarda o Codex ficar disponível, busca tarefas por ordem alfabética e processa uma tarefa por ciclo por padrão. A tarefa precisa declarar objetivo, escopo, critérios de aceite e condição de parada. Ao terminar, o bot mostra uma notificação do Windows e grava o último resultado em `automation/logs/last-completion.txt`.
+O worker aguarda o Codex ficar disponível, busca tarefas por ordem alfabética e processa uma tarefa por ciclo quando nenhum escopo é informado. A tarefa precisa declarar objetivo, escopo, critérios de aceite e condição de parada. Ao terminar, o bot mostra uma notificação do Windows e grava o último resultado em `automation/logs/last-completion.txt`.
 
 Para listar as tarefas disponíveis:
 
@@ -33,6 +53,14 @@ Para escolher exatamente uma tarefa:
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -TaskName 001-inventario.md -Once
 ```
 
+Para concluir todas as etapas de um módulo, nomeie as tarefas com o mesmo prefixo e execute o workstream. Por exemplo, `armamento-001-modelo.md`, `armamento-002-endpoint.md` e `armamento-003-testes.md` serão executadas nessa ordem:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -Workstream armamento
+```
+
+Esse comando continua até não existirem mais tarefas `armamento-*.md`. Se uma etapa falhar, o bot para no ponto da falha e avisa para que ela seja corrigida antes de continuar.
+
 Para executar sem manter o terminal aberto:
 
 ```powershell
@@ -45,9 +73,11 @@ Para processar somente uma tarefa:
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -Once
 ```
 
-O limite padrão é uma tarefa por execução. Para autorizar mais tarefas no mesmo ciclo, use `-MaxTasks 3`.
+Sem `-Workstream`, o limite padrão é uma tarefa por execução. Para autorizar mais tarefas no mesmo ciclo, use `-MaxTasks 3`.
 
 Use `-NoNotification` somente se não quiser o aviso visual do Windows.
+
+O bot executa o Codex com `--approve-for-me --sandbox workspace-write`. Isso permite o trabalho sem solicitar `Allow once` a cada comando, mas limita a execução ao workspace do projeto. A tarefa continua sendo o limite funcional: o Codex deve parar na condição de parada descrita no arquivo selecionado.
 
 ## Publicação automática opcional
 

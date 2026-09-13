@@ -3,8 +3,9 @@ param(
     [string]$TaskDirectory = '',
     [string]$CodexCommand = 'codex',
     [int]$PollSeconds = 30,
-    [int]$MaxTasks = 1,
+    [int]$MaxTasks = 0,
     [string]$TaskName = '',
+    [string]$Workstream = '',
     [switch]$ListTasks,
     [switch]$Once,
     [switch]$AutoCommit,
@@ -26,6 +27,10 @@ $completedDirectory = Join-Path $TaskDirectory 'completed'
 $failedDirectory = Join-Path $TaskDirectory 'failed'
 $logDirectory = Join-Path $PSScriptRoot 'logs'
 $processedTasks = 0
+$taskLimit = $MaxTasks
+if ($taskLimit -eq 0 -and -not $Workstream -and -not $TaskName) {
+    $taskLimit = 1
+}
 
 foreach ($directory in @($TaskDirectory, $workingDirectory, $completedDirectory, $failedDirectory, $logDirectory)) {
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
@@ -39,6 +44,9 @@ function Get-PendingTask {
     $pendingTasks = Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
         Where-Object { $_.Name -notlike '_*' } |
         Sort-Object Name
+    if ($Workstream) {
+        $pendingTasks = $pendingTasks | Where-Object { $_.Name -like "$Workstream-*.md" }
+    }
     if ($TaskName) {
         return $pendingTasks | Where-Object { $_.Name -eq $TaskName } | Select-Object -First 1
     }
@@ -63,6 +71,7 @@ Read the task below and implement it completely in the repository.
 - Run the narrowest relevant tests or validation commands.
 - Do not commit or push; the worker handles that when configured.
 - Stop exactly at the scope and stop condition in the task. Do not start another feature.
+- If this task belongs to a workstream, continue only through the next task in that same workstream.
 - At the end, report changed files, validation results, and any blocker.
 
 TASK
@@ -73,7 +82,7 @@ $task
 
 function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     $prompt = New-CodexPrompt $taskPath
-    $codexOutput = & $CodexCommand exec --full-auto --skip-git-repo-check $prompt 2>&1
+    $codexOutput = & $CodexCommand exec --approve-for-me --sandbox workspace-write --skip-git-repo-check $prompt 2>&1
     $exitCode = $LASTEXITCODE
     $codexOutput | Tee-Object -FilePath $logPath
     if ($exitCode -ne 0) {
@@ -146,6 +155,7 @@ function Show-CompletionNotice([string]$title, [string]$message) {
 if ($ListTasks) {
     Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
         Where-Object { $_.Name -notlike '_*' } |
+        Where-Object { -not $Workstream -or $_.Name -like "$Workstream-*.md" } |
         Sort-Object Name |
         Select-Object -ExpandProperty Name
     exit 0
@@ -186,5 +196,5 @@ while ($true) {
         Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $task.Name`nConsulte: $logPath"
     }
 
-    if ($MaxTasks -gt 0 -and $processedTasks -ge $MaxTasks) { break }
+    if ($taskLimit -gt 0 -and $processedTasks -ge $taskLimit) { break }
 }
