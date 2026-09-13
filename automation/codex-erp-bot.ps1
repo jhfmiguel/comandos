@@ -126,13 +126,13 @@ function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     $processInfo.RedirectStandardInput = $true
     $processInfo.RedirectStandardOutput = $true
     $processInfo.RedirectStandardError = $true
-    $processInfo.StandardInputEncoding = [System.Text.Encoding]::UTF8
-    $processInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-    $processInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $processInfo
     [void]$process.Start()
-    $process.StandardInput.Write($prompt)
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $promptBytes = $utf8.GetBytes($prompt)
+    $process.StandardInput.BaseStream.Write($promptBytes, 0, $promptBytes.Length)
+    $process.StandardInput.BaseStream.Flush()
     $process.StandardInput.Close()
     Write-BotStatus 'working' 'Codex está trabalhando na etapa atual.' (Split-Path $taskPath -Leaf)
     try {
