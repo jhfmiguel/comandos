@@ -1,4 +1,5 @@
 import { AxiosResponse } from "axios";
+import { useMemo } from "react";
 
 import { httpClient } from "api/http";
 import { Page } from "api/models/common/page";
@@ -14,6 +15,7 @@ export interface WeaponSearchFilters {
 }
 
 export const useWeaponService = () => {
+    return useMemo(() => {
     const saveWeapon = async (
         weapon: Weapon
     ): Promise<Weapon> => {
@@ -59,7 +61,8 @@ export const useWeaponService = () => {
     const findWeapon = async (
         filters: WeaponSearchFilters,
         page = 0,
-        size = 10
+        size = 10,
+        signal?: AbortSignal
     ): Promise<Page<Weapon>> => {
         const params = new URLSearchParams({
             sku: filters.sku,
@@ -72,7 +75,8 @@ export const useWeaponService = () => {
 
         const response: AxiosResponse<Page<Weapon>> =
             await httpClient.get(
-                `${resourceURL}?${params.toString()}`
+                `${resourceURL}?${params.toString()}`,
+                { signal }
             );
 
         return response.data;
@@ -85,4 +89,5 @@ export const useWeaponService = () => {
         deleteWeapon,
         findWeapon
     };
+    }, []);
 };

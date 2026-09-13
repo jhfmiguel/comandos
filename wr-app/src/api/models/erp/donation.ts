@@ -1,0 +1,5 @@
+export interface DonationStockOption { kind:"ASSET"|"LOT";stockId:number;code:string;modelName:string;sku:string;locationName:string;unitOfMeasure:string;available:string }
+export interface DonationLine { id:number;modelId:number;assetId:number|null;lotId:number|null;locationId:number;movementId:number;modelName:string;sku:string;stockCode:string;locationName:string;unitOfMeasure:string;quantity:string }
+export interface Donation { id:number;organizationId:number;organizationName:string;unitId:number|null;unitName:string|null;donorId:number;donorName:string;doneeId:number;doneeName:string;term:string;status:string;finalizedAt:string;finalizedById:number|null;finalizedByLogin:string|null;items:DonationLine[] }
+export interface DonationRequest { requestId:string;organizationId:number;unitId?:number;donorId:number;doneeId:number;term:string;items:{assetId?:number;balanceId?:number;quantity:number}[] }
+export interface DonationPage<T>{content:T[];totalElements:number;page:number;size:number}

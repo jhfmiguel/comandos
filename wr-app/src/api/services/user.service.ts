@@ -1,4 +1,5 @@
 import type { AxiosResponse } from "axios";
+import { useMemo } from "react";
 
 import { httpClient } from "api/http";
 import type { Page } from "api/models/common/page";
@@ -9,6 +10,7 @@ const resourceURL = "api/users";
 
 
 export const useUserService = () => {
+    return useMemo(() => {
   
 
     const saveUser = async ( user: User ): Promise<User> => {
@@ -51,7 +53,8 @@ export const useUserService = () => {
         birth: string = "",
         address: string = "",
         email: string = "",
-        phone: string = ""
+        phone: string = "",
+        signal?: AbortSignal
         
     ): Promise<Page<User>> => {
         
@@ -61,6 +64,7 @@ export const useUserService = () => {
 
         const response: AxiosResponse<Page<User>> = await httpClient.get< Page< User >>( resourceURL,
             {
+                signal,
                 params: 
                 {
                     name,
@@ -90,4 +94,5 @@ export const useUserService = () => {
     };
     
 
+    }, []);
 };
