@@ -82,8 +82,14 @@ $task
 
 function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     $prompt = New-CodexPrompt $taskPath
-    $codexOutput = & $CodexCommand exec --approve-for-me --skip-git-repo-check $prompt 2>&1
-    $exitCode = $LASTEXITCODE
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $codexOutput = & $CodexCommand exec --approve-for-me --skip-git-repo-check $prompt 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
     $codexOutput | Tee-Object -FilePath $logPath
     $outputText = $codexOutput -join "`n"
     if ($outputText -match '(?i)rate limit|out of codex|resets on|add credits|temporarily unavailable') {
