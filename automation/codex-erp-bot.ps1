@@ -17,6 +17,9 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$utf8Output = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = $utf8Output
+$OutputEncoding = $utf8Output
 
 if (-not $TaskDirectory) {
     $TaskDirectory = Join-Path $PSScriptRoot 'tasks'
@@ -224,12 +227,29 @@ function Show-CompletionNotice([string]$title, [string]$message) {
     }
 }
 
+function Get-TaskSummary([System.IO.FileInfo]$taskFile, [string]$taskState) {
+    $content = Get-Content -Raw -Encoding UTF8 -Path $taskFile.FullName
+    $description = 'Descrição não informada.'
+    if ($content -match '(?ms)^## Objetivo\s*\r?\n+(.+?)(?:\r?\n##|\z)') {
+        $description = ($matches[1] -replace '\s+', ' ').Trim()
+    }
+    Write-Output ("{0} | {1} | {2} | {3:yyyy-MM-dd HH:mm:ss}" -f $taskFile.Name, $taskState, $description, $taskFile.LastWriteTime)
+}
+
 if ($ListTasks) {
-    Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
-        Where-Object { $_.Name -notlike '_*' } |
-        Where-Object { -not $Workstream -or $_.Name -like "$Workstream-*.md" } |
-        Sort-Object Name |
-        Select-Object -ExpandProperty Name
+    $taskGroups = @(
+        @{ Path = $TaskDirectory; State = 'Pendente' },
+        @{ Path = $workingDirectory; State = 'Fazendo' },
+        @{ Path = $completedDirectory; State = 'Concluída' },
+        @{ Path = $failedDirectory; State = 'Falhou' }
+    )
+    foreach ($taskGroup in $taskGroups) {
+        Get-ChildItem -Path $taskGroup.Path -Filter '*.md' -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike '_*' } |
+            Where-Object { -not $Workstream -or $_.Name -like "$Workstream-*.md" } |
+            Sort-Object Name |
+            ForEach-Object { Get-TaskSummary $_ $taskGroup.State }
+    }
     exit 0
 }
 
