@@ -1,6 +1,5 @@
 package com.weaponsregistration.rest.sales;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,7 +13,6 @@ import jakarta.transaction.Transactional;
 
 @RestController
 @RequestMapping("/api/sales")
-@CrossOrigin("*")
 public class SalesController {
 	
 	private final SaleRepository saleRepository;

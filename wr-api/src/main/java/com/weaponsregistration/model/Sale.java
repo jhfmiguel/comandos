@@ -28,7 +28,7 @@ public class Sale {
 	@JoinColumn(name = "id_user")
 	private User user;
 	
-	@Enumerated(EnumType.ORDINAL)
+	@Enumerated(EnumType.STRING)
 	@Column(name = "payment_method")
 	private PaymentMethod paymentMethod;
 	

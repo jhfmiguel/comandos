@@ -1,0 +1,99 @@
+package com.weaponsregistration.audit.service;
+
+import com.weaponsregistration.audit.model.AuditRecord;
+import com.weaponsregistration.security.service.AccountPrincipal;
+import com.weaponsregistration.security.service.AccessPolicy;
+import jakarta.persistence.EntityManager;
+import java.time.Instant;
+import java.util.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+@Service
+@Transactional(readOnly = true)
+public class AuditService {
+    private final EntityManager em;
+    private final AccessPolicy access;
+    private final JsonMapper json = JsonMapper.builder().findAndAddModules().build();
+    private static final Set<String> SECRETS = Set.of("password", "passwordhash", "token", "csrftoken", "requestfingerprint", "authorization");
+    public AuditService(EntityManager em, AccessPolicy access) { this.em = em; this.access = access; }
+    public record Actor(Long id, String login, String type) {}
+    public record Summary(long id, Instant occurredAt, Long actorId, String actorLogin, String actorType, String resource, long recordId, String action) {}
+    public record Detail(Summary event, JsonNode before, JsonNode after) {}
+    public record Page(List<Summary> content, long totalElements, int page, int size) {}
+
+    public Actor actor() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal principal)
+            return new Actor(principal.accountId, principal.getUsername(), "ACCOUNT");
+        return new Actor(null, null, "UNAUTHENTICATED");
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void record(String resource, long recordId, String action, Object before, Object after) {
+        var actor = actor();
+        var event = new AuditRecord();
+        event.occurredAt = Instant.now();
+        event.actorId = actor.id(); event.actorLogin = actor.login(); event.actorType = actor.type();
+        event.resource = resource; event.recordId = recordId; event.action = action;
+        event.beforeJson = snapshot(before); event.afterJson = snapshot(after);
+        em.persist(event);
+    }
+
+    private String snapshot(Object value) {
+        if (value == null) return null;
+        return json.writeValueAsString(redact(json.valueToTree(value)));
+    }
+    private JsonNode redact(JsonNode node) {
+        if (node.isObject()) {
+            var result = json.createObjectNode();
+            for (var property : node.properties()) {
+                String normalized = property.getKey().replace("_", "").replace("-", "").toLowerCase(Locale.ROOT);
+                if (!SECRETS.contains(normalized)) result.set(property.getKey(), redact(property.getValue()));
+            }
+            return result;
+        }
+        if (node.isArray()) {
+            var result = json.createArrayNode();
+            node.forEach(item -> result.add(redact(item)));
+            return result;
+        }
+        return node;
+    }
+
+    public Page list(String resource, Long recordId, String action, String actor, Instant from, Instant until, int page) {
+        access.requireAny("audit", "READ");
+        if (page < 0 || page > 100000 || from != null && until != null && from.isAfter(until)) bad("Invalid audit filters.");
+        List<String> clauses = new ArrayList<>();
+        Map<String, Object> parameters = new HashMap<>();
+        if (resource != null && !resource.isBlank()) { clauses.add("a.resource = :resource"); parameters.put("resource", resource.trim()); }
+        if (recordId != null) { clauses.add("a.recordId = :recordId"); parameters.put("recordId", recordId); }
+        if (action != null && !action.isBlank()) { clauses.add("a.action = :action"); parameters.put("action", action); }
+        if (actor != null && !actor.isBlank()) {
+            clauses.add("lower(a.actorLogin) like :actor escape '!'");
+            parameters.put("actor", "%" + actor.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%");
+        }
+        if (from != null) { clauses.add("a.occurredAt >= :from"); parameters.put("from", from); }
+        if (until != null) { clauses.add("a.occurredAt <= :until"); parameters.put("until", until); }
+        String where = clauses.isEmpty() ? "" : " where " + String.join(" and ", clauses);
+        var query = em.createQuery("select a from AuditRecord a" + where + " order by a.id desc", AuditRecord.class);
+        var count = em.createQuery("select count(a) from AuditRecord a" + where, Long.class);
+        parameters.forEach((key, value) -> { query.setParameter(key, value); count.setParameter(key, value); });
+        return new Page(query.setFirstResult(page * 20).setMaxResults(20).getResultList().stream().map(this::summary).toList(), count.getSingleResult(), page, 20);
+    }
+
+    public Detail get(long id) {
+        access.requireAny("audit", "READ");
+        var event = em.find(AuditRecord.class, id);
+        if (event == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Audit record not found.");
+        return new Detail(summary(event), event.beforeJson == null ? null : json.readTree(event.beforeJson), event.afterJson == null ? null : json.readTree(event.afterJson));
+    }
+    private Summary summary(AuditRecord a) { return new Summary(a.id, a.occurredAt, a.actorId, a.actorLogin, a.actorType, a.resource, a.recordId, a.action); }
+    private static void bad(String detail) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, detail); }
+}

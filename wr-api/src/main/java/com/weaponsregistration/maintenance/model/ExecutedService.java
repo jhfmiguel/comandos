@@ -1,0 +1,2 @@
+package com.weaponsregistration.maintenance.model;import com.weaponsregistration.core.model.CoreEntity;import jakarta.persistence.*;import java.math.BigDecimal;
+@Entity @Table(name="erp_executed_service")public class ExecutedService extends CoreEntity{@ManyToOne(optional=false)@JoinColumn(name="work_order_id",nullable=false)public WorkOrder workOrder;@Column(nullable=false,length=1000)public String description;@Column(nullable=false,precision=19,scale=4)public BigDecimal cost;}
