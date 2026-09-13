@@ -16,6 +16,20 @@ function Get-TaskDescription([string]$path) {
     return 'Descrição não informada.'
 }
 
+function Get-TaskProgress([string]$path, [string]$state) {
+    $content = Get-Content -Raw -Encoding UTF8 -Path $path
+    $criteria = [regex]::Matches($content, '(?m)^- \[([ xX])\]')
+    if ($criteria.Count -gt 0) {
+        $checked = @($criteria | Where-Object { $_.Groups[1].Value -match '[xX]' }).Count
+        return [math]::Round(($checked / $criteria.Count) * 100)
+    }
+    switch ($state) {
+        'Fazendo' { return 50 }
+        'Concluída' { return 100 }
+        default { return 0 }
+    }
+}
+
 function Get-TaskRows {
     $groups = @(
         @{ Path = $taskRoot; State = 'Pendente' },
@@ -31,6 +45,7 @@ function Get-TaskRows {
                     Nome = $_.Name
                     Estado = $group.State
                     Descricao = Get-TaskDescription $_.FullName
+                    Progresso = Get-TaskProgress $_.FullName $group.State
                     Atualizado = $_.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
                 }
             }
@@ -61,6 +76,33 @@ function Write-ProgressSummary($rows) {
     Write-Host ''
 }
 
+function Get-ShortText([string]$value, [int]$maxLength) {
+    if ($value.Length -le $maxLength) { return $value }
+    return $value.Substring(0, $maxLength - 3) + '...'
+}
+
+function Write-HorizontalQueue($rows) {
+    $terminalWidth = 120
+    try { $terminalWidth = [int]$Host.UI.RawUI.WindowSize.Width } catch { }
+    $stateWidth = 9
+    $nameWidth = 30
+    $progressWidth = 8
+    $updatedWidth = 16
+    $descriptionWidth = [math]::Max(20, $terminalWidth - $stateWidth - $nameWidth - $progressWidth - $updatedWidth - 8)
+    $header = 'Estado'.PadRight($stateWidth) + ' ' + 'Nome'.PadRight($nameWidth) + ' ' + 'Descrição'.PadRight($descriptionWidth) + ' ' + 'Progresso'.PadRight($progressWidth) + ' ' + 'Atualizado'.PadRight($updatedWidth)
+    Write-Host $header -ForegroundColor Cyan
+    Write-Host ('-' * [math]::Min($terminalWidth - 1, 120)) -ForegroundColor DarkGray
+    foreach ($row in $rows) {
+        $state = ('{0,-9}' -f (Get-ShortText $row.Estado $stateWidth))
+        $name = ('{0,-30}' -f (Get-ShortText $row.Nome $nameWidth))
+        $description = (Get-ShortText $row.Descricao $descriptionWidth).PadRight($descriptionWidth)
+        $progress = ('{0,6}%' -f $row.Progresso)
+        $updated = ('{0,-16}' -f (Get-ShortText $row.Atualizado $updatedWidth))
+        Write-Host $state -NoNewline -ForegroundColor (Get-StateColor $row.Estado)
+        Write-Host (' ' + $name + ' ' + $description + ' ' + $progress + ' ' + $updated)
+    }
+}
+
 while ($true) {
     Clear-Host
     Write-Host 'COMANDOS - FILA DO ARMAMENTO' -ForegroundColor Cyan
@@ -75,12 +117,7 @@ while ($true) {
     Write-Host ''
     $rows = @(Get-TaskRows)
     Write-ProgressSummary $rows
-    foreach ($row in $rows) {
-        $color = Get-StateColor $row.Estado
-        Write-Host ('[{0,-10}] {1}' -f $row.Estado, $row.Nome) -ForegroundColor $color
-        Write-Host ('             {0}' -f $row.Descricao) -ForegroundColor DarkGray
-        Write-Host ('             Atualizado: {0}' -f $row.Atualizado) -ForegroundColor DarkGray
-    }
+    Write-HorizontalQueue $rows
     if ($Once) { break }
     Write-Host ('Atualizando a cada {0}s. Ctrl+C para sair.' -f $RefreshSeconds) -ForegroundColor DarkGray
     Start-Sleep -Seconds $RefreshSeconds
