@@ -19,7 +19,21 @@ codex --version
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1
 ```
 
-O worker aguarda o Codex ficar disponível, busca tarefas por ordem alfabética e processa uma por vez. Para executar sem manter o terminal aberto:
+O worker aguarda o Codex ficar disponível, busca tarefas por ordem alfabética e processa uma tarefa por ciclo por padrão. A tarefa precisa declarar objetivo, escopo, critérios de aceite e condição de parada. Ao terminar, o bot mostra uma notificação do Windows e grava o último resultado em `automation/logs/last-completion.txt`.
+
+Para listar as tarefas disponíveis:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -ListTasks
+```
+
+Para escolher exatamente uma tarefa:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -TaskName 001-inventario.md -Once
+```
+
+Para executar sem manter o terminal aberto:
 
 ```powershell
 Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1'
@@ -30,6 +44,10 @@ Para processar somente uma tarefa:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\automation\codex-erp-bot.ps1 -Once
 ```
+
+O limite padrão é uma tarefa por execução. Para autorizar mais tarefas no mesmo ciclo, use `-MaxTasks 3`.
+
+Use `-NoNotification` somente se não quiser o aviso visual do Windows.
 
 ## Publicação automática opcional
 

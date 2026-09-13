@@ -1,12 +1,15 @@
 [CmdletBinding()]
 param(
-    [string]$TaskDirectory = (Join-Path $PSScriptRoot 'tasks'),
+    [string]$TaskDirectory = '',
     [string]$CodexCommand = 'codex',
     [int]$PollSeconds = 30,
-    [int]$MaxTasks = 0,
+    [int]$MaxTasks = 1,
+    [string]$TaskName = '',
+    [switch]$ListTasks,
     [switch]$Once,
     [switch]$AutoCommit,
     [switch]$AutoPush,
+    [switch]$NoNotification,
     [string]$Remote = 'origin',
     [string]$Branch = 'main'
 )
@@ -14,6 +17,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if (-not $TaskDirectory) {
+    $TaskDirectory = Join-Path $PSScriptRoot 'tasks'
+}
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $workingDirectory = Join-Path $TaskDirectory 'working'
 $completedDirectory = Join-Path $TaskDirectory 'completed'
@@ -30,14 +36,22 @@ function Test-CodexAvailable {
 }
 
 function Get-PendingTask {
-    return Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
+    $pendingTasks = Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
         Where-Object { $_.Name -notlike '_*' } |
-        Sort-Object Name |
-        Select-Object -First 1
+        Sort-Object Name
+    if ($TaskName) {
+        return $pendingTasks | Where-Object { $_.Name -eq $TaskName } | Select-Object -First 1
+    }
+    return $pendingTasks | Select-Object -First 1
 }
 
 function New-CodexPrompt([string]$taskPath) {
     $task = Get-Content -Raw -Path $taskPath
+    foreach ($requiredSection in @('## Objetivo', '## Escopo', '## Critérios de aceite', '## Condição de parada')) {
+        if ($task -notmatch [regex]::Escape($requiredSection)) {
+            throw "Task '$taskPath' does not contain the required section '$requiredSection'."
+        }
+    }
     return @"
 You are the implementation agent for the COMANDOS ERP repository.
 Repository: $repositoryRoot
@@ -48,6 +62,7 @@ Read the task below and implement it completely in the repository.
 - Keep the change focused on this task.
 - Run the narrowest relevant tests or validation commands.
 - Do not commit or push; the worker handles that when configured.
+- Stop exactly at the scope and stop condition in the task. Do not start another feature.
 - At the end, report changed files, validation results, and any blocker.
 
 TASK
@@ -108,10 +123,41 @@ function Fail-Task([string]$taskPath) {
     Move-Item -Force -Path $taskPath -Destination (Join-Path $failedDirectory (Split-Path $taskPath -Leaf))
 }
 
+function Show-CompletionNotice([string]$title, [string]$message) {
+    $noticePath = Join-Path $logDirectory 'last-completion.txt'
+    "$(Get-Date -Format s) - $title`r`n$message" | Set-Content -Path $noticePath
+    if ($NoNotification) { return }
+    try {
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Drawing
+        $notifyIcon = New-Object System.Windows.Forms.NotifyIcon
+        $notifyIcon.Icon = [System.Drawing.SystemIcons]::Information
+        $notifyIcon.Visible = $true
+        $notifyIcon.BalloonTipTitle = $title
+        $notifyIcon.BalloonTipText = $message
+        $notifyIcon.ShowBalloonTip(8000)
+        Start-Sleep -Seconds 8
+        $notifyIcon.Dispose()
+    } catch {
+        Write-Warning "Could not show Windows notification: $($_.Exception.Message)"
+    }
+}
+
+if ($ListTasks) {
+    Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
+        Where-Object { $_.Name -notlike '_*' } |
+        Sort-Object Name |
+        Select-Object -ExpandProperty Name
+    exit 0
+}
+
 while ($true) {
     $task = Get-PendingTask
     if ($null -eq $task) {
-        if ($Once) { break }
+        if ($Once -or $processedTasks -gt 0) {
+            Show-CompletionNotice 'COMANDOS Codex Bot finalizado' "Tarefas processadas: $processedTasks. Não há mais tarefas no escopo."
+            break
+        }
         Start-Sleep -Seconds $PollSeconds
         continue
     }
@@ -130,13 +176,15 @@ while ($true) {
         Invoke-CodexTask $workingTask $logPath
         Invoke-ProjectValidation
         Complete-Task $workingTask
+        $processedTasks++
+        Show-CompletionNotice 'Tarefa do COMANDOS concluída' "Tarefa: $task.Name`nLog: $logPath"
     } catch {
         $_ | Out-String | Tee-Object -FilePath $logPath -Append
         if (Test-Path $workingTask) {
             Fail-Task $workingTask
         }
+        Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $task.Name`nConsulte: $logPath"
     }
 
-    $processedTasks++
     if ($MaxTasks -gt 0 -and $processedTasks -ge $MaxTasks) { break }
 }
