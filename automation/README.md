@@ -77,7 +77,7 @@ Sem `-Workstream`, o limite padrão é uma tarefa por execução. Para autorizar
 
 Use `-NoNotification` somente se não quiser o aviso visual do Windows.
 
-O bot executa o Codex com `--approve-for-me --sandbox workspace-write`. Isso permite o trabalho sem solicitar `Allow once` a cada comando, mas limita a execução ao workspace do projeto. A tarefa continua sendo o limite funcional: o Codex deve parar na condição de parada descrita no arquivo selecionado.
+O bot executa o Codex com `--approve-for-me`. Isso permite o trabalho sem solicitar `Allow once` a cada comando. A tarefa continua sendo o limite funcional: o Codex deve parar na condição de parada descrita no arquivo selecionado. Se o serviço estiver em rate limit, a etapa volta para a fila e o worker aguarda, sem marcá-la como concluída.
 
 ## Publicação automática opcional
 

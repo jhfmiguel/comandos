@@ -82,9 +82,13 @@ $task
 
 function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
     $prompt = New-CodexPrompt $taskPath
-    $codexOutput = & $CodexCommand exec --approve-for-me --sandbox workspace-write --skip-git-repo-check $prompt 2>&1
+    $codexOutput = & $CodexCommand exec --approve-for-me --skip-git-repo-check $prompt 2>&1
     $exitCode = $LASTEXITCODE
     $codexOutput | Tee-Object -FilePath $logPath
+    $outputText = $codexOutput -join "`n"
+    if ($outputText -match '(?i)rate limit|out of codex|resets on|add credits|temporarily unavailable') {
+        throw 'CODEX_UNAVAILABLE'
+    }
     if ($exitCode -ne 0) {
         throw "Codex exited with code $exitCode. See $logPath"
     }
@@ -187,13 +191,19 @@ while ($true) {
         Invoke-ProjectValidation
         Complete-Task $workingTask
         $processedTasks++
-        Show-CompletionNotice 'Tarefa do COMANDOS concluída' "Tarefa: $task.Name`nLog: $logPath"
+        Show-CompletionNotice 'Tarefa do COMANDOS concluída' "Tarefa: $($task.Name)`nLog: $logPath"
     } catch {
-        $_ | Out-String | Tee-Object -FilePath $logPath -Append
+        $errorText = $_ | Out-String
+        $errorText | Tee-Object -FilePath $logPath -Append
+        if ($errorText -match 'CODEX_UNAVAILABLE|rate limit|out of codex|resets on|add credits|temporarily unavailable') {
+            Move-Item -Force -Path $workingTask -Destination (Join-Path $TaskDirectory $task.Name)
+            Start-Sleep -Seconds $PollSeconds
+            continue
+        }
         if (Test-Path $workingTask) {
             Fail-Task $workingTask
         }
-        Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $task.Name`nConsulte: $logPath"
+        Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $($task.Name)`nConsulte: $logPath"
         break
     }
 
