@@ -36,6 +36,7 @@ import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
 import { Message } from "components/common/message";
 import { useSession } from "components/auth/session-provider";
+import { useComandosPreferences } from "components/settings/preferences-provider";
 import type { ErpField, ErpPage, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
 import { createErpService, type ErpService, type ErpModule } from "api/services/erp.service";
 import styles from "./workspace.module.css";
@@ -104,6 +105,7 @@ export function RecordWorkspace({ module, title, initialResource, description, s
 
     const service = React.useMemo(() => createErpService(module), [module]);
     const { session } = useSession();
+    const { tr } = useComandosPreferences();
     const accessRevision = JSON.stringify(session?.access);
     
     const [catalog, setCatalog] = React.useState<ErpResource[]>([]);
@@ -150,16 +152,16 @@ export function RecordWorkspace({ module, title, initialResource, description, s
     
     return (
 
-        <Layout title={title}>
+        <Layout title={tr(title)}>
 
             <div className={styles.workspace}>
                 
-                <p className={styles.intro}>{description}</p>
+                <p className={styles.intro}>{tr(description)}</p>
                 
                 {error && <Message type="error" text={error} />}
-                {error && <Button type="button" onClick={() => { setError(""); setRetry(value => value + 1); }}>Retry</Button>}
-                {!catalogLoaded && !error && <p role="status">Loading records…</p>}
-                {catalogLoaded && !catalog.length && <Message type="info" text="No resources are available for your access profile." />}
+                {error && <Button type="button" onClick={() => { setError(""); setRetry(value => value + 1); }}>{tr("Retry")}</Button>}
+                {!catalogLoaded && !error && <p role="status">{tr("Loading records…")}</p>}
+                {catalogLoaded && !catalog.length && <Message type="info" text={tr("No resources are available for your access profile.")} />}
                 {!!catalog.length && (
                     
                     <div className={showNavigation ? styles.shell : `${styles.shell} ${styles.shellSingle}`}>
@@ -179,7 +181,7 @@ export function RecordWorkspace({ module, title, initialResource, description, s
                                                                 
 
                         
-                                                                <p className={styles.group}>{group}</p>
+                                                                <p className={styles.group}>{tr(group)}</p>
 
                         
                                                                 {catalog.filter(item => item.group === group).map(item => (
@@ -188,7 +190,7 @@ export function RecordWorkspace({ module, title, initialResource, description, s
                                                                     <button key={item.key} type="button" aria-current={resource?.key === item.key ? "page" : undefined}
 
                         
-                                                                        onClick={() => setSelected(item.key)}>{item.label}</button>
+                                                                        onClick={() => setSelected(item.key)}>{tr(item.label)}</button>
 
                         
                                                                 ))}
@@ -248,6 +250,7 @@ function getErpServerFilters(
 }
 
 function ResourcePanel({ resource, service }: { resource: ErpResource; service: ErpService }) {
+    const { tr } = useComandosPreferences();
     const allowed = (action: string) => !resource.readOnly && (!resource.actions || resource.actions.includes(action));
     
     const [search, setSearch] = React.useState("");
@@ -315,7 +318,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
         
         if (value == null || value === "") return "—";
         if (field.type === "reference") return record.referenceLabels[field.name] || `#${value}`;
-        if (field.type === "boolean") return value ? "Yes" : "No";
+        if (field.type === "boolean") return value ? tr("Yes") : tr("No");
 
         return String(value).replaceAll("_", " ");
     
@@ -327,16 +330,16 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
             
             <div className={styles.toolbar}>
                 
-                <h1 id="resource-title">{resource.label}</h1>
+                <h1 id="resource-title">{tr(resource.label)}</h1>
                 {allowed("CREATE") && 
                 <Button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
-                    <Plus size={16} /><span>New record</span>
+                    <Plus size={16} /><span>{tr("New record")}</span>
                 </Button>
                 }
                 {resource.key === "assets" && allowed("CREATE") && <Button type="button" severity="secondary"
-                    onClick={() => setEditor({})}>Register single asset</Button>}
+                    onClick={() => setEditor({})}>{tr("Register single asset")}</Button>}
                 {resource.key === "lots" && allowed("CREATE") && <Button type="button" className="registration-yellow-button"
-                    onClick={() => setIntake(true)}>Receive ammunition boxes</Button>}
+                    onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</Button>}
             </div>
             
             {notice && 
@@ -376,7 +379,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
                                     {columns.map((field) => (
                                         <DataTable.THeadCell key={field.name}>
-                                            {field.label}
+                                            {tr(field.label)}
                                         </DataTable.THeadCell>
                                     ))}
 
@@ -420,7 +423,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                                 event.target.value
                                                             );
                                                         }}
-                                                        placeholder={`Search ${field.label.toLowerCase()}...`}
+                                                        placeholder={`${tr("Search")} ${tr(field.label).toLowerCase()}...`}
                                                         size="small"
                                                         fluid
                                                     />
@@ -467,7 +470,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                         type="button"
                                                         variant="text"
                                                         severity="secondary"
-                                                        aria-label={`Edit ${record.label}`}
+                                                        aria-label={`${tr("Edit")} ${record.label}`}
                                                         disabled={!allowed("UPDATE")}
                                                         onClick={() => setEditor({ record })}
                                                     >
@@ -478,7 +481,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                         type="button"
                                                         variant="text"
                                                         severity="danger"
-                                                        aria-label={`Delete ${record.label}`}
+                                                        aria-label={`${tr("Delete")} ${record.label}`}
                                                         disabled={!allowed("DELETE")}
                                                         onClick={() => setDeleting(record)}
                                                     >
@@ -670,6 +673,8 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
 }) {
 
+    const { tr } = useComandosPreferences();
+
     const [values, setValues] = React.useState<Record<string, ErpValue>>
         (() => Object.fromEntries(resource.fields.map(field => 
         [field.name, field.type === "password" ? "" 
@@ -729,7 +734,7 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                     {resource.fields.map(field => {
                                         const required = field.required && !(record && field.type === "password");
                                         return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && field.createOnly)}>
-                                            <label htmlFor={`core-${field.name}`}>{field.label}{required ? " *" : ""}</label>
+                                            <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
                                             {resource.key === "profiles" && field.name === "level" && <small>Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.</small>}
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
                                             {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}

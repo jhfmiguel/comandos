@@ -25,7 +25,7 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
 
             <Menu />
 
-            <Sidebar.Main className="comandos-sidebar-main">
+            <Sidebar.Main className="comandos-sidebar-main pt-0">
 
                 <header className="comandos-main-header flex h-12 items-center gap-3 px-4">
 
@@ -44,7 +44,7 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
 
                 </header>
 
-                <div className="flex-1 px-4 pb-4 pt-4">
+                <div className="comandos-main-content flex-1 px-4 pb-4 pt-4">
 
                     <div className="comandos-main-card surface-card border-round shadow-2 overflow-hidden">
 

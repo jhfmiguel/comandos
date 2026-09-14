@@ -74,7 +74,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 && grant.organizationId === organizationId && grant.unitId === unitId));
     return <SessionContext.Provider value={{ session, refresh, signOut, can }}>
         {canDisplay ? <>
-            {!isBot && pathname !== "/login" && !session?.requireLogin && <div className="px-4 pt-3"><Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." /></div>}
+            {!isBot && pathname !== "/login" && !session?.requireLogin && <Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." />}
             {children}
         </> : <main className="max-w-lg mx-auto p-6">
             {error ? <><Message type="error" text={error} /><Button onClick={() => { setError(""); void refresh(); }}>Retry</Button></> : <p role="status">Checking session…</p>}

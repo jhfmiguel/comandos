@@ -1,0 +1,401 @@
+COMANDOS - I18N AUDIT
+Generated: 2026-09-14T13:15:26.300Z
+Potential untranslated literals: 397
+
+src\api\services\ammunition-consumption.service.ts:8 | (await httpClient.post
+src\api\services\custody.service.ts:10 | (await httpClient.post
+src\api\services\disposal.service.ts:5 | (await httpClient.get
+src\api\services\disposal.service.ts:6 | (await httpClient.post
+src\api\services\disposal.service.ts:7 | (await httpClient.get
+src\api\services\donation.service.ts:5 | (await httpClient.get
+src\api\services\donation.service.ts:6 | (await httpClient.post
+src\api\services\donation.service.ts:7 | (await httpClient.get
+src\api\services\inventory-count.service.ts:1 | (await httpClient.get
+src\api\services\inventory-count.service.ts:1 | (await httpClient.post
+src\api\services\inventory-count.service.ts:1 | (await httpClient.put
+src\api\services\inventory-sales.service.ts:18 | (await httpClient.post
+src\api\services\maintenance.service.ts:1 | (await httpClient.get
+src\api\services\maintenance.service.ts:1 | (await httpClient.post
+src\api\services\reservation.service.ts:1 | (await httpClient.get
+src\api\services\reservation.service.ts:1 | (await httpClient.post
+src\api\services\transfer.service.ts:8 | (await httpClient.get
+src\api\services\transfer.service.ts:11 | (await httpClient.post
+src\api\services\user.service.ts:18 | = await httpClient.post
+src\api\services\user.service.ts:34 | = await httpClient.get
+src\api\services\user.service.ts:65 | = await httpClient.get
+src\app\dashboard\page.tsx:80 | 4.8% this month
+src\app\dashboard\page.tsx:89 | 2.3% this month
+src\app\dashboard\page.tsx:98 | 86 updated today
+src\app\dashboard\page.tsx:107 | 1.2% this month
+src\app\page.tsx:93 | Dashboard period
+src\app\page.tsx:138 | Available inventory
+src\app\page.tsx:144 | Pending controls
+src\app\page.tsx:154 | Monthly movements
+src\app\page.tsx:155 | Equipment movement volume
+src\app\page.tsx:157 | Monthly movements options
+src\app\page.tsx:170 | this year
+src\app\page.tsx:175 | Monthly movements chart
+src\app\page.tsx:200 | Monthly target
+src\app\page.tsx:201 | Operational readiness
+src\app\page.tsx:203 | Monthly target options
+src\app\page.tsx:218 | +10.5% from last month
+src\app\page.tsx:219 | Inventory availability is progressing toward the operational target.
+src\app\page.tsx:247 | Movements and custodies
+src\app\page.tsx:257 | Statistics chart
+src\app\page.tsx:276 | Inventory overview
+src\app\page.tsx:277 | Asset availability by status
+src\app\page.tsx:279 | Inventory overview options
+src\app\page.tsx:309 | Recent movements
+src\app\page.tsx:310 | Latest inventory operations
+src\app\page.tsx:322 | Destination / Unit
+src\app\registrations\users\page.tsx:5 | Loading user registration…
+src\app\registrations\weapons\page.tsx:5 | Loading weapon registration…
+src\app\settings\page.tsx:46 | Português do Brasil / English
+src\components\auth\session-provider.tsx:80 | Checking session…
+src\components\bot\comandos-task-board.tsx:49 | void | Promise
+src\components\bot\comandos-task-board.tsx:527 | Buscar no Task Board
+src\components\bot\comandos-task-board.tsx:528 | Buscar no Task Board
+src\components\bot\comandos-task-board.tsx:534 | Limpar busca
+src\components\bot\comandos-task-board.tsx:535 | Limpar busca
+src\components\bot\comandos-task-board.tsx:549 | Filtrar por prioridade
+src\components\bot\comandos-task-board.tsx:553 | Média
+src\components\bot\comandos-task-board.tsx:564 | Filtrar por tipo
+src\components\bot\comandos-task-board.tsx:603 | Opções do Task Board
+src\components\bot\comandos-task-board.tsx:604 | Opções do Task Board
+src\components\bot\comandos-task-board.tsx:624 | Sem agrupamento
+src\components\bot\comandos-task-board.tsx:642 | Mais recentes
+src\components\bot\comandos-task-board.tsx:700 | selecionado(s)
+src\components\bot\comandos-task-board.tsx:799 | Mover coluna para esquerda
+src\components\bot\comandos-task-board.tsx:814 | Mover coluna para direita
+src\components\bot\comandos-task-board.tsx:967 | Enviar ao bot
+src\components\bot\command-center.tsx:1444 | Enviar ao bot
+src\components\bot\command-center.tsx:1449 | Voltar para backlog
+src\components\bot\command-center.tsx:1461 | Fila real do bot
+src\components\bot\command-center.tsx:1462 | Fila real do bot
+src\components\bot\command-center.tsx:1466 | Fila real do bot
+src\components\bot\command-center.tsx:1473 | Fila real do bot
+src\components\bot\command-center.tsx:1488 | Fila real do bot
+src\components\bot\command-center.tsx:1489 | Fila real do bot
+src\components\bot\command-center.tsx:1490 | Fila real do bot
+src\components\bot\command-center.tsx:1497 | Fila real do bot
+src\components\bot\command-center.tsx:1501 | Fila real do bot
+src\components\bot\command-center.tsx:1579 | Fila real do bot
+src\components\bot\command-center.tsx:1587 | Fila real do bot
+src\components\bot\command-center.tsx:1598 | Fila real do bot
+src\components\bot\command-center.tsx:1599 | Fila real do bot
+src\components\bot\command-center.tsx:1600 | Fila real do bot
+src\components\bot\command-center.tsx:1609 | Fila real do bot
+src\components\bot\command-center.tsx:1610 | Fila real do bot
+src\components\bot\command-center.tsx:1625 | Fila real do bot
+src\components\bot\command-center.tsx:1626 | Fila real do bot
+src\components\bot\command-center.tsx:1627 | Fila real do bot
+src\components\bot\command-center.tsx:1628 | Fila real do bot
+src\components\bot\command-center.tsx:1633 | Fila real do bot
+src\components\bot\command-center.tsx:1634 | Fila real do bot
+src\components\bot\command-center.tsx:1807 | Status e controle do bot
+src\components\bot\command-center.tsx:1809 | Status atual do bot
+src\components\bot\command-center.tsx:2016 | Sprints do ERP
+src\components\bot\command-center.tsx:2091 | Fechar formulário de sprint
+src\components\bot\command-center.tsx:2225 | Fechar aviso
+src\components\bot\command-center.tsx:2247 | Fechar formulário de requisito
+src\components\bot\command-center.tsx:2309 | Média
+src\components\bot\command-center.tsx:2362 | Fila real do bot
+src\components\bot\command-center.tsx:2475 | Voltar para backlog
+src\components\bot\command-center.tsx:2476 | Voltar para backlog
+src\components\common\message\index.tsx:47 | Close message
+src\components\erp\ammunition-consumption\index.tsx:30 | (null); const [unit, setUnit] = React.useState
+src\components\erp\ammunition-consumption\index.tsx:31 | (null); const [authorizer, setAuthorizer] = React.useState
+src\components\erp\ammunition-consumption\index.tsx:39 | 0 && Number(item.quantity)
+src\components\erp\ammunition-consumption\index.tsx:47 | = 400 && status
+src\components\erp\ammunition-consumption\index.tsx:55 | Organization *
+src\components\erp\ammunition-consumption\index.tsx:59 | Responsible person *
+src\components\erp\ammunition-consumption\index.tsx:60 | Authorizer *
+src\components\erp\ammunition-consumption\index.tsx:61 | Purpose *
+src\components\erp\ammunition-consumption\index.tsx:65 | Quantity *
+src\components\erp\ammunition-consumption\index.tsx:65 | Result *
+src\components\erp\ammunition-consumption\index.tsx:73 | + Consumption
+src\components\erp\ammunition-consumption\index.tsx:98 | Loading history…
+src\components\erp\audit\index.tsx:492 | Search account...
+src\components\erp\audit\index.tsx:524 | Search operation...
+src\components\erp\audit\index.tsx:556 | Search resource...
+src\components\erp\audit\index.tsx:589 | Search ID...
+src\components\erp\audit\index.tsx:820 | Audit event details
+src\components\erp\custody\index.tsx:70 | = 400 && status
+src\components\erp\custody\index.tsx:82 | Organization *
+src\components\erp\custody\index.tsx:88 | Recipient type *
+src\components\erp\custody\index.tsx:94 | Recipient *
+src\components\erp\custody\index.tsx:96 | Receiving organizational unit *
+src\components\erp\custody\index.tsx:99 | Authorizer *
+src\components\erp\custody\index.tsx:101 | Purpose *
+src\components\erp\custody\index.tsx:127 | + Custody
+src\components\erp\custody\index.tsx:207 | = 400 && status
+src\components\erp\custody\index.tsx:211 | Custody history
+src\components\erp\custody\index.tsx:212 | Refresh history
+src\components\erp\custody\index.tsx:216 | Retry pending return
+src\components\erp\custody\index.tsx:217 | Loading custody history…
+src\components\erp\custody\index.tsx:218 | Return condition *
+src\components\erp\custody\index.tsx:223 | !item.returnedAt); return
+src\components\erp\custody\index.tsx:229 | Equipment / model
+src\components\erp\custody\index.tsx:229 | Set / role
+src\components\erp\custody\index.tsx:238 | Open maintenance
+src\components\erp\custody\index.tsx:242 | Return all pending
+src\components\erp\custody\index.tsx:244 | No custody records in the selected scope.
+src\components\erp\disposals\index.tsx:18 | Asset disposal
+src\components\erp\disposals\index.tsx:20 | ([]);const[pending,setPending]=React.useState
+src\components\erp\disposals\index.tsx:20 | (null);const[completed,setCompleted]=React.useState
+src\components\erp\disposals\index.tsx:20 | (null);const[processNumber,setProcessNumber]=React.useState("");const[reason,setReason]=React.useState("");const[destroy,setDestroy]=React.useState(false);const[method,setMethod]=React.useState("");const[destroyedAt,setDestroyedAt]=React.useState("");const[certificate,setCertificate]=React.useState("");const[selected,setSelected]=React.useState
+src\components\erp\disposals\index.tsx:20 | (null);const[unit,setUnit]=React.useState
+src\components\erp\disposals\index.tsx:21 | 0&&Number(item.quantity)
+src\components\erp\disposals\index.tsx:22 | =400&&status
+src\components\erp\disposals\index.tsx:23 | Permanently remove assets or lot quantities through a formal disposal process.
+src\components\erp\disposals\index.tsx:24 | Organization *
+src\components\erp\disposals\index.tsx:26 | Process number *
+src\components\erp\disposals\index.tsx:27 | Reason *
+src\components\erp\disposals\index.tsx:28 | Enable when disposal includes certified destruction.
+src\components\erp\disposals\index.tsx:28 | Record physical destruction
+src\components\erp\disposals\index.tsx:29 | Destruction certificate *
+src\components\erp\disposals\index.tsx:29 | Destruction date and time *
+src\components\erp\disposals\index.tsx:29 | Destruction method *
+src\components\erp\disposals\index.tsx:30 | + Disposal
+src\components\erp\disposals\index.tsx:30 | Disposal items
+src\components\erp\disposals\index.tsx:30 | Select an organization and add available stock.
+src\components\erp\disposals\index.tsx:33 | ("ASSET");const[search,setSearch]=React.useState("");const[page,setPage]=React.useState(0);const[result,setResult]=React.useState
+src\components\erp\disposals\index.tsx:33 | Code / model
+src\components\erp\disposals\index.tsx:33 | Code, model or SKU
+src\components\erp\disposals\index.tsx:33 | Loading stock…
+src\components\erp\disposals\index.tsx:33 | No available stock matches your search.
+src\components\erp\disposals\index.tsx:33 | Stock type
+src\components\erp\disposals\index.tsx:34 | controller.abort()},[organizationId,unitId,page,refresh]);return
+src\components\erp\disposals\index.tsx:34 | Loading history…
+src\components\erp\disposals\index.tsx:34 | No disposals in the selected scope.
+src\components\erp\donations\index.tsx:20 | ([]);const[pending,setPending]=React.useState
+src\components\erp\donations\index.tsx:20 | (null);const[completed,setCompleted]=React.useState
+src\components\erp\donations\index.tsx:20 | (null);const[donee,setDonee]=React.useState
+src\components\erp\donations\index.tsx:20 | (null);const[donor,setDonor]=React.useState
+src\components\erp\donations\index.tsx:20 | (null);const[term,setTerm]=React.useState("");const[selected,setSelected]=React.useState
+src\components\erp\donations\index.tsx:20 | (null);const[unit,setUnit]=React.useState
+src\components\erp\donations\index.tsx:21 | 0&&Number(i.quantity)
+src\components\erp\donations\index.tsx:22 | =400&&status
+src\components\erp\donations\index.tsx:23 | Donate available assets or lot-controlled stock under a formal term.
+src\components\erp\donations\index.tsx:24 | Organization *
+src\components\erp\donations\index.tsx:26 | Donor representative *
+src\components\erp\donations\index.tsx:27 | Donee *
+src\components\erp\donations\index.tsx:28 | Donation term *
+src\components\erp\donations\index.tsx:29 | + Donation
+src\components\erp\donations\index.tsx:29 | Donation items
+src\components\erp\donations\index.tsx:29 | Select an organization and add available stock.
+src\components\erp\donations\index.tsx:32 | ("ASSET");const[search,setSearch]=React.useState("");const[page,setPage]=React.useState(0);const[result,setResult]=React.useState
+src\components\erp\donations\index.tsx:32 | Code / model
+src\components\erp\donations\index.tsx:32 | Code, model or SKU
+src\components\erp\donations\index.tsx:32 | Loading stock…
+src\components\erp\donations\index.tsx:32 | No available stock matches your search.
+src\components\erp\donations\index.tsx:32 | Stock type
+src\components\erp\donations\index.tsx:33 | c.abort()},[organizationId,unitId,page,refresh]);return
+src\components\erp\donations\index.tsx:33 | Loading history…
+src\components\erp\donations\index.tsx:33 | No donations in the selected scope.
+src\components\erp\inventory-counts\index.tsx:4 | ([]),[values,setValues]=React.useState
+src\components\erp\inventory-counts\index.tsx:4 | (null),[history,setHistory]=React.useState
+src\components\erp\inventory-counts\index.tsx:4 | (null),[location,setLocation]=React.useState
+src\components\erp\inventory-counts\index.tsx:4 | (null),[purpose,setPurpose]=React.useState(""),[current,setCurrent]=React.useState
+src\components\erp\inventory-counts\index.tsx:4 | (null),[unit,setUnit]=React.useState
+src\components\erp\inventory-counts\index.tsx:13 | =400&&status
+src\components\erp\inventory-counts\index.tsx:29 | Count all individual equipment and lot quantities at one stock location, review differences, and approve auditable adjustments.
+src\components\erp\inventory-counts\index.tsx:29 | Organization *
+src\components\erp\inventory-counts\index.tsx:29 | Purpose *
+src\components\erp\inventory-counts\index.tsx:29 | Stock location *
+src\components\erp\inventory-counts\index.tsx:30 | + Inventory count
+src\components\erp\inventory-counts\index.tsx:30 | Approve adjustments
+src\components\erp\inventory-counts\index.tsx:30 | Save count
+src\components\erp\inventory-counts\index.tsx:31 | Inventory history
+src\components\erp\inventory\index.tsx:18 | Manage equipment models, firearm and ammunition specifications, registrations, individual assets, stock lots, and technical characteristics.
+src\components\erp\inventory\stock-intake-editor.tsx:43 | 0) && normalized.length
+src\components\erp\inventory\stock-intake-editor.tsx:44 | 0 && row.first.length
+src\components\erp\inventory\stock-intake-editor.tsx:44 | 0 && row.second.length
+src\components\erp\inventory\stock-intake-editor.tsx:86 | = 400 && status
+src\components\erp\inventory\stock-intake-editor.tsx:119 | Paste a list from a spreadsheet
+src\components\erp\inventory\stock-intake-editor.tsx:120 | Asset code and serial number (two columns, no header)
+src\components\erp\inventory\stock-intake-editor.tsx:122 | Add pasted rows
+src\components\erp\inventory\stock-intake-editor.tsx:132 | Add row
+src\components\erp\inventory\stock-intake-editor.tsx:133 | Loose rounds (without a box)
+src\components\erp\inventory\stock-intake-editor.tsx:139 | Enter positive whole quantities; the total can contain at most 15 digits.
+src\components\erp\inventory\stock-intake-editor.tsx:140 | Edit batch
+src\components\erp\maintenance\index.tsx:4 | Maintenance and inspection
+src\components\erp\maintenance\index.tsx:5 | ([]),[assets,setAssets]=React.useState
+src\components\erp\maintenance\index.tsx:5 | ([]),[orders,setOrders]=React.useState
+src\components\erp\maintenance\index.tsx:5 | ([]),[search,setSearch]=React.useState(""),[asset,setAsset]=React.useState(""),[plan,setPlan]=React.useState(""),[reason,setReason]=React.useState(""),[custodyReturnItemId,setCustodyReturnItemId]=React.useState
+src\components\erp\maintenance\index.tsx:5 | (null),[plans,setPlans]=React.useState
+src\components\erp\maintenance\index.tsx:5 | (null),[unit,setUnit]=React.useState
+src\components\erp\maintenance\index.tsx:9 | Asset *
+src\components\erp\maintenance\index.tsx:9 | Find asset
+src\components\erp\maintenance\index.tsx:9 | No plan
+src\components\erp\maintenance\index.tsx:9 | Open maintenance work orders, record diagnosis and services, and release assets through a functional test.
+src\components\erp\maintenance\index.tsx:9 | Open work order
+src\components\erp\maintenance\index.tsx:9 | Organization *
+src\components\erp\maintenance\index.tsx:9 | Reason *
+src\components\erp\maintenance\index.tsx:9 | Select an asset
+src\components\erp\maintenance\index.tsx:10 | Create maintenance plan
+src\components\erp\maintenance\index.tsx:10 | Create plan
+src\components\erp\maintenance\index.tsx:10 | Periodicity in days *
+src\components\erp\maintenance\index.tsx:10 | Plan name *
+src\components\erp\maintenance\index.tsx:10 | Type *
+src\components\erp\maintenance\index.tsx:11 | No work orders in the selected scope.
+src\components\erp\maintenance\index.tsx:11 | Work order history
+src\components\erp\maintenance\index.tsx:12 | Cause *
+src\components\erp\maintenance\index.tsx:12 | Complete work order
+src\components\erp\maintenance\index.tsx:12 | Defect *
+src\components\erp\maintenance\index.tsx:12 | Functional test result *
+src\components\erp\maintenance\index.tsx:12 | Service cost *
+src\components\erp\maintenance\index.tsx:12 | Service performed *
+src\components\erp\maintenance\index.tsx:12 | Technical opinion *
+src\components\erp\maintenance\index.tsx:12 | Test notes *
+src\components\erp\reservations\index.tsx:2 | Inventory reservations
+src\components\erp\reservations\index.tsx:3 | ("ASSET"),[search,setSearch]=React.useState(""),[stock,setStock]=React.useState
+src\components\erp\reservations\index.tsx:3 | ([]),[done,setDone]=React.useState
+src\components\erp\reservations\index.tsx:3 | ([]),[history,setHistory]=React.useState
+src\components\erp\reservations\index.tsx:3 | ([]),[selected,setSelected]=React.useState
+src\components\erp\reservations\index.tsx:3 | (null),[error,setError]=React.useState(""),[refresh,setRefresh]=React.useState(0),[busy,setBusy]=React.useState(false);const[pending,setPending]=React.useState
+src\components\erp\reservations\index.tsx:3 | (null),[purpose,setPurpose]=React.useState(""),[starts,setStarts]=React.useState(""),[ends,setEnds]=React.useState(""),[kind,setKind]=React.useState
+src\components\erp\reservations\index.tsx:3 | (null),[unit,setUnit]=React.useState
+src\components\erp\reservations\index.tsx:17 | =400&&status
+src\components\erp\reservations\index.tsx:27 | + Reservation
+src\components\erp\reservations\index.tsx:27 | Add available stock.
+src\components\erp\reservations\index.tsx:27 | Code, model or SKU
+src\components\erp\reservations\index.tsx:27 | End date and time *
+src\components\erp\reservations\index.tsx:27 | Organization *
+src\components\erp\reservations\index.tsx:27 | Purpose *
+src\components\erp\reservations\index.tsx:27 | Reserve individual equipment or lot quantities for a defined purpose and period.
+src\components\erp\reservations\index.tsx:27 | Reserved items
+src\components\erp\reservations\index.tsx:27 | Start date and time *
+src\components\erp\reservations\index.tsx:27 | Stock type
+src\components\erp\sales\index.tsx:42 | Inventory sales
+src\components\erp\sales\index.tsx:69 | units(item.quantity)
+src\components\erp\sales\index.tsx:83 | = 400 && status
+src\components\erp\sales\index.tsx:89 | Sell available assets or stock lots. Prices and stock are checked when you finalize.
+src\components\erp\sales\index.tsx:96 | Organization *
+src\components\erp\sales\index.tsx:104 | Select a unit to restrict stock and history. Leaving it empty requires organization-wide sales access.
+src\components\erp\sales\index.tsx:107 | Buyer *
+src\components\erp\sales\index.tsx:111 | Payment method *
+src\components\erp\sales\index.tsx:113 | Select a payment method
+src\components\erp\sales\index.tsx:124 | Item / code
+src\components\erp\sales\index.tsx:124 | Sale items
+src\components\erp\sales\index.tsx:124 | Unit price
+src\components\erp\sales\index.tsx:133 | Select an organization and add stock items.
+src\components\erp\sales\index.tsx:139 | + Sale
+src\components\erp\sales\index.tsx:166 | Stock type
+src\components\erp\sales\index.tsx:168 | Code, SKU or model
+src\components\erp\sales\index.tsx:170 | Refresh stock
+src\components\erp\sales\index.tsx:173 | Loading stock…
+src\components\erp\sales\index.tsx:174 | Code / model
+src\components\erp\sales\index.tsx:174 | Unit price
+src\components\erp\sales\index.tsx:177 | No available stock matches your search.
+src\components\erp\sales\index.tsx:188 | Item / code
+src\components\erp\sales\index.tsx:188 | Unit price
+src\components\erp\sales\index.tsx:192 | Returns and cancellations
+src\components\erp\sales\index.tsx:207 | Refresh history
+src\components\erp\sales\index.tsx:207 | Sales history
+src\components\erp\sales\index.tsx:209 | Loading sales…
+src\components\erp\sales\index.tsx:211 | No sales recorded for the selected scope.
+src\components\erp\sales\index.tsx:252 | = 400 && status
+src\components\erp\sales\index.tsx:256 | All sale items have been returned.
+src\components\erp\sales\index.tsx:259 | Return or cancel sale
+src\components\erp\sales\index.tsx:264 | Return reason *
+src\components\erp\sales\index.tsx:268 | Notes *
+src\components\erp\sales\index.tsx:272 | Refund reference
+src\components\erp\sales\index.tsx:277 | Return quantity
+src\components\erp\shared\quantity-input.tsx:27 | Boxes and loose units
+src\components\erp\shared\quantity-input.tsx:27 | Units without boxes
+src\components\erp\shared\quantity-input.tsx:34 | Units per box
+src\components\erp\shared\quantity-input.tsx:38 | Remove box row
+src\components\erp\shared\quantity-input.tsx:40 | Add box size
+src\components\erp\shared\quantity-input.tsx:41 | Loose units
+src\components\erp\shared\record-workspace.tsx:312 | resource.readOnly || index
+src\components\erp\shared\record-workspace.tsx:581 | Loading recordsâ€¦
+src\components\erp\shared\record-workspace.tsx:598 | Record saved successfully.
+src\components\erp\shared\record-workspace.tsx:615 | Delete record
+src\components\erp\shared\record-workspace.tsx:632 | Record deleted successfully.
+src\components\erp\shared\record-workspace.tsx:814 | Type to find a record
+src\components\erp\shared\record-workspace.tsx:818 | Select a record
+src\components\erp\shared\record-workspace.tsx:819 | String(option.id) === current) &&
+src\components\erp\shared\record-workspace.tsx:822 | Select an organization first.
+src\components\erp\shared\record-workspace.tsx:823 | Loading models and records...
+src\components\erp\shared\record-workspace.tsx:825 | result.size &&
+src\components\erp\transfers\index.tsx:26 | Inventory transfers
+src\components\erp\transfers\index.tsx:77 | = 400 && status
+src\components\erp\transfers\index.tsx:86 | Move assets and lot-controlled stock between units in the same organization.
+src\components\erp\transfers\index.tsx:92 | Organization *
+src\components\erp\transfers\index.tsx:96 | Source unit *
+src\components\erp\transfers\index.tsx:99 | Destination unit *
+src\components\erp\transfers\index.tsx:102 | Destination location *
+src\components\erp\transfers\index.tsx:106 | Purpose *
+src\components\erp\transfers\index.tsx:113 | Transfer items
+src\components\erp\transfers\index.tsx:114 | Source location
+src\components\erp\transfers\index.tsx:124 | Select the source unit and add available stock.
+src\components\erp\transfers\index.tsx:126 | + Transfer
+src\components\erp\transfers\index.tsx:156 | Available stock at source
+src\components\erp\transfers\index.tsx:157 | Stock type
+src\components\erp\transfers\index.tsx:160 | Code, model or SKU
+src\components\erp\transfers\index.tsx:162 | Loading stock…
+src\components\erp\transfers\index.tsx:163 | Code / model
+src\components\erp\transfers\index.tsx:168 | No available stock matches your search.
+src\components\erp\transfers\index.tsx:185 | Loading history…
+src\components\erp\transfers\index.tsx:192 | No transfers in the selected scope.
+src\components\layout\index.tsx:38 | Toggle sidebar
+src\components\sales\form.tsx:303 | No user found
+src\components\sales\form.tsx:371 | No weapon found
+src\components\sales\form.tsx:425 | Weapons in this sale
+src\components\sales\form.tsx:433 | Unit Price
+src\components\sales\form.tsx:456 | Decrease quantity
+src\components\sales\form.tsx:468 | Increase quantity
+src\components\sales\form.tsx:485 | Delete item
+src\components\sales\form.tsx:500 | No weapons added to the sale.
+src\components\sales\form.tsx:540 | Payment Method *
+src\components\sales\form.tsx:601 | Delete Item
+src\components\sales\index.tsx:30 | Sale successfully completed!
+src\components\users\list\index.tsx:919 | Search name...
+src\components\users\list\index.tsx:1022 | Search address...
+src\components\users\list\index.tsx:1055 | Search e-mail...
+src\components\users\list\index.tsx:1465 | Edit user
+src\components\users\list\index.tsx:1466 | Edit user
+src\components\users\list\index.tsx:1484 | Save changes
+src\components\users\list\index.tsx:1485 | Save changes
+src\components\users\list\index.tsx:1500 | Cancel editing
+src\components\users\list\index.tsx:1501 | Cancel editing
+src\components\users\list\index.tsx:1517 | Delete user
+src\components\users\list\index.tsx:1518 | Delete user
+src\components\users\registration\form.tsx:31 | void | Promise
+src\components\users\registration\form.tsx:131 | Id:
+src\components\users\registration\form.tsx:141 | Creation Date:
+src\components\users\registration\form.tsx:157 | Name: *
+src\components\users\registration\form.tsx:178 | CPF: *
+src\components\users\registration\form.tsx:200 | Birth: *
+src\components\users\registration\form.tsx:221 | Address: *
+src\components\users\registration\form.tsx:243 | E-mail: *
+src\components\users\registration\form.tsx:262 | Phone: *
+src\components\users\registration\index.tsx:30 | User successfully updated
+src\components\users\registration\index.tsx:40 | User successfully registered
+src\components\users\registration\index.tsx:50 | An error occurred while saving the user.
+src\components\weapons\list\index.tsx:769 | Search SKU...
+src\components\weapons\list\index.tsx:797 | Search name...
+src\components\weapons\list\index.tsx:835 | Search price...
+src\components\weapons\list\index.tsx:863 | Search description...
+src\components\weapons\list\index.tsx:1135 | Edit weapon
+src\components\weapons\list\index.tsx:1136 | Edit weapon
+src\components\weapons\list\index.tsx:1154 | Save changes
+src\components\weapons\list\index.tsx:1155 | Save changes
+src\components\weapons\list\index.tsx:1170 | Cancel editing
+src\components\weapons\list\index.tsx:1171 | Cancel editing
+src\components\weapons\list\index.tsx:1187 | Delete weapon
+src\components\weapons\list\index.tsx:1188 | Delete weapon
+src\components\weapons\registration\index.tsx:126 | An error occurred while loading the weapon.
+src\components\weapons\registration\index.tsx:163 | Weapon successfully updated.
+src\components\weapons\registration\index.tsx:179 | Weapon successfully registered.
+src\components\weapons\registration\index.tsx:204 | An error occurred while saving the weapon.
+src\components\weapons\registration\index.tsx:219 | Weapons Registration
+src\components\weapons\registration\index.tsx:233 | Registration Date
+src\components\weapons\registration\index.tsx:244 | SKU *
+src\components\weapons\registration\index.tsx:251 | Type the SKU
+src\components\weapons\registration\index.tsx:256 | Price *
+src\components\weapons\registration\index.tsx:263 | Type the price
+src\components\weapons\registration\index.tsx:271 | Name *
+src\components\weapons\registration\index.tsx:278 | Type the name
+src\components\weapons\registration\index.tsx:292 | Type the description

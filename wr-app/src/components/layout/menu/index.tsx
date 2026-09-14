@@ -24,6 +24,7 @@ import { Sidebar } from "@primereact/ui/sidebar"
 
 import { MenuItem } from "../menu-item"
 import { useSession } from "components/auth/session-provider"
+import { useComandosPreferences } from "components/settings/preferences-provider"
 
 interface SidebarOpenChangeEvent {
     originalEvent?: React.SyntheticEvent
@@ -35,6 +36,7 @@ let persistedSidebarOpen = true
 export const Menu: React.FC = () => {
 
     const { session, signOut, can } = useSession()
+    const { tr } = useComandosPreferences()
     const [signOutError, setSignOutError] = React.useState("")
     const [signingOut, setSigningOut] = React.useState(false)
 
@@ -135,7 +137,7 @@ export const Menu: React.FC = () => {
                                     <MenuItem
                                         menuKey="dashboard"
                                         href="/"
-                                        label="Dashboard"
+                                        label={tr("Dashboard")}
                                         icon={Home}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -145,7 +147,7 @@ export const Menu: React.FC = () => {
                                     <MenuItem
                                         menuKey="command-center"
                                         href="/bot"
-                                        label="Command Center"
+                                        label={tr("Command Center")}
                                         icon={ListCheck}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -154,7 +156,7 @@ export const Menu: React.FC = () => {
 
                                     <MenuItem
                                         menuKey="institutional-core"
-                                        label="Institutional core"
+                                        label={tr("Institutional core")}
                                         icon={Cog}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -232,7 +234,7 @@ export const Menu: React.FC = () => {
 
                                     <MenuItem
                                         menuKey="inventory"
-                                        label="Assets and inventory"
+                                        label={tr("Assets and inventory")}
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -243,23 +245,23 @@ export const Menu: React.FC = () => {
                                                 subItems: [
                                                     {
                                                         href: "/erp/inventory?resource=custody-return-condition-types",
-                                                        label: "Custody return condition types"
+                                                        label: "Custody return condition"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=sale-return-reason-types",
-                                                        label: "Sale return reason types"
+                                                        label: "Sale return reason"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=inventory-count-status-types",
-                                                        label: "Inventory count status types"
+                                                        label: "Inventory count status"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=inventory-count-result-types",
-                                                        label: "Inventory count result types"
+                                                        label: "Inventory count result"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=reservation-status-types",
-                                                        label: "Reservation status types"
+                                                        label: "Reservation status"
                                                     }
                                                 ]
                                             },
@@ -268,15 +270,15 @@ export const Menu: React.FC = () => {
                                                 subItems: [
                                                     {
                                                         href: "/erp/inventory?resource=item-categories",
-                                                        label: "Item categories"
+                                                        label: "Categories"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=armament-types",
-                                                        label: "Armament types"
+                                                        label: "Types"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=armament-classifications",
-                                                        label: "Armament classifications"
+                                                        label: "Classifications"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=brands",
@@ -284,7 +286,7 @@ export const Menu: React.FC = () => {
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=item-models",
-                                                        label: "Item models"
+                                                        label: "Models"
                                                     }
                                                 ]
                                             },
@@ -293,52 +295,52 @@ export const Menu: React.FC = () => {
                                                 subItems: [
                                                     {
                                                         href: "/erp/inventory?resource=technical-characteristics",
-                                                        label: "Technical characteristics"
+                                                        label: "Technical"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=category-characteristics",
-                                                        label: "Category characteristics"
+                                                        label: "Category"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=model-characteristics",
-                                                        label: "Model characteristics"
+                                                        label: "Model"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=asset-characteristics",
-                                                        label: "Asset characteristics"
+                                                        label: "Asset"
                                                     }
                                                 ]
                                             },
                                             {
-                                                label: "Controlled equipment",
+                                                label: "Equipment",
                                                 subItems: [
                                                     {
                                                         href: "/erp/inventory?resource=firearm-specifications",
-                                                        label: "Firearm specifications"
+                                                        label: "Firearm"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=ammunition-specifications",
-                                                        label: "Ammunition specifications"
+                                                        label: "Ammunition"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=grenade-specifications",
-                                                        label: "Grenade specifications"
+                                                        label: "Grenade"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=spray-specifications",
-                                                        label: "Spray specifications"
+                                                        label: "Spray"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=ballistic-protection-specifications",
-                                                        label: "Ballistic protection specifications"
+                                                        label: "Ballistic protection"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=electrical-device-specifications",
-                                                        label: "Electrical device specifications"
+                                                        label: "Electrical device"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=optical-specifications",
-                                                        label: "Optical specifications"
+                                                        label: "Optical"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=regulatory-controls",
@@ -376,7 +378,7 @@ export const Menu: React.FC = () => {
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=equipment-sets",
-                                                        label: "Equipment sets"
+                                                        label: "Equipment set"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=equipment-set-components",
@@ -393,15 +395,15 @@ export const Menu: React.FC = () => {
                                                 ]
                                             },
                                             {
-                                                label: "Stock history",
+                                                label: "Stock",
                                                 subItems: [
                                                     {
                                                         href: "/erp/inventory?resource=stock-balances",
-                                                        label: "Stock balances"
+                                                        label: "Balances"
                                                     },
                                                     {
                                                         href: "/erp/inventory?resource=stock-movements",
-                                                        label: "Stock movements"
+                                                        label: "Movements"
                                                     }
                                                 ]
                                             }
@@ -409,7 +411,7 @@ export const Menu: React.FC = () => {
                                     />
                                     <MenuItem
                                         menuKey="equipment-movement"
-                                        label="Equipment Movement"
+                                        label={tr("Equipment Movement")}
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -449,13 +451,13 @@ export const Menu: React.FC = () => {
                                             }
                                         ]}
                                     />
-                                    <MenuItem menuKey="inventory-counts" href="/erp/inventory-counts" label="Physical inventory" icon={Shield}
+                                    <MenuItem menuKey="inventory-counts" href="/erp/inventory-counts" label={tr("Physical inventory")} icon={Shield}
                                         collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
 
                                     {can("audit", "READ") && <MenuItem
                                         menuKey="audit"
                                         href="/erp/audit"
-                                        label="Audit history"
+                                        label={tr("Audit history")}
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -489,7 +491,7 @@ export const Menu: React.FC = () => {
                                     <PopupMenu.Trigger
                                         as={Sidebar.MenuButton}
                                         className="comandos-sidebar-user p-1!"
-                                        aria-label="Open user menu"
+                                        aria-label={tr(tr(tr(tr("Open user menu"))))}
                                     >
 
                                         <Avatar.Root
@@ -500,7 +502,7 @@ export const Menu: React.FC = () => {
                                         </Avatar.Root>
 
                                         <span>
-                                            {session?.user?.name || "Guest"}
+                                            {session?.user?.name || tr(tr(tr("Guest")))}
                                         </span>
 
                                         {userMenuOpen
@@ -524,7 +526,7 @@ export const Menu: React.FC = () => {
                                                 <PopupMenu.List>
 
                                                     <PopupMenu.Label>
-                                                        {session?.user?.login || "Setup mode"}
+                                                        {session?.user?.login || tr(tr(tr("Setup mode")))}
                                                     </PopupMenu.Label>
 
                                                     <PopupMenu.Separator />
@@ -549,8 +551,8 @@ export const Menu: React.FC = () => {
                                                             catch { setSignOutError("Unable to sign out. Please try again.") }
                                                             finally { setSigningOut(false) }
                                                         }}>
-                                                        <SignOut />{signingOut ? "Signing outâ€¦" : "Sign out"}
-                                                    </PopupMenu.Item> : <PopupMenu.Item as={Link} href="/login"><SignOut />Sign in</PopupMenu.Item>}
+                                                        <SignOut />{signingOut ? tr(tr(tr("Signing out…"))) : tr(tr(tr("Sign out")))}
+                                                    </PopupMenu.Item> : <PopupMenu.Item as={Link} href="/login"><SignOut />{tr(tr(tr("Sign in")))}</PopupMenu.Item>}
 
                                                 </PopupMenu.List>
 

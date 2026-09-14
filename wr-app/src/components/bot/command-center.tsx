@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Plus, Search, Undo2, X } from "lucide-react"
+import { Plus, Search, X } from "lucide-react"
 
 
 import { Paginator } from "@primereact/ui/paginator"
@@ -16,7 +16,8 @@ import { AngleLeft } from "@primeicons/react/angle-left"
 import { AngleRight } from "@primeicons/react/angle-right"
 import { EllipsisH } from "@primeicons/react/ellipsis-h"
 import { Layout } from "components"
-import { ArrowUTurnUpLeft, Pause, Pencil, Play, Send, Stop, Trash } from "@primeicons/react"
+import { ComandosTaskBoard } from "./comandos-task-board"
+import { ArrowUTurnUpLeft, Pause, Pencil, Play, Stop, Trash } from "@primeicons/react"
 
 type ModuleKey = string
 type ExecutionMode = "continuous" | "until"
@@ -108,9 +109,6 @@ const defaultSprints: Sprint[] = [
         steps: 3
     }
 ]
-
-const statusColumns: RequirementStatus[] = ["Backlog", "Fazendo", "Concluído"]
-
 const stateLabels: Record<string, string> = {
     offline: "offline",
     waiting: "aguardando",
@@ -154,7 +152,10 @@ const formatRateLimitReset = (botStatus: BotStatus) => {
         const parsedReset = new Date(rawReset)
 
         if (!Number.isNaN(parsedReset.getTime())) {
-            return parsedReset.toLocaleTimeString("pt-BR", {
+            return parsedReset.toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit"
@@ -178,7 +179,10 @@ const formatRateLimitReset = (botStatus: BotStatus) => {
     const parsedMessageReset = new Date(messageReset)
 
     if (!Number.isNaN(parsedMessageReset.getTime())) {
-        return parsedMessageReset.toLocaleTimeString("pt-BR", {
+        return parsedMessageReset.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit"
@@ -1850,7 +1854,15 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                             {" | "}
                             Atualizado:{" "}
                             {botStatus.updatedAt
-                                ? new Date(botStatus.updatedAt).toLocaleTimeString()
+                                ? new Date(botStatus.updatedAt).toLocaleString("pt-BR", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                    hour12: false
+                                })
                                 : "nunca"}
                         </p>
                         {(() => {
@@ -2332,120 +2344,18 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                         </div>
                     </section>
                 )}
-
-                <section
-                    className="scrum-board"
-                    aria-label="Quadro Scrum"
-                >
-                    {statusColumns.map((status) => {
-                        const items = filteredRequirements.filter(
-                            (requirement) => requirement.status === status
-                        )
-
-                        return (
-                            <div
-                                className="scrum-column"
-                                key={status}
-                            >
-                                <div className="column-heading">
-                                    <div>
-                                        <span
-                                            className={`column-marker marker-${status.toLowerCase()}`}
-                                        />
-                                        <h3>{status}</h3>
-                                    </div>
-                                    <span className="column-count">
-                                        {items.length}
-                                    </span>
-                                </div>
-
-                                <div className="column-items">
-                                    {items.map((requirement) => (
-                                        <article
-                                            className="requirement-card"
-                                            key={requirement.id}
-                                        >
-                                            <div className="card-meta">
-                                                <span>{requirement.id}</span>
-                                                <span
-                                                    className={`priority priority-${requirement.priority.toLowerCase()}`}
-                                                >
-                                                    {requirement.priority}
-                                                </span>
-                                            </div>
-
-                                            <h4>{requirement.title}</h4>
-                                            <p>{requirement.description}</p>
-
-                                            <div className="card-footer">
-                                                <span className="type-label">
-                                                    {requirement.type}
-                                                </span>
-
-                                                <select
-                                                    value={requirement.status}
-                                                    onChange={(event) =>
-                                                        updateStatus(
-                                                            requirement.id,
-                                                            event.target.value as RequirementStatus
-                                                        )
-                                                    }
-                                                >
-                                                    {statusColumns.map((option) => (
-                                                        <option key={option}>
-                                                            {option}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <div
-                                                className="command-actions"
-                                                style={{ marginTop: 10 }}
-                                            >
-                                                <button
-                                                    className="task-export requirement-send-icon"
-                                                    disabled={busy}
-                                                    onClick={() => downloadTask(requirement)}
-                                                    aria-label="Enviar ao bot"
-                                                    title="Enviar ao bot"
-                                                >
-    <Send className="card-action-prime-icon" />
-</button>
-
-                                                <button
-                                                    className="icon-button"
-                                                    aria-label={`Editar ${requirement.id}`}
-                                                    onClick={() =>
-                                                        openEditRequirement(requirement)
-                                                    }
-                                                >
-                                                    <Pencil className="card-action-prime-icon" />
-                                                </button>
-
-                                                <button
-                                                    className="icon-button"
-                                                    aria-label={`Excluir ${requirement.id}`}
-                                                    onClick={() =>
-                                                        deleteRequirement(requirement)
-                                                    }
-                                                >
-                                                    <Trash className="card-action-prime-icon" />
-                                                </button>
-                                            </div>
-                                        </article>
-                                    ))}
-
-                                    {items.length === 0 && (
-                                        <div className="column-empty">
-                                            Nenhum item nesta etapa.
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
-                </section>
+                <ComandosTaskBoard
+                    moduleName={selectedSprint.name}
+                    requirements={filteredRequirements}
+                    busy={busy}
+                    onCreate={openNewRequirement}
+                    onStatusChange={updateStatus}
+                    onEdit={openEditRequirement}
+                    onDelete={deleteRequirement}
+                    onSend={(requirement) =>
+                        void downloadTask(requirement)
+                    }
+                />
 
                 <section
                     className="requirement-form"

@@ -517,6 +517,13 @@ Read the task below and implement it completely in the repository.
 - Stop exactly at the scope and stop condition in the task. Do not start another feature.
 - If this task belongs to a workstream, continue only through the next task in that same workstream.
 - At the end, report changed files, validation results, and any blocker.
+- Never claim success if any acceptance criterion is not actually implemented.
+- Your final response MUST contain exactly one result marker:
+  COMANDOS_TASK_RESULT: PASS
+  or
+  COMANDOS_TASK_RESULT: FAIL
+- Use PASS only when the requested implementation is present in repository files and all applicable acceptance criteria are satisfied.
+- If no repository implementation file needed to change, use FAIL and explain why.
 
 TASK
 ====
@@ -662,6 +669,107 @@ function Get-TaskCommitDescription([string]$taskPath) {
 
 
 
+function Get-ImplementationSnapshot {
+    $snapshot = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($rootName in @('wr-api', 'wr-app')) {
+        $rootPath = Join-Path $repositoryRoot $rootName
+
+        if (-not (Test-Path -LiteralPath $rootPath)) {
+            continue
+        }
+
+        Get-ChildItem -LiteralPath $rootPath -Recurse -File -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.FullName -notmatch '[\\/](node_modules|\.next|target|dist|build|coverage)[\\/]'
+            } |
+            ForEach-Object {
+                $relativePath = $_.FullName.Substring($repositoryRoot.Length).TrimStart('\', '/')
+                $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash
+                $snapshot[$relativePath] = $hash
+            }
+    }
+
+    return $snapshot
+}
+
+function Get-ImplementationChanges(
+    [System.Collections.Generic.Dictionary[string,string]]$before,
+    [System.Collections.Generic.Dictionary[string,string]]$after
+) {
+    $paths = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($path in $before.Keys) {
+        [void]$paths.Add($path)
+    }
+
+    foreach ($path in $after.Keys) {
+        [void]$paths.Add($path)
+    }
+
+    $changes = @()
+
+    foreach ($path in $paths) {
+        $beforeHash = if ($before.ContainsKey($path)) { $before[$path] } else { $null }
+        $afterHash = if ($after.ContainsKey($path)) { $after[$path] } else { $null }
+
+        if ($beforeHash -ne $afterHash) {
+            $changes += $path
+        }
+    }
+
+    return @($changes | Sort-Object)
+}
+
+function Assert-CodexTaskResult([string]$logPath) {
+    $combined = ''
+
+    foreach ($path in @($logPath, "$logPath.stderr")) {
+        if (Test-Path -LiteralPath $path) {
+            $combined += "`n" + [System.IO.File]::ReadAllText($path)
+        }
+    }
+
+    $markers = [regex]::Matches(
+        $combined,
+        '(?im)^\s*COMANDOS_TASK_RESULT:\s*(PASS|FAIL)\s*$'
+    )
+
+    if ($markers.Count -ne 1) {
+        throw 'Codex nao informou exatamente um COMANDOS_TASK_RESULT: PASS/FAIL.'
+    }
+
+    if ($markers[0].Groups[1].Value.ToUpperInvariant() -ne 'PASS') {
+        throw 'Codex informou COMANDOS_TASK_RESULT: FAIL.'
+    }
+}
+
+function Assert-ImplementationChanged(
+    [System.Collections.Generic.Dictionary[string,string]]$before,
+    [string]$logPath
+) {
+    $after = Get-ImplementationSnapshot
+    $changes = Get-ImplementationChanges $before $after
+
+    if ($changes.Count -eq 0) {
+        throw 'Nenhum arquivo de implementacao em wr-api ou wr-app foi alterado. A tarefa nao pode ser concluida.'
+    }
+
+    $report = (
+        "`r`nCOMANDOS_IMPLEMENTATION_CHANGES:`r`n- " +
+        ($changes -join "`r`n- ") +
+        "`r`n"
+    )
+
+    [System.IO.File]::AppendAllText(
+        $logPath,
+        $report,
+        (New-Object System.Text.UTF8Encoding($false))
+    )
+
+    return $changes
+}
+
 function Complete-Task([string]$taskPath) {
     $destination = Join-Path $completedDirectory (Split-Path $taskPath -Leaf)
     Move-Item -Force -Path $taskPath -Destination $destination
@@ -795,10 +903,13 @@ while ($true) {
     $workingTask = Join-Path $workingDirectory $task.Name
     Move-Item -LiteralPath $task.FullName -Destination $workingTask
     $logPath = Join-Path $logDirectory ("{0:yyyyMMdd-HHmmss}-{1}.log" -f (Get-Date), $task.BaseName)
-
+
+    $implementationBefore = Get-ImplementationSnapshot
     try {
         Write-BotStatus 'waiting' 'Etapa selecionada. Verificando disponibilidade do Codex.' $task.Name
         Invoke-CodexTask $workingTask $logPath
+        Assert-CodexTaskResult $logPath
+        [void](Assert-ImplementationChanged $implementationBefore $logPath)
         Invoke-ProjectValidation
         Complete-Task $workingTask
         $processedTasks++

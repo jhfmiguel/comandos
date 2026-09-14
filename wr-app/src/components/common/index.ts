@@ -17,3 +17,5 @@ export { Button } from './button'
 export { Message } from './message'
 
 export { Loader } from './loader'
+
+export { ComandosToaster, notify } from './toast'
