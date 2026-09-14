@@ -111,14 +111,14 @@ function TransferForm({ onNew }: { onNew: () => void }) {
                     onAdd={item => setSelected([...selected, { ...item, quantity: "1" }])} />
             </fieldset>}
             <div className={styles.tableContainer}><table><caption>Transfer items</caption><thead><tr>
-                <th>Item</th><th>Source location</th><th>Available</th><th>Quantity</th><th>Actions</th>
+                <th>Item</th><th>Source location</th><th>Available</th><th>Quantity</th><th className={styles.actionCell}>Actions</th>
             </tr></thead><tbody>{selected.map(item => <tr key={`${item.kind}-${item.stockId}`}>
                 <td>{item.code}<br />{item.modelName} · {item.sku}</td><td>{item.locationName}</td>
                 <td>{item.available} {item.unitOfMeasure}</td><td><input aria-label={`Quantity for ${item.code}`} type="number"
                     min="0.0001" max={item.available} step="0.0001" value={item.quantity}
                     disabled={item.kind === "ASSET" || busy || !!pending || !!completed}
                     onChange={event => setSelected(selected.map(value => value.kind === item.kind && value.stockId === item.stockId
-                        ? { ...value, quantity: event.target.value } : value))} /></td><td><Button type="button" severity="secondary"
+                        ? { ...value, quantity: event.target.value } : value))} /></td><td className={styles.actionCell}><Button type="button" severity="secondary"
                     disabled={busy || !!pending || !!completed} onClick={() => setSelected(selected.filter(value =>
                         value.kind !== item.kind || value.stockId !== item.stockId))}>Remove</Button></td>
             </tr>)}{!selected.length && <tr><td colSpan={5}>Select the source unit and add available stock.</td></tr>}</tbody></table></div>
@@ -161,9 +161,9 @@ function StockPicker({ organizationId, sourceUnitId, selected, onAdd }: {
             type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(0); setResult(null); }} /></div>
     </div>{error && <Message type="error" text={error} />}{!result && !error && <p role="status">Loading stock…</p>}
         {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / model</th><th>Location</th>
-            <th>Available</th><th>Actions</th></tr></thead><tbody>{result.content.map(item => <tr key={`${item.kind}-${item.stockId}`}>
+            <th>Available</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>{result.content.map(item => <tr key={`${item.kind}-${item.stockId}`}>
                 <td>{item.code}<br />{item.modelName} · {item.sku}</td><td>{item.locationName}</td>
-                <td>{item.available} {item.unitOfMeasure}</td><td><Button type="button" disabled={selected.length >= 100
+                <td>{item.available} {item.unitOfMeasure}</td><td className={styles.actionCell}><Button type="button" disabled={selected.length >= 100
                     || selected.some(value => value.kind === item.kind && value.stockId === item.stockId)} onClick={() => onAdd(item)}>Add</Button></td>
             </tr>)}{!result.content.length && <tr><td colSpan={4}>No available stock matches your search.</td></tr>}</tbody></table></div>
             <Pagination page={page} result={result} onPage={value => { setPage(value); setResult(null); }} /></>}

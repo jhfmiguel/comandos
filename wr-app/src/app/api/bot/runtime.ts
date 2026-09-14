@@ -29,39 +29,75 @@ async function readRateLimitResetAt() {
 
     try {
         files = (await readdir(logsDirectory))
-            .filter((name) => name.toLowerCase().endsWith(".log"))
+            .filter((name) => {
+                const lower = name.toLowerCase()
+
+                return (
+                    lower.endsWith(".log") ||
+                    lower.endsWith(".stderr")
+                )
+            })
             .sort()
             .reverse()
-            .slice(0, 20)
+            .slice(0, 40)
     } catch {
         return null
     }
 
     const patterns = [
-        /rate limit resets? on\s+([^\r\n.]+)/i,
-        /rate limit resets? at\s+([^\r\n.]+)/i,
-        /resets? on\s+([^\r\n.]+)/i,
-        /resets? at\s+([^\r\n.]+)/i,
-        /try again at\s+([^\r\n.]+)/i
+        /rate limit resets? on\s+([^\r\n]+)/i,
+        /rate limit resets? at\s+([^\r\n]+)/i,
+        /resets? on\s+([^\r\n]+)/i,
+        /resets? at\s+([^\r\n]+)/i,
+        /try again at\s+([^\r\n]+)/i
     ]
 
     for (const name of files) {
-        const log = await readFile(join(logsDirectory, name), "utf8").catch(() => "")
+        const log = await readFile(
+            join(logsDirectory, name),
+            "utf8"
+        ).catch(() => "")
 
         if (!log) {
             continue
         }
 
+        const cleanLog = log.replace(
+            /\x1B\[[0-9;]*[A-Za-z]/g,
+            ""
+        )
+
         for (const pattern of patterns) {
-            const matches = [...log.matchAll(new RegExp(pattern.source, `${pattern.flags}g`))]
+            const matches = [
+                ...cleanLog.matchAll(
+                    new RegExp(
+                        pattern.source,
+                        `${pattern.flags}g`
+                    )
+                )
+            ]
 
-            if (matches.length > 0) {
-                const value = matches[matches.length - 1]?.[1]?.trim()
-
-                if (value) {
-                    return value
-                }
+            if (matches.length === 0) {
+                continue
             }
+
+            const rawValue = matches[
+                matches.length - 1
+            ]?.[1]
+                ?.trim()
+                .replace(/[.;]+$/, "")
+
+            if (!rawValue) {
+                continue
+            }
+
+            const parsed = new Date(rawValue)
+
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed.toISOString()
+            }
+
+            return rawValue
         }
     }
 

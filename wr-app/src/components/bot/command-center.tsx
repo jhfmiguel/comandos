@@ -16,9 +16,10 @@ import { AngleLeft } from "@primeicons/react/angle-left"
 import { AngleRight } from "@primeicons/react/angle-right"
 import { EllipsisH } from "@primeicons/react/ellipsis-h"
 import { Layout } from "components"
-import { ArrowUTurnUpLeft, Pencil, Send, Trash } from "@primeicons/react"
+import { ArrowUTurnUpLeft, Pause, Pencil, Play, Send, Stop, Trash } from "@primeicons/react"
 
 type ModuleKey = string
+type ExecutionMode = "continuous" | "until"
 type RequirementType = "Requisito" | "Correção"
 type RequirementStatus = "Backlog" | "Fazendo" | "Concluído"
 
@@ -58,6 +59,8 @@ type BotStatus = {
     updatedAt: string | null
     rateLimitResetAt?: string | null
     alive?: boolean
+    executionMode?: ExecutionMode
+    stopAfterTask?: string | null
     tasks?: QueuedTask[]
 }
 
@@ -129,6 +132,11 @@ const queueLabels: Record<string, string> = {
     failed: "Falhou"
 }
 
+const executionModeLabels: Record<ExecutionMode, string> = {
+    continuous: "Trabalhe sem parar",
+    until: "Trabalhe até o requisito selecionado"
+}
+
 const slugify = (value: string) => value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -140,27 +148,45 @@ const slugify = (value: string) => value
 const getPrefix = (sprint: Sprint) => sprint.key.slice(0, 3).toUpperCase()
 
 const formatRateLimitReset = (botStatus: BotStatus) => {
-    if (botStatus.rateLimitResetAt) {
-        const resetAt = new Date(botStatus.rateLimitResetAt)
+    const rawReset = botStatus.rateLimitResetAt
 
-        if (!Number.isNaN(resetAt.getTime())) {
-            return resetAt.toLocaleTimeString([], {
+    if (rawReset) {
+        const parsedReset = new Date(rawReset)
+
+        if (!Number.isNaN(parsedReset.getTime())) {
+            return parsedReset.toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
-                minute: "2-digit"
+                minute: "2-digit",
+                second: "2-digit"
             })
         }
 
-        return botStatus.rateLimitResetAt
+        return rawReset
     }
 
     const message = botStatus.message || ""
+
     const resetMatch = message.match(
-        /(?:resets?\s+(?:on|at)|liberad[oa]\s+(?:às|as)|dispon[ií]vel\s+(?:às|as))\s+([^.;]+)/i
+        /(?:rate limit\s+resets?\s+(?:on|at)|resets?\s+(?:on|at)|try again at|liberad[oa]\s+(?:Ã s|as)|dispon[iÃ­]vel\s+(?:Ã s|as))\s+([^.;\r\n]+)/i
     )
 
-    return resetMatch?.[1]?.trim() || null
-}
+    if (!resetMatch?.[1]) {
+        return null
+    }
 
+    const messageReset = resetMatch[1].trim()
+    const parsedMessageReset = new Date(messageReset)
+
+    if (!Number.isNaN(parsedMessageReset.getTime())) {
+        return parsedMessageReset.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+        })
+    }
+
+    return messageReset
+}
 export function CommandCenter() {
     const [sprints, setSprints] = useState<Sprint[]>(defaultSprints)
     const [requirements, setRequirements] = useState<Requirement[]>([])
@@ -168,6 +194,8 @@ export function CommandCenter() {
     const [busy, setBusy] = useState(false)
     const [queuePage, setQueuePage] = useState(1)
     const [selectedModule, setSelectedModule] = useState<ModuleKey>("armamento")
+    const [selectedStopTask, setSelectedStopTask] = useState("")
+    const [selectedExecutionMode, setSelectedExecutionMode] = useState<ExecutionMode>("continuous")
     const [search, setSearch] = useState("")
     const [showRequirementForm, setShowRequirementForm] = useState(false)
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null)
@@ -229,6 +257,32 @@ export function CommandCenter() {
                 setNotice("Não foi possível carregar o backlog salvo no navegador.")
             }
 
+            try {
+                const storedExecutionMode =
+                    window.localStorage.getItem(
+                        "comandos-bot-execution-mode"
+                    )
+
+                if (
+                    storedExecutionMode === "continuous" ||
+                    storedExecutionMode === "until"
+                ) {
+                    setSelectedExecutionMode(storedExecutionMode)
+                }
+
+                const storedStopTask =
+                    window.localStorage.getItem(
+                        "comandos-bot-stop-after-task"
+                    )
+
+                if (storedStopTask) {
+                    setSelectedStopTask(storedStopTask)
+                }
+            } catch {
+                setNotice(
+                    "Não foi possível carregar a configuração do bot."
+                )
+            }
             setLoaded(true)
         })
     }, [])
@@ -265,6 +319,36 @@ export function CommandCenter() {
         }
     }, [requirements, loaded])
 
+    useEffect(() => {
+        if (!loaded) return
+
+        try {
+            window.localStorage.setItem(
+                "comandos-bot-execution-mode",
+                selectedExecutionMode
+            )
+
+            if (selectedStopTask) {
+                window.localStorage.setItem(
+                    "comandos-bot-stop-after-task",
+                    selectedStopTask
+                )
+            } else {
+                window.localStorage.removeItem(
+                    "comandos-bot-stop-after-task"
+                )
+            }
+        } catch (error) {
+            console.error(
+                "Não foi possível salvar a configuração do bot.",
+                error
+            )
+        }
+    }, [
+        selectedExecutionMode,
+        selectedStopTask,
+        loaded
+    ])
     const refreshStatus = async () => {
         try {
             const response = await fetch("/api/bot/status", { cache: "no-store" })
@@ -384,6 +468,10 @@ export function CommandCenter() {
                 ? difference
                 : b.name.localeCompare(a.name)
         })
+    const runnableQueue = queue.filter((task) =>
+        ["pending", "working"].includes(task.state)
+    )
+
 
     const queueRows = 10
 
@@ -801,15 +889,36 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
     }
 
     const sendBotCommand = (
-        command: "start" | "pause" | "resume" | "stop"
+        command: "start" | "pause" | "resume" | "stop",
+        executionMode?: ExecutionMode,
+        stopAfterTask?: string
     ) => sendRequest(
         "/api/bot/control",
         {
             command,
-            workstream: selectedModule
+            workstream: selectedModule,
+            ...(executionMode ? { executionMode } : {}),
+            ...(stopAfterTask ? { stopAfterTask } : {})
         }
     )
+    const handleBotPlay = () => {
+        if (
+            botStatus.alive &&
+            ["paused", "pause-requested"].includes(botStatus.state)
+        ) {
+            return sendBotCommand("resume")
+        }
 
+        if (botStatus.alive) {
+            return Promise.resolve(false)
+        }
+
+        return sendBotCommand(
+            "start",
+            selectedStopTask ? "until" : "continuous",
+            selectedStopTask || undefined
+        )
+    }
     if (!selectedSprint) {
         return null
     }
@@ -1535,7 +1644,7 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                         display: flex !important;
                         align-items: center !important;
                         justify-content: flex-end !important;
-                        flex-wrap: nowrap !important;
+                        flex-wrap: wrap !important;
                         gap: 0.75rem !important;
                     }
 
@@ -1608,10 +1717,79 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                         align-items: center !important;
                         justify-content: flex-end !important;
                         gap: 0.75rem !important;
-                        flex-wrap: nowrap !important;
+                        flex-wrap: wrap !important;
                     }
 
-                    .command-center .bot-overview-card + .command-toolbar {
+                    
+                    .command-center .bot-until-control {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        flex-wrap: wrap;
+                    }
+
+                    .command-center .bot-execution-target {
+                        min-height: 2.5rem;
+                        min-width: 16rem;
+                        max-width: 26rem;
+                        padding: 0 0.75rem;
+                        background: #202020;
+                        border: 1px solid #343434;
+                        border-radius: 0.5rem;
+                        color: #f5f5f5;
+                    }
+                    /* BOT_COMPACT_CONTROLS */
+                    .command-center .bot-controls-compact {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: flex-end !important;
+                        gap: 0.5rem !important;
+                        flex-wrap: wrap !important;
+                    }
+
+                    .command-center .bot-controls-compact .bot-execution-target {
+                        min-height: 2.5rem;
+                        min-width: 18rem;
+                        max-width: 28rem;
+                        padding: 0 0.75rem;
+                        background: #202020;
+                        border: 1px solid #343434;
+                        border-radius: 0.5rem;
+                        color: #f5f5f5;
+                    }
+
+                    .command-center .bot-control-icon {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        padding: 0;
+                        border: 1px solid #3d3d3d;
+                        border-radius: 0.5rem;
+                        background: #242424;
+                        color: #f5f5f5;
+                        cursor: pointer;
+                    }
+
+                    .command-center .bot-control-icon:hover:not(:disabled) {
+                        background: #303030;
+                    }
+
+                    .command-center .bot-control-icon:disabled {
+                        opacity: 0.45;
+                        cursor: not-allowed;
+                    }
+
+                    .command-center .bot-control-play {
+                        color: #22c55e;
+                    }
+
+                    .command-center .bot-control-stop {
+                        color: #ef4444;
+                    }
+                    /* BOT_COMPACT_CONTROLS_END */
+.command-center .bot-overview-card + .command-toolbar {
                         margin-top: 2rem !important;
                     }
 
@@ -1690,55 +1868,111 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                         })()}
                     </div>
 
-                    <div className="bot-controls">
-                        <button
-                            className="command-button command-button-primary"
-                            onClick={() => void sendBotCommand("start")}
-                            disabled={
-                                busy ||
-                                botStatus.alive ||
-                                !queue.some((task) =>
-                                    ["pending", "working"].includes(task.state)
+                    <div className="bot-controls bot-controls-compact">
+                        <select
+                            className="bot-execution-target"
+                            value={selectedStopTask}
+                            onChange={(event) =>
+                                setSelectedStopTask(
+                                    event.target.value
                                 )
                             }
+                            disabled={
+                                busy ||
+                                Boolean(botStatus.alive)
+                            }
+                            aria-label="Trabalhe até o requisito"
+                            title="Trabalhe até o requisito"
                         >
-                            Iniciar próxima etapa
+                            <option value="">
+                                Trabalhe até o requisito
+                            </option>
+
+                            {runnableQueue.map((task) => (
+                                <option
+                                    key={task.name}
+                                    value={task.name}
+                                >
+                                    {task.title}
+                                </option>
+                            ))}
+                        </select>
+
+                        <button
+                            type="button"
+                            className="bot-control-icon bot-control-play"
+                            onClick={() => void handleBotPlay()}
+                            disabled={
+                                busy ||
+                                (
+                                    Boolean(botStatus.alive) &&
+                                    ![
+                                        "paused",
+                                        "pause-requested"
+                                    ].includes(botStatus.state)
+                                ) ||
+                                (
+                                    !botStatus.alive &&
+                                    runnableQueue.length === 0
+                                )
+                            }
+                            aria-label={
+                                ["paused", "pause-requested"].includes(
+                                    botStatus.state
+                                )
+                                    ? "Continuar BOT"
+                                    : "Iniciar BOT"
+                            }
+                            title={
+                                ["paused", "pause-requested"].includes(
+                                    botStatus.state
+                                )
+                                    ? "Continuar"
+                                    : (
+                                        selectedStopTask
+                                            ? "Trabalhar até o requisito selecionado"
+                                            : "Trabalhar sem parar"
+                                    )
+                            }
+                        >
+                            <Play size={22} />
                         </button>
 
                         <button
-                            className="command-button"
-                            onClick={() => void sendBotCommand("pause")}
+                            type="button"
+                            className="bot-control-icon"
+                            onClick={() =>
+                                void sendBotCommand("pause")
+                            }
                             disabled={
                                 busy ||
                                 !botStatus.alive ||
-                                !["working", "waiting", "validating"].includes(
-                                    botStatus.state
-                                )
+                                ![
+                                    "working",
+                                    "waiting",
+                                    "validating"
+                                ].includes(botStatus.state)
                             }
+                            aria-label="Pausar BOT"
+                            title="Pausar"
                         >
-                            Pausar após etapa
+                            <Pause size={22} />
                         </button>
 
                         <button
-                            className="command-button"
-                            onClick={() => void sendBotCommand("resume")}
+                            type="button"
+                            className="bot-control-icon bot-control-stop"
+                            onClick={() =>
+                                void sendBotCommand("stop")
+                            }
                             disabled={
                                 busy ||
-                                !["paused", "pause-requested"].includes(
-                                    botStatus.state
-                                )
+                                !botStatus.alive
                             }
+                            aria-label="Parar BOT"
+                            title="Parar"
                         >
-                            Continuar
-                        </button>
-
-                        <button
-                            className="command-button command-button-danger"
-                            onClick={() => void sendBotCommand("stop")}
-                            disabled={busy || !botStatus.alive}
-                        >
-                            <X size={15} />
-                            Parar
+                            <Stop size={22} />
                         </button>
                     </div>
                 </section>

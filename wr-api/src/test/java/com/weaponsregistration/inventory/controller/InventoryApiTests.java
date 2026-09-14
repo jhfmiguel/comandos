@@ -38,6 +38,73 @@ class InventoryApiTests {
     }
     private String unique() { return UUID.randomUUID().toString(); }
     @Test
+    void equipmentModelLookupFiltersPersistedFamiliesBeforePaginationIncludingLegacyModels() throws Exception {
+        String token = unique();
+        var families = List.of("FIREARM", "AMMUNITION", "GRENADE", "SPRAY", "BALLISTIC_PROTECTION", "ELECTRICAL_DEVICE", "OPTICAL");
+        Map<String, Long> ids = new HashMap<>();
+        long brand = create("inventory/brands", Map.of("name", unique(), "manufacturer", "Test")).get("id").asLong();
+        for (String family : families) {
+            var category = categoryData(false); category.put("family", family);
+            long categoryId = create("inventory/categories", category).get("id").asLong();
+            for (int i = 0; i < 12; i++) {
+                var model = create("inventory/models", Map.of("name", token + "-" + i, "categoryId", categoryId,
+                    "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "0"));
+                ids.put(family, model.get("id").asLong());
+                assertEquals(family, model.get("modelFamily").asText());
+                assertTrue(model.get("armamentTypeId").isNull());
+            }
+        }
+        for (String family : families) {
+            for (int page = 0; page < 2; page++) {
+                var result = request("GET", "inventory/models?search=" + token + "&size=10&page=" + page + "&filter.modelFamily=" + family, null);
+                assertEquals(200, result.status(), result.raw());
+                assertEquals(12, result.body().get("totalElements").asInt());
+                assertEquals(page == 0 ? 10 : 2, result.body().get("content").size());
+                for (var row : result.body().get("content")) assertEquals(family, row.get("modelFamily").asText());
+            }
+            var historical = request("GET", "inventory/models/" + ids.get(family), null);
+            assertEquals(200, historical.status());
+            assertEquals(family, historical.body().get("modelFamily").asText());
+            assertEquals(0, request("GET", "inventory/models?search=" + unique() + "&filter.modelFamily=" + family, null)
+                .body().get("totalElements").asInt());
+        }
+        assertEquals(400, request("GET", "inventory/models?filter.modelFamily=FIRE", null).status());
+        assertEquals(84, request("GET", "inventory/models?search=" + token, null).body().get("totalElements").asInt());
+        for (String family : families) {
+            String resource = family.toLowerCase(Locale.ROOT).replace('_', '-') + "-specifications";
+            var data = new HashMap<String, Object>();
+            for (var field : com.weaponsregistration.inventory.service.InventoryCatalog.get(resource).fields()) {
+                data.put(field.name(), switch (field.type()) {
+                    case "reference" -> ids.get(family);
+                    case "integer", "decimal" -> 1;
+                    case "boolean" -> false;
+                    case "choice" -> field.choices().get(0);
+                    default -> "Test";
+                });
+            }
+            for (String incompatible : families) {
+                if (family.equals(incompatible)) continue;
+                data.put("modelId", ids.get(incompatible));
+                var rejected = request("POST", "inventory/" + resource, data);
+                assertEquals(400, rejected.status(), rejected.raw());
+                assertTrue(rejected.raw().contains(family + " family"), rejected.raw());
+            }
+            data.put("modelId", ids.get(family));
+            var saved = create("inventory/" + resource, data);
+            String path = "inventory/" + resource + "/" + saved.get("id").asLong();
+            assertEquals(ids.get(family).longValue(), request("GET", path, null).body().get("modelId").asLong());
+            assertEquals(1, request("GET", "inventory/" + resource + "?filter.modelId=" + token, null).body().get("totalElements").asInt());
+            data.put("version", saved.get("version").asLong());
+            var edited = request("PUT", path, data);
+            assertEquals(200, edited.status(), edited.raw());
+            data.put("version", edited.body().get("version").asLong());
+            data.put("modelId", ids.get(families.get((families.indexOf(family) + 1) % families.size())));
+            assertEquals(400, request("PUT", path, data).status());
+            assertEquals(ids.get(family).longValue(), request("GET", path, null).body().get("modelId").asLong());
+        }
+    }
+
+    @Test
     void patrimonialIdentityNormalizesGloballyAndPreservesMovementLinks() throws Exception {
         var first = setup(false); var second = setup(false);
         String token = unique().toUpperCase(Locale.ROOT);

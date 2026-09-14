@@ -121,14 +121,14 @@ function SalesForm({ onNewSale }: { onNewSale: () => void }) {
                 }} />
             </fieldset>}
             {!completed && <div className={styles.tableContainer}>
-                <table><caption>Sale items</caption><thead><tr><th>Item / code</th><th>Location</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th><th>Actions</th></tr></thead>
+                <table><caption>Sale items</caption><thead><tr><th>Item / code</th><th>Location</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th><th className={styles.actionCell}>Actions</th></tr></thead>
                     <tbody>{cart.map(item => <tr key={keyOf(item)}>
                         <td>{item.modelName}<br />{item.code}</td><td>{item.locationName}</td>
                         <td><div className={styles.field}><QuantityInput code={item.code} max={item.available} value={item.quantity}
                             disabled={locked} individual={item.kind === "ASSET"}
                             onChange={quantity => setCart(cart.map(line => keyOf(line) === keyOf(item) ? { ...line, quantity } : line))} /></div>{item.unitOfMeasure}</td>
                         <td>{item.unitPrice}</td><td>{amount(subtotal(item))}</td>
-                        <td><Button type="button" severity="secondary" disabled={locked} aria-label={`Remove ${item.code}`}
+                        <td className={styles.actionCell}><Button type="button" severity="secondary" disabled={locked} aria-label={`Remove ${item.code}`}
                             onClick={() => setCart(cart.filter(line => keyOf(line) !== keyOf(item)))}>Remove</Button></td>
                     </tr>)}{!cart.length && <tr><td colSpan={6}>Select an organization and add stock items.</td></tr>}</tbody>
                 </table>
@@ -171,9 +171,9 @@ function StockPicker({ organizationId, unitId, cart, onAdd }: { organizationId: 
         </div>
         {error && <Message type="error" text={error} />}
         {!result && !error && <p role="status">Loading stock…</p>}
-        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / model</th><th>Location</th><th>Available</th><th>Unit price</th><th>Actions</th></tr></thead>
+        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / model</th><th>Location</th><th>Available</th><th>Unit price</th><th className={styles.actionCell}>Actions</th></tr></thead>
             <tbody>{result.content.map(item => <tr key={keyOf(item)}><td>{item.code}<br />{item.modelName} · {item.sku}</td><td>{item.locationName}</td>
-                <td>{item.available} {item.unitOfMeasure}</td><td>{item.unitPrice}</td><td><Button type="button" disabled={cart.length >= 100 || cart.some(line => keyOf(line) === keyOf(item))}
+                <td>{item.available} {item.unitOfMeasure}</td><td>{item.unitPrice}</td><td className={styles.actionCell}><Button type="button" disabled={cart.length >= 100 || cart.some(line => keyOf(line) === keyOf(item))}
                     onClick={() => onAdd(item)}>Add</Button></td></tr>)}{!result.content.length && <tr><td colSpan={5}>No available stock matches your search.</td></tr>}</tbody></table></div>
             <Pagination page={page} result={result} onPage={value => { setResult(null); setPage(value); }} /></>}
     </section>;

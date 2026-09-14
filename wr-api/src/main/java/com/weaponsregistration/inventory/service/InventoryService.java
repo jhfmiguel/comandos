@@ -49,6 +49,17 @@ public class InventoryService {
         List<String> clauses = new ArrayList<>();
         Map<String, Object> parameters = new LinkedHashMap<>();
 
+        // The persisted model -> category -> family relationship also covers legacy models
+        // without an optional armament type or classification.
+        String modelFamily = requestParams.get("filter.modelFamily");
+        if ("models".equals(resource) && modelFamily != null && !modelFamily.isBlank()) {
+            var families = InventoryCatalog.get("categories").fields().stream()
+                .filter(field -> field.name().equals("family")).findFirst().orElseThrow().choices();
+            if (!families.contains(modelFamily)) bad("Invalid equipment family.");
+            clauses.add("e.category.family = :modelFamily");
+            parameters.put("modelFamily", modelFamily);
+        }
+
         if (search != null && !search.isBlank()) {
             List<String> expressions =
                 new ArrayList<>(List.of("cast(e.id as string)"));
@@ -467,6 +478,7 @@ public class InventoryService {
         result.put("id", entity.id); result.put("version", entity.version);
         result.put("createdAt", entity.createdAt); result.put("updatedAt", entity.updatedAt);
         result.put("label", label(entity));
+        if (entity instanceof ItemModel model) result.put("modelFamily", model.category.family);
         Map<String, String> labels = new LinkedHashMap<>();
         for (var field : spec.fields()) {
             Object value = read(entity, field.property());

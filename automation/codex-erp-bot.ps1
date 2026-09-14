@@ -7,6 +7,9 @@ param(
     [int]$MaxTasks = 0,
     [string]$TaskName = '',
     [string]$Workstream = '',
+    [ValidateSet('continuous', 'until')]
+    [string]$ExecutionMode = 'continuous',
+    [string]$StopAfterTask = '',
     [switch]$ListTasks,
     [switch]$Once,
     [switch]$AutoCommit,
@@ -16,6 +19,14 @@ param(
     [string]$Remote = 'origin',
     [string]$Branch = 'main'
 )
+# BOT_EXECUTION_MODE_VALIDATION
+if (
+    $ExecutionMode -eq 'until' -and
+    [string]::IsNullOrWhiteSpace($StopAfterTask)
+) {
+    throw 'ExecutionMode until requires StopAfterTask.'
+}
+
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -31,17 +42,22 @@ $logDirectory = Join-Path $PSScriptRoot 'logs'
 $runtimeDirectory = Join-Path $PSScriptRoot 'runtime'
 $statusPath = Join-Path $runtimeDirectory 'status.json'
 $controlPath = Join-Path $runtimeDirectory 'control.json'
+$rateLimitStatePath = Join-Path $runtimeDirectory 'codex-rate-limit.json'
 $processedTasks = 0
 $script:lastState = 'starting'
 $script:lastMessage = 'Iniciando worker.'
 $script:lastTask = ''
 $taskLimit = $MaxTasks
 
+
+if ($ExecutionMode -eq 'until' -and [string]::IsNullOrWhiteSpace($StopAfterTask)) {
+    throw 'ExecutionMode until requires StopAfterTask.'
+}
 foreach ($directory in @($TaskDirectory, $workingDirectory, $completedDirectory, $failedDirectory, $logDirectory, $runtimeDirectory)) {
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
 }
 
-function Write-BotStatus([string]$state, [string]$message, [string]$taskName = '') {
+function Write-BotStatus([string]$state, [string]$message, [string]$taskName = '', [string]$rateLimitResetAt = '') {
     $script:lastState = $state
     $script:lastMessage = $message
     $script:lastTask = $taskName
@@ -50,9 +66,12 @@ function Write-BotStatus([string]$state, [string]$message, [string]$taskName = '
         message = $message
         taskName = $taskName
         workstream = $Workstream
+        executionMode = $ExecutionMode
+        stopAfterTask = $StopAfterTask
         processedTasks = $processedTasks
         updatedAt = (Get-Date).ToString('o')
         pid = $PID
+        rateLimitResetAt = if ($rateLimitResetAt) { $rateLimitResetAt } else { $null }
     }
     $temporary = "$statusPath.$PID.tmp"
     [System.IO.File]::WriteAllText($temporary, ($status | ConvertTo-Json), (New-Object System.Text.UTF8Encoding($false)))
@@ -75,69 +94,252 @@ function Wait-BotPoll {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function Wait-IfPaused([string]$taskName) {
     $previousState = $script:lastState
     $previousMessage = $script:lastMessage
-    
-function Get-CodexResetAt([string]$logPath) {
-    if (-not (Test-Path -LiteralPath $logPath)) {
+
+    while ($true) {
+        $control = Get-Control
+
+        if ($control -and $control.command -eq 'stop') {
+            throw 'BOT_STOP_REQUESTED'
+        }
+
+        if (-not $control -or $control.command -ne 'pause') {
+            if ($control -and $control.command -eq 'resume') {
+                Clear-Control
+            }
+
+            if ($script:lastState -eq 'paused') {
+                Write-BotStatus $previousState $previousMessage $taskName
+            }
+
+            return
+        }
+
+        Write-BotStatus `
+            'paused' `
+            'Pausado pelo painel. Aguardando continuar ou parar.' `
+            $taskName
+
+        Start-Sleep -Seconds 2
+    }
+}
+
+function Convert-CodexResetTextToDateTime([string]$text) {
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        return $null
+    }
+
+    $normalized = [regex]::Replace(
+        $text.Trim(),
+        '(?i)(\d{1,2})(st|nd|rd|th)\b',
+        '$1'
+    )
+
+    $culture = [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+    $styles = [System.Globalization.DateTimeStyles]::AllowWhiteSpaces
+    $parsed = [datetime]::MinValue
+
+    foreach ($format in @(
+        'MMM d, yyyy h:mm tt',
+        'MMM d, yyyy, h:mm tt',
+        'MMMM d, yyyy h:mm tt',
+        'MMMM d, yyyy, h:mm tt'
+    )) {
+        if ([datetime]::TryParseExact(
+            $normalized,
+            $format,
+            $culture,
+            $styles,
+            [ref]$parsed
+        )) {
+            return $parsed
+        }
+    }
+
+    if ([datetime]::TryParse(
+        $normalized,
+        $culture,
+        $styles,
+        [ref]$parsed
+    )) {
+        return $parsed
+    }
+
+    return $null
+}
+
+function Save-CodexRateLimit(
+    [datetime]$resetAt,
+    [string]$displayText
+) {
+    $state = [ordered]@{
+        resetAt = $resetAt.ToString('o')
+        displayText = $displayText
+        updatedAt = (Get-Date).ToString('o')
+    }
+
+    $temporary = "$rateLimitStatePath.$PID.tmp"
+
+    [System.IO.File]::WriteAllText(
+        $temporary,
+        ($state | ConvertTo-Json),
+        (New-Object System.Text.UTF8Encoding($false))
+    )
+
+    Move-Item -Force -Path $temporary -Destination $rateLimitStatePath
+}
+
+function Clear-CodexRateLimit {
+    Remove-Item `
+        -Force `
+        -LiteralPath $rateLimitStatePath `
+        -ErrorAction SilentlyContinue
+}
+
+function Get-ActiveCodexRateLimit {
+    if (-not (Test-Path -LiteralPath $rateLimitStatePath)) {
         return $null
     }
 
     try {
-        $text = Get-Content -Raw -Encoding UTF8 -Path $logPath
+        $state = Get-Content `
+            -Raw `
+            -Encoding UTF8 `
+            -LiteralPath $rateLimitStatePath |
+            ConvertFrom-Json
 
-        if ($text -match '(?i)resets on\s+([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4},\s+\d{1,2}:\d{2}\s*(?:AM|PM))') {
-            $raw = $matches[1]
-            $culture = [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
-            $styles = [System.Globalization.DateTimeStyles]::AllowWhiteSpaces
-            $parsed = [datetime]::MinValue
+        if (-not $state.resetAt) {
+            Clear-CodexRateLimit
+            return $null
+        }
 
-            foreach ($format in @(
-                'MMM d, yyyy, h:mm tt',
-                'MMM dd, yyyy, h:mm tt',
-                'MMMM d, yyyy, h:mm tt',
-                'MMMM dd, yyyy, h:mm tt'
-            )) {
-                if ([datetime]::TryParseExact(
-                    $raw,
-                    $format,
-                    $culture,
-                    $styles,
-                    [ref]$parsed
-                )) {
-                    return $parsed
-                }
-            }
+        $resetAt = [datetime]::Parse(
+            [string]$state.resetAt,
+            [System.Globalization.CultureInfo]::InvariantCulture,
+            [System.Globalization.DateTimeStyles]::RoundtripKind
+        )
 
-            if ([datetime]::TryParse(
-                $raw,
-                $culture,
-                $styles,
-                [ref]$parsed
-            )) {
-                return $parsed
+        if ((Get-Date) -ge $resetAt) {
+            Clear-CodexRateLimit
+            return $null
+        }
+
+        $displayText = [string]$state.displayText
+
+        if ([string]::IsNullOrWhiteSpace($displayText)) {
+            $displayText = $resetAt.ToString(
+                'MMM d, yyyy h:mm tt',
+                [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+            )
+        }
+
+        return [pscustomobject]@{
+            ResetAt = $resetAt
+            DisplayText = $displayText
+        }
+    }
+    catch {
+        Clear-CodexRateLimit
+        return $null
+    }
+}
+
+function Get-CodexResetInfo([string]$logPath) {
+    if ([string]::IsNullOrWhiteSpace($logPath)) {
+        return $null
+    }
+
+    $text = ''
+
+    foreach ($path in @($logPath, "$logPath.stderr")) {
+        if (-not (Test-Path -LiteralPath $path)) {
+            continue
+        }
+
+        try {
+            $text += "`n" + [System.IO.File]::ReadAllText($path)
+        }
+        catch {
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        return $null
+    }
+
+    $text = [regex]::Replace(
+        $text,
+        '\x1B\[[0-?]*[ -/]*[@-~]',
+        ''
+    )
+
+    $patterns = @(
+        '(?i)rate limit resets?\s+on\s+([^\r\n]+)',
+        '(?i)rate limit resets?\s+at\s+([^\r\n]+)',
+        '(?i)resets?\s+on\s+([^\r\n]+)',
+        '(?i)resets?\s+at\s+([^\r\n]+)',
+        '(?i)try again at\s+([^\r\n]+)'
+    )
+
+    foreach ($pattern in $patterns) {
+        $matches = [regex]::Matches($text, $pattern)
+
+        if ($matches.Count -eq 0) {
+            continue
+        }
+
+        $raw = $matches[
+            $matches.Count - 1
+        ].Groups[1].Value.Trim()
+
+        $raw = $raw.TrimEnd('.', ';')
+
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            continue
+        }
+
+        $parsed = Convert-CodexResetTextToDateTime $raw
+
+        if ($null -ne $parsed) {
+            return [pscustomobject]@{
+                ResetAt = $parsed
+                DisplayText = $raw
             }
         }
-    } catch {
-        return $null
     }
 
     return $null
 }
 
 function Register-CodexResumeTask([datetime]$resumeAt) {
-    if ($resumeAt -le (Get-Date).AddSeconds(30)) {
-        $resumeAt = (Get-Date).AddMinutes(2)
-    }
+    $now = Get-Date
 
-    # Pequena margem para nao chamar o Codex exatamente no segundo do reset.
-    $resumeAt = $resumeAt.AddMinutes(1)
+    if ($resumeAt -le $now) {
+        $resumeAt = $now.AddSeconds(15)
+    }
 
     $scheduledTaskName = 'COMANDOS Codex Auto Resume'
 
     $arguments = @(
         '-NoProfile',
+        '-NonInteractive',
         '-ExecutionPolicy', 'Bypass',
         '-File', ('"' + $PSCommandPath + '"')
     )
@@ -154,7 +356,13 @@ function Register-CodexResumeTask([datetime]$resumeAt) {
         $arguments += @('-Workstream', ('"' + $Workstream + '"'))
     }
 
-    if ($TaskName) {
+    
+    $arguments += @('-ExecutionMode', ('"' + $ExecutionMode + '"'))
+
+    if ($StopAfterTask) {
+        $arguments += @('-StopAfterTask', ('"' + $StopAfterTask + '"'))
+    }
+if ($TaskName) {
         $arguments += @('-TaskName', ('"' + $TaskName + '"'))
     }
 
@@ -189,16 +397,28 @@ function Register-CodexResumeTask([datetime]$resumeAt) {
             -Once `
             -At $resumeAt
 
+        $settings = New-ScheduledTaskSettingsSet `
+            -StartWhenAvailable `
+            -AllowStartIfOnBatteries `
+            -DontStopIfGoingOnBatteries
+
         Register-ScheduledTask `
             -TaskName $scheduledTaskName `
             -Action $action `
             -Trigger $trigger `
-            -Description 'Reinicia o BOT COMANDOS quando a cota do Codex deve estar disponivel novamente.' `
-            -Force | Out-Null
+            -Settings $settings `
+            -Description 'Retoma automaticamente o BOT COMANDOS quando a cota do Codex for liberada.' `
+            -Force |
+            Out-Null
 
         return $resumeAt
-    } catch {
-        Write-Warning "Nao foi possivel agendar o reinicio automatico: $($_.Exception.Message)"
+    }
+    catch {
+        Write-Warning (
+            'Nao foi possivel agendar o reinicio automatico: ' +
+            $_.Exception.Message
+        )
+
         return $null
     }
 }
@@ -207,44 +427,51 @@ function Stop-BotForCodexUnavailable(
     [string]$taskName,
     [string]$logPath = ''
 ) {
-    $resetAt = $null
+    $resetInfo = $null
 
     if ($logPath) {
-        $resetAt = Get-CodexResetAt $logPath
+        $resetInfo = Get-CodexResetInfo $logPath
     }
 
-    # Se o Codex nao informou o reset, tenta de novo em 1 hora.
-    if ($null -eq $resetAt) {
-        $resetAt = (Get-Date).AddHours(1)
+    if ($null -eq $resetInfo) {
+        $resetInfo = Get-ActiveCodexRateLimit
     }
 
-    $scheduledAt = Register-CodexResumeTask $resetAt
+    if ($null -eq $resetInfo) {
+        $fallbackAt = (Get-Date).AddSeconds(
+            [Math]::Max(60, $CodexRetrySeconds)
+        )
 
-    if ($null -ne $scheduledAt) {
-        Write-BotStatus `
-            'offline' `
-            ("Codex indisponivel. BOT desligado. Reinicio automatico agendado para {0:dd/MM/yyyy HH:mm}." -f $scheduledAt) `
-            $taskName
-    } else {
-        Write-BotStatus `
-            'offline' `
-            'Codex indisponivel. BOT desligado; reinicio automatico nao pode ser agendado.' `
-            $taskName
-    }
-}
-while ($true) {
-        $control = Get-Control
-        if ($control -and $control.command -eq 'stop') { throw 'BOT_STOP_REQUESTED' }
-        if (-not $control -or $control.command -ne 'pause') {
-            if ($control -and $control.command -eq 'resume') { Clear-Control }
-            if ($script:lastState -eq 'paused') { Write-BotStatus $previousState $previousMessage $taskName }
-            return
+        $resetInfo = [pscustomobject]@{
+            ResetAt = $fallbackAt
+            DisplayText = $fallbackAt.ToString(
+                'MMM d, yyyy h:mm tt',
+                [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+            )
         }
-        Write-BotStatus 'paused' 'Pausado pelo painel. Aguardando continuar ou parar.' $taskName
-        Start-Sleep -Seconds 2
     }
-}
 
+    Save-CodexRateLimit `
+        $resetInfo.ResetAt `
+        $resetInfo.DisplayText
+
+    $scheduledAt = Register-CodexResumeTask $resetInfo.ResetAt
+
+    $message = (
+        'Codex liberado para trabalhar às {0}.' -f
+        $resetInfo.DisplayText
+    )
+
+    if ($null -eq $scheduledAt) {
+        $message += ' A retomada automatica nao pôde ser agendada.'
+    }
+
+    Write-BotStatus `
+        'waiting' `
+        $message `
+        $taskName `
+        $resetInfo.ResetAt.ToString('o')
+}
 function Test-CodexAvailable {
     return $null -ne (Get-Command $CodexCommand -ErrorAction SilentlyContinue)
 }
@@ -430,194 +657,11 @@ function Get-TaskCommitDescription([string]$taskPath) {
     return $description
 }
 
-function Get-RateLimitResetDateTime([string]$logPath) {
-    if ([string]::IsNullOrWhiteSpace($logPath)) {
-        return $null
-    }
 
-    $text = ""
 
-    foreach ($path in @($logPath, "$logPath.stderr")) {
-        if (Test-Path $path) {
-            try {
-                $text += "`n" + [System.IO.File]::ReadAllText($path)
-            }
-            catch {
-            }
-        }
-    }
 
-    if ([string]::IsNullOrWhiteSpace($text)) {
-        return $null
-    }
 
-    $text = [regex]::Replace(
-        $text,
-        '\x1B\[[0-?]*[ -/]*[@-~]',
-        ''
-    )
 
-    $patterns = @(
-        '(?i)rate limit resets?\s+on\s+([^\r\n.;]+)',
-        '(?i)rate limit resets?\s+at\s+([^\r\n.;]+)',
-        '(?i)resets?\s+on\s+([^\r\n.;]+)',
-        '(?i)resets?\s+at\s+([^\r\n.;]+)',
-        '(?i)try again at\s+([^\r\n.;]+)'
-    )
-
-    foreach ($pattern in $patterns) {
-        $matches = [regex]::Matches($text, $pattern)
-
-        if ($matches.Count -eq 0) {
-            continue
-        }
-
-        $raw = $matches[$matches.Count - 1].Groups[1].Value.Trim()
-
-        if ([string]::IsNullOrWhiteSpace($raw)) {
-            continue
-        }
-
-        $parsed = [datetime]::MinValue
-
-        if ([datetime]::TryParse(
-            $raw,
-            [System.Globalization.CultureInfo]::InvariantCulture,
-            [System.Globalization.DateTimeStyles]::AllowWhiteSpaces,
-            [ref]$parsed
-        )) {
-            $now = Get-Date
-
-            $hasExplicitDate =
-                $raw -match '\d{4}' -or
-                $raw -match '(?i)\bjan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec\b' -or
-                $raw -match '\d{1,2}[/-]\d{1,2}'
-
-            if (-not $hasExplicitDate) {
-                $parsed = Get-Date `
-                    -Year $now.Year `
-                    -Month $now.Month `
-                    -Day $now.Day `
-                    -Hour $parsed.Hour `
-                    -Minute $parsed.Minute `
-                    -Second $parsed.Second
-
-                if ($parsed -le $now) {
-                    $parsed = $parsed.AddDays(1)
-                }
-            }
-
-            return $parsed
-        }
-    }
-
-    return $null
-}
-
-function Wait-UntilRateLimitReset(
-    [string]$logPath,
-    [string]$taskName
-) {
-    $resetAt = Get-RateLimitResetDateTime $logPath
-
-    if ($null -eq $resetAt) {
-        Write-BotStatus `
-            'waiting' `
-            'Rate limit do Codex ativo. Horario de liberacao nao identificado. Nenhuma nova chamada ao Codex sera feita.' `
-            $taskName
-
-        while ($null -eq $resetAt) {
-            $control = Get-Control
-
-            if ($control -and $control.command -eq 'stop') {
-                throw 'BOT_STOP_REQUESTED'
-            }
-
-            if ($control -and $control.command -eq 'pause') {
-                Wait-IfPaused $taskName
-            }
-
-            Start-Sleep -Seconds 60
-            $resetAt = Get-RateLimitResetDateTime $logPath
-        }
-    }
-
-    $resumeAt = $resetAt.AddSeconds(15)
-    $displayTime = $resetAt.ToString('HH:mm:ss')
-
-    while ((Get-Date) -lt $resumeAt) {
-        Write-BotStatus `
-            'waiting' `
-            "Rate limit do Codex ativo. Codex liberado as $displayTime. Nenhuma tentativa sera feita antes desse horario." `
-            $taskName
-
-        $control = Get-Control
-
-        if ($control -and $control.command -eq 'stop') {
-            throw 'BOT_STOP_REQUESTED'
-        }
-
-        if ($control -and $control.command -eq 'pause') {
-            Wait-IfPaused $taskName
-        }
-
-        $remaining = [int][Math]::Ceiling(
-            ($resumeAt - (Get-Date)).TotalSeconds
-        )
-
-        $sleepSeconds = [Math]::Min(
-            60,
-            [Math]::Max(1, $remaining)
-        )
-
-        Start-Sleep -Seconds $sleepSeconds
-    }
-
-    Write-BotStatus `
-        'waiting' `
-        'Rate limit encerrado. Codex liberado; retomando a tarefa preservada na fila.' `
-        $taskName
-}
-
-function Get-RateLimitStatusMessage([string]$logPath) {
-    $fallback = 'Rate limit do Codex; etapa preservada na fila.'
-
-    if ([string]::IsNullOrWhiteSpace($logPath) -or -not (Test-Path $logPath)) {
-        return $fallback
-    }
-
-    try {
-        $log = [System.IO.File]::ReadAllText($logPath)
-
-        # Remove sequencias ANSI que podem vir da CLI.
-        $log = [regex]::Replace($log, '\x1B\[[0-?]*[ -/]*[@-~]', '')
-
-        $patterns = @(
-            '(?i)rate limit resets?\s+on\s+([^\r\n.;]+)',
-            '(?i)rate limit resets?\s+at\s+([^\r\n.;]+)',
-            '(?i)resets?\s+on\s+([^\r\n.;]+)',
-            '(?i)resets?\s+at\s+([^\r\n.;]+)',
-            '(?i)try again at\s+([^\r\n.;]+)'
-        )
-
-        foreach ($pattern in $patterns) {
-            $matches = [regex]::Matches($log, $pattern)
-
-            if ($matches.Count -gt 0) {
-                $reset = $matches[$matches.Count - 1].Groups[1].Value.Trim()
-
-                if (-not [string]::IsNullOrWhiteSpace($reset)) {
-                    return "Rate limit do Codex; etapa preservada na fila. Codex liberado Ã s $reset."
-                }
-            }
-        }
-
-        return $fallback
-    }
-    catch {
-        return $fallback
-    }
-}
 function Complete-Task([string]$taskPath) {
     $destination = Join-Path $completedDirectory (Split-Path $taskPath -Leaf)
     Move-Item -Force -Path $taskPath -Destination $destination
@@ -735,7 +779,19 @@ while ($true) {
         Stop-BotForCodexUnavailable $task.Name
         break
     }
+    $activeRateLimit = Get-ActiveCodexRateLimit
 
+    if ($null -ne $activeRateLimit) {
+        [void](Register-CodexResumeTask $activeRateLimit.ResetAt)
+
+        Write-BotStatus `
+            'waiting' `
+            ("Codex liberado para trabalhar às {0}." -f $activeRateLimit.DisplayText) `
+            $task.Name `
+            $activeRateLimit.ResetAt.ToString('o')
+
+        break
+    }
     $workingTask = Join-Path $workingDirectory $task.Name
     Move-Item -LiteralPath $task.FullName -Destination $workingTask
     $logPath = Join-Path $logDirectory ("{0:yyyyMMdd-HHmmss}-{1}.log" -f (Get-Date), $task.BaseName)
@@ -746,6 +802,12 @@ while ($true) {
         Invoke-ProjectValidation
         Complete-Task $workingTask
         $processedTasks++
+        # BOT_STOP_AFTER_SELECTED_REQUIREMENT
+        $reachedStopAfterTask = (
+            $ExecutionMode -eq 'until' -and
+            -not [string]::IsNullOrWhiteSpace($StopAfterTask) -and
+            $task.Name -eq $StopAfterTask
+        )
         Write-BotStatus 'completed' 'Etapa concluida e validada.' $task.Name
         Show-CompletionNotice 'Tarefa do COMANDOS concluída' "Tarefa: $($task.Name)`nLog: $logPath"
     } catch {
@@ -772,7 +834,39 @@ while ($true) {
         break
     }
 
+    # selected requirement reached
+
+    if ($reachedStopAfterTask) {
+
+        Write-BotStatus 
+
+            'completed' 
+
+            ('Requisito limite concluido: ' + $task.Name) 
+
+            $task.Name
+
+
+        Show-CompletionNotice 
+
+            'COMANDOS Codex Bot finalizado' 
+
+            ('Requisito limite concluido: ' + $task.Name)
+
+
+        break
+
+    }
+
     Wait-IfPaused ''
+
+    # BOT_2_MODOS_STOP_AFTER_SELECTED
+    if ($ExecutionMode -eq 'until' -and $StopAfterTask -and $task.Name -eq $StopAfterTask) {
+        Write-BotStatus 'completed' ('Requisito limite concluido: ' + $task.Name) $task.Name
+        Show-CompletionNotice 'COMANDOS Codex Bot finalizado' ('Requisito limite concluido: ' + $task.Name)
+        break
+    }
+
     if ($taskLimit -gt 0 -and $processedTasks -ge $taskLimit) {
         Write-BotStatus 'completed' 'Limite de etapas concluido. Inicie outra etapa pelo painel.'
         break

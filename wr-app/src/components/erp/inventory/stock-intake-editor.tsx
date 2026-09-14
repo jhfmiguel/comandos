@@ -121,13 +121,13 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                         <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
                         <Button type="button" onClick={importPairs}>Add pasted rows</Button></details>}
                     <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Boxes and rounds"}</caption>
-                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th>Actions</th>{assets && <th>Validation</th>}</tr></thead>
+                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th>{assets && <th>Validation</th>}</tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
                             {(["first", "second"] as const).map(column => <td key={column}><input required
                                 aria-label={`${assets ? column === "first" ? "Asset code" : "Serial number" : column === "first" ? "Number of boxes" : "Rounds per box"} ${index + 1}`}
                                 type="text" inputMode={assets ? "text" : "numeric"} maxLength={assets ? 255 : 15}
                                 value={row[column]} onChange={event => update(index, column, event.target.value)} /></td>)}
-                            <td><Button type="button" severity="secondary" aria-label={`Remove row ${index + 1}`}
+                            <td className={styles.actionCell}><Button type="button" severity="secondary" aria-label={`Remove row ${index + 1}`}
                                 onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}>Remove</Button></td>{assets && <td aria-live="polite">{results[index]?.errors.length ? results[index].errors.join(" ") : normalized[index].first === "" || normalized[index].second === "" ? "Asset code and serial number are required." : normalized.some((other, i) => i !== index && (other.first === normalized[index].first || other.second === normalized[index].second)) ? "Duplicate asset code or serial number." : results[index]?.status === "ACCEPTED" ? "Accepted; saved" : results[index]?.status === "VALID" ? "Valid; not saved yet" : ""}</td>}</tr>)}</tbody></table></div>
                     <Button type="button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>Add row</Button>
                     {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>

@@ -17,6 +17,10 @@
 .tableContainer th, .tableContainer td { padding: .8rem; text-align: left; border-bottom: 1px solid var(--p-content-border-color, #ddd); }
 .tableContainer th { font-weight: 600; white-space: nowrap; }
 .tableContainer td { max-width: 22rem; overflow-wrap: anywhere; }
+.actionCell.actionCell { text-align: right; }
+.actionCell > button { white-space: nowrap; }
+.tableActions { flex-wrap: wrap; }
+.tableActions > button { flex-shrink: 0; }
 .pagination { display: flex; align-items: center; justify-content: flex-end; gap: .8rem; margin-top: 1rem; flex-wrap: wrap; }
 .pagination span { margin-right: auto; font-size: .875rem; }
 .dialog { width: min(44rem, calc(100vw - 2rem)); max-height: 90vh; overflow-y: auto; }

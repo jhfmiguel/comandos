@@ -110,16 +110,16 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
                 unitId={unitId} selected={selectedSets} onAdd={item => setSelectedSets([...selectedSets, item])} />}
             </fieldset>
             <div className={styles.tableContainer}><table><caption>Selected equipment sets</caption><thead><tr>
-                <th>Code / name</th><th>Components</th><th>Actions</th></tr></thead><tbody>
+                <th>Code / name</th><th>Components</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
                 {selectedSets.map(item => <tr key={item.equipmentSetId}><td>{item.code}<br />{item.name}</td><td>{item.componentCount}</td>
-                    <td><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed}
+                    <td className={styles.actionCell}><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed}
                         onClick={() => setSelectedSets(selectedSets.filter(value => value.equipmentSetId !== item.equipmentSetId))}>Remove</Button></td></tr>)}
                 {!selectedSets.length && <tr><td colSpan={3}>No equipment set selected.</td></tr>}
             </tbody></table></div>
             <div className={styles.tableContainer}><table><caption>Selected equipment</caption><thead><tr>
-                <th>Asset / model</th><th>Serial number</th><th>Location</th><th>Actions</th></tr></thead><tbody>
+                <th>Asset / model</th><th>Serial number</th><th>Location</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
                 {selected.map(item => <tr key={item.assetId}><td>{item.assetCode}<br />{item.modelName}</td><td>{item.serialNumber || "—"}</td>
-                    <td>{item.locationName}</td><td><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed}
+                    <td>{item.locationName}</td><td className={styles.actionCell}><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed}
                         onClick={() => setSelected(selected.filter(value => value.assetId !== item.assetId))}>Remove</Button></td></tr>)}
                 {!selected.length && <tr><td colSpan={4}>Select the organization and add available equipment.</td></tr>}
             </tbody></table></div>
@@ -145,9 +145,9 @@ function EquipmentSetPicker({ organizationId, unitId, selected, onAdd }: { organ
         <label htmlFor="custody-set-search">Set code or name</label><input id="custody-set-search" type="search" value={search}
             onChange={event => { setSearch(event.target.value); setPage(0); setResult(null); }} /></div></div>
         {error && <Message type="error" text={error} />}{!result && !error && <p role="status">Loading equipment sets…</p>}
-        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / name</th><th>Components</th><th>Actions</th></tr></thead><tbody>
+        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / name</th><th>Components</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
             {result.content.map(item => <tr key={item.equipmentSetId}><td>{item.code}<br />{item.name}</td><td>{item.componentCount}</td>
-                <td><Button type="button" disabled={selected.some(value => value.equipmentSetId === item.equipmentSetId)} onClick={() => onAdd(item)}>Add set</Button></td></tr>)}
+                <td className={styles.actionCell}><Button type="button" disabled={selected.some(value => value.equipmentSetId === item.equipmentSetId)} onClick={() => onAdd(item)}>Add set</Button></td></tr>)}
             {!result.content.length && <tr><td colSpan={3}>No complete equipment set is currently available.</td></tr>}</tbody></table></div>
             <Pagination page={page} result={result} onPage={value => { setPage(value); setResult(null); }} /></>}
     </section>;
@@ -165,9 +165,9 @@ function StockPicker({ organizationId, unitId, selected, onAdd }: { organization
         <label htmlFor="custody-search">Asset code, serial number or model</label><input id="custody-search" type="search" value={search}
             onChange={event => { setSearch(event.target.value); setPage(0); setResult(null); }} /></div></div>
         {error && <Message type="error" text={error} />}{!result && !error && <p role="status">Loading equipment…</p>}
-        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Asset / model</th><th>Serial number</th><th>Location</th><th>Actions</th></tr></thead><tbody>
+        {result && <><div className={styles.tableContainer}><table><thead><tr><th>Asset / model</th><th>Serial number</th><th>Location</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
             {result.content.map(item => <tr key={item.assetId}><td>{item.assetCode}<br />{item.modelName}</td><td>{item.serialNumber || "—"}</td>
-                <td>{item.locationName}</td><td><Button type="button" disabled={selected.length >= 100 || selected.some(value => value.assetId === item.assetId)}
+                <td>{item.locationName}</td><td className={styles.actionCell}><Button type="button" disabled={selected.length >= 100 || selected.some(value => value.assetId === item.assetId)}
                     onClick={() => onAdd(item)}>Add</Button></td></tr>)}
             {!result.content.length && <tr><td colSpan={4}>No available equipment matches your search.</td></tr>}</tbody></table></div>
             <Pagination page={page} result={result} onPage={value => { setPage(value); setResult(null); }} /></>}
@@ -226,11 +226,11 @@ function CustodyHistory({ organizationId, unitId, refresh }: { organizationId: n
                 <p>{custody.recipientType === "UNIT" ? "Receiving organizational unit" : "Recipient"}: {custody.recipientName}</p>
                 <p>Purpose: {custody.purpose} · Delivered: {custody.deliveredAt.replace("T", " ")} · Due: {custody.dueAt?.replace("T", " ") || "Not set"}</p>
                 <p>Authorized by: {custody.authorizerName} · Issued by: {custody.issuedByLogin || "Not recorded"}</p>
-                <table><thead><tr><th>Equipment / model</th><th>Set / role</th><th>Quantity</th><th>Location</th><th>Return</th></tr></thead><tbody>
+                <table><thead><tr><th>Equipment / model</th><th>Set / role</th><th>Quantity</th><th>Location</th><th className={styles.actionCell}>Return</th></tr></thead><tbody>
                     {custody.items.map(item => { const setItems = item.equipmentSetId ? outstanding.filter(value => value.equipmentSetId === item.equipmentSetId) : [];
                         return <tr key={item.id}><td>{item.assetCode}<br />{item.modelName}{item.serialNumber ? <><br />Serial: {item.serialNumber}</> : null}</td>
                         <td>{item.equipmentSetCode ? <>{item.equipmentSetCode}<br />{item.componentRole}</> : "Individual"}</td><td>{item.quantity}</td>
-                        <td>{item.locationName}</td><td>{item.returnedAt ? <>Returned {item.returnedAt.replace("T", " ")}
+                        <td>{item.locationName}</td><td className={styles.actionCell}>{item.returnedAt ? <>Returned {item.returnedAt.replace("T", " ")}
                             {item.returnConditionName && <><br />Condition: {item.returnConditionName}</>}
                             {item.inspectionNotes && <><br />Notes: {item.inspectionNotes}</>}
                             {item.maintenanceWorkOrderId ? <><br />Work order #{item.maintenanceWorkOrderId}</>

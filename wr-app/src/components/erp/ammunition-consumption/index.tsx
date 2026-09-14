@@ -62,13 +62,13 @@ function ConsumptionForm({ onNew }: { onNew: () => void }) {
         </fieldset>
         {organizationId && canRead && canCreate && !completed && <StockPicker organizationId={organizationId} unitId={unitId} selected={selected}
             onAdd={item => setSelected([...selected, { ...item, quantity: "1", result: "Consumed" }])} />}
-        <div className={styles.tableContainer}><table><caption>Consumption items</caption><thead><tr><th>Ammunition / lot</th><th>Available</th><th>Quantity *</th><th>Result *</th><th>Actions</th></tr></thead><tbody>
+        <div className={styles.tableContainer}><table><caption>Consumption items</caption><thead><tr><th>Ammunition / lot</th><th>Available</th><th>Quantity *</th><th>Result *</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
             {selected.map(item => <tr key={item.balanceId}><td>{item.sku} · {item.modelName}<br />Lot {item.lotNumber} · {item.locationName}</td><td>{item.available} {item.unitOfMeasure}</td>
                 <td><input aria-label={`Quantity for ${item.lotNumber}`} type="number" min="0.0001" max={item.available} step="0.0001" required value={item.quantity}
                     disabled={busy || !!pending || !!completed} onChange={event => setSelected(selected.map(value => value.balanceId === item.balanceId ? { ...value, quantity: event.target.value } : value))} /></td>
                 <td><input aria-label={`Result for ${item.lotNumber}`} required maxLength={255} value={item.result} disabled={busy || !!pending || !!completed}
                     onChange={event => setSelected(selected.map(value => value.balanceId === item.balanceId ? { ...value, result: event.target.value } : value))} /></td>
-                <td><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed} onClick={() => setSelected(selected.filter(value => value.balanceId !== item.balanceId))}>Remove</Button></td></tr>)}
+                <td className={styles.actionCell}><Button type="button" severity="secondary" disabled={busy || !!pending || !!completed} onClick={() => setSelected(selected.filter(value => value.balanceId !== item.balanceId))}>Remove</Button></td></tr>)}
             {!selected.length && <tr><td colSpan={5}>Select the organization and add an available ammunition lot.</td></tr>}
         </tbody></table></div><div className={styles.actions}>{completed ? <Button type="button" className="registration-yellow-button" onClick={onNew}>+ Consumption</Button>
             : <Button type="submit" className="registration-yellow-button" disabled={busy || !validItems || !canCreate}>{busy ? "Finalizing…" : pending ? "Retry finalize" : "Finalize consumption"}</Button>}</div></form>
@@ -85,9 +85,9 @@ function StockPicker({ organizationId, unitId, selected, onAdd }: { organization
     return <section><div className={styles.toolbar}><h2>Available ammunition</h2><div className={styles.field}><label htmlFor="ammunition-search">SKU, model, lot or location</label>
         <input id="ammunition-search" type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(0); setResult(null); }} /></div></div>
         {error && <Message type="error" text={error} />}{!result && !error && <p role="status">Loading ammunition…</p>}
-        {result && <><div className={styles.tableContainer}><table><thead><tr><th>SKU / model</th><th>Lot</th><th>Location</th><th>Available</th><th>Actions</th></tr></thead><tbody>
+        {result && <><div className={styles.tableContainer}><table><thead><tr><th>SKU / model</th><th>Lot</th><th>Location</th><th>Available</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
             {result.content.map(item => <tr key={item.balanceId}><td>{item.sku}<br />{item.modelName}</td><td>{item.lotNumber}<br />Expires: {item.validUntil || "Not set"}</td><td>{item.locationName}</td><td>{item.available} {item.unitOfMeasure}</td>
-                <td><Button type="button" disabled={selected.length >= 100 || selected.some(value => value.balanceId === item.balanceId)} onClick={() => onAdd(item)}>Add</Button></td></tr>)}
+                <td className={styles.actionCell}><Button type="button" disabled={selected.length >= 100 || selected.some(value => value.balanceId === item.balanceId)} onClick={() => onAdd(item)}>Add</Button></td></tr>)}
             {!result.content.length && <tr><td colSpan={5}>No available ammunition matches your search.</td></tr>}</tbody></table></div><Pagination page={page} result={result} onPage={setPage} /></>}
     </section>;
 }

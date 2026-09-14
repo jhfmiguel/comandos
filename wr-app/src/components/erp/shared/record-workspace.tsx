@@ -382,9 +382,9 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
                                     {!resource.readOnly && (
                                         <DataTable.THeadCell
+                                            className={styles.actionCell}
                                             style={{
-                                                width: "8rem",
-                                                textAlign: "center"
+                                                width: "8rem"
                                             }}
                                         >
                                             Actions
@@ -461,8 +461,8 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                         ))}
 
                                         {!resource.readOnly && (
-                                            <DataTable.Cell>
-                                                <div className={styles.actions}>
+                                            <DataTable.Cell className={styles.actionCell}>
+                                                <div className={`${styles.actions} ${styles.tableActions}`}>
                                                     <Button
                                                         type="button"
                                                         variant="text"
@@ -650,6 +650,16 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     );
 }
 
+const equipmentModelFamilies: Record<string, string> = {
+    "firearm-specifications": "FIREARM",
+    "ammunition-specifications": "AMMUNITION",
+    "grenade-specifications": "GRENADE",
+    "spray-specifications": "SPRAY",
+    "ballistic-protection-specifications": "BALLISTIC_PROTECTION",
+    "electrical-device-specifications": "ELECTRICAL_DEVICE",
+    "optical-specifications": "OPTICAL",
+};
+
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
     resource: ErpResource; 
@@ -726,6 +736,7 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                             {resource.key === "user-profiles" && field.name === "unitId" && <small>Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.</small>}
                                             {field.type === "reference" ? (
                                                 <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
+                                                    modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
                                                     organizationId={values.organizationId} excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}
                                                     optionFilter={option => {
                                                         if (["armament-types", "armament-classifications"].includes(field.reference ?? "") && option.active === false) return false;
@@ -768,23 +779,29 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
     );
 }
 
-export function ReferenceField({ service, field, value, selectedLabel, organizationId, excludedId, optionFilter, onChange }: {
+export function ReferenceField({ service, field, value, selectedLabel, organizationId, excludedId, optionFilter, modelFamily, onChange }: {
     service: ErpService; field: ErpField; value: ErpValue; selectedLabel?: string; organizationId: ErpValue;
-    excludedId?: number; optionFilter?: (record: ErpRecord) => boolean; onChange: (value: ErpValue) => void;
+    excludedId?: number; optionFilter?: (record: ErpRecord) => boolean; modelFamily?: string; onChange: (value: ErpValue) => void;
 }) {
     const [search, setSearch] = React.useState("");
     const [result, setResult] = React.useState<ErpPage | null>(null);
     const [error, setError] = React.useState("");
+    const [completedQuery, setCompletedQuery] = React.useState("");
+    const [retry, setRetry] = React.useState(0);
+    const queryKey = JSON.stringify([field.reference, search, organizationId, modelFamily, retry]);
+    const loading = completedQuery !== queryKey;
     React.useEffect(() => {
         const controller = new AbortController();
         const timer = setTimeout(() => {
-            service.list(field.reference!, search, 0, controller.signal, ["units", "core/units"].includes(field.reference ?? "") ? organizationId : undefined).then(data => {
+            service.list(field.reference!, search, 0, controller.signal, ["units", "core/units"].includes(field.reference ?? "") ? organizationId : undefined,
+                modelFamily ? { modelFamily } : {}).then(data => {
                 if (!controller.signal.aborted) { setResult(data); setError(""); }
-            }).catch(error => { if (!controller.signal.aborted) setError(errorMessage(error)); });
+            }).catch(error => { if (!controller.signal.aborted) { setResult(null); setError(errorMessage(error)); } })
+                .finally(() => { if (!controller.signal.aborted) setCompletedQuery(queryKey); });
         }, 250);
         return () => { clearTimeout(timer); controller.abort(); };
-    }, [field.reference, search, organizationId, service]);
-    const options = (result?.content ?? []).filter(item => item.id !== excludedId && (!optionFilter || optionFilter(item)) &&
+    }, [field.reference, search, organizationId, service, modelFamily, queryKey]);
+    const options = (loading ? [] : result?.content ?? []).filter(item => (!modelFamily || item.modelFamily === modelFamily) && item.id !== excludedId && (!optionFilter || optionFilter(item)) &&
         !(["units", "core/units"].includes(field.reference ?? "") && organizationId && String(item.organizationId) !== String(organizationId)));
     const current = String(value ?? "");
     return (
@@ -798,8 +815,10 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                 {options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
             </select>
             {["units", "core/units"].includes(field.reference ?? "") && !organizationId && <small>Select an organization first.</small>}
-            {result && result.totalElements > result.size && <small>Showing the first 20 matches. Refine your search for more records.</small>}
-            {error && <small role="alert">{error}</small>}
+            {loading && <small role="status">Loading models and records...</small>}
+            {!loading && !error && options.length === 0 && <small role="status">{search ? "No matching records. Try another search." : modelFamily ? "No models registered for this equipment type." : "No records available."}</small>}
+            {!loading && result && result.totalElements > result.size && <small>Showing the first {result.size} matches. Refine your search for more records.</small>}
+            {!loading && error && <small role="alert">{error} <button type="button" onClick={() => setRetry(current => current + 1)}>Retry</button></small>}
         </div>
     );
 }

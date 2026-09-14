@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import * as React from "react"
@@ -14,20 +14,6 @@ type BotStatus = {
     alive?: boolean
 }
 
-const statusClass: Record<string, string> = {
-    working: "is-working",
-    validating: "is-validating",
-    waiting: "is-waiting",
-    paused: "is-paused",
-    "pause-requested": "is-paused",
-    "codex-offline": "is-offline",
-    offline: "is-offline",
-    unresponsive: "is-offline",
-    stopped: "is-stopped",
-    failed: "is-failed",
-    completed: "is-completed",
-    starting: "is-starting"
-}
 
 export function TopToolbar() {
     const {
@@ -138,20 +124,14 @@ export function TopToolbar() {
 
             <Link
                 href="/bot"
-                className={`comandos-bot-indicator ${statusClass[state] || "is-offline"} comandos-bot-status-centered`}
+                className="comandos-bot-indicator comandos-bot-status-centered"
                 title="Command Center"
                 aria-label={`${t("bot")}: ${stateLabel}`}
             >
                 <span
-                    className="comandos-bot-light"
+                    className={`comandos-bot-status-light comandos-bot-status-${state}`}
                     aria-hidden="true"
                 />
-                <span className="comandos-bot-label">
-                    {t("bot")}
-                </span>
-                <span className="comandos-bot-state">
-                    {stateLabel}
-                </span>
             </Link>
         </nav>
     )

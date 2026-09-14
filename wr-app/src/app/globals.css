@@ -1883,3 +1883,63 @@ a:has(.comandos-bot-status-centered) {
     padding: 0 !important;
 }
 /* END COMANDOS BOT CENTER V15 */
+/* COMANDOS TOP BOT STATUS SYNC START */
+
+/*
+ * Indicador superior do bot:
+ * - usa as mesmas classes comandos-bot-status-* do Command Center;
+ * - fica centralizado na mesma caixa visual do seletor claro/escuro.
+ */
+.comandos-top-toolbar .comandos-bot-status-centered {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.25rem !important;
+    min-width: 2.25rem !important;
+    height: 2.25rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0.65rem !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+}
+
+.comandos-top-toolbar .comandos-bot-status-centered .comandos-bot-status-light {
+    display: block !important;
+    position: static !important;
+    width: 0.7rem !important;
+    min-width: 0.7rem !important;
+    height: 0.7rem !important;
+    flex: 0 0 0.7rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+}
+
+/* COMANDOS TOP BOT STATUS SYNC END */
+/* COMANDOS MAIN HEADER FLOW START */
+
+/*
+ * O menu superior direito deve acompanhar o fluxo normal da pagina.
+ * O parent nao pode ser sticky, pois isso manteria a toolbar presa
+ * mesmo que a propria toolbar use position: static.
+ */
+.comandos-main-header {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: auto !important;
+}
+
+/*
+ * Garante que a barra superior direita tambem permaneÃ§a no fluxo
+ * normal do documento.
+ */
+.comandos-main-header .comandos-top-toolbar {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+}
+
+/* COMANDOS MAIN HEADER FLOW END */

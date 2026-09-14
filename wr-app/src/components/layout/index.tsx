@@ -44,7 +44,7 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
 
                 </header>
 
-                <div className="flex-1 px-4 pb-4 pt-0">
+                <div className="flex-1 px-4 pb-4 pt-4">
 
                     <div className="comandos-main-card surface-card border-round shadow-2 overflow-hidden">
 
