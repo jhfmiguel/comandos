@@ -13,10 +13,40 @@ export function createErpService(module: ErpModule) {
         catalog: async (signal?: AbortSignal) =>
             (await httpClient.get<ErpResource[]>(`${root}/catalog`, { signal })).data,
         
-        list: async (resource: string, search = "", page = 0, signal?: AbortSignal, organizationId?: ErpValue) =>
-            (await httpClient.get<ErpPage>(path(resource), {
-                params: { search, page, size: 20, organizationId: organizationId || undefined }, signal
-            })).data,
+        list: async (
+            resource: string,
+            search = "",
+            page = 0,
+            signal?: AbortSignal,
+            organizationId?: ErpValue,
+            filters: Record<string, string> = {}
+        ) =>
+            (
+                await httpClient.get<ErpPage>(
+                    path(resource),
+                    {
+                        params: {
+                            search,
+                            page,
+                            size: 10,
+                            organizationId:
+                                organizationId ||
+                                undefined,
+                            ...Object.fromEntries(
+                                Object.entries(filters)
+                                    .filter(([, value]) =>
+                                        value.trim() !== ""
+                                    )
+                                    .map(([field, value]) => [
+                                        `filter.${field}`,
+                                        value.trim()
+                                    ])
+                            )
+                        },
+                        signal
+                    }
+                )
+            ).data,
         
         save: async (resource: string, values: Record<string, ErpValue>, id?: number) =>
             id == null

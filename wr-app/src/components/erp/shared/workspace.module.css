@@ -36,3 +36,7 @@
     .navigation > div { min-width: 170px; }
 }
 @media (max-width: 550px) { .fields { grid-template-columns: 1fr; } }
+
+.shellSingle {
+    grid-template-columns: minmax(0, 1fr);
+}

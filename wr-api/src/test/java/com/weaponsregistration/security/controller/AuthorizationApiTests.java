@@ -102,6 +102,41 @@ class AuthorizationApiTests {
     }
 
     @Test
+    void ammunitionConsumptionRequiresCreateAndEnforcesUnitScopeOnStockAndRetries() throws Exception {
+        var f = fixture();
+        long balance = tx.execute(status -> {
+            var category = new ItemCategory(); category.name = UUID.randomUUID().toString(); category.family = "AMMUNITION";
+            category.serialized = false; category.lotControlled = true; category.consumable = true; persist(category);
+            var model = new ItemModel(); model.category = category; model.brand = em.find(ItemModel.class, f.model()).brand;
+            model.name = "Cartridge"; model.sku = UUID.randomUUID().toString(); model.unitOfMeasure = "EA"; persist(model);
+            var lot = new StockLot(); lot.model = model; lot.openingLocation = em.find(StockLocation.class, f.location());
+            lot.lotNumber = UUID.randomUUID().toString(); lot.initialQuantity = BigDecimal.TEN; lot.availableQuantity = BigDecimal.TEN; persist(lot);
+            var stock = new StockBalance(); stock.lot = lot; stock.location = lot.openingLocation; stock.available = BigDecimal.TEN; persist(stock);
+            return stock.id;
+        });
+        grant(f, "ammunition-consumptions", "READ", "UNIT", f.unit());
+        grant(f, "core/people", "READ", "SYSTEM", null);
+        login(f);
+        String path = "/api/erp/ammunition-consumptions";
+        var payload = new HashMap<String, Object>(Map.of("requestId", UUID.randomUUID().toString(),
+            "organizationId", f.organization(), "unitId", f.unit(), "responsibleId", f.person(), "authorizerId", f.person(),
+            "purpose", "Training", "items", List.of(Map.of("balanceId", balance, "quantity", "2", "result", "Consumed"))));
+        assertEquals(403, request("POST", path, payload).status());
+        assertEquals(403, request("GET", path + "/stock?organizationId=" + f.organization(), null).status());
+        assertEquals(403, request("GET", path + "?organizationId=" + f.otherOrganization(), null).status());
+        var stock = request("GET", path + "/stock?organizationId=" + f.organization() + "&unitId=" + f.unit(), null);
+        assertEquals(200, stock.status(), stock.raw()); assertEquals(1, stock.body().get("totalElements").asInt());
+        long createGrant = grant(f, "ammunition-consumptions", "CREATE", "UNIT", f.unit());
+        payload.remove("unitId"); assertEquals(403, request("POST", path, payload).status());
+        payload.put("unitId", f.unit());
+        var created = request("POST", path, payload); assertEquals(200, created.status(), created.raw());
+        assertEquals(200, request("GET", path + "/" + created.body().get("id").asLong(), null).status());
+        jdbc.update("delete from erp_profile_permission where id = ?", createGrant);
+        assertEquals(403, request("POST", path, payload).status());
+        assertEquals(0, new BigDecimal("8").compareTo(jdbc.queryForObject("select available from erp_stock_balance where id = ?", BigDecimal.class, balance)));
+    }
+
+    @Test
     void reservationExpirationAndCancellationRequireTheirOwnActions() throws Exception {
         for (String action : List.of("EXPIRE", "CANCEL")) {
             var f = fixture();
@@ -161,9 +196,33 @@ class AuthorizationApiTests {
         // A separate read-only account cannot mutate stock even within its scope.
         var reader = fixture(); grant(reader, "inventory/assets", "READ", "SYSTEM", null); login(reader);
         assertEquals(403, request("POST", "/api/erp/inventory/assets", Map.of()).status());
+        assertEquals(403, request("POST", "/api/erp/inventory/assets/batch", Map.of()).status());
+        assertEquals(403, request("POST", "/api/erp/inventory/assets/batch/review", Map.of()).status());
         assertEquals(403, request("DELETE", "/api/erp/inventory/assets/" + reader.asset() + "?version=0", null).status());
         var catalog = request("GET", "/api/erp/inventory/catalog", null).body();
         assertEquals(List.of("READ"), json.convertValue(catalog.get(0).get("actions"), List.class));
+    }
+
+    @Test
+    void assetBatchChecksScopeAndAuditsAuthenticatedActor() throws Exception {
+        var f = fixture();
+        grant(f, "inventory/assets", "CREATE", "ORGANIZATION", null);
+        grant(f, "inventory/models", "READ", "SYSTEM", null);
+        grant(f, "inventory/locations", "READ", "ORGANIZATION", null); login(f);
+        var common = new HashMap<String, Object>(Map.of("modelId", f.model(), "locationId", f.otherLocation(),
+            "condition", "NEW", "status", "AVAILABLE", "currentValue", "0"));
+        String code = UUID.randomUUID().toString();
+        var payload = Map.of("requestId", UUID.randomUUID().toString(), "common", common,
+            "items", List.of(Map.of("assetCode", code, "serialNumber", UUID.randomUUID().toString())));
+        for (String suffix : List.of("", "/review"))
+            assertEquals(403, request("POST", "/api/erp/inventory/assets/batch" + suffix, payload).status());
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_asset_item where asset_code=?", Long.class, code));
+        common.put("locationId", f.location());
+        var created = request("POST", "/api/erp/inventory/assets/batch", payload);
+        assertEquals(200, created.status(), created.raw());
+        long id = created.body().get("recordIds").get(0).asLong();
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where action='BATCH_CREATE' and record_id=?", Long.class, id));
+        assertNotNull(jdbc.queryForObject("select occurred_at from erp_audit_record where action='BATCH_CREATE' and record_id=?", java.sql.Timestamp.class, id));
     }
 
     @Test
@@ -181,6 +240,16 @@ class AuthorizationApiTests {
         data.put("locationId", f.location());
         var created = request("POST", "/api/erp/inventory/assets", data);
         assertEquals(201, created.status(), created.raw());
+        long assetId = created.body().get("id").asLong();
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource='inventory/assets' and action='CREATE' and record_id=?", Long.class, assetId));
+        data.put("version", created.body().get("version").asLong()); data.put("condition", "GOOD");
+        assertEquals(403, request("PUT", "/api/erp/inventory/assets/" + assetId, data).status());
+        grant(f, "inventory/assets", "UPDATE", "ORGANIZATION", null);
+        assertEquals(403, request("PUT", "/api/erp/inventory/assets/" + f.otherAsset(), data).status());
+        var edited = request("PUT", "/api/erp/inventory/assets/" + assetId, data);
+        assertEquals(200, edited.status(), edited.raw());
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource='inventory/assets' and action='UPDATE' and record_id=?", Long.class, assetId));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/assets' and record_id=?", Long.class, assetId));
         assertEquals(403, request("POST", "/api/erp/inventory/locations", Map.of("organizationId", f.otherOrganization(), "name", "Forbidden location", "type", "Warehouse", "controlled", false)).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_location where name = 'Forbidden location'", Long.class));
     }

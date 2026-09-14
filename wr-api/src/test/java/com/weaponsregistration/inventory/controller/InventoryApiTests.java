@@ -37,6 +37,99 @@ class InventoryApiTests {
         return result.body();
     }
     private String unique() { return UUID.randomUUID().toString(); }
+    @Test
+    void patrimonialIdentityNormalizesGloballyAndPreservesMovementLinks() throws Exception {
+        var first = setup(false); var second = setup(false);
+        String token = unique().toUpperCase(Locale.ROOT);
+        var data = assetData(first);
+        data.put("assetCode", " a b-" + token); data.put("serialNumber", " s\t n-" + token);
+        var saved = create("inventory/assets", data); long id = saved.get("id").asLong();
+        assertEquals("AB-" + token, saved.get("assetCode").asText());
+        assertEquals("SN-" + token, saved.get("serialNumber").asText());
+        var duplicate = assetData(second); duplicate.put("serialNumber", "sn-" + token.toLowerCase(Locale.ROOT));
+        var conflict = request("POST", "inventory/assets", duplicate);
+        assertEquals(409, conflict.status(), conflict.raw()); assertTrue(conflict.raw().contains("(#" + id + ")"));
+        // Legacy, noncanonical rows must also participate in global uniqueness checks.
+        jdbc.update("update erp_asset_item set asset_code=?, serial_number=? where id=?", " a b-" + token.toLowerCase(Locale.ROOT), " s n-" + token.toLowerCase(Locale.ROOT), id);
+        duplicate.put("assetCode", "AB-" + token);
+        conflict = request("POST", "inventory/assets", duplicate);
+        assertEquals(409, conflict.status()); assertTrue(conflict.raw().contains("Asset code")); assertTrue(conflict.raw().contains("Serial number"));
+        var common = assetData(second); common.remove("assetCode"); common.remove("serialNumber");
+        var batch = Map.of("requestId", unique(), "common", common, "items", List.of(
+            Map.of("assetCode", "AB-" + token, "serialNumber", "SN-" + token),
+            Map.of("assetCode", "a b-" + token, "serialNumber", "s n-" + token)));
+        for (String endpoint : List.of("inventory/assets/batch/review", "inventory/assets/batch")) {
+            var rejected = request("POST", endpoint, batch);
+            assertEquals(400, rejected.status(), rejected.raw());
+            assertTrue(rejected.raw().contains("Related rows: [1, 2]"));
+            assertTrue(rejected.raw().contains("(#" + id + ")"));
+        }
+        for (String field : List.of("assetCode", "serialNumber", "modelId")) {
+            var edit = new HashMap<>(data); edit.put("version", saved.get("version").asLong());
+            edit.put(field, field.equals("modelId") ? second.model() : unique());
+            assertEquals(400, request("PUT", "inventory/assets/" + id, edit).status());
+        }
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where asset_id=? and quantity=1", Long.class, id));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, second.model()));
+    }
+
+    @Test
+    void armamentCatalogValidatesRelationshipsUsageAndAuditsChanges() throws Exception {
+        var s = setup(false);
+        var typeData = new HashMap<String, Object>(Map.of("code", "T_" + unique().replace("-", "").toUpperCase(Locale.ROOT),
+            "name", "Pistol", "active", true, "categoryId", s.category()));
+        var type = create("inventory/armament-types", typeData);
+        long typeId = type.get("id").asLong();
+        var classificationData = new HashMap<String, Object>(Map.of("code", "C_" + unique().replace("-", "").toUpperCase(Locale.ROOT),
+            "name", "Training", "active", true, "typeId", typeId));
+        var classification = create("inventory/armament-classifications", classificationData);
+        long classificationId = classification.get("id").asLong();
+        var existing = request("GET", "inventory/models/" + s.model(), null).body();
+        var model = new HashMap<String, Object>();
+        for (String field : List.of("name", "unitOfMeasure", "sku", "listPrice")) model.put(field, existing.get(field).asText());
+        model.put("categoryId", s.category()); model.put("brandId", existing.get("brandId").asLong());
+        model.put("version", existing.get("version").asLong());
+        model.put("armamentClassificationId", classificationId);
+        assertEquals(400, request("PUT", "inventory/models/" + s.model(), model).status());
+        model.put("armamentTypeId", typeId);
+        var saved = request("PUT", "inventory/models/" + s.model(), model);
+        assertEquals(200, saved.status(), saved.raw());
+        model.put("version", saved.body().get("version").asLong());
+        model.remove("armamentTypeId"); model.remove("armamentClassificationId");
+        var legacy = request("PUT", "inventory/models/" + s.model(), model);
+        assertEquals(200, legacy.status(), legacy.raw());
+        assertEquals(typeId, legacy.body().get("armamentTypeId").asLong());
+        assertEquals(classificationId, legacy.body().get("armamentClassificationId").asLong());
+        typeData.put("version", type.get("version").asLong()); typeData.put("active", false);
+        assertEquals(400, request("PUT", "inventory/armament-types/" + typeId, typeData).status());
+        classificationData.put("version", classification.get("version").asLong()); classificationData.put("active", false);
+        assertEquals(400, request("PUT", "inventory/armament-classifications/" + classificationId, classificationData).status());
+        assertEquals(400, request("DELETE", "inventory/armament-classifications/" + classificationId + "?version=0", null).status());
+        assertEquals(400, request("DELETE", "inventory/armament-types/" + typeId + "?version=0", null).status());
+        classificationData.put("active", true); classificationData.put("name", "Updated classification");
+        var edited = request("PUT", "inventory/armament-classifications/" + classificationId, classificationData);
+        assertEquals(200, edited.status(), edited.raw());
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/armament-classifications' and record_id=?", Long.class, classificationId));
+        assertEquals(classificationId, request("GET", "inventory/armament-classifications?search=" + classificationData.get("code"), null).body().get("content").get(0).get("id").asLong());
+        model.put("version", legacy.body().get("version").asLong());
+        model.put("categoryId", create("inventory/categories", categoryData(false)).get("id").asLong());
+        assertEquals(400, request("PUT", "inventory/models/" + s.model(), model).status());
+    }
+
+    @Test
+    void unusedArmamentCatalogCanBeDeactivatedAndInvalidValuesAreRejected() throws Exception {
+        var data = new HashMap<String, Object>(Map.of("code", "T_" + unique().replace("-", "").toUpperCase(Locale.ROOT),
+            "name", "Type", "active", true, "categoryId", create("inventory/categories", categoryData(false)).get("id").asLong()));
+        var type = create("inventory/armament-types", data);
+        assertEquals(409, request("POST", "inventory/armament-types", data).status());
+        data.put("version", type.get("version").asLong()); data.put("active", false);
+        assertEquals(200, request("PUT", "inventory/armament-types/" + type.get("id").asLong(), data).status());
+        assertEquals(400, request("POST", "inventory/armament-classifications", Map.of("code", "VALID", "name", "Invalid parent", "active", true, "typeId", type.get("id").asLong())).status());
+        data.remove("version"); data.put("code", "invalid code");
+        assertEquals(400, request("POST", "inventory/armament-types", data).status());
+        data.put("code", "VALID"); data.put("categoryId", 999999999L);
+        assertEquals(404, request("POST", "inventory/armament-types", data).status());
+    }
     private Map<String, Object> categoryData(boolean lot) {
         return new HashMap<>(Map.of("name", unique(), "family", "GENERAL", "serialized", !lot, "lotControlled", lot, "consumable", lot));
     }
@@ -60,6 +153,90 @@ class InventoryApiTests {
     }
 
     @Test
+    void basicFirearmRegistrationNormalizesQueriesEditsAndAuditsWithoutDuplicatingStock() throws Exception {
+        var s = setup(false);
+        jdbc.update("update erp_item_category set family='FIREARM' where id=?", s.category());
+        var data = assetData(s);
+        String code = "Arm-" + unique(), serial = "Sn-" + unique();
+        data.put("assetCode", "  " + code + "  "); data.put("serialNumber", "  " + serial + "  ");
+        var created = create("inventory/assets", data);
+        long id = created.get("id").asLong();
+        assertEquals(code.toUpperCase(Locale.ROOT), created.get("assetCode").asText());
+        assertEquals(serial.toUpperCase(Locale.ROOT), created.get("serialNumber").asText());
+        var fetched = request("GET", "inventory/assets/" + id, null);
+        assertEquals(200, fetched.status());
+        for (String field : List.of("id", "version", "assetCode", "serialNumber", "modelId", "locationId", "condition", "status", "referenceLabels"))
+            assertEquals(created.get(field), fetched.body().get(field), field);
+        assertEquals(id, request("GET", "inventory/assets?search=" + code, null).body().get("content").get(0).get("id").asLong());
+        var duplicate = request("POST", "inventory/assets", data);
+        assertEquals(409, duplicate.status());
+        assertTrue(duplicate.body().get("detail").asText().contains("Asset code is already registered. Individual asset (#" + id + ")"));
+        var other = new HashMap<>(data); other.put("assetCode", unique());
+        duplicate = request("POST", "inventory/assets", other);
+        assertEquals(409, duplicate.status());
+        assertTrue(duplicate.body().get("detail").asText().contains("Serial number is already registered. Individual asset (#" + id + ")"));
+        data.put("version", created.get("version").asLong()); data.put("condition", "GOOD"); data.put("currentValue", "100.5000");
+        var edited = request("PUT", "inventory/assets/" + id, data);
+        assertEquals(200, edited.status(), edited.raw());
+        assertEquals("100.5", edited.body().get("currentValue").asText());
+        assertEquals(409, request("PUT", "inventory/assets/" + id, data).status());
+        assertEquals("GOOD", request("GET", "inventory/assets/" + id, null).body().get("condition").asText());
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where asset_id=?", Long.class, id));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_lot where model_id=?", Long.class, s.model()));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/assets' and record_id=?", Long.class, id));
+        var before = json.readTree(jdbc.queryForObject("select before_json from erp_audit_record where resource='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
+        var after = json.readTree(jdbc.queryForObject("select after_json from erp_audit_record where resource='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
+        assertEquals("NEW", before.get("condition").asText()); assertEquals("GOOD", after.get("condition").asText());
+    }
+
+    @Test
+    void basicRegistrationRejectsMissingAndMalformedFieldsBeforePersistence() throws Exception {
+        var s = setup(false);
+        for (String field : List.of("modelId", "locationId", "assetCode", "serialNumber", "condition", "status", "currentValue")) {
+            var data = assetData(s); data.put(field, "  ");
+            assertEquals(400, request("POST", "inventory/assets", data).status(), field);
+        }
+        for (var invalid : List.of(Map.entry("assetCode", "x".repeat(256)), Map.entry("currentValue", "-1"),
+                Map.entry("condition", "INVALID"), Map.entry("validUntil", "2026-02-30"), Map.entry("quantity", "2"))) {
+            var data = assetData(s); data.put(invalid.getKey(), invalid.getValue());
+            assertEquals(400, request("POST", "inventory/assets", data).status(), invalid.getKey());
+        }
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where location_id=?", Long.class, s.location()));
+    }
+
+    @Test
+    void batchReviewReportsEveryRowWithoutWritingAndConfirmationRevalidates() throws Exception {
+        var s = setup(false);
+        var common = assetData(s); common.remove("assetCode"); common.remove("serialNumber");
+        String code = unique(), serial = unique();
+        var payload = new HashMap<String, Object>(Map.of("requestId", unique(), "common", common,
+            "items", List.of(Map.of("assetCode", code, "serialNumber", serial),
+                Map.of("assetCode", unique(), "serialNumber", unique()))));
+        var review = request("POST", "inventory/assets/batch/review", payload);
+        assertEquals(200, review.status(), review.raw());
+        assertEquals("VALID", review.body().get("rows").get(0).get("status").asText());
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        var competing = assetData(s); competing.put("assetCode", code); competing.put("serialNumber", serial);
+        create("inventory/assets", competing);
+        var rejected = request("POST", "inventory/assets/batch", payload);
+        assertEquals(400, rejected.status(), rejected.raw());
+        assertEquals(2, rejected.body().get("rows").size());
+        assertEquals(2, rejected.body().get("rows").get(0).get("errors").size());
+        assertEquals("VALID", rejected.body().get("rows").get(1).get("status").asText());
+        assertEquals("0", rejected.body().get("quantity").asText());
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
+        assertTrue(jdbc.queryForObject("select count(*) from erp_audit_record where action='BATCH_REJECTED' and after_json like ?", Long.class,
+            "%" + payload.get("requestId") + "%") > 0);
+        payload.put("items", Arrays.asList(null, Map.of("assetCode", "", "serialNumber", ""),
+            Map.of("assetCode", "DUP", "serialNumber", "SAME"), Map.of("assetCode", "DUP", "serialNumber", "SAME")));
+        var invalid = request("POST", "inventory/assets/batch/review", payload);
+        assertEquals(400, invalid.status(), invalid.raw());
+        for (var row : invalid.body().get("rows")) assertEquals("REJECTED", row.get("status").asText());
+    }
+
+    @Test
     void assetBatchPreservesPairsCountsSerialsAndRecoversAnIdenticalRetry() throws Exception {
         var s = setup(false);
         var common = assetData(s); common.remove("assetCode"); common.remove("serialNumber");
@@ -71,8 +248,8 @@ class InventoryApiTests {
         assertEquals("2", result.body().get("quantity").asText());
         assertEquals(2, result.body().get("recordIds").size());
         long first = result.body().get("recordIds").get(0).asLong();
-        assertEquals(code, jdbc.queryForObject("select asset_code from erp_asset_item where id=?", String.class, first));
-        assertEquals(serial, jdbc.queryForObject("select serial_number from erp_asset_item where id=?", String.class, first));
+        assertEquals(code.toUpperCase(Locale.ROOT), jdbc.queryForObject("select asset_code from erp_asset_item where id=?", String.class, first));
+        assertEquals(serial.toUpperCase(Locale.ROOT), jdbc.queryForObject("select serial_number from erp_asset_item where id=?", String.class, first));
         var retry = request("POST", "inventory/assets/batch", payload);
         assertEquals(200, retry.status(), retry.raw());
         assertEquals(result.body(), retry.body());
@@ -161,7 +338,7 @@ class InventoryApiTests {
     void catalogAndSearchCoverEveryResourceAndStockHistoryIsReadOnly() throws Exception {
         var catalog = request("GET", "inventory/catalog", null);
         assertEquals(200, catalog.status());
-        assertEquals(31, catalog.body().size());
+        assertEquals(com.weaponsregistration.inventory.service.InventoryCatalog.RESOURCES.size(), catalog.body().size());
         for (var resource : catalog.body()) {
             var list = request("GET", "inventory/" + resource.get("key").asText() + "?search=test", null);
             assertEquals(200, list.status(), list.raw());

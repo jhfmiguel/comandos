@@ -15,6 +15,9 @@ async function main() {
     const errors = [];
     let delayedSearch;
     page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => {
+        if (message.type() === 'error') errors.push(`Console: ${message.text()} (${message.location().url})`);
+    });
     // Use the existing production build while forwarding its API calls to the test instance.
     await context.route('http://localhost:8080/api/**', async route => {
         try {
@@ -57,9 +60,12 @@ async function main() {
         assert.ok(damaged?.blocksAvailability);
 
         await page.goto(`${appURL}/erp/custody`);
+        await page.getByRole('searchbox', { name: 'Search organization', exact: true }).fill(`Browser validation ${suffix}`);
         await page.locator('#core-organizationId').selectOption(String(organizationId));
         await page.locator('#core-unitId').selectOption(String(unitId));
+        await page.getByRole('searchbox', { name: 'Search recipient', exact: true }).fill(`Recipient ${suffix}`);
         await page.locator('#core-recipientId').selectOption(String(recipientId));
+        await page.getByRole('searchbox', { name: 'Search authorizer', exact: true }).fill(`Authorizer ${suffix}`);
         await page.locator('#core-authorizerId').selectOption(String(authorizerId));
         await page.getByLabel('Purpose *', { exact: true }).fill('Browser acceptance validation');
         await page.getByRole('row').filter({ hasText: assetCode }).getByRole('button', { name: 'Add', exact: true }).click();
@@ -74,7 +80,10 @@ async function main() {
         assert.equal((await get(`inventory/assets/${assetId}`)).status, 'BLOCKED');
         await page.getByRole('button', { name: 'Open maintenance', exact: true }).click();
         await page.waitForURL('**/erp/maintenance?**');
-        await page.waitForFunction(() => document.querySelector('#core-organization')?.value !== '');
+        await page.waitForFunction(({ organizationId, assetId }) =>
+            document.querySelector('#core-organization')?.value === String(organizationId)
+            && document.querySelector('#maintenance-asset')?.value === String(assetId),
+        { organizationId, assetId });
         await page.getByRole('button', { name: 'Open work order', exact: true }).click();
         await page.getByText(/Work order #\d+ opened successfully\./).waitFor();
         assert.equal((await get(`inventory/assets/${assetId}`)).status, 'IN_MAINTENANCE');

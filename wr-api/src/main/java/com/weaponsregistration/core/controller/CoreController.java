@@ -45,9 +45,9 @@ public class CoreController {
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long organizationId) {
-    	
-        return service.list(resource, search, page, size, organizationId);
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam Map<String, String> params) {
+        return service.list(resource, search, page, size, organizationId, params);
         
     }
 

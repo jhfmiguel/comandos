@@ -49,14 +49,44 @@ class AmmunitionConsumptionApiTests {
         assertEquals("8.2500", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
         assertEquals(first.body().get("id").asLong(), request("POST", "ammunition-consumptions", data).body().get("id").asLong());
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'ammunition-consumptions'", Long.class));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'ammunition-consumptions' and record_id = ?", Long.class, first.body().get("id").asLong()));
     }
     @Test void insufficientSecondLineRollsBackEveryDeduction() throws Exception {
-        var s = setup(); var other = setup(); var data = new HashMap<String, Object>(payload(s, "1"));
-        data.put("items", List.of(Map.of("balanceId", s.balance(), "quantity", "1", "result", "Used"), Map.of("balanceId", other.balance(), "quantity", "99", "result", "Used")));
-        assertEquals(400, request("POST", "ammunition-consumptions", data).status());
+        var s = setup(); var data = new HashMap<String, Object>(payload(s, "1"));
+        long model = jdbc.queryForObject("select model_id from erp_stock_lot where id = ?", Long.class, s.lot());
+        long otherLot = create("inventory/lots", Map.of("modelId", model, "openingLocationId", s.location(), "lotNumber", unique(), "initialQuantity", "10"));
+        long otherBalance = jdbc.queryForObject("select id from erp_stock_balance where lot_id = ?", Long.class, otherLot);
+        data.put("items", List.of(Map.of("balanceId", s.balance(), "quantity", "1", "result", "Used"), Map.of("balanceId", otherBalance, "quantity", "99", "result", "Used")));
+        assertEquals(409, request("POST", "ammunition-consumptions", data).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_ammunition_consumption where request_id = ?", Long.class, data.get("requestId")));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+        assertEquals("10.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
+        assertEquals("10.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
+    }
+    @Test void changedRetryConflictsAndExpiredAmmunitionIsExcluded() throws Exception {
+        var s = setup(); var data = new HashMap<String, Object>(payload(s, "1"));
+        var first = request("POST", "ammunition-consumptions", data); assertEquals(200, first.status(), first.raw());
+        data.put("purpose", "Different purpose");
+        assertEquals(409, request("POST", "ammunition-consumptions", data).status());
+        jdbc.update("update erp_stock_lot set valid_until = ? where id = ?", java.time.LocalDate.now().minusDays(1), s.lot());
+        assertEquals(0, request("GET", "ammunition-consumptions/stock?organizationId=" + s.organization() + "&unitId=" + s.unit(), null).body().get("totalElements").asInt());
+        assertEquals(400, request("POST", "ammunition-consumptions", payload(s, "1")).status());
+        assertEquals("9.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+    }
+    @Test void concurrentRetriesProduceOnlyOneConsumption() throws Exception {
+        var s = setup(); var data = payload(s, "2");
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            java.util.concurrent.Callable<Result> consume = () -> { start.await(); return request("POST", "ammunition-consumptions", data); };
+            var first = executor.submit(consume); var second = executor.submit(consume); start.countDown();
+            var a = first.get(30, java.util.concurrent.TimeUnit.SECONDS); var b = second.get(30, java.util.concurrent.TimeUnit.SECONDS);
+            assertEquals(200, a.status(), a.raw()); assertEquals(200, b.status(), b.raw());
+            assertEquals(a.body().get("id").asLong(), b.body().get("id").asLong());
+        }
+        assertEquals("8.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
+        assertEquals("8.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
     }
     @Test void stockAndHistoryAreScopedAndValidationRejectsInvalidLines() throws Exception {
         var s = setup(); assertEquals(1, request("GET", "ammunition-consumptions/stock?organizationId=" + s.organization() + "&unitId=" + s.unit(), null).body().get("totalElements").asInt());

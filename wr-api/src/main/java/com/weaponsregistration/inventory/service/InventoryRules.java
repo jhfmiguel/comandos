@@ -30,6 +30,29 @@ public class InventoryRules {
     }
 
     public void validate(CoreEntity entity, Map<String, Object> previous) {
+        if (entity instanceof ArmamentType type) {
+            registry(type.code, 0);
+            if (!type.code.matches("[A-Z][A-Z0-9_]{1,49}")) bad("Code must be uppercase.");
+            if (type.id != null && typeUsage(type.id) > 0 && (!type.active
+                    || !Objects.equals(previous.get("categoryId"), type.category.id)))
+                bad("A used armament type cannot be deactivated or moved to another category. Reassign its references first.");
+        }
+        if (entity instanceof ArmamentClassification classification) {
+            registry(classification.code, 0);
+            if (!classification.code.matches("[A-Z][A-Z0-9_]{1,49}")) bad("Code must be uppercase.");
+            if (!classification.type.active) bad("Select an active armament type.");
+            if (classification.id != null && classificationUsage(classification.id) > 0 && (!classification.active
+                    || !Objects.equals(previous.get("typeId"), classification.type.id)))
+                bad("A used classification cannot be deactivated or moved to another type. Reassign its references first.");
+        }
+        if (entity instanceof ItemModel model) {
+            if (model.armamentType != null && (!model.armamentType.active
+                    || !Objects.equals(model.armamentType.category.id, model.category.id)))
+                bad("Select an active armament type belonging to the model category.");
+            if (model.armamentClassification != null && (!model.armamentClassification.active
+                    || model.armamentType == null || !Objects.equals(model.armamentClassification.type.id, model.armamentType.id)))
+                bad("Select an active classification belonging to the model armament type.");
+        }
         if (entity instanceof ItemCategory category) {
             if (category.serialized && category.consumable) bad("Consumables must be quantity controlled, not individually serialized.");
             Set<Long> visited = new HashSet<>();
@@ -249,6 +272,10 @@ public class InventoryRules {
     }
 
     public void beforeDelete(CoreEntity entity) {
+        if (entity instanceof ArmamentType type && typeUsage(type.id) > 0)
+            bad("A used armament type cannot be deleted.");
+        if (entity instanceof ArmamentClassification classification && classificationUsage(classification.id) > 0)
+            bad("A used armament classification cannot be deleted.");
         if (entity instanceof AssetItem || entity instanceof StockLot) bad("Registered stock cannot be deleted. A dedicated disposal or reversal operation is required.");
         if (entity instanceof EquipmentSet set && count("select count(c) from EquipmentSetComponent c where c.equipmentSet.id = :id", set.id) > 0)
             bad("Remove every component before deleting the equipment set.");
@@ -341,6 +368,13 @@ public class InventoryRules {
     private long categoryUsage(long id) {
         return count("select count(a) from AssetItem a where a.model.category.id = :id", id)
             + count("select count(l) from StockLot l where l.model.category.id = :id", id);
+    }
+    private long typeUsage(long id) {
+        return count("select count(m) from ItemModel m where m.armamentType.id = :id", id)
+            + count("select count(c) from ArmamentClassification c where c.type.id = :id", id);
+    }
+    private long classificationUsage(long id) {
+        return count("select count(m) from ItemModel m where m.armamentClassification.id = :id", id);
     }
     private long modelUsage(long id) {
         return count("select count(a) from AssetItem a where a.model.id = :id", id)

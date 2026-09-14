@@ -20,9 +20,25 @@ public class InventoryController {
     }
 
     @PostMapping("/assets/batch")
-    public com.weaponsregistration.inventory.service.StockIntakeService.Receipt createAssets(
+    public org.springframework.http.ResponseEntity<Map<String, Object>> createAssets(
             @RequestBody com.weaponsregistration.inventory.service.StockIntakeService.AssetsRequest request) {
-        return intake.assets(request);
+        return batchResponse(intake.assets(request));
+    }
+
+    @PostMapping("/assets/batch/review")
+    public org.springframework.http.ResponseEntity<Map<String, Object>> reviewAssets(
+            @RequestBody com.weaponsregistration.inventory.service.StockIntakeService.AssetsRequest request) {
+        return batchResponse(intake.reviewAssets(request));
+    }
+
+    private org.springframework.http.ResponseEntity<Map<String, Object>> batchResponse(
+            com.weaponsregistration.inventory.service.StockIntakeService.AssetResult result) {
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("accepted", result.accepted()); body.put("detail", result.detail()); body.put("rows", result.rows());
+        body.put("quantity", result.receipt() == null ? "0" : result.receipt().quantity());
+        body.put("recordIds", result.receipt() == null ? List.of() : result.receipt().recordIds());
+        if (result.receipt() != null) body.put("id", result.receipt().id());
+        return org.springframework.http.ResponseEntity.status(result.accepted() ? 200 : 400).body(body);
     }
 
     @PostMapping("/lots/from-boxes")
@@ -43,8 +59,9 @@ public class InventoryController {
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Long organizationId) {
-        return service.list(resource, search, page, size, organizationId);
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam Map<String, String> params) {
+        return service.list(resource, search, page, size, organizationId, params);
     }
 
     @GetMapping("/{resource}/{id}")

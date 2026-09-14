@@ -83,10 +83,17 @@ try {
     await page.getByLabel('Serial number 2', { exact: true }).fill(`SN-B-${suffix}`);
     retryPath = '/api/erp/inventory/assets/batch'; retryBodies = [];
     await page.getByRole('button', { name: 'Register assets', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirm registration', exact: true }).waitFor();
+    assert.equal((await get(`inventory/assets?organizationId=${organizationId}`)).content.length, 0);
+    await page.getByRole('button', { name: 'Edit batch', exact: true }).click();
+    assert.equal(await page.getByLabel('Asset code 1', { exact: true }).inputValue(), `CODE-A-${suffix}`);
+    await page.getByRole('button', { name: 'Register assets', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirm registration', exact: true }).click();
     await page.getByRole('button', { name: 'Retry entry', exact: true }).waitFor();
     assert.ok(await page.getByLabel('Asset code 1', { exact: true }).isDisabled());
     await recover();
     await page.getByText('2 individual assets registered successfully.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
     const assets = (await get(`inventory/assets?organizationId=${organizationId}`)).content;
     assert.equal(assets.length, 2);
     assert.deepEqual(assets.map(a => [a.assetCode, a.serialNumber]), [[`CODE-A-${suffix}`, `SN-A-${suffix}`], [`CODE-B-${suffix}`, `SN-B-${suffix}`]]);

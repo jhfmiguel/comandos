@@ -90,7 +90,7 @@ function SalesForm({ onNewSale }: { onNewSale: () => void }) {
         {error && <Message type="error" text={error} onClose={() => setError("")} />}
         {pending && !busy && <Message type="warn" text="The result could not be confirmed. Retry this sale to recover its result without a second stock deduction." />}
         {completed && <Message type="success" text={`Sale #${completed.id} finalized successfully.`} />}
-        <form onSubmit={finalize}>
+        <form data-comandos-erp-form="true" onSubmit={finalize}>
             <fieldset className={styles.fields} disabled={locked}>
                 <div className={styles.field}>
                     <label htmlFor="core-organizationId">Organization *</label>

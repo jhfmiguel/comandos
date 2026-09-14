@@ -7,6 +7,7 @@ import { Button } from "@primereact/ui/button"
 import { Sidebar } from "@primereact/ui/sidebar"
 
 import { Menu } from "./menu"
+import { TopToolbar } from "./top-toolbar"
 import { Message } from "components"
 import { Alert } from "components/common/message"
 
@@ -26,7 +27,7 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
 
             <Sidebar.Main className="comandos-sidebar-main">
 
-                <header className="flex h-12 items-center gap-3 px-4">
+                <header className="comandos-main-header flex h-12 items-center gap-3 px-4">
 
                     <Sidebar.Trigger
                         as={Button}
@@ -38,6 +39,8 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
                     >
                         <SidebarIcon />
                     </Sidebar.Trigger>
+
+                    <TopToolbar />
 
                 </header>
 

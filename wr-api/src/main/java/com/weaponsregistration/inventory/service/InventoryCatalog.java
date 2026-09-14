@@ -65,6 +65,20 @@ public final class InventoryCatalog {
             new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
             new Field("systemProtected", "System protected", "boolean", true, null, List.of(), true, false)
         ), false),
+        new Resource("armament-types", "Armament types", "Catalog", ArmamentType.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of(), false, true),
+            new Field("name", "Name", "text", true, null, List.of(), false, false),
+            new Field("description", "Description", "text", false, null, List.of(), false, false),
+            new Field("active", "Active", "boolean", true, null, List.of(), false, false),
+            new Field("categoryId", "category", "reference", true, "categories", List.of(), false, false)
+        ), false),
+        new Resource("armament-classifications", "Armament classifications", "Catalog", ArmamentClassification.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of(), false, true),
+            new Field("name", "Name", "text", true, null, List.of(), false, false),
+            new Field("description", "Description", "text", false, null, List.of(), false, false),
+            new Field("active", "Active", "boolean", true, null, List.of(), false, false),
+            new Field("typeId", "type", "reference", true, "armament-types", List.of(), false, false)
+        ), false),
         new Resource("categories", "Item categories", "Catalog", ItemCategory.class, List.of(
             new Field("parentCategoryId", "Parent category", "reference", false, "categories", List.of(), false, false),
             new Field("name", "Name", "text", true, null, List.of(), false, false),
@@ -78,6 +92,8 @@ public final class InventoryCatalog {
             new Field("manufacturer", "Manufacturer", "text", true, null, List.of(), false, false)
         ), false),
         new Resource("models", "Item models", "Catalog", ItemModel.class, List.of(
+            new Field("armamentTypeId", "Armament type", "reference", false, "armament-types", List.of(), false, false),
+            new Field("armamentClassificationId", "Armament classification", "reference", false, "armament-classifications", List.of(), false, false),
             new Field("categoryId", "Category", "reference", true, "categories", List.of(), false, false),
             new Field("brandId", "Brand", "reference", true, "brands", List.of(), false, false),
             new Field("name", "Name", "text", true, null, List.of(), false, false),

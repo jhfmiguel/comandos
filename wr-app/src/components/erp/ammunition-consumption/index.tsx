@@ -51,7 +51,7 @@ function ConsumptionForm({ onNew }: { onNew: () => void }) {
         {error && <Message type="error" text={error} onClose={() => setError("")} />}
         {pending && !busy && <Message type="warn" text="The result could not be confirmed. Retry the same request to avoid consuming stock twice." />}
         {completed && <Message type="success" text={`Consumption #${completed.id} finalized successfully.`} />}
-        <form onSubmit={finalize}><fieldset className={styles.fields} disabled={busy || !!pending || !!completed}>
+        <form data-comandos-erp-form="true" onSubmit={finalize}><fieldset className={styles.fields} disabled={busy || !!pending || !!completed}>
             <Field label="Organization *"><ReferenceField service={core} field={ref("organizationId", "Organization", "organizations")} value={organization} organizationId={null}
                 onChange={value => { setOrganization(value); setUnit(null); setSelected([]); }} /></Field>
             <Field label="Unit"><ReferenceField key={String(organization)} service={core} field={ref("unitId", "Unit", "units", false)} value={unit} organizationId={organization}

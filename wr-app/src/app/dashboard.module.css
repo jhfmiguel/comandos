@@ -1,0 +1,556 @@
+.dashboard {
+    --accent: #ff9900;
+    --surface: var(--p-content-background, #ffffff);
+    --border: color-mix(in srgb, currentColor 11%, transparent);
+    --muted: color-mix(in srgb, currentColor 56%, transparent);
+    --soft: color-mix(in srgb, currentColor 3.5%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.pageHeader {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.pageHeader h1 {
+    margin: 0 0 .28rem;
+    font-size: 1.45rem;
+    line-height: 1.2;
+    letter-spacing: -.025em;
+}
+
+.pageHeader p,
+.cardHeader p,
+.tableHeader p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .75rem;
+}
+
+.headerActions {
+     display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.selectControl,
+.refreshButton {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 2.35rem;
+    padding: 0 .75rem;
+    border: 1px solid var(--border);
+    border-radius: .55rem;
+    background: var(--surface);
+    color: inherit;
+}
+
+.selectControl select {
+    appearance: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: .72rem;
+}
+
+.refreshButton {
+    font-size: .72rem;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.refreshButton:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.topGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, .8fr);
+    gap: 1rem;
+}
+
+.metricGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    align-self: start;
+}
+
+.metricCard,
+.card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+}
+
+.metricCard {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.55rem 1fr auto;
+    align-items: center;
+    gap: .8rem;
+    min-width: 0;
+    padding: 1rem;
+    border-radius: .75rem;
+}
+
+.metricIcon {
+    display: grid;
+    place-items: center;
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 50%;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.metricBody {
+    min-width: 0;
+}
+
+.metricBody span,
+.metricBody strong {
+    display: block;
+}
+
+.metricLabel {
+    color: var(--muted);
+    font-size: .68rem;
+}
+
+.metricBody strong {
+    margin-top: .15rem;
+    font-size: 1.35rem;
+    line-height: 1;
+    letter-spacing: -.03em;
+}
+
+.changeUp,
+.changeDown {
+    display: inline-flex;
+    align-items: center;
+    gap: .12rem;
+    width: fit-content;
+    font-size: .62rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.changeUp {
+    color: #16a34a;
+}
+
+.changeDown {
+    color: #dc2626;
+}
+
+.card {
+    min-width: 0;
+    padding: 1rem;
+    border-radius: .75rem;
+}
+
+.monthlySalesCard {
+    grid-column: 1 / 2;
+}
+
+.targetCard {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+
+.cardHeader,
+.tableHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cardHeader h2,
+.tableHeader h2 {
+    margin: 0 0 .24rem;
+    font-size: .9rem;
+    letter-spacing: -.012em;
+}
+
+.iconButton {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: .45rem;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.iconButton:hover {
+    background: var(--soft);
+    color: inherit;
+}
+
+.salesValueRow {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.salesValueRow > div {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.salesValueRow strong {
+    font-size: 1.55rem;
+    letter-spacing: -.035em;
+}
+
+.salesValueRow small {
+    color: var(--muted);
+    font-size: .62rem;
+}
+
+.miniChart,
+.statisticsChart {
+    position: relative;
+    height: 230px;
+    margin-top: .65rem;
+}
+
+.gridLines {
+    position: absolute;
+    inset: 16px 0 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.gridLines i {
+    border-top: 1px dashed var(--border);
+}
+
+.miniChart svg,
+.statisticsChart svg {
+    position: absolute;
+    inset: 0 0 24px;
+    width: 100%;
+    height: calc(100% - 24px);
+}
+
+.area {
+    fill: url(#monthlyArea);
+}
+
+.mainLine,
+.secondaryLine {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.mainLine {
+    stroke: var(--accent);
+}
+
+.secondaryLine {
+    stroke: #64748b;
+    opacity: .62;
+}
+
+.monthLabels {
+    position: absolute;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    color: var(--muted);
+    font-size: .56rem;
+    text-align: center;
+}
+
+.radialWrap {
+    display: grid;
+    place-items: center;
+    padding: 1.15rem 0 .7rem;
+}
+
+.radial {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 190px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--accent) 0deg 272deg,
+        color-mix(in srgb, currentColor 8%, transparent) 272deg 360deg
+    );
+}
+
+.radial::after {
+    content: "";
+    position: absolute;
+    width: 72%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--surface);
+}
+
+.radialCenter {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.radialCenter strong,
+.radialCenter span {
+    display: block;
+}
+
+.radialCenter strong {
+    font-size: 1.5rem;
+    letter-spacing: -.04em;
+}
+
+.radialCenter span {
+    margin-top: .15rem;
+    color: var(--muted);
+    font-size: .65rem;
+}
+
+.targetText {
+    text-align: center;
+}
+
+.targetText strong {
+    font-size: .74rem;
+}
+
+.targetText p {
+    max-width: 270px;
+    margin: .35rem auto 1rem;
+    color: var(--muted);
+    font-size: .65rem;
+    line-height: 1.45;
+}
+
+.targetStats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border);
+}
+
+.targetStats > div {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: .2rem;
+    padding: .85rem .25rem 0;
+    text-align: center;
+}
+
+.targetStats span {
+    color: var(--muted);
+    font-size: .58rem;
+}
+
+.targetStats strong {
+    font-size: .7rem;
+}
+
+.middleGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr);
+    gap: 1rem;
+}
+
+.statisticsChart {
+    height: 270px;
+    margin-top: 1rem;
+}
+
+.legend {
+    display: flex;
+    gap: .75rem;
+    color: var(--muted);
+    font-size: .62rem;
+}
+
+.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+.legend i {
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+}
+
+.legendPrimary {
+    background: var(--accent);
+}
+
+.legendSecondary {
+    background: #64748b;
+}
+
+.barChart {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    margin-top: 1rem;
+}
+
+.barRow > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .3rem;
+    font-size: .66rem;
+}
+
+.barRow > div:first-child span {
+    color: var(--muted);
+}
+
+.barTrack {
+    height: .45rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.barTrack span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+.tableHeader {
+    margin-bottom: .9rem;
+}
+
+.tableHeader > span {
+    color: var(--muted);
+    font-size: .6rem;
+}
+
+.tableWrap {
+    overflow-x: auto;
+}
+
+.tableWrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .67rem;
+}
+
+.tableWrap th {
+    padding: .66rem .75rem;
+    border-block: 1px solid var(--border);
+    background: var(--soft);
+    color: var(--muted);
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.tableWrap td {
+    padding: .78rem .75rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.status {
+    display: inline-flex;
+    padding: .22rem .5rem;
+    border-radius: 999px;
+    font-size: .58rem;
+    font-weight: 700;
+}
+
+.statusCompleted {
+    color: #15803d;
+    background: rgb(34 197 94 / 10%);
+}
+
+.statusProcessing {
+    color: #0369a1;
+    background: rgb(14 165 233 / 10%);
+}
+
+.statusPending {
+    color: #b45309;
+    background: rgb(245 158 11 / 10%);
+}
+
+.footer {
+    color: var(--muted);
+    font-size: .58rem;
+    text-align: right;
+}
+
+@media (max-width: 1180px) {
+    .topGrid,
+    .middleGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .targetCard,
+    .monthlySalesCard {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .pageHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .headerActions {
+        width: 100%;
+    }
+
+    .selectControl,
+    .refreshButton {
+        flex: 1;
+    }
+
+    .metricGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .metricCard {
+        grid-template-columns: 2.55rem 1fr auto;
+    }
+
+    .legend {
+        flex-direction: column;
+        gap: .35rem;
+    }
+
+    .months span:nth-child(even) {
+        display: none;
+    }
+}

@@ -11,6 +11,8 @@ import type { ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "components/erp/shared/workspace.module.css";
 
+type RowResult = { row: number; status: string; errors: string[] };
+type BatchResult = { quantity: string; rows?: RowResult[] };
 type Pair = { first: string; second: string };
 type Payload = { requestId: string; [key: string]: unknown };
 const emptyRow = (): Pair => ({ first: "", second: "" });
@@ -29,8 +31,11 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     const [error, setError] = React.useState("");
     const [busy, setBusy] = React.useState(false);
     const [pending, setPending] = React.useState<Payload | null>(null);
+    const [reviewed, setReviewed] = React.useState(false);
+    const [results, setResults] = React.useState<RowResult[]>([]);
+    const [completed, setCompleted] = React.useState<string | null>(null);
     const saving = React.useRef(false);
-    const locked = busy || !!pending;
+    const locked = busy || !!pending || reviewed || completed !== null;
     const normalized = rows.map(row => ({ first: row.first.trim(), second: row.second.trim() }));
     const serials = normalized.map(row => row.second).filter(Boolean);
     const codes = normalized.map(row => row.first).filter(Boolean);
@@ -39,11 +44,12 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
         ? row.first.length > 0 && row.first.length <= 255 && row.second.length > 0 && row.second.length <= 255
         : whole.test(row.first) && whole.test(row.second));
     const validLoose = /^(0|[1-9][0-9]{0,14})$/.test(looseUnits);
-    const total = assets ? String(new Set(serials).size) : validRows && validLoose
+    const total = assets ? String(rows.length) : validRows && validLoose
         ? normalized.reduce((sum, row) => sum + BigInt(row.first) * BigInt(row.second), BigInt(looseUnits)).toString() : "0";
     const valid = validRows && !duplicate && (assets || validLoose && total !== "0" && total.length <= 15);
 
     function update(index: number, column: keyof Pair, value: string) {
+        setResults([]);
         setRows(current => current.map((row, i) => i === index ? { ...row, [column]: value } : row));
     }
     function importPairs() {
@@ -55,22 +61,29 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
         const existing = rows.filter(row => row.first.trim() || row.second.trim());
         if (existing.length + parsed.length > 1000) { setError("An entry can contain at most 1000 assets."); return; }
         setRows([...existing, ...parsed.map(([first, second]) => ({ first: first.trim(), second: second.trim() }))]);
-        setPaste(""); setError("");
+        setPaste(""); setError(""); setResults([]);
     }
     async function submit(event: React.FormEvent) {
         event.preventDefault();
-        if (saving.current || !valid) return;
+        if (saving.current || !valid || completed !== null) return;
         const common = Object.fromEntries(fields.map(field => [field.name, values[field.name] ?? ""]));
         const payload = pending ?? (assets
             ? { requestId: crypto.randomUUID(), common, items: normalized.map(row => ({ assetCode: row.first, serialNumber: row.second })) }
             : { requestId: crypto.randomUUID(), ...common, looseUnits, boxes: normalized.map(row => ({ boxes: row.first, roundsPerBox: row.second })) });
-        saving.current = true; setBusy(true); setPending(payload); setError("");
+        const review = assets && !reviewed && !pending;
+        saving.current = true; setBusy(true); if (!review) setPending(payload); setError("");
         try {
-            const result = await httpClient.post<{ quantity: string }>(`/api/erp/inventory/${assets ? "assets/batch" : "lots/from-boxes"}`, payload);
+            const result = await httpClient.post<BatchResult>(`/api/erp/inventory/${assets ? review ? "assets/batch/review" : "assets/batch" : "lots/from-boxes"}`, payload);
+            setResults(result.data.rows ?? []);
+            if (review) { setReviewed(true); return; }
+            if (assets) { setPending(null); setReviewed(false); setCompleted(result.data.quantity); return; }
             onSaved(result.data.quantity);
         } catch (failure) {
+            if (axios.isAxiosError(failure) && Array.isArray(failure.response?.data?.rows)) {
+                setResults(failure.response.data.rows); setReviewed(false);
+            }
             const status = axios.isAxiosError(failure) ? failure.response?.status : undefined;
-            if (!pending && status && status >= 400 && status < 500) setPending(null);
+            if (!pending && status && status >= 400 && status < 500) { setPending(null); setReviewed(false); }
             setError(axios.isAxiosError(failure) && typeof failure.response?.data?.detail === "string"
                 ? failure.response.data.detail : "The entry result could not be confirmed. Retry to recover the same entry.");
         } finally { saving.current = false; setBusy(false); }
@@ -78,10 +91,14 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     return <Dialog.Root open onOpenChange={(event: { value?: boolean }) => { if (!event.value && !locked) onCancel(); }}>
         <Dialog.Portal><Dialog.Backdrop /><Dialog.Positioner><Dialog.Popup className={styles.dialog}>
             <Dialog.Header><Dialog.Title>{assets ? "Register individual assets" : "Receive ammunition boxes"}</Dialog.Title></Dialog.Header>
-            <Dialog.Content><form className={styles.form} onSubmit={submit}>
+            <Dialog.Content><form data-comandos-erp-form="true" className={styles.form} onSubmit={submit}>
                 <p>{assets ? "Choose the common model and location, then enter one asset code / serial number pair per unit."
                     : "Choose the ammunition model and lot. Enter boxes, loose rounds or both. Remove box rows to receive only loose rounds."}</p>
+                {assets && <Message type="info" text="Atomic batch: all rows are saved together. If any row is rejected, no assets are created. Review the pairs before confirming." />}
+                {reviewed && <Message type="info" text="All rows validated. Check the model, location and pairs below, then confirm registration." />}
+                {!assets && <Message type="info" text="This entry creates one aggregate lot balance in rounds. Box quantities are recorded as opening packaging only; individual boxes do not have identifiers or separate balances. Use this entry only for aggregate stock." />}
                 {error && <Message type="error" text={error} />}
+                {completed !== null && <Message type="success" text={`${completed} individual assets registered successfully.`} />}
                 {pending && !busy && <Message type="warn" text="Retry this entry to confirm its result without registering the stock twice." />}
                 <fieldset className={styles.fields} disabled={locked}>
                     {fields.map(field => <div className={styles.field} key={field.name}>
@@ -104,14 +121,14 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                         <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
                         <Button type="button" onClick={importPairs}>Add pasted rows</Button></details>}
                     <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Boxes and rounds"}</caption>
-                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th>Actions</th>{assets && <th>Validation</th>}</tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
                             {(["first", "second"] as const).map(column => <td key={column}><input required
                                 aria-label={`${assets ? column === "first" ? "Asset code" : "Serial number" : column === "first" ? "Number of boxes" : "Rounds per box"} ${index + 1}`}
                                 type="text" inputMode={assets ? "text" : "numeric"} maxLength={assets ? 255 : 15}
                                 value={row[column]} onChange={event => update(index, column, event.target.value)} /></td>)}
                             <td><Button type="button" severity="secondary" aria-label={`Remove row ${index + 1}`}
-                                onClick={() => setRows(current => current.filter((_, i) => i !== index))}>Remove</Button></td></tr>)}</tbody></table></div>
+                                onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}>Remove</Button></td>{assets && <td aria-live="polite">{results[index]?.errors.length ? results[index].errors.join(" ") : normalized[index].first === "" || normalized[index].second === "" ? "Asset code and serial number are required." : normalized.some((other, i) => i !== index && (other.first === normalized[index].first || other.second === normalized[index].second)) ? "Duplicate asset code or serial number." : results[index]?.status === "ACCEPTED" ? "Accepted; saved" : results[index]?.status === "VALID" ? "Valid; not saved yet" : ""}</td>}</tr>)}</tbody></table></div>
                     <Button type="button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>Add row</Button>
                     {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
@@ -120,9 +137,10 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                 <p role="status">{assets ? "Quantity (serial numbers)" : "Total rounds"}: <strong>{total}</strong></p>
                 {duplicate && <Message type="error" text="Each asset code and serial number must be unique in this list." />}
                 {!assets && (!validRows || total.length > 15) && <small>Enter positive whole quantities; the total can contain at most 15 digits.</small>}
-                <div className={styles.actions}><Button type="button" severity="secondary" disabled={locked} onClick={onCancel}>Cancel</Button>
+                {reviewed && !pending && <Button type="button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Edit batch</Button>}
+                {completed !== null ? <Button type="button" onClick={() => onSaved(completed)}>Done</Button> : <div className={styles.actions}><Button type="button" severity="secondary" disabled={locked} onClick={onCancel}>Cancel</Button>
                     <Button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
-                        {busy ? "Saving..." : pending ? "Retry entry" : assets ? "Register assets" : "Receive boxes"}</Button></div>
+                        {busy ? "Processing..." : pending ? "Retry entry" : assets ? reviewed ? "Confirm registration" : "Register assets" : "Receive boxes"}</Button></div>}
             </form></Dialog.Content>
         </Dialog.Popup></Dialog.Positioner></Dialog.Portal>
     </Dialog.Root>;

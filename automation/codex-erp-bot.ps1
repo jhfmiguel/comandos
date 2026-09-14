@@ -3,6 +3,7 @@ param(
     [string]$TaskDirectory = '',
     [string]$CodexCommand = 'codex',
     [int]$PollSeconds = 30,
+    [int]$CodexRetrySeconds = 300,
     [int]$MaxTasks = 0,
     [string]$TaskName = '',
     [string]$Workstream = '',
@@ -11,6 +12,7 @@ param(
     [switch]$AutoCommit,
     [switch]$AutoPush,
     [switch]$NoNotification,
+    [switch]$StartPaused,
     [string]$Remote = 'origin',
     [string]$Branch = 'main'
 )
@@ -30,16 +32,19 @@ $runtimeDirectory = Join-Path $PSScriptRoot 'runtime'
 $statusPath = Join-Path $runtimeDirectory 'status.json'
 $controlPath = Join-Path $runtimeDirectory 'control.json'
 $processedTasks = 0
+$script:lastState = 'starting'
+$script:lastMessage = 'Iniciando worker.'
+$script:lastTask = ''
 $taskLimit = $MaxTasks
-if ($taskLimit -eq 0 -and -not $Workstream -and -not $TaskName) {
-    $taskLimit = 1
-}
 
 foreach ($directory in @($TaskDirectory, $workingDirectory, $completedDirectory, $failedDirectory, $logDirectory, $runtimeDirectory)) {
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
 }
 
 function Write-BotStatus([string]$state, [string]$message, [string]$taskName = '') {
+    $script:lastState = $state
+    $script:lastMessage = $message
+    $script:lastTask = $taskName
     $status = [ordered]@{
         state = $state
         message = $message
@@ -49,7 +54,10 @@ function Write-BotStatus([string]$state, [string]$message, [string]$taskName = '
         updatedAt = (Get-Date).ToString('o')
         pid = $PID
     }
-    $status | ConvertTo-Json | Set-Content -Path $statusPath -Encoding UTF8
+    $temporary = "$statusPath.$PID.tmp"
+    [System.IO.File]::WriteAllText($temporary, ($status | ConvertTo-Json), (New-Object System.Text.UTF8Encoding($false)))
+    if (Test-Path -LiteralPath $statusPath) { [System.IO.File]::Replace($temporary, $statusPath, "$statusPath.previous") }
+    else { [System.IO.File]::Move($temporary, $statusPath) }
 }
 
 function Get-Control {
@@ -59,11 +67,179 @@ function Get-Control {
 
 function Clear-Control { Remove-Item -Force -Path $controlPath -ErrorAction SilentlyContinue }
 
+function Wait-BotPoll {
+    for ($tick = 0; $tick -lt [math]::Max(1, $PollSeconds); $tick += 2) {
+        Wait-IfPaused $script:lastTask
+        Write-BotStatus $script:lastState $script:lastMessage $script:lastTask
+        Start-Sleep -Seconds 2
+    }
+}
+
 function Wait-IfPaused([string]$taskName) {
-    while ($true) {
+    $previousState = $script:lastState
+    $previousMessage = $script:lastMessage
+    
+function Get-CodexResetAt([string]$logPath) {
+    if (-not (Test-Path -LiteralPath $logPath)) {
+        return $null
+    }
+
+    try {
+        $text = Get-Content -Raw -Encoding UTF8 -Path $logPath
+
+        if ($text -match '(?i)resets on\s+([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4},\s+\d{1,2}:\d{2}\s*(?:AM|PM))') {
+            $raw = $matches[1]
+            $culture = [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+            $styles = [System.Globalization.DateTimeStyles]::AllowWhiteSpaces
+            $parsed = [datetime]::MinValue
+
+            foreach ($format in @(
+                'MMM d, yyyy, h:mm tt',
+                'MMM dd, yyyy, h:mm tt',
+                'MMMM d, yyyy, h:mm tt',
+                'MMMM dd, yyyy, h:mm tt'
+            )) {
+                if ([datetime]::TryParseExact(
+                    $raw,
+                    $format,
+                    $culture,
+                    $styles,
+                    [ref]$parsed
+                )) {
+                    return $parsed
+                }
+            }
+
+            if ([datetime]::TryParse(
+                $raw,
+                $culture,
+                $styles,
+                [ref]$parsed
+            )) {
+                return $parsed
+            }
+        }
+    } catch {
+        return $null
+    }
+
+    return $null
+}
+
+function Register-CodexResumeTask([datetime]$resumeAt) {
+    if ($resumeAt -le (Get-Date).AddSeconds(30)) {
+        $resumeAt = (Get-Date).AddMinutes(2)
+    }
+
+    # Pequena margem para nao chamar o Codex exatamente no segundo do reset.
+    $resumeAt = $resumeAt.AddMinutes(1)
+
+    $scheduledTaskName = 'COMANDOS Codex Auto Resume'
+
+    $arguments = @(
+        '-NoProfile',
+        '-ExecutionPolicy', 'Bypass',
+        '-File', ('"' + $PSCommandPath + '"')
+    )
+
+    if ($TaskDirectory) {
+        $arguments += @('-TaskDirectory', ('"' + $TaskDirectory + '"'))
+    }
+
+    if ($CodexCommand -and $CodexCommand -ne 'codex') {
+        $arguments += @('-CodexCommand', ('"' + $CodexCommand + '"'))
+    }
+
+    if ($Workstream) {
+        $arguments += @('-Workstream', ('"' + $Workstream + '"'))
+    }
+
+    if ($TaskName) {
+        $arguments += @('-TaskName', ('"' + $TaskName + '"'))
+    }
+
+    if ($MaxTasks -gt 0) {
+        $arguments += @('-MaxTasks', [string]$MaxTasks)
+    }
+
+    if ($Once) { $arguments += '-Once' }
+    if ($AutoCommit) { $arguments += '-AutoCommit' }
+    if ($AutoPush) { $arguments += '-AutoPush' }
+    if ($NoNotification) { $arguments += '-NoNotification' }
+
+    if ($Remote) {
+        $arguments += @('-Remote', ('"' + $Remote + '"'))
+    }
+
+    if ($Branch) {
+        $arguments += @('-Branch', ('"' + $Branch + '"'))
+    }
+
+    $argumentLine = $arguments -join ' '
+
+    try {
+        Import-Module ScheduledTasks -ErrorAction Stop
+
+        $action = New-ScheduledTaskAction `
+            -Execute 'powershell.exe' `
+            -Argument $argumentLine `
+            -WorkingDirectory $repositoryRoot
+
+        $trigger = New-ScheduledTaskTrigger `
+            -Once `
+            -At $resumeAt
+
+        Register-ScheduledTask `
+            -TaskName $scheduledTaskName `
+            -Action $action `
+            -Trigger $trigger `
+            -Description 'Reinicia o BOT COMANDOS quando a cota do Codex deve estar disponivel novamente.' `
+            -Force | Out-Null
+
+        return $resumeAt
+    } catch {
+        Write-Warning "Nao foi possivel agendar o reinicio automatico: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+function Stop-BotForCodexUnavailable(
+    [string]$taskName,
+    [string]$logPath = ''
+) {
+    $resetAt = $null
+
+    if ($logPath) {
+        $resetAt = Get-CodexResetAt $logPath
+    }
+
+    # Se o Codex nao informou o reset, tenta de novo em 1 hora.
+    if ($null -eq $resetAt) {
+        $resetAt = (Get-Date).AddHours(1)
+    }
+
+    $scheduledAt = Register-CodexResumeTask $resetAt
+
+    if ($null -ne $scheduledAt) {
+        Write-BotStatus `
+            'offline' `
+            ("Codex indisponivel. BOT desligado. Reinicio automatico agendado para {0:dd/MM/yyyy HH:mm}." -f $scheduledAt) `
+            $taskName
+    } else {
+        Write-BotStatus `
+            'offline' `
+            'Codex indisponivel. BOT desligado; reinicio automatico nao pode ser agendado.' `
+            $taskName
+    }
+}
+while ($true) {
         $control = Get-Control
         if ($control -and $control.command -eq 'stop') { throw 'BOT_STOP_REQUESTED' }
-        if (-not $control -or $control.command -ne 'pause') { return }
+        if (-not $control -or $control.command -ne 'pause') {
+            if ($control -and $control.command -eq 'resume') { Clear-Control }
+            if ($script:lastState -eq 'paused') { Write-BotStatus $previousState $previousMessage $taskName }
+            return
+        }
         Write-BotStatus 'paused' 'Pausado pelo painel. Aguardando continuar ou parar.' $taskName
         Start-Sleep -Seconds 2
     }
@@ -76,7 +252,15 @@ function Test-CodexAvailable {
 function Get-PendingTask {
     $pendingTasks = Get-ChildItem -Path $TaskDirectory -Filter '*.md' -File |
         Where-Object { $_.Name -notlike '_*' } |
-        Sort-Object Name
+        Sort-Object `
+            @{ Expression = {
+                if ($_.Name -match '-(\d+)-') {
+                    [int]$matches[1]
+                } else {
+                    -1
+                }
+            }; Descending = $true }, `
+            @{ Expression = { $_.Name }; Descending = $true }
     if ($Workstream) {
         $pendingTasks = $pendingTasks | Where-Object { $_.Name -like "$Workstream-*.md" }
     }
@@ -113,74 +297,327 @@ $task
 "@
 }
 
-function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
-    $prompt = New-CodexPrompt $taskPath
-    $command = Get-Command "$CodexCommand.cmd" -ErrorAction SilentlyContinue
-    if (-not $command) { $command = Get-Command $CodexCommand -ErrorAction Stop }
-    $processInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $processInfo.FileName = $command.Source
-    $processInfo.Arguments = 'exec --approve-for-me --skip-git-repo-check -'
-    $processInfo.WorkingDirectory = $repositoryRoot
-    $processInfo.UseShellExecute = $false
-    $processInfo.CreateNoWindow = $true
-    $processInfo.RedirectStandardInput = $true
-    $processInfo.RedirectStandardOutput = $true
-    $processInfo.RedirectStandardError = $true
+function Invoke-WorkerProcess([string]$executable, [string]$arguments, [string]$directory, [string]$logPath, [string]$prompt = '') {
+    $info = New-Object System.Diagnostics.ProcessStartInfo
+    if ($executable -match '\.(cmd|bat)$') {
+        $info.FileName = $env:ComSpec
+        $info.Arguments = '/d /s /c ""' + $executable + '" ' + $arguments + '"'
+    } else { $info.FileName = $executable; $info.Arguments = $arguments }
+    $info.WorkingDirectory = $directory
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.RedirectStandardInput = $true
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
     $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $processInfo
-    [void]$process.Start()
-    $utf8 = New-Object System.Text.UTF8Encoding($false)
-    $promptBytes = $utf8.GetBytes($prompt)
-    $process.StandardInput.BaseStream.Write($promptBytes, 0, $promptBytes.Length)
-    $process.StandardInput.BaseStream.Flush()
-    $process.StandardInput.Close()
-    Write-BotStatus 'working' ('Codex est' + [char]0x00E1 + ' trabalhando na etapa atual.') (Split-Path $taskPath -Leaf)
+    $process.StartInfo = $info
+    $stdout = $null
+    $stderr = $null
+    $started = $false
     try {
+        [void]$process.Start()
+        $started = $true
+        $stdout = [System.IO.File]::Open($logPath, 'Create', 'Write', 'Read')
+        $stderr = [System.IO.File]::Open("$logPath.stderr", 'Create', 'Write', 'Read')
+        # Drain both pipes immediately. Waiting for exit before reading can deadlock.
+        $outputCopy = $process.StandardOutput.BaseStream.CopyToAsync($stdout)
+        $errorCopy = $process.StandardError.BaseStream.CopyToAsync($stderr)
+        if ($prompt) {
+            $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes($prompt)
+            $process.StandardInput.BaseStream.Write($bytes, 0, $bytes.Length)
+        }
+        $process.StandardInput.Close()
+        $state = $script:lastState
+        $message = $script:lastMessage
+        $taskName = $script:lastTask
         while (-not $process.HasExited) {
             $control = Get-Control
-            if ($control -and $control.command -eq 'stop') {
-                $process.Kill()
-                throw 'BOT_STOP_REQUESTED'
-            }
+            if ($control -and $control.command -eq 'stop') { throw 'BOT_STOP_REQUESTED' }
             if ($control -and $control.command -eq 'pause') {
-                Write-BotStatus 'pause-requested' 'Pausa solicitada; aguardando o Codex finalizar o comando atual.' (Split-Path $taskPath -Leaf)
+                Write-BotStatus 'pause-requested' 'Pausa solicitada para depois da etapa atual.' $taskName
+            } else {
+                Write-BotStatus $state $message $taskName
             }
             Start-Sleep -Seconds 2
         }
-        $codexOutput = @($process.StandardOutput.ReadToEnd(), $process.StandardError.ReadToEnd())
-        $exitCode = $process.ExitCode
+        [void]$outputCopy.GetAwaiter().GetResult()
+        [void]$errorCopy.GetAwaiter().GetResult()
+        return $process.ExitCode
     } finally {
+        if ($started -and -not $process.HasExited) {
+            # Kill the wrapper and its children, not only cmd.exe.
+            & taskkill.exe /PID $process.Id /T /F | Out-Null
+            if ($LASTEXITCODE -ne 0 -and -not $process.HasExited) { throw 'Could not stop worker child processes. Check Windows process permissions.' }
+            $process.WaitForExit()
+        }
+        if ($started -and $stdout -and $stderr) {
+            [void]$outputCopy.GetAwaiter().GetResult()
+            [void]$errorCopy.GetAwaiter().GetResult()
+        }
+        if ($stdout) { $stdout.Dispose() }
+        if ($stderr) { $stderr.Dispose() }
         $process.Dispose()
-    }
-    $codexOutput | Tee-Object -FilePath $logPath
-    $outputText = (Get-Content -Raw -Encoding UTF8 -Path $logPath) + "`n" + ($codexOutput -join "`n")
-    if ($outputText -match '(?i)rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') {
-        throw 'CODEX_UNAVAILABLE'
-    }
-    if ($exitCode -ne 0) {
-        throw "Codex exited with code $exitCode. See $logPath"
     }
 }
 
+function Invoke-CodexTask([string]$taskPath, [string]$logPath) {
+    $prompt = New-CodexPrompt $taskPath
+    $command = Get-Command $CodexCommand -ErrorAction Stop
+    if ($command.Source -match '\.ps1$') { $command = Get-Command ($command.Source -replace '\.ps1$', '.cmd') -ErrorAction Stop }
+    Write-BotStatus 'working' 'Codex executando a etapa atual.' (Split-Path $taskPath -Leaf)
+    $exitCode = Invoke-WorkerProcess $command.Source '--ask-for-approval never exec --sandbox workspace-write --skip-git-repo-check -' $repositoryRoot $logPath $prompt
+    $outputText = (Get-Content -Raw -Encoding UTF8 -LiteralPath $logPath) + "\n" + (Get-Content -Raw -Encoding UTF8 -LiteralPath "$logPath.stderr")
+    if ($exitCode -ne 0 -and $outputText -match '(?i)rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') { throw 'CODEX_UNAVAILABLE' }
+    if ($exitCode -ne 0) { throw "Codex exited with code $exitCode. See $logPath and $logPath.stderr" }
+}
+
 function Invoke-ProjectValidation {
+    Write-BotStatus 'validating' 'Validando testes da API e lint da interface.' $script:lastTask
+    if (Test-Path (Join-Path $repositoryRoot 'wr-api\mvnw.cmd')) {
+        $code = Invoke-WorkerProcess (Join-Path $repositoryRoot 'wr-api\mvnw.cmd') 'test' (Join-Path $repositoryRoot 'wr-api') "$logPath.api.log"
+        if ($code -ne 0) { throw 'API tests failed.' }
+    }
+    if (Test-Path (Join-Path $repositoryRoot 'wr-app\package.json')) {
+        $npm = (Get-Command npm.cmd -ErrorAction Stop).Source
+        $code = Invoke-WorkerProcess $npm 'run lint' (Join-Path $repositoryRoot 'wr-app') "$logPath.lint.log"
+        if ($code -ne 0) { throw 'Frontend lint failed.' }
+    }
+}
+
+
+function Get-NextCommitNumber {
     Push-Location $repositoryRoot
     try {
-        & git status --short
-        if (Test-Path (Join-Path $repositoryRoot 'wr-api\mvnw.cmd')) {
-            Push-Location (Join-Path $repositoryRoot 'wr-api')
-            try { & .\mvnw.cmd test } finally { Pop-Location }
-            if ($LASTEXITCODE -ne 0) { throw 'API tests failed.' }
+        $subjects = & git log --format=%s -n 300
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Could not read git history.'
         }
-        if (Test-Path (Join-Path $repositoryRoot 'wr-app\package.json')) {
-            Push-Location (Join-Path $repositoryRoot 'wr-app')
-            try { & npm.cmd run lint } finally { Pop-Location }
-            if ($LASTEXITCODE -ne 0) { throw 'Frontend lint failed.' }
+
+        foreach ($subject in $subjects) {
+            if ($subject -match '^(\d{3})\s+-\s+') {
+                return ([int]$matches[1]) + 1
+            }
         }
+
+        return 1
     } finally {
         Pop-Location
     }
 }
 
+function Get-TaskCommitDescription([string]$taskPath) {
+    $taskName = Split-Path $taskPath -LeafBase
+    $taskContent = Get-Content -Raw -Encoding UTF8 -Path $taskPath
+
+    if ($taskContent -match '(?m)^#\s+(.+?)\s*$') {
+        return $matches[1].Trim()
+    }
+
+    if ($taskContent -match '(?ms)^## Objetivo\s*\r?\n+(.+?)(?:\r?\n##|\z)') {
+        $description = ($matches[1] -replace '\s+', ' ').Trim()
+        if ($description.Length -gt 90) {
+            $description = $description.Substring(0, 90).Trim()
+        }
+        return $description
+    }
+
+    $description = ($taskName -replace '^\d+[-_ ]*', '' -replace '[-_]+', ' ').Trim()
+
+    if ([string]::IsNullOrWhiteSpace($description)) {
+        return 'Implementa tarefa automatizada'
+    }
+
+    return $description
+}
+
+function Get-RateLimitResetDateTime([string]$logPath) {
+    if ([string]::IsNullOrWhiteSpace($logPath)) {
+        return $null
+    }
+
+    $text = ""
+
+    foreach ($path in @($logPath, "$logPath.stderr")) {
+        if (Test-Path $path) {
+            try {
+                $text += "`n" + [System.IO.File]::ReadAllText($path)
+            }
+            catch {
+            }
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        return $null
+    }
+
+    $text = [regex]::Replace(
+        $text,
+        '\x1B\[[0-?]*[ -/]*[@-~]',
+        ''
+    )
+
+    $patterns = @(
+        '(?i)rate limit resets?\s+on\s+([^\r\n.;]+)',
+        '(?i)rate limit resets?\s+at\s+([^\r\n.;]+)',
+        '(?i)resets?\s+on\s+([^\r\n.;]+)',
+        '(?i)resets?\s+at\s+([^\r\n.;]+)',
+        '(?i)try again at\s+([^\r\n.;]+)'
+    )
+
+    foreach ($pattern in $patterns) {
+        $matches = [regex]::Matches($text, $pattern)
+
+        if ($matches.Count -eq 0) {
+            continue
+        }
+
+        $raw = $matches[$matches.Count - 1].Groups[1].Value.Trim()
+
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            continue
+        }
+
+        $parsed = [datetime]::MinValue
+
+        if ([datetime]::TryParse(
+            $raw,
+            [System.Globalization.CultureInfo]::InvariantCulture,
+            [System.Globalization.DateTimeStyles]::AllowWhiteSpaces,
+            [ref]$parsed
+        )) {
+            $now = Get-Date
+
+            $hasExplicitDate =
+                $raw -match '\d{4}' -or
+                $raw -match '(?i)\bjan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec\b' -or
+                $raw -match '\d{1,2}[/-]\d{1,2}'
+
+            if (-not $hasExplicitDate) {
+                $parsed = Get-Date `
+                    -Year $now.Year `
+                    -Month $now.Month `
+                    -Day $now.Day `
+                    -Hour $parsed.Hour `
+                    -Minute $parsed.Minute `
+                    -Second $parsed.Second
+
+                if ($parsed -le $now) {
+                    $parsed = $parsed.AddDays(1)
+                }
+            }
+
+            return $parsed
+        }
+    }
+
+    return $null
+}
+
+function Wait-UntilRateLimitReset(
+    [string]$logPath,
+    [string]$taskName
+) {
+    $resetAt = Get-RateLimitResetDateTime $logPath
+
+    if ($null -eq $resetAt) {
+        Write-BotStatus `
+            'waiting' `
+            'Rate limit do Codex ativo. Horario de liberacao nao identificado. Nenhuma nova chamada ao Codex sera feita.' `
+            $taskName
+
+        while ($null -eq $resetAt) {
+            $control = Get-Control
+
+            if ($control -and $control.command -eq 'stop') {
+                throw 'BOT_STOP_REQUESTED'
+            }
+
+            if ($control -and $control.command -eq 'pause') {
+                Wait-IfPaused $taskName
+            }
+
+            Start-Sleep -Seconds 60
+            $resetAt = Get-RateLimitResetDateTime $logPath
+        }
+    }
+
+    $resumeAt = $resetAt.AddSeconds(15)
+    $displayTime = $resetAt.ToString('HH:mm:ss')
+
+    while ((Get-Date) -lt $resumeAt) {
+        Write-BotStatus `
+            'waiting' `
+            "Rate limit do Codex ativo. Codex liberado as $displayTime. Nenhuma tentativa sera feita antes desse horario." `
+            $taskName
+
+        $control = Get-Control
+
+        if ($control -and $control.command -eq 'stop') {
+            throw 'BOT_STOP_REQUESTED'
+        }
+
+        if ($control -and $control.command -eq 'pause') {
+            Wait-IfPaused $taskName
+        }
+
+        $remaining = [int][Math]::Ceiling(
+            ($resumeAt - (Get-Date)).TotalSeconds
+        )
+
+        $sleepSeconds = [Math]::Min(
+            60,
+            [Math]::Max(1, $remaining)
+        )
+
+        Start-Sleep -Seconds $sleepSeconds
+    }
+
+    Write-BotStatus `
+        'waiting' `
+        'Rate limit encerrado. Codex liberado; retomando a tarefa preservada na fila.' `
+        $taskName
+}
+
+function Get-RateLimitStatusMessage([string]$logPath) {
+    $fallback = 'Rate limit do Codex; etapa preservada na fila.'
+
+    if ([string]::IsNullOrWhiteSpace($logPath) -or -not (Test-Path $logPath)) {
+        return $fallback
+    }
+
+    try {
+        $log = [System.IO.File]::ReadAllText($logPath)
+
+        # Remove sequencias ANSI que podem vir da CLI.
+        $log = [regex]::Replace($log, '\x1B\[[0-?]*[ -/]*[@-~]', '')
+
+        $patterns = @(
+            '(?i)rate limit resets?\s+on\s+([^\r\n.;]+)',
+            '(?i)rate limit resets?\s+at\s+([^\r\n.;]+)',
+            '(?i)resets?\s+on\s+([^\r\n.;]+)',
+            '(?i)resets?\s+at\s+([^\r\n.;]+)',
+            '(?i)try again at\s+([^\r\n.;]+)'
+        )
+
+        foreach ($pattern in $patterns) {
+            $matches = [regex]::Matches($log, $pattern)
+
+            if ($matches.Count -gt 0) {
+                $reset = $matches[$matches.Count - 1].Groups[1].Value.Trim()
+
+                if (-not [string]::IsNullOrWhiteSpace($reset)) {
+                    return "Rate limit do Codex; etapa preservada na fila. Codex liberado Ã s $reset."
+                }
+            }
+        }
+
+        return $fallback
+    }
+    catch {
+        return $fallback
+    }
+}
 function Complete-Task([string]$taskPath) {
     $destination = Join-Path $completedDirectory (Split-Path $taskPath -Leaf)
     Move-Item -Force -Path $taskPath -Destination $destination
@@ -188,7 +625,10 @@ function Complete-Task([string]$taskPath) {
         Push-Location $repositoryRoot
         try {
             & git add -A
-            & git commit -m "BOT - Implementa tarefa $(Split-Path $destination -LeafBase)"
+            $nextCommitNumber = Get-NextCommitNumber
+            $commitDescription = Get-TaskCommitDescription $destination
+            $commitMessage = ('{0:D3} - {1}' -f $nextCommitNumber, $commitDescription)
+            & git commit -m $commitMessage
             if ($LASTEXITCODE -ne 0) { throw 'Git commit failed.' }
             if ($AutoPush) {
                 & git push $Remote $Branch
@@ -244,53 +684,80 @@ if ($ListTasks) {
         Get-ChildItem -Path $taskGroup.Path -Filter '*.md' -File -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -notlike '_*' } |
             Where-Object { -not $Workstream -or $_.Name -like "$Workstream-*.md" } |
-            Sort-Object Name |
+            Sort-Object `
+            @{ Expression = {
+                if ($_.Name -match '-(\d+)-') {
+                    [int]$matches[1]
+                } else {
+                    -1
+                }
+            }; Descending = $true }, `
+            @{ Expression = { $_.Name }; Descending = $true } |
             ForEach-Object { Get-TaskSummary $_ $taskGroup.State }
     }
     exit 0
 }
 
+# Holding this handle prevents concurrent workers, including simultaneous panel clicks.
+$workerLock = $null
+try {
+    $workerLock = [System.IO.File]::Open((Join-Path $runtimeDirectory 'worker.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+} catch { Write-Error 'Another worker already owns this queue.'; exit 1 }
+try {
+    # Preserve tasks abandoned by a terminated worker; never overwrite another task.
+    $resolvedTasks = [System.IO.Path]::GetFullPath($TaskDirectory).TrimEnd('\')
+    if (-not $resolvedTasks.StartsWith($repositoryRoot.TrimEnd('\') + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Task directory must be inside the repository.'
+    }
+    foreach ($orphan in Get-ChildItem -LiteralPath $workingDirectory -Filter '*.md' -File) {
+        Move-Item -LiteralPath $orphan.FullName -Destination (Join-Path $resolvedTasks $orphan.Name)
+    }
+    Clear-Control
+    if ($StartPaused) {
+        [System.IO.File]::WriteAllText($controlPath, '{"command":"pause"}', (New-Object System.Text.UTF8Encoding($false)))
+    }
+    Write-BotStatus 'starting' 'Worker iniciado.'
 while ($true) {
     Wait-IfPaused ''
     $task = Get-PendingTask
     if ($null -eq $task) {
-        if ($Once -or $processedTasks -gt 0) {
-            Write-BotStatus 'completed' 'Não há mais tarefas no escopo.'
-            Show-CompletionNotice 'COMANDOS Codex Bot finalizado' ('Tarefas processadas: ' + $processedTasks + '. N' + [char]0x00E3 + 'o h' + [char]0x00E1 + ' mais tarefas no escopo.')
+        if ($Once) {
+            Write-BotStatus 'completed' 'NÃ£o hÃ¡ mais tarefas no escopo.'
+            Show-CompletionNotice 'COMANDOS Codex Bot finalizado' ('Tarefas processadas: ' + $processedTasks + '.')
             break
         }
         Write-BotStatus 'waiting' 'Aguardando tarefas ou disponibilidade do Codex.'
-        Start-Sleep -Seconds $PollSeconds
+        Wait-BotPoll
         continue
     }
 
     if (-not (Test-CodexAvailable)) {
-        Write-BotStatus 'waiting' 'Codex indisponível; aguardando o próximo ciclo.' $task.Name
-        if ($Once) { break }
-        Start-Sleep -Seconds $PollSeconds
-        continue
+        Stop-BotForCodexUnavailable $task.Name
+        break
     }
 
     $workingTask = Join-Path $workingDirectory $task.Name
-    Move-Item -Force -Path $task.FullName -Destination $workingTask
+    Move-Item -LiteralPath $task.FullName -Destination $workingTask
     $logPath = Join-Path $logDirectory ("{0:yyyyMMdd-HHmmss}-{1}.log" -f (Get-Date), $task.BaseName)
-    Clear-Control
 
     try {
-        Write-BotStatus 'working' 'Iniciando etapa selecionada.' $task.Name
+        Write-BotStatus 'waiting' 'Etapa selecionada. Verificando disponibilidade do Codex.' $task.Name
         Invoke-CodexTask $workingTask $logPath
         Invoke-ProjectValidation
         Complete-Task $workingTask
         $processedTasks++
+        Write-BotStatus 'completed' 'Etapa concluida e validada.' $task.Name
         Show-CompletionNotice 'Tarefa do COMANDOS concluída' "Tarefa: $($task.Name)`nLog: $logPath"
     } catch {
         $errorText = $_ | Out-String
-        $errorText | Tee-Object -FilePath $logPath -Append
+        [System.IO.File]::AppendAllText($logPath, $errorText, (New-Object System.Text.UTF8Encoding($false)))
         if ($errorText -match 'CODEX_UNAVAILABLE|rate limit|usage limit|hit your usage|out of codex|resets on|try again at|add credits|temporarily unavailable') {
-            Move-Item -Force -Path $workingTask -Destination (Join-Path $TaskDirectory $task.Name)
-            Write-BotStatus 'waiting' 'Rate limit do Codex; etapa preservada na fila.' $task.Name
-            Start-Sleep -Seconds $PollSeconds
-            continue
+            if (Test-Path $workingTask) {
+                Move-Item -Force -Path $workingTask -Destination (Join-Path $TaskDirectory $task.Name)
+            }
+
+            Stop-BotForCodexUnavailable $task.Name $logPath
+            break
         }
         if ($errorText -match 'BOT_STOP_REQUESTED') {
             Move-Item -Force -Path $workingTask -Destination (Join-Path $TaskDirectory $task.Name)
@@ -300,9 +767,18 @@ while ($true) {
         if (Test-Path $workingTask) {
             Fail-Task $workingTask
         }
+        Write-BotStatus 'failed' ('Falha na etapa. Consulte ' + $logPath) $task.Name
         Show-CompletionNotice 'Tarefa do COMANDOS falhou' "Tarefa: $($task.Name)`nConsulte: $logPath"
         break
     }
 
-    if ($taskLimit -gt 0 -and $processedTasks -ge $taskLimit) { break }
+    Wait-IfPaused ''
+    if ($taskLimit -gt 0 -and $processedTasks -ge $taskLimit) {
+        Write-BotStatus 'completed' 'Limite de etapas concluido. Inicie outra etapa pelo painel.'
+        break
+    }
 }
+} catch {
+    if ($_ -match 'BOT_STOP_REQUESTED') { Write-BotStatus 'stopped' 'Worker parado pelo painel.' }
+    else { Write-BotStatus 'failed' $_.Exception.Message; throw }
+} finally { if ($workerLock) { $workerLock.Dispose() } }

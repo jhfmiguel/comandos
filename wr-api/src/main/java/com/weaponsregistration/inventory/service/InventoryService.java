@@ -32,37 +32,257 @@ public class InventoryService {
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
 
-    public PageResult list(String resource, String search, int page, int size, Long organizationId) {
+    public PageResult list(
+            String resource,
+            String search,
+            int page,
+            int size,
+            Long organizationId,
+            Map<String, String> requestParams) {
+
         var spec = InventoryCatalog.get(resource);
-        if (page < 0 || page > 100000 || size < 1 || size > 100) bad("Invalid pagination.");
-        List<String> expressions = new ArrayList<>(List.of("cast(e.id as string)"));
-        spec.fields().stream().filter(f -> Set.of("text", "choice").contains(f.type()))
-            .forEach(f -> expressions.add("lower(e." + f.property() + ")"));
-        boolean searchRequested = search != null && !search.isBlank();
-        String where = searchRequested ? " where (" + String.join(" or ", expressions.stream().map(e -> e + " like :search escape '!'").toList()) + ")" : "";
-        String organizationPath = switch (resource) {
-            case "locations" -> "e.organization.id";
-            case "assets", "balances", "movements" -> "e.location.organization.id";
-            case "regulatory-controls" -> "e.asset.location.organization.id";
-            case "expirations", "certifications", "recalls" -> "e.organization.id";
-            case "recall-items" -> "e.recall.organization.id";
-            case "equipment-sets" -> "e.organization.id";
-            case "equipment-set-components" -> "e.equipmentSet.organization.id";
-            case "lots" -> "e.openingLocation.organization.id";
-            default -> null;
-        };
-        boolean scoped = organizationId != null && organizationPath != null;
-        if (scoped) where += (searchRequested ? " and " : " where ") + organizationPath + " = :organizationId";
-        where += (where.isEmpty() ? " where " : " and ") + access.predicate("inventory/" + resource, "READ", "e");
-        var query = em.createQuery("select e from " + spec.entity().getSimpleName() + " e" + where + " order by e.id", spec.entity());
-        var count = em.createQuery("select count(e) from " + spec.entity().getSimpleName() + " e" + where, Long.class);
-        if (searchRequested) {
-            String term = "%" + search.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
-            query.setParameter("search", term); count.setParameter("search", term);
+
+        if (page < 0 || page > 100000 || size < 1 || size > 100) {
+            bad("Invalid pagination.");
         }
-        if (scoped) { query.setParameter("organizationId", organizationId); count.setParameter("organizationId", organizationId); }
-        return new PageResult(query.setFirstResult(page * size).setMaxResults(size).getResultList().stream()
-            .map(row -> view(spec, row)).toList(), count.getSingleResult(), page, size);
+
+        List<String> clauses = new ArrayList<>();
+        Map<String, Object> parameters = new LinkedHashMap<>();
+
+        if (search != null && !search.isBlank()) {
+            List<String> expressions =
+                new ArrayList<>(List.of("cast(e.id as string)"));
+
+            spec.fields().stream()
+                .filter(field ->
+                    Set.of("text", "choice").contains(field.type())
+                )
+                .forEach(field ->
+                    expressions.add("lower(e." + field.property() + ")")
+                );
+
+            clauses.add(
+                "(" +
+                String.join(
+                    " or ",
+                    expressions.stream()
+                        .map(expression ->
+                            expression + " like :globalSearch escape '!'"
+                        )
+                        .toList()
+                ) +
+                ")"
+            );
+
+            parameters.put("globalSearch", likeTerm(search));
+        }
+
+        int filterIndex = 0;
+
+        for (var entry : requestParams.entrySet()) {
+            if (!entry.getKey().startsWith("filter.")) {
+                continue;
+            }
+
+            String fieldName =
+                entry.getKey().substring("filter.".length());
+
+            String value =
+                entry.getValue() == null
+                    ? ""
+                    : entry.getValue().trim();
+
+            if (value.isBlank()) {
+                continue;
+            }
+
+            String parameter = "columnFilter" + filterIndex++;
+
+            if ("id".equals(fieldName)) {
+                clauses.add(
+                    "cast(e.id as string) like :" +
+                    parameter +
+                    " escape '!'"
+                );
+                parameters.put(parameter, likeTerm(value));
+                continue;
+            }
+
+            var field = spec.fields().stream()
+                .filter(candidate -> candidate.name().equals(fieldName))
+                .findFirst()
+                .orElse(null);
+
+            if (field == null) {
+                continue;
+            }
+
+            List<String> expressions = new ArrayList<>();
+
+            if ("reference".equals(field.type())) {
+                String relation = "e." + field.property();
+
+                expressions.add("cast(" + relation + ".id as string)");
+
+                if (
+                    field.reference() != null &&
+                    field.reference().startsWith("core/")
+                ) {
+                    var target =
+                        CoreCatalog.get(
+                            field.reference().substring("core/".length())
+                        );
+
+                    target.fields().stream()
+                        .filter(targetField ->
+                            Set.of("text", "email", "choice")
+                                .contains(targetField.type())
+                        )
+                        .limit(4)
+                        .forEach(targetField ->
+                            expressions.add(
+                                "lower(" +
+                                relation +
+                                "." +
+                                targetField.property() +
+                                ")"
+                            )
+                        );
+                }
+                else if (field.reference() != null) {
+                    var target = InventoryCatalog.get(field.reference());
+
+                    target.fields().stream()
+                        .filter(targetField ->
+                            Set.of("text", "choice")
+                                .contains(targetField.type())
+                        )
+                        .limit(4)
+                        .forEach(targetField ->
+                            expressions.add(
+                                "lower(" +
+                                relation +
+                                "." +
+                                targetField.property() +
+                                ")"
+                            )
+                        );
+                }
+            }
+            else {
+                expressions.add(
+                    "lower(cast(e." +
+                    field.property() +
+                    " as string))"
+                );
+            }
+
+            clauses.add(
+                "(" +
+                String.join(
+                    " or ",
+                    expressions.stream()
+                        .map(expression ->
+                            expression +
+                            " like :" +
+                            parameter +
+                            " escape '!'"
+                        )
+                        .toList()
+                ) +
+                ")"
+            );
+
+            parameters.put(parameter, likeTerm(value));
+        }
+
+        String organizationPath =
+            switch (resource) {
+                case "locations" ->
+                    "e.organization.id";
+                case "assets",
+                     "balances",
+                     "movements" ->
+                    "e.location.organization.id";
+                case "regulatory-controls" ->
+                    "e.asset.location.organization.id";
+                case "expirations",
+                     "certifications",
+                     "recalls" ->
+                    "e.organization.id";
+                case "recall-items" ->
+                    "e.recall.organization.id";
+                case "equipment-sets" ->
+                    "e.organization.id";
+                case "equipment-set-components" ->
+                    "e.equipmentSet.organization.id";
+                case "lots" ->
+                    "e.openingLocation.organization.id";
+                default ->
+                    null;
+            };
+
+        boolean scoped =
+            organizationId != null &&
+            organizationPath != null;
+
+        if (scoped) {
+            clauses.add(organizationPath + " = :organizationId");
+            parameters.put("organizationId", organizationId);
+        }
+
+        clauses.add(
+            access.predicate("inventory/" + resource, "READ", "e")
+        );
+
+        String where =
+            " where " +
+            String.join(" and ", clauses);
+
+        var query = em.createQuery(
+            "select e from " +
+            spec.entity().getSimpleName() +
+            " e" +
+            where +
+            " order by e.id",
+            spec.entity()
+        );
+
+        var count = em.createQuery(
+            "select count(e) from " +
+            spec.entity().getSimpleName() +
+            " e" +
+            where,
+            Long.class
+        );
+
+        parameters.forEach((name, value) -> {
+            query.setParameter(name, value);
+            count.setParameter(name, value);
+        });
+
+        return new PageResult(
+            query
+                .setFirstResult(page * size)
+                .setMaxResults(size)
+                .getResultList()
+                .stream()
+                .map(row -> view(spec, row))
+                .toList(),
+            count.getSingleResult(),
+            page,
+            size
+        );
+    }
+
+    private static String likeTerm(String raw) {
+        return "%" +
+            raw.trim()
+                .toLowerCase(Locale.ROOT)
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_") +
+            "%";
     }
 
     public Map<String, Object> get(String resource, long id) {
@@ -84,6 +304,18 @@ public class InventoryService {
     }
 
     private Map<String, Object> save(String resource, Long id, Map<String, Object> data, String packaging) {
+        return save(resource, id, data, packaging, false);
+    }
+
+    public String validateAsset(Map<String, Object> data) {
+        try { save("assets", null, data, null, true); return null; }
+        catch (ResponseStatusException ex) {
+            if (ex.getStatusCode().value() == 403) throw ex;
+            return ex.getReason();
+        }
+    }
+
+    private Map<String, Object> save(String resource, Long id, Map<String, Object> data, String packaging, boolean validateOnly) {
         var spec = InventoryCatalog.get(resource);
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("inventory/" + resource, action);
@@ -101,11 +333,19 @@ public class InventoryService {
         if (id != null && !Objects.equals(entity.version, integer(data.get("version"), true))) conflict("This record has changed. Reload before saving.");
         for (var field : spec.fields()) {
             if (field.readOnly()) continue;
-            Object value = parse(field, data.get(field.name()));
+            // Preserve references when an older client omits the new model fields.
+            if (id != null && entity instanceof ItemModel && !data.containsKey(field.name())
+                    && Set.of("armamentTypeId", "armamentClassificationId").contains(field.name())) continue;
+            Object raw = data.get(field.name());
+            if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber").contains(field.name()) && raw instanceof String text)
+                raw = AssetIdentity.normalize(text);
+            Object value = parse(field, raw);
             if (value instanceof CoreEntity reference) access.requireEntity(
                 field.reference().startsWith("core/") ? field.reference() : "inventory/" + field.reference(), "READ", reference);
             if (id != null && field.createOnly()) {
                 Object current = read(entity, field.property());
+                if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber").contains(field.name()) && current instanceof String text)
+                    current = AssetIdentity.normalize(text);
                 boolean equal = current instanceof CoreEntity ref ? value instanceof CoreEntity other && Objects.equals(ref.id, other.id)
                     : current instanceof BigDecimal decimal && value instanceof BigDecimal other ? decimal.compareTo(other) == 0 : Objects.equals(current, value);
                 if (!equal) bad(field.label() + " cannot be changed after registration.");
@@ -114,7 +354,15 @@ public class InventoryService {
         }
         access.requireEntity("inventory/" + resource, action, entity);
         rules.validate(entity, previous);
+        if (validateOnly) return Map.of();
         if (id == null) {
+            // Batch review reports duplicates per field separately. All actual creates
+            // share this check under the catalog lock, before stock or audit writes.
+            if (entity instanceof AssetItem asset) {
+                var errors = AssetIdentity.conflicts(em.createQuery("select a from AssetItem a", AssetItem.class)
+                    .getResultList(), asset.assetCode, asset.serialNumber);
+                if (!errors.isEmpty()) conflict(String.join(" ", errors));
+            }
             if (entity instanceof StockLot lot) lot.openingPackaging = packaging;
             if (entity instanceof StockLot lot) lot.availableQuantity = lot.initialQuantity;
             em.persist(entity);
@@ -143,6 +391,10 @@ public class InventoryService {
     }
 
     private void lockCatalog() {
+        em.createQuery("select t from ArmamentType t order by t.id", ArmamentType.class)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        em.createQuery("select c from ArmamentClassification c order by c.id", ArmamentClassification.class)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         // Serialize schema and asset writes before reading related category rows.
         // This also prevents concurrent parent changes from creating a cycle.
         em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)

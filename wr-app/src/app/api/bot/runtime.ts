@@ -7,6 +7,7 @@ export const automationRoot = process.env.COMANDOS_AUTOMATION_ROOT
     : resolve(process.cwd(), "..", "automation")
 export const runtimeDirectory = join(automationRoot, "runtime")
 export const taskDirectory = join(automationRoot, "tasks")
+export const logsDirectory = join(automationRoot, "logs")
 export const workstreams = new Set(["armamento", "municao", "transporte", "inventario", "custodia", "auditoria"])
 
 export function localRequest(request: Request) {
@@ -23,6 +24,49 @@ export async function writeJson(name: string, data: unknown) {
     await rename(temporary, join(runtimeDirectory, name))
 }
 
+async function readRateLimitResetAt() {
+    let files: string[]
+
+    try {
+        files = (await readdir(logsDirectory))
+            .filter((name) => name.toLowerCase().endsWith(".log"))
+            .sort()
+            .reverse()
+            .slice(0, 20)
+    } catch {
+        return null
+    }
+
+    const patterns = [
+        /rate limit resets? on\s+([^\r\n.]+)/i,
+        /rate limit resets? at\s+([^\r\n.]+)/i,
+        /resets? on\s+([^\r\n.]+)/i,
+        /resets? at\s+([^\r\n.]+)/i,
+        /try again at\s+([^\r\n.]+)/i
+    ]
+
+    for (const name of files) {
+        const log = await readFile(join(logsDirectory, name), "utf8").catch(() => "")
+
+        if (!log) {
+            continue
+        }
+
+        for (const pattern of patterns) {
+            const matches = [...log.matchAll(new RegExp(pattern.source, `${pattern.flags}g`))]
+
+            if (matches.length > 0) {
+                const value = matches[matches.length - 1]?.[1]?.trim()
+
+                if (value) {
+                    return value
+                }
+            }
+        }
+    }
+
+    return null
+}
 export async function readStatus() {
     const offline = { state: "offline", message: "Worker não iniciado. Inicie a próxima etapa pelo painel.", taskName: "", processedTasks: 0, updatedAt: null, alive: false }
     try {
@@ -39,7 +83,13 @@ export async function readStatus() {
         if (alive && !terminal && (!Number.isFinite(age) || age > 90000)) {
             return { ...status, state: "unresponsive", alive, message: "Worker sem atualização há mais de 90 segundos. Pare a instância antes de reiniciar." }
         }
-        return { ...status, alive }
+        return {
+            ...status,
+            alive,
+            rateLimitResetAt:
+                status.rateLimitResetAt ??
+                await readRateLimitResetAt()
+        }
     } catch { return offline }
 }
 

@@ -1,0 +1,350 @@
+﻿.dashboard {
+    --accent: #ff9900;
+    --border: color-mix(in srgb, currentColor 14%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.hero h1 {
+    margin: .25rem 0;
+    font-size: clamp(1.55rem, 2vw, 2.1rem);
+}
+
+.hero p,
+.kpi span,
+.kpi small {
+    opacity: .62;
+}
+
+.eyebrow,
+.cardEyebrow {
+    color: var(--accent);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .13em;
+}
+
+.live {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .8rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.live span {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.kpi,
+.card {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--p-content-background, #fff);
+}
+
+.kpi {
+    display: flex;
+    gap: .9rem;
+    padding: 1.1rem;
+}
+
+.kpiIcon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.5rem;
+    height: 2.5rem;
+    border-radius: .75rem;
+    background: rgb(255 153 0 / 12%);
+    color: var(--accent);
+}
+
+.kpi span,
+.kpi small {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .75rem;
+}
+
+.kpi strong {
+    display: block;
+    margin: .18rem 0;
+    font-size: 1.45rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    min-width: 0;
+    padding: 1.2rem;
+}
+
+.wide {
+    grid-column: span 2;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cardHeader h2 {
+    margin: .25rem 0 0;
+    font-size: 1rem;
+}
+
+.period {
+    padding: .4rem .65rem;
+    border: 1px solid var(--border);
+    border-radius: .55rem;
+    font-size: .72rem;
+}
+
+.legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: .6rem;
+    font-size: .7rem;
+}
+
+.legend span {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.dotPrimary,
+.dotMuted {
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+}
+
+.dotPrimary { background: var(--accent); }
+.dotMuted { background: #64748b; }
+
+.lineChart {
+    position: relative;
+    height: 270px;
+}
+
+.lineChart svg {
+    position: absolute;
+    inset: 0 0 25px;
+    width: 100%;
+    height: calc(100% - 25px);
+}
+
+.gridLines {
+    position: absolute;
+    inset: 20px 0 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.gridLines i {
+    border-top: 1px dashed var(--border);
+}
+
+.linePrimary,
+.lineMuted {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+    stroke-width: 2;
+}
+
+.linePrimary { stroke: var(--accent); }
+.lineMuted { stroke: #64748b; opacity: .55; }
+
+.months {
+    position: absolute;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    font-size: .65rem;
+    text-align: center;
+    opacity: .55;
+}
+
+.bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.barRow > div:first-child,
+.donutLegend div {
+    display: flex;
+    justify-content: space-between;
+    font-size: .75rem;
+}
+
+.track {
+    height: .5rem;
+    margin-top: .4rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+.donutArea {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1.4rem;
+}
+
+.donut {
+    display: grid;
+    place-items: center;
+    width: 165px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--accent) 0 38%,
+        #64748b 38% 62%,
+        #94a3b8 62% 79%,
+        #475569 79% 91%,
+        #cbd5e1 91% 100%
+    );
+    position: relative;
+}
+
+.donut::after {
+    content: "";
+    position: absolute;
+    width: 62%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--p-content-background, #fff);
+}
+
+.donut > div {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.donut strong,
+.donut span {
+    display: block;
+}
+
+.donutLegend {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.donutLegend div {
+    padding-bottom: .55rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.readiness {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .75rem;
+    margin-top: 1.2rem;
+}
+
+.readiness div {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+}
+
+.readiness strong,
+.readiness span {
+    display: block;
+}
+
+.readiness span {
+    margin-top: .2rem;
+    font-size: .7rem;
+    opacity: .6;
+}
+
+.note {
+    margin: 0;
+    font-size: .72rem;
+    opacity: .5;
+    text-align: right;
+}
+
+@media (max-width: 1100px) {
+    .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .readiness {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .kpis,
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wide {
+        grid-column: auto;
+    }
+
+    .donutArea {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .donutLegend {
+        width: 100%;
+    }
+
+    .readiness {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

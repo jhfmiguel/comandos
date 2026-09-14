@@ -10,8 +10,9 @@ import type { IconProps } from "@primeicons/react/core"
 import { Sidebar } from "@primereact/ui/sidebar"
 
 interface SubMenuItem {
-    href: string
+    href?: string
     label: string
+    subItems?: Array<SubMenuItem>
 }
 
 interface MenuItemProps {
@@ -21,37 +22,68 @@ interface MenuItemProps {
     icon: React.FC<IconProps>
     collapsed?: boolean
     selectedMenu: string | null
-    onSelect: ( menuKey: string | null ) => void
+    onSelect: (menuKey: string | null) => void
     subItems?: Array<SubMenuItem>
 }
 
-export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
+function hasActiveSubItem(
+    items: Array<SubMenuItem> | undefined,
+    isCurrentRoute: (href?: string) => boolean
+): boolean {
+
+    return items?.some((item) =>
+        isCurrentRoute(item.href) ||
+        hasActiveSubItem(item.subItems, isCurrentRoute)
+    ) ?? false
+
+}
+
+export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
 
     const pathname = usePathname()
 
-    const isCurrentRoute = ( href: string ): boolean => {
+    const isCurrentRoute = (href?: string): boolean => {
 
-        return href === "/"
-            ? pathname === href
-            : pathname.startsWith(href)
+        if (!href) {
+            return false
+        }
+
+        const [path, query = ""] = href.split("?")
+
+        const pathMatches = path === "/"
+            ? pathname === path
+            : pathname.startsWith(path)
+
+        if (!pathMatches) {
+            return false
+        }
+
+        if (!query || typeof window === "undefined") {
+            return pathMatches
+        }
+
+        const expected = new URLSearchParams(query)
+        const current = new URLSearchParams(window.location.search)
+
+        return [...expected.entries()].every(
+            ([key, value]) => current.get(key) === value
+        )
 
     }
 
     const isRouteActive = props.href
         ? isCurrentRoute(props.href)
-        : props.subItems?.some(
-            (item) => isCurrentRoute(item.href)
-        ) ?? false
+        : hasActiveSubItem(props.subItems, isCurrentRoute)
 
     const isActive = props.selectedMenu !== null
         ? props.selectedMenu === props.menuKey
         : isRouteActive
 
     const Icon = props.icon
-
     const hasSubItems = Boolean(props.subItems?.length)
 
     const [submenuOpen, setSubmenuOpen] = React.useState(isRouteActive)
+    const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({})
 
     const removeCurrentFocus = (): void => {
 
@@ -66,7 +98,6 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
     const handleMenuSelection = (): void => {
 
         removeCurrentFocus()
-
         props.onSelect(props.menuKey)
 
     }
@@ -74,8 +105,192 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
     const handleSubmenuToggle = (): void => {
 
         handleMenuSelection()
-
         setSubmenuOpen((currentValue) => !currentValue)
+
+    }
+
+    const renderExpandedItems = (
+        items: Array<SubMenuItem>,
+        depth = 0,
+        parentKey = props.menuKey
+    ): React.ReactNode => {
+
+        return items.map((item, index) => {
+
+            const itemKey = `${parentKey}-${depth}-${index}-${item.label}`
+            const hasChildren = Boolean(item.subItems?.length)
+            const childActive = hasChildren
+                ? hasActiveSubItem(item.subItems, isCurrentRoute)
+                : false
+
+            const itemOpen = openGroups[itemKey] ?? childActive
+            const itemActive = item.href
+                ? isCurrentRoute(item.href)
+                : childActive
+
+            if (hasChildren) {
+
+                return (
+
+                    <Sidebar.MenuSubItem key={itemKey}>
+
+                        <button
+                            type="button"
+                            aria-expanded={itemOpen}
+                            className={
+                                itemActive
+                                    ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active comandos-sidebar-submenu-group"
+                                    : "comandos-sidebar-menu-button comandos-sidebar-submenu-group"
+                            }
+                            onClick={(event) => {
+
+                                event.stopPropagation()
+                                removeCurrentFocus()
+                                props.onSelect(props.menuKey)
+
+                                setOpenGroups((current) => ({
+                                    ...current,
+                                    [itemKey]: !itemOpen
+                                }))
+
+                            }}
+                        >
+
+                            <span>{item.label}</span>
+
+                            {itemOpen
+                                ? <ChevronDown className="ml-auto" />
+                                : <ChevronRight className="ml-auto" />
+                            }
+
+                        </button>
+
+                        {itemOpen && (
+
+                            <Sidebar.MenuSub
+                                className="comandos-sidebar-submenu comandos-sidebar-submenu-nested border-l-0!"
+                                style={{ borderLeft: "none" }}
+                            >
+                                {renderExpandedItems(
+                                    item.subItems ?? [],
+                                    depth + 1,
+                                    itemKey
+                                )}
+                            </Sidebar.MenuSub>
+
+                        )}
+
+                    </Sidebar.MenuSubItem>
+
+                )
+
+            }
+
+            if (!item.href) {
+                return null
+            }
+
+            return (
+
+                <Sidebar.MenuSubItem key={itemKey}>
+
+                    <Sidebar.MenuSubButton
+                        as={Link}
+                        href={item.href}
+                        isActive={itemActive}
+                        aria-current={itemActive ? "page" : undefined}
+                        className={
+                            itemActive
+                                ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
+                                : "comandos-sidebar-menu-button"
+                        }
+                        onClick={(event) => {
+
+                            event.stopPropagation()
+                            removeCurrentFocus()
+                            props.onSelect(props.menuKey)
+
+                        }}
+                    >
+
+                        <span>{item.label}</span>
+
+                    </Sidebar.MenuSubButton>
+
+                </Sidebar.MenuSubItem>
+
+            )
+
+        })
+
+    }
+
+    const renderCollapsedItems = (
+        items: Array<SubMenuItem>,
+        depth = 0,
+        parentKey = props.menuKey
+    ): React.ReactNode => {
+
+        return items.map((item, index) => {
+
+            const itemKey = `${parentKey}-popup-${depth}-${index}-${item.label}`
+
+            if (item.subItems?.length) {
+
+                return (
+
+                    <div
+                        key={itemKey}
+                        className="comandos-sidebar-popup-group"
+                    >
+
+                        <div className="comandos-sidebar-popup-group-title">
+                            {item.label}
+                        </div>
+
+                        {renderCollapsedItems(
+                            item.subItems,
+                            depth + 1,
+                            itemKey
+                        )}
+
+                    </div>
+
+                )
+
+            }
+
+            if (!item.href) {
+                return null
+            }
+
+            const itemActive = isCurrentRoute(item.href)
+
+            return (
+
+                <Link
+                    key={itemKey}
+                    href={item.href}
+                    aria-current={itemActive ? "page" : undefined}
+                    className={
+                        itemActive
+                            ? "comandos-sidebar-popup-link comandos-sidebar-popup-link-active"
+                            : "comandos-sidebar-popup-link"
+                    }
+                    onClick={(event) => {
+
+                        event.stopPropagation()
+                        removeCurrentFocus()
+                        props.onSelect(props.menuKey)
+
+                    }}
+                >
+                    {item.label}
+                </Link>
+
+            )
+
+        })
 
     }
 
@@ -98,16 +313,12 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
 
                     <Icon />
 
-                    <span>
-                        {props.label}
-                    </span>
+                    <span>{props.label}</span>
 
                     {!props.collapsed && (
-
                         submenuOpen
                             ? <ChevronDown className="ml-auto" />
                             : <ChevronRight className="ml-auto" />
-
                     )}
 
                 </Sidebar.MenuButton>
@@ -118,50 +329,7 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
                         className="comandos-sidebar-submenu border-l-0!"
                         style={{ borderLeft: "none" }}
                     >
-
-                        {props.subItems?.map((item) => {
-
-                            const isSubItemActive =
-                                props.selectedMenu === null &&
-                                isCurrentRoute(item.href)
-
-                            return (
-
-                                <Sidebar.MenuSubItem key={item.href}>
-
-                                    <Sidebar.MenuSubButton
-                                        as={Link}
-                                        href={item.href}
-                                        isActive={isSubItemActive}
-                                        aria-current={isSubItemActive ? "page" : undefined}
-                                        className={
-                                            isSubItemActive
-                                                ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
-                                                : "comandos-sidebar-menu-button"
-                                        }
-                                        onClick={(event) => {
-
-                                            event.stopPropagation()
-
-                                            removeCurrentFocus()
-
-                                            props.onSelect(props.menuKey)
-
-                                        }}
-                                    >
-
-                                        <span>
-                                            {item.label}
-                                        </span>
-
-                                    </Sidebar.MenuSubButton>
-
-                                </Sidebar.MenuSubItem>
-
-                            )
-
-                        })}
-
+                        {renderExpandedItems(props.subItems ?? [])}
                     </Sidebar.MenuSub>
 
                 )}
@@ -174,37 +342,7 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
                             {props.label}
                         </div>
 
-                        {props.subItems?.map((item) => {
-
-                            const isSubItemActive = props.selectedMenu === null && isCurrentRoute(item.href)
-
-                            return (
-
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    aria-current={isSubItemActive ? "page" : undefined}
-                                    className={
-                                        isSubItemActive
-                                            ? "comandos-sidebar-popup-link comandos-sidebar-popup-link-active"
-                                            : "comandos-sidebar-popup-link"
-                                    }
-                                    onClick={(event) => {
-
-                                        event.stopPropagation()
-
-                                        removeCurrentFocus()
-
-                                        props.onSelect(props.menuKey)
-
-                                    }}
-                                >
-                                    {item.label}
-                                </Link>
-
-                            )
-
-                        })}
+                        {renderCollapsedItems(props.subItems ?? [])}
 
                     </div>
 
@@ -233,19 +371,14 @@ export const MenuItem: React.FC<MenuItemProps> = ( props: MenuItemProps ) => {
                 onClick={(event) => {
 
                     event.stopPropagation()
-
                     removeCurrentFocus()
-
                     props.onSelect(props.menuKey)
 
                 }}
             >
 
                 <Icon />
-
-                <span>
-                    {props.label}
-                </span>
+                <span>{props.label}</span>
 
             </Sidebar.MenuButton>
 

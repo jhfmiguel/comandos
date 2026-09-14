@@ -1,12 +1,23 @@
-"use client";
+"use client"
 
-import { RecordWorkspace } from "components/erp/shared/record-workspace";
+import { RecordWorkspace } from "components/erp/shared/record-workspace"
 
-export function CoreWorkspace() {
-    return <RecordWorkspace 
-                module="core" 
-                title="Institutional core" 
-                initialResource="organizations"
-                description="Manage organizations, people, their roles, and system account assignments." 
-            />;
+interface CoreWorkspaceProps {
+    initialResource?: string
+}
+
+export function CoreWorkspace({
+    initialResource = "organizations"
+}: CoreWorkspaceProps) {
+
+    return (
+        <RecordWorkspace
+            module="core"
+            title="Institutional core"
+            initialResource={initialResource}
+            description="Manage organizations, people, their roles, and system account assignments."
+            showNavigation={false}
+        />
+    )
+
 }

@@ -1,5 +1,21 @@
-import { CoreWorkspace } from "components/erp/core";
+import { CoreWorkspace } from "components/erp/core"
 
-export default function CorePage() {
-    return <CoreWorkspace />;
+interface CorePageProps {
+    searchParams: Promise<{
+        resource?: string
+    }>
+}
+
+export default async function CorePage({
+    searchParams
+}: CorePageProps) {
+
+    const params = await searchParams
+
+    return (
+        <CoreWorkspace
+            initialResource={params.resource}
+        />
+    )
+
 }

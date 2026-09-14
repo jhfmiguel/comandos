@@ -36,46 +36,204 @@ public class CoreService {
     public record PageResult(List<Map<String, Object>> content, long totalElements,
                              int page, int size) {}
 
-    public PageResult list(String resource, String search, int page, int size, Long organizationId) {
+    public PageResult list(
+            String resource,
+            String search,
+            int page,
+            int size,
+            Long organizationId,
+            Map<String, String> requestParams) {
+
         var spec = CoreCatalog.get(resource);
-        if (page < 0 || page > 100000 || size < 1 || size > 100) bad("Invalid pagination.");
-        List<String> searchExpressions = new ArrayList<>();
-        searchExpressions.add("cast(e.id as string)");
-        spec.fields().stream().filter(f -> Set.of("text", "email", "choice").contains(f.type()))
-            .forEach(f -> searchExpressions.add("lower(e." + f.property() + ")"));
-        if (spec.entity() == PersonRoleAssignment.class) {
-            searchExpressions.add("lower(e.person.fullName)");
-            searchExpressions.add("lower(e.role.name)");
+
+        if (page < 0 || page > 100000 || size < 1 || size > 100) {
+            bad("Invalid pagination.");
         }
-        if (spec.entity() == UserProfile.class) {
-            searchExpressions.add("lower(e.user.login)");
-            searchExpressions.add("lower(e.profile.name)");
+
+        List<String> clauses = new ArrayList<>();
+        Map<String, Object> parameters = new LinkedHashMap<>();
+
+        if (search != null && !search.isBlank()) {
+            List<String> expressions = new ArrayList<>();
+            expressions.add("cast(e.id as string)");
+
+            spec.fields().stream()
+                .filter(field ->
+                    Set.of("text", "email", "choice").contains(field.type())
+                )
+                .forEach(field ->
+                    expressions.add("lower(e." + field.property() + ")")
+                );
+
+            clauses.add(
+                "(" +
+                String.join(
+                    " or ",
+                    expressions.stream()
+                        .map(expression ->
+                            expression + " like :globalSearch escape '!'"
+                        )
+                        .toList()
+                ) +
+                ")"
+            );
+
+            parameters.put("globalSearch", likeTerm(search));
         }
-        if (spec.entity() == ProfilePermission.class) {
-            searchExpressions.add("lower(e.profile.name)");
-            searchExpressions.add("lower(e.permission.resource)");
-            searchExpressions.add("lower(e.permission.action)");
+
+        int filterIndex = 0;
+
+        for (var entry : requestParams.entrySet()) {
+            if (!entry.getKey().startsWith("filter.")) {
+                continue;
+            }
+
+            String fieldName =
+                entry.getKey().substring("filter.".length());
+
+            String value =
+                entry.getValue() == null
+                    ? ""
+                    : entry.getValue().trim();
+
+            if (value.isBlank()) {
+                continue;
+            }
+
+            String parameter = "columnFilter" + filterIndex++;
+
+            if ("id".equals(fieldName)) {
+                clauses.add(
+                    "cast(e.id as string) like :" +
+                    parameter +
+                    " escape '!'"
+                );
+                parameters.put(parameter, likeTerm(value));
+                continue;
+            }
+
+            var field = spec.fields().stream()
+                .filter(candidate -> candidate.name().equals(fieldName))
+                .findFirst()
+                .orElse(null);
+
+            if (field == null || "password".equals(field.type())) {
+                continue;
+            }
+
+            List<String> expressions = new ArrayList<>();
+
+            if ("reference".equals(field.type())) {
+                String relation = "e." + field.property();
+
+                expressions.add("cast(" + relation + ".id as string)");
+
+                var target = CoreCatalog.get(field.reference());
+
+                target.fields().stream()
+                    .filter(targetField ->
+                        Set.of("text", "email", "choice")
+                            .contains(targetField.type())
+                    )
+                    .limit(4)
+                    .forEach(targetField ->
+                        expressions.add(
+                            "lower(" +
+                            relation +
+                            "." +
+                            targetField.property() +
+                            ")"
+                        )
+                    );
+            }
+            else {
+                expressions.add(
+                    "lower(cast(e." +
+                    field.property() +
+                    " as string))"
+                );
+            }
+
+            clauses.add(
+                "(" +
+                String.join(
+                    " or ",
+                    expressions.stream()
+                        .map(expression ->
+                            expression +
+                            " like :" +
+                            parameter +
+                            " escape '!'"
+                        )
+                        .toList()
+                ) +
+                ")"
+            );
+
+            parameters.put(parameter, likeTerm(value));
         }
-        String where = "";
-        boolean filter = search != null && !search.isBlank();
-        if (filter) where = " where (" + String.join(" or ", searchExpressions.stream()
-            .map(expression -> expression + " like :search escape '!' ").toList()) + ")";
-        boolean scoped = organizationId != null && spec.entity() == OrganizationalUnit.class;
-        if (scoped) where += (filter ? " and " : " where ") + "e.organization.id = :organizationId";
-        where += (where.isEmpty() ? " where " : " and ") + access.predicate("core/" + resource, "READ", "e");
-        var query = em.createQuery("select e from " + spec.entity().getSimpleName() + " e" + where + " order by e.id", spec.entity());
-        var count = em.createQuery("select count(e) from " + spec.entity().getSimpleName() + " e" + where, Long.class);
-        if (filter) {
-            String term = "%" + search.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
-            query.setParameter("search", term);
-            count.setParameter("search", term);
-        }
+
+        boolean scoped =
+            organizationId != null &&
+            spec.entity() == OrganizationalUnit.class;
+
         if (scoped) {
-            query.setParameter("organizationId", organizationId);
-            count.setParameter("organizationId", organizationId);
+            clauses.add("e.organization.id = :organizationId");
+            parameters.put("organizationId", organizationId);
         }
-        return new PageResult(query.setFirstResult(page * size).setMaxResults(size)
-            .getResultList().stream().map(e -> view(spec, e)).toList(), count.getSingleResult(), page, size);
+
+        clauses.add(
+            access.predicate("core/" + resource, "READ", "e")
+        );
+
+        String where =
+            " where " +
+            String.join(" and ", clauses);
+
+        var query = em.createQuery(
+            "select e from " +
+            spec.entity().getSimpleName() +
+            " e" +
+            where +
+            " order by e.id",
+            spec.entity()
+        );
+
+        var count = em.createQuery(
+            "select count(e) from " +
+            spec.entity().getSimpleName() +
+            " e" +
+            where,
+            Long.class
+        );
+
+        parameters.forEach((name, value) -> {
+            query.setParameter(name, value);
+            count.setParameter(name, value);
+        });
+
+        return new PageResult(
+            query
+                .setFirstResult(page * size)
+                .setMaxResults(size)
+                .getResultList()
+                .stream()
+                .map(entity -> view(spec, entity))
+                .toList(),
+            count.getSingleResult(),
+            page,
+            size
+        );
+    }
+
+    private static String likeTerm(String raw) {
+        return "%" +
+            raw.trim()
+                .toLowerCase(Locale.ROOT)
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_") +
+            "%";
     }
 
     public Map<String, Object> get(String resource, long id) {

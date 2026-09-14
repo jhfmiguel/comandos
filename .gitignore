@@ -1,3 +1,13 @@
 automation/logs/
 automation/tasks/working/
 automation/tasks/failed/
+
+# COMANDOS - arquivos locais e temporarios
+.backup-*/
+wr-app/.backup-*/
+*.bak
+*.bak-*
+*.log
+automation/runtime/
+wr-app/lint-*.log
+wr-app/typecheck-*.log

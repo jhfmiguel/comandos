@@ -8,6 +8,29 @@ import { Plus, Pencil, Trash } from "@primeicons/react";
 import { Button } from "@primereact/ui/button";
 import { Dialog } from "@primereact/ui/dialog";
 import { InputText } from "@primereact/ui/inputtext";
+import {
+    DataTable,
+    FilterMatchMode
+} from "@primereact/ui/datatable";
+
+import type {
+    DataTableFilterInstance,
+    DataTableFilterMeta,
+    DataTablePaginationInstance
+} from "@primereact/ui/datatable";
+
+import { Paginator } from "@primereact/ui/paginator";
+
+import type {
+    PaginatorPagesInstance,
+    PaginatorRootChangeEvent
+} from "@primereact/ui/paginator";
+
+import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
+import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
+import { AngleLeft } from "@primeicons/react/angle-left";
+import { AngleRight } from "@primeicons/react/angle-right";
+import { EllipsisH } from "@primeicons/react/ellipsis-h";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
@@ -18,6 +41,50 @@ import { createErpService, type ErpService, type ErpModule } from "api/services/
 import styles from "./workspace.module.css";
 
 
+function createErpTableFilters(
+    fields: ErpField[]
+): DataTableFilterMeta {
+
+    const filters: DataTableFilterMeta = {};
+
+    fields.forEach((field) => {
+        filters[field.name] = {
+            value: null,
+            matchMode: FilterMatchMode.Contains
+        };
+    });
+
+    return filters;
+
+}
+
+function getErpFilterSearch(
+    filters: DataTableFilterMeta
+): string {
+
+    return Object.values(filters)
+        .map((filter) => {
+
+            if (
+                !filter ||
+                typeof filter !== "object" ||
+                !("value" in filter)
+            ) {
+                return "";
+            }
+
+            const value = filter.value;
+
+            return value == null
+                ? ""
+                : String(value).trim();
+
+        })
+        .filter(Boolean)
+        .join(" ");
+
+}
+
 function errorMessage(error: unknown): string {
     if (axios.isAxiosError(error)) {
         const detail = error.response?.data?.detail;
@@ -27,13 +94,12 @@ function errorMessage(error: unknown): string {
 }
 
 
-export function RecordWorkspace({ module, title, initialResource, description }: {
-    
-    module: ErpModule; 
-    title: string; 
-    initialResource: string; 
+export function RecordWorkspace({ module, title, initialResource, description, showNavigation = true }: {
+    module: ErpModule;
+    title: string;
+    initialResource: string;
     description: string;
-
+    showNavigation?: boolean;
 }) {
 
     const service = React.useMemo(() => createErpService(module), [module]);
@@ -60,7 +126,27 @@ export function RecordWorkspace({ module, title, initialResource, description }:
 
     }, [retry, service, accessRevision]);
 
-    const resource = catalog.find(item => item.key === selected) ?? catalog[0];
+    const normalizeResourceName = (value: string): string =>
+        value
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+    const requestedCatalogResource = catalog.find((item) =>
+        item.key === initialResource ||
+        normalizeResourceName(item.label) === initialResource
+    );
+
+    const selectedResourceKey = showNavigation
+        ? selected
+        : requestedCatalogResource?.key ?? initialResource;
+
+    const resource = catalog.find(
+        (item) => item.key === selectedResourceKey
+    ) ?? catalog[0];
     
     return (
 
@@ -76,21 +162,51 @@ export function RecordWorkspace({ module, title, initialResource, description }:
                 {catalogLoaded && !catalog.length && <Message type="info" text="No resources are available for your access profile." />}
                 {!!catalog.length && (
                     
-                    <div className={styles.shell}>
+                    <div className={showNavigation ? styles.shell : `${styles.shell} ${styles.shellSingle}`}>
                         
-                        <nav aria-label={`${title} resources`} className={styles.navigation}>
-                            {[...new Set(catalog.map(item => item.group))].map(group => (
-                                <div key={group}>
-                                    
-                                    <p className={styles.group}>{group}</p>
-                                    {catalog.filter(item => item.group === group).map(item => (
-                                        <button key={item.key} type="button" aria-current={resource?.key === item.key ? "page" : undefined}
-                                            onClick={() => setSelected(item.key)}>{item.label}</button>
-                                    ))}
+                        {showNavigation && (
 
-                                </div>
-                            ))}
-                        </nav>
+                        
+                            <nav aria-label={`${title} resources`} className={styles.navigation}>
+
+                        
+                                                        {[...new Set(catalog.map(item => item.group))].map(group => (
+
+                        
+                                                            <div key={group}>
+
+                        
+                                                                
+
+                        
+                                                                <p className={styles.group}>{group}</p>
+
+                        
+                                                                {catalog.filter(item => item.group === group).map(item => (
+
+                        
+                                                                    <button key={item.key} type="button" aria-current={resource?.key === item.key ? "page" : undefined}
+
+                        
+                                                                        onClick={() => setSelected(item.key)}>{item.label}</button>
+
+                        
+                                                                ))}
+
+                        
+                            
+
+                        
+                                                            </div>
+
+                        
+                                                        ))}
+
+                        
+                                                    </nav>
+
+                        
+                        )}
                         {resource && <ResourcePanel key={resource.key} resource={resource} service={service} />}
 
                     </div>
@@ -100,11 +216,47 @@ export function RecordWorkspace({ module, title, initialResource, description }:
     );
 }
 
+function getErpServerFilters(
+    filters: DataTableFilterMeta
+): Record<string, string> {
+
+    return Object.fromEntries(
+        Object.entries(filters)
+            .map(([field, filter]) => {
+
+                if (
+                    !filter ||
+                    typeof filter !== "object" ||
+                    !("value" in filter)
+                ) {
+                    return [field, ""];
+                }
+
+                const value = filter.value;
+
+                return [
+                    field,
+                    value == null
+                        ? ""
+                        : String(value).trim()
+                ];
+
+            })
+            .filter(([, value]) => value !== "")
+    );
+
+}
+
 function ResourcePanel({ resource, service }: { resource: ErpResource; service: ErpService }) {
     const allowed = (action: string) => !resource.readOnly && (!resource.actions || resource.actions.includes(action));
     
     const [search, setSearch] = React.useState("");
+    const [serverFilters, setServerFilters] = React.useState<Record<string, string>>({});
     const [page, setPage] = React.useState(0);
+    const [filters, setFilters] = React.useState<DataTableFilterMeta>(
+        () => createErpTableFilters(resource.fields)
+    );
+    const filterTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const [result, setResult] = React.useState<ErpPage | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [revision, setRevision] = React.useState(0);
@@ -119,14 +271,14 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
         const controller = new AbortController();
         
         const timer = setTimeout(() => {
-            service.list(resource.key, search, page, controller.signal).then(data => {
+            service.list(resource.key, search, page, controller.signal, undefined, serverFilters).then(data => {
                 if (!controller.signal.aborted) setResult(data);
             }).catch(error => {
                 if (!controller.signal.aborted) { setResult(null); setNotice({ type: "error", text: errorMessage(error) }); }
             }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
         }, 250);
         return () => { clearTimeout(timer); controller.abort(); };
-    }, [resource.key, search, page, revision, service]);
+    }, [resource.key, search, serverFilters, page, revision, service]);
 
     const refresh = () => { 
         
@@ -135,6 +287,23 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
     };
     
+    const handleTableFilter = (event: {
+        filters: DataTableFilterMeta;
+    }): void => {
+
+        setFilters(event.filters);
+        setPage(0);
+
+        if (filterTimeoutRef.current) {
+            clearTimeout(filterTimeoutRef.current);
+        }
+
+        filterTimeoutRef.current = setTimeout(() => {
+            setLoading(true);
+            setServerFilters(getErpServerFilters(event.filters));
+        }, 400);
+
+    };
     const columns = resource.fields
                                 .filter(field => field.type !== "password")
                                 .filter((field, index) => resource.readOnly || index < 4 || ["status", "availableQuantity"]
@@ -164,6 +333,8 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                     <Plus size={16} /><span>New record</span>
                 </Button>
                 }
+                {resource.key === "assets" && allowed("CREATE") && <Button type="button" severity="secondary"
+                    onClick={() => setEditor({})}>Register single asset</Button>}
                 {resource.key === "lots" && allowed("CREATE") && <Button type="button" className="registration-yellow-button"
                     onClick={() => setIntake(true)}>Receive ammunition boxes</Button>}
             </div>
@@ -171,106 +342,246 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
             {notice && 
             <Message type={notice.type} text={notice.text} onClose={() => setNotice(null)} />
             }
-            
-            <div className={styles.toolbar}>
-                
-                <label className={styles.search}>Search
-                    <InputText 
-                        value={search} 
-                        placeholder={`Search ${resource.label.toLowerCase()}`}
-                        onChange={
-                            (event: React.ChangeEvent<HTMLInputElement>) => { 
-                                setLoading(true); setSearch(event.target.value); setPage(0); 
+<div className={styles.tableContainer} aria-busy={loading}>
+                <DataTable.Root
+                    data={result?.content ?? []}
+                    dataKey="id"
+                    lazy
+                    paginator
+                    rows={result?.size ?? 10}
+                    totalRecords={result?.totalElements ?? 0}
+                    first={page * (result?.size ?? 10)}
+                    filters={filters}
+                    onFilter={handleTableFilter}
+                    style={{ width: "100%" }}
+                >
+                    <DataTable.TableContainer
+                        style={{
+                            width: "100%",
+                            overflowX: "auto"
+                        }}
+                    >
+                        <DataTable.Table
+                            style={{
+                                width: "100%",
+                                minWidth: "900px",
+                                tableLayout: "auto"
+                            }}
+                        >
+                            <DataTable.THead>
+                                <DataTable.THeadRow>
+                                    <DataTable.THeadCell>
+                                        ID
+                                    </DataTable.THeadCell>
+
+                                    {columns.map((field) => (
+                                        <DataTable.THeadCell key={field.name}>
+                                            {field.label}
+                                        </DataTable.THeadCell>
+                                    ))}
+
+                                    {!resource.readOnly && (
+                                        <DataTable.THeadCell
+                                            style={{
+                                                width: "8rem",
+                                                textAlign: "center"
+                                            }}
+                                        >
+                                            Actions
+                                        </DataTable.THeadCell>
+                                    )}
+                                </DataTable.THeadRow>
+
+                                <DataTable.THeadRow>
+                                    <DataTable.THeadCell />
+
+                                    {columns.map((field) => (
+                                        <DataTable.THeadCell key={field.name}>
+                                            <DataTable.Filter
+                                                field={field.name}
+                                                display="row"
+                                                dataType="text"
+                                            >
+                                                {({
+                                                    value,
+                                                    onChange
+                                                }: DataTableFilterInstance) => (
+                                                    <InputText
+                                                        value={
+                                                            value == null
+                                                                ? ""
+                                                                : String(value)
+                                                        }
+                                                        onChange={(
+                                                            event: React.ChangeEvent<HTMLInputElement>
+                                                        ) => {
+                                                            onChange(
+                                                                event,
+                                                                event.target.value
+                                                            );
+                                                        }}
+                                                        placeholder={`Search ${field.label.toLowerCase()}...`}
+                                                        size="small"
+                                                        fluid
+                                                    />
+                                                )}
+                                            </DataTable.Filter>
+                                        </DataTable.THeadCell>
+                                    ))}
+
+                                    {!resource.readOnly && (
+                                        <DataTable.THeadCell />
+                                    )}
+                                </DataTable.THeadRow>
+                            </DataTable.THead>
+
+                            <DataTable.TBody>
+                                {({
+                                    item,
+                                    index
+                                }) => {
+                                    const record =
+                                        item as ErpRecord;
+
+                                    return (
+                                    <DataTable.Row
+                                        key={
+                                            record.id ??
+                                            index
+                                        }
+                                    >
+                                        <DataTable.Cell>
+                                            {record.id}
+                                        </DataTable.Cell>
+
+                                        {columns.map((field) => (
+                                            <DataTable.Cell key={field.name}>
+                                                {display(record, field)}
+                                            </DataTable.Cell>
+                                        ))}
+
+                                        {!resource.readOnly && (
+                                            <DataTable.Cell>
+                                                <div className={styles.actions}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="text"
+                                                        severity="secondary"
+                                                        aria-label={`Edit ${record.label}`}
+                                                        disabled={!allowed("UPDATE")}
+                                                        onClick={() => setEditor({ record })}
+                                                    >
+                                                        <Pencil size={18} />
+                                                    </Button>
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="text"
+                                                        severity="danger"
+                                                        aria-label={`Delete ${record.label}`}
+                                                        disabled={!allowed("DELETE")}
+                                                        onClick={() => setDeleting(record)}
+                                                    >
+                                                        <Trash size={18} />
+                                                    </Button>
+                                                </div>
+                                            </DataTable.Cell>
+                                        )}
+                                    </DataTable.Row>
+                                    );
+                                }}
+                            </DataTable.TBody>
+                        </DataTable.Table>
+                    </DataTable.TableContainer>
+
+                    <DataTable.Pagination>
+                        {({
+                            rows: currentRows
+                        }: DataTablePaginationInstance) => (
+                            <Paginator.Root
+                                className="comandos-datatable-paginator"
+                                page={page + 1}
+                                total={result?.totalElements ?? 0}
+                                itemsPerPage={
+                                    currentRows ??
+                                    result?.size ??
+                                    10
                                 }
-                        } 
-                    />
-                </label>
+                                onPageChange={(
+                                    event: PaginatorRootChangeEvent
+                                ) => {
+                                    const nextPage =
+                                        event.value - 1;
 
-                <Button 
-                    type="button" 
-                    severity="secondary" 
-                    onClick={refresh} 
-                    disabled={loading}>
-                Refresh
-                </Button>
+                                    setLoading(true);
+                                    setPage(nextPage);
+                                }}
+                            >
+                                <Paginator.Content>
+                                    <Paginator.First>
+                                        <AngleDoubleLeft />
+                                    </Paginator.First>
 
+                                    <Paginator.Prev>
+                                        <AngleLeft />
+                                    </Paginator.Prev>
+
+                                    <Paginator.Pages>
+                                        {({
+                                            paginator
+                                        }: PaginatorPagesInstance) =>
+                                            paginator?.pages.map(
+                                                (
+                                                    paginatorPage,
+                                                    pageIndex
+                                                ) =>
+                                                    paginatorPage.type === "page" ? (
+                                                        <Paginator.Page
+                                                            key={pageIndex}
+                                                            value={paginatorPage.value}
+                                                        />
+                                                    ) : (
+                                                        <Paginator.Ellipsis
+                                                            key={pageIndex}
+                                                        >
+                                                            <EllipsisH />
+                                                        </Paginator.Ellipsis>
+                                                    )
+                                            )
+                                        }
+                                    </Paginator.Pages>
+
+                                    <Paginator.Next>
+                                        <AngleRight />
+                                    </Paginator.Next>
+
+                                    <Paginator.Last>
+                                        <AngleDoubleRight />
+                                    </Paginator.Last>
+                                </Paginator.Content>
+                            </Paginator.Root>
+                        )}
+                    </DataTable.Pagination>
+
+                    <div
+                        style={{
+                            padding: "0.5rem",
+                            textAlign: "right",
+                            borderTop: "1px solid #e5e7eb",
+                            fontSize: "0.875rem"
+                        }}
+                    >
+                        Total records: {result?.totalElements ?? 0}
+                    </div>
+                </DataTable.Root>
+
+                {loading && <p role="status">Loading recordsâ€¦</p>}
+
+                {!loading && result?.content.length === 0 && (
+                    <p>No records found.</p>
+                )}
             </div>
-
-            <div className={styles.tableContainer} aria-busy={loading}>
-                
-                <table>
-                    
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            {columns.map(field => 
-                            <th key={field.name}>{field.label}</th>)}
-                            {!resource.readOnly && 
-                            <th>Actions</th>}
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {!loading && result?.content.map(record => (
-                        <tr key={record.id}>
-                            <td>{record.id}</td>
-                            {columns.map(field => 
-                            <td key={field.name}>{display(record, field)}</td>)}
-                            {!resource.readOnly && 
-                            <td>
-                                <div className={styles.actions}>
-                                    <Button 
-                                        type="button" 
-                                        variant="text" 
-                                        severity="secondary" 
-                                        aria-label={`Edit ${record.label}`} 
-                                        disabled={!allowed("UPDATE")}
-                                        onClick={() => setEditor({ record })}>
-                                            <Pencil size={18} />
-                                    </Button>
-                                    <Button 
-                                        type="button" 
-                                        variant="text" 
-                                        severity="danger" 
-                                        aria-label={`Delete ${record.label}`} 
-                                        disabled={!allowed("DELETE")}
-                                        onClick={() => setDeleting(record)}>
-                                            <Trash size={18} />
-                                    </Button>
-                                </div>
-                            </td>}
-                        </tr>
-                        ))}
-
-                    </tbody>
-
-                </table>
-                {loading && <p role="status">Loading records…</p>}
-                {!loading && result?.content.length === 0 && <p>No records found.</p>}
-            </div>
-            
-            <div className={styles.pagination}>
-                
-                <span>{result?.totalElements ?? 0} records · Page {page + 1}</span>
-
-                <Button 
-                    type="button" 
-                    severity="secondary" 
-                    disabled={loading || page === 0} 
-                    onClick={() => { setLoading(true); setPage(value => value - 1); }}>
-                        Previous
-                    </Button>
-                <Button 
-                    type="button" 
-                    severity="secondary" 
-                    disabled={loading || !result || (page + 1) * result.size >= result.totalElements} 
-                    onClick={() => { setLoading(true); setPage(value => value + 1); }}>
-                        Next
-                </Button>
-            
-            </div>
-
-            {intake && <StockIntakeEditor resource={resource} service={service} onCancel={() => setIntake(false)}
+{intake && <StockIntakeEditor resource={resource} service={service} onCancel={() => setIntake(false)}
                 onSaved={quantity => { setIntake(false); setNotice({ type: "success", text: resource.key === "assets"
                     ? `${quantity} individual assets registered successfully.` : `${quantity} rounds received successfully.` }); refresh(); }} />}
             {editor &&
@@ -361,6 +672,8 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
     
     const change = (field: ErpField, value: ErpValue) => 
         setValues(current => ({ ...current, [field.name]: value,
+        ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
+        ...(resource.key === "models" && field.name === "armamentTypeId" ? { armamentClassificationId: "" } : {}),
         ...(field.name === "organizationId" ? { ...(resource.fields.some(f => f.name === "unitId") ? { unitId: "" } : {}), 
         ...(resource.fields.some(f => f.name === "parentUnitId") ? { parentUnitId: "" } : {}) } : {})
     }));
@@ -383,7 +696,7 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                     
                         <Dialog.Content>
                             
-                            <form 
+                            <form data-comandos-erp-form="true" 
                                 className={styles.form} 
                                 onSubmit={async event => {
                                     event.preventDefault();
@@ -397,6 +710,11 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                     finally { saving.current = false; setBusy(false); }
                             }}>
                                 {error && <Message type="error" text={error} onClose={() => setError("")} />}
+                                {resource.key === "assets" && <p>
+                                    Select an existing model and register one individual item. Asset code must be unique;
+                                    serial number is required for serialized models and must be unique within the model.
+                                    Leading and trailing spaces are removed; letter case is preserved.
+                                </p>}
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
                                         const required = field.required && !(record && field.type === "password");
@@ -409,6 +727,12 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                             {field.type === "reference" ? (
                                                 <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
                                                     organizationId={values.organizationId} excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}
+                                                    optionFilter={option => {
+                                                        if (["armament-types", "armament-classifications"].includes(field.reference ?? "") && option.active === false) return false;
+                                                        if (resource.key === "models" && field.name === "armamentTypeId") return String(option.categoryId) === String(values.categoryId);
+                                                        if (resource.key === "models" && field.name === "armamentClassificationId") return String(option.typeId) === String(values.armamentTypeId);
+                                                        return true;
+                                                    }}
                                                     onChange={value => change(field, value)} />
                                             ) : field.type === "boolean" ? (
                                                 <input id={`core-${field.name}`} type="checkbox" checked={Boolean(values[field.name])} onChange={event => change(field, event.target.checked)} />

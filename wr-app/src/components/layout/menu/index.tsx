@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
@@ -30,108 +31,6 @@ interface SidebarOpenChangeEvent {
 }
 
 let persistedSidebarOpen = true
-
-const SkullIcon = (): React.JSX.Element => {
-
-    return (
-
-        <svg
-            className="comandos-sidebar-skull"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 64 64"
-            width="24"
-            height="24"
-            aria-hidden="true"
-            style={{
-                display: "block",
-                minWidth: "24px",
-                minHeight: "24px",
-                overflow: "visible"
-            }}
-        >
-
-            {/* Skull silhouette */}
-            <path
-                d="
-                    M32 3
-                    C16 3 7 14 7 29
-                    C7 39 12 46 19 50
-                    L19 57
-                    L25 57
-                    L27 52
-                    L30 58
-                    L34 58
-                    L37 52
-                    L39 57
-                    L45 57
-                    L45 50
-                    C52 46 57 39 57 29
-                    C57 14 48 3 32 3
-                    Z
-                "
-                style={{
-                    fill: "#ff9900",
-                    stroke: "#ff9900",
-                    strokeWidth: 1.5,
-                    strokeLinejoin: "round"
-                }}
-            />
-
-            {/* Left angry eye */}
-            <path
-                className="comandos-sidebar-skull-detail"
-                d="
-                    M12 23
-                    L29 18
-                    L26 34
-                    L17 32
-                    L14 28
-                    Z
-                "
-                style={{
-                    fill: "#363636",
-                    stroke: "none"
-                }}
-            />
-
-            {/* Right angry eye */}
-            <path
-                className="comandos-sidebar-skull-detail"
-                d="
-                    M52 23
-                    L35 18
-                    L38 34
-                    L47 32
-                    L50 28
-                    Z
-                "
-                style={{
-                    fill: "#363636",
-                    stroke: "none"
-                }}
-            />
-
-            {/* Nose */}
-            <path
-                className="comandos-sidebar-skull-detail"
-                d="
-                    M32 34
-                    L26 44
-                    L32 41
-                    L38 44
-                    Z
-                "
-                style={{
-                    fill: "#363636",
-                    stroke: "none"
-                }}
-            />
-
-        </svg>
-
-    )
-
-}
 
 export const Menu: React.FC = () => {
 
@@ -203,14 +102,15 @@ export const Menu: React.FC = () => {
                                 >
 
                                     <div className="comandos-sidebar-logo">
-
-                                        <SkullIcon />
-
+                                        <Image
+                                            src="/comandos-logo-v4.png"
+                                            alt="Comandos"
+                                            width={1240}
+                                            height={1240}
+                                            priority
+                                            className="comandos-sidebar-logo-image"
+                                        />
                                     </div>
-
-                                    <span className="font-bold">
-                                        Comandos
-                                    </span>
 
                                 </Sidebar.MenuButton>
 
@@ -253,98 +153,302 @@ export const Menu: React.FC = () => {
                                     />
 
                                     <MenuItem
-                                        menuKey="users"
-                                        href="/queries/users"
-                                        label="Users"
-                                        icon={Users}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-
-                                    <MenuItem
                                         menuKey="institutional-core"
-                                        href="/erp/core"
                                         label="Institutional core"
                                         icon={Cog}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
+                                        subItems={[
+                                            {
+                                                label: "Institutional",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/core?resource=organizations",
+                                                        label: "Organizations"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=organizational-units",
+                                                        label: "Organizational units"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "People",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/core?resource=people",
+                                                        label: "People"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=person-roles",
+                                                        label: "Person roles"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=person-role-assignments",
+                                                        label: "Person role assignments"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=role-details",
+                                                        label: "Role details"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=credentials",
+                                                        label: "Credentials"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=qualifications",
+                                                        label: "Qualifications"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Access",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/core?resource=system-users",
+                                                        label: "System users"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=access-profiles",
+                                                        label: "Access profiles"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=permissions",
+                                                        label: "Permissions"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=user-profiles",
+                                                        label: "User profiles"
+                                                    },
+                                                    {
+                                                        href: "/erp/core?resource=profile-permissions",
+                                                        label: "Profile permissions"
+                                                    }
+                                                ]
+                                            }
+                                        ]}
                                     />
 
                                     <MenuItem
                                         menuKey="inventory"
-                                        href="/erp/inventory"
                                         label="Assets and inventory"
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
+                                        subItems={[
+                                            {
+                                                label: "Reference data",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=custody-return-condition-types",
+                                                        label: "Custody return condition types"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=sale-return-reason-types",
+                                                        label: "Sale return reason types"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=inventory-count-status-types",
+                                                        label: "Inventory count status types"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=inventory-count-result-types",
+                                                        label: "Inventory count result types"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=reservation-status-types",
+                                                        label: "Reservation status types"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Catalog",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=item-categories",
+                                                        label: "Item categories"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=armament-types",
+                                                        label: "Armament types"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=armament-classifications",
+                                                        label: "Armament classifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=brands",
+                                                        label: "Brands"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=item-models",
+                                                        label: "Item models"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Specifications",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=technical-characteristics",
+                                                        label: "Technical characteristics"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=category-characteristics",
+                                                        label: "Category characteristics"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=model-characteristics",
+                                                        label: "Model characteristics"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=asset-characteristics",
+                                                        label: "Asset characteristics"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Controlled equipment",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=firearm-specifications",
+                                                        label: "Firearm specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=ammunition-specifications",
+                                                        label: "Ammunition specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=grenade-specifications",
+                                                        label: "Grenade specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=spray-specifications",
+                                                        label: "Spray specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=ballistic-protection-specifications",
+                                                        label: "Ballistic protection specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=electrical-device-specifications",
+                                                        label: "Electrical device specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=optical-specifications",
+                                                        label: "Optical specifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=regulatory-controls",
+                                                        label: "Regulatory controls"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Compliance",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=expiration-controls",
+                                                        label: "Expiration controls"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=certifications",
+                                                        label: "Certifications"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=recalls",
+                                                        label: "Recalls"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=recall-items",
+                                                        label: "Recall items"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Inventory",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=stock-locations",
+                                                        label: "Stock locations"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=equipment-sets",
+                                                        label: "Equipment sets"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=equipment-set-components",
+                                                        label: "Equipment set components"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=individual-assets",
+                                                        label: "Individual assets"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=stock-lots",
+                                                        label: "Stock lots"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                label: "Stock history",
+                                                subItems: [
+                                                    {
+                                                        href: "/erp/inventory?resource=stock-balances",
+                                                        label: "Stock balances"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory?resource=stock-movements",
+                                                        label: "Stock movements"
+                                                    }
+                                                ]
+                                            }
+                                        ]}
                                     />
-
                                     <MenuItem
-                                        menuKey="inventory-sales"
-                                        href="/erp/sales"
-                                        label="Inventory sales"
+                                        menuKey="equipment-movement"
+                                        label="Equipment Movement"
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
+                                        subItems={[
+                                            {
+                                                href: "/erp/sales",
+                                                label: "Sale"
+                                            },
+                                            {
+                                                href: "/erp/custody",
+                                                label: "Custody"
+                                            },
+                                            {
+                                                href: "/erp/ammunition-consumption",
+                                                label: "Ammunition consumption"
+                                            },
+                                            {
+                                                href: "/erp/donations",
+                                                label: "Donation"
+                                            },
+                                            {
+                                                href: "/erp/transfers",
+                                                label: "Transfer"
+                                            },
+                                            {
+                                                href: "/erp/disposals",
+                                                label: "Disposal"
+                                            },
+                                            {
+                                                href: "/erp/reservations",
+                                                label: "Reservation"
+                                            },
+                                            {
+                                                href: "/erp/maintenance",
+                                                label: "Maintenance and inspection"
+                                            }
+                                        ]}
                                     />
-
-                                    <MenuItem
-                                        menuKey="firearm-custody"
-                                        href="/erp/custody"
-                                        label="Equipment custody"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-
-                                    <MenuItem
-                                        menuKey="ammunition-consumption"
-                                        href="/erp/ammunition-consumption"
-                                        label="Ammunition consumption"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-
-                                    <MenuItem
-                                        menuKey="donations"
-                                        href="/erp/donations"
-                                        label="Donations"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-
-                                    <MenuItem
-                                        menuKey="inventory-transfers"
-                                        href="/erp/transfers"
-                                        label="Inventory transfers"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-
-                                    <MenuItem
-                                        menuKey="asset-disposal"
-                                        href="/erp/disposals"
-                                        label="Asset disposal"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                    />
-                                    <MenuItem menuKey="maintenance" href="/erp/maintenance" label="Maintenance and inspection" icon={Shield}
-                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
-                                    <MenuItem menuKey="reservations" href="/erp/reservations" label="Inventory reservations" icon={Shield}
-                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
                                     <MenuItem menuKey="inventory-counts" href="/erp/inventory-counts" label="Physical inventory" icon={Shield}
                                         collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
 
@@ -357,25 +461,6 @@ export const Menu: React.FC = () => {
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
                                     />}
-
-                                    <MenuItem
-                                        menuKey="weapons"
-                                        label="Weapons"
-                                        icon={Shield}
-                                        collapsed={!sidebarOpen}
-                                        selectedMenu={selectedMenu}
-                                        onSelect={setSelectedMenu}
-                                        subItems={[
-                                            {
-                                                href: "/queries/weapons",
-                                                label: "Registration"
-                                            },
-                                            {
-                                                href: "/sales/new-sale",
-                                                label: "Sales"
-                                            }
-                                        ]}
-                                    />
 
                                 </Sidebar.Menu>
 
@@ -444,7 +529,7 @@ export const Menu: React.FC = () => {
 
                                                     <PopupMenu.Separator />
 
-                                                    <PopupMenu.Item>
+                                                    <PopupMenu.Item as={Link} href="/settings">
                                                         <Cog />
                                                         Settings
                                                     </PopupMenu.Item>
@@ -464,7 +549,7 @@ export const Menu: React.FC = () => {
                                                             catch { setSignOutError("Unable to sign out. Please try again.") }
                                                             finally { setSigningOut(false) }
                                                         }}>
-                                                        <SignOut />{signingOut ? "Signing out…" : "Sign out"}
+                                                        <SignOut />{signingOut ? "Signing outâ€¦" : "Sign out"}
                                                     </PopupMenu.Item> : <PopupMenu.Item as={Link} href="/login"><SignOut />Sign in</PopupMenu.Item>}
 
                                                 </PopupMenu.List>
@@ -495,3 +580,5 @@ export const Menu: React.FC = () => {
     )
 
 }
+
+

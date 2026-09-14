@@ -4,7 +4,6 @@ import com.weaponsregistration.inventory.model.*;
 import com.weaponsregistration.security.service.AccessPolicy;
 import jakarta.persistence.*;
 import java.math.BigInteger;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.*;
@@ -23,16 +22,23 @@ public class StockIntakeService {
     public record BoxesRequest(String requestId, Long modelId, Long openingLocationId, String lotNumber,
         String validUntil, List<BoxRow> boxes, String looseUnits) {}
     public record Receipt(long id, List<Long> recordIds, String quantity) {}
+    public record RowResult(int row, String assetCode, String serialNumber, String status, List<String> errors) {}
+    public record AssetResult(Receipt receipt, boolean accepted, String detail, List<RowResult> rows) {}
+    private final com.weaponsregistration.audit.service.AuditService audit;
     private final EntityManager em;
     private final InventoryService inventory;
     private final AccessPolicy access;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    public StockIntakeService(EntityManager em, InventoryService inventory, AccessPolicy access) {
-        this.em = em; this.inventory = inventory; this.access = access;
+    public StockIntakeService(EntityManager em, InventoryService inventory, AccessPolicy access, com.weaponsregistration.audit.service.AuditService audit) {
+        this.em = em; this.inventory = inventory; this.access = access; this.audit = audit;
     }
 
-    public Receipt assets(AssetsRequest request) {
+    public AssetResult assets(AssetsRequest request) { return processAssets(request, false); }
+    public AssetResult reviewAssets(AssetsRequest request) { return processAssets(request, true); }
+
+    private AssetResult processAssets(AssetsRequest request, boolean review) {
+        access.requireAny("inventory/assets", "CREATE");
         if (request == null || request.common() == null || request.items() == null || request.items().isEmpty()
             || request.items().size() > 1000) bad("Select common asset fields and 1 to 1000 asset code / serial number pairs.");
         if (!Set.of("modelId", "locationId", "condition", "status", "validUntil", "currentValue").containsAll(request.common().keySet()))
@@ -40,29 +46,67 @@ public class StockIntakeService {
         var canonical = new AssetsRequest(request.requestId(), new TreeMap<>(request.common()), request.items());
         String fingerprint = fingerprint(canonical);
         var existing = existing(request.requestId(), "assets", fingerprint);
-        if (existing != null) return receipt(existing);
-        Set<String> codes = new HashSet<>(); Set<String> serials = new HashSet<>();
+        if (existing != null) return accepted(receipt(existing), request);
+        Map<String, Integer> codes = new HashMap<>(), serials = new HashMap<>();
+        for (var row : request.items()) if (row != null) {
+            codes.merge(AssetIdentity.normalize(row.assetCode()), 1, Integer::sum);
+            serials.merge(AssetIdentity.normalize(row.serialNumber()), 1, Integer::sum);
+        }
+        var registered = em.createQuery("select a from AssetItem a", AssetItem.class).getResultList();
+        List<RowResult> results = new ArrayList<>();
+        List<Map<String, Object>> dataRows = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
         for (int i = 0; i < request.items().size(); i++) {
             var row = request.items().get(i);
-            try {
-                if (row == null) bad("Asset code and serial number are required.");
-                long modelId = modelId(request.common().get("modelId"));
-                String code = requiredText(row.assetCode()); String serial = requiredText(row.serialNumber());
-                if (!codes.add(code)) bad("Duplicate asset code in this list: " + code);
-                if (!serials.add(serial)) bad("Duplicate serial number in this list: " + serial);
-                if (em.createQuery("select count(a) from AssetItem a where a.assetCode = :code", Long.class)
-                    .setParameter("code", code).getSingleResult() > 0) bad("Asset code is already registered: " + code);
-                if (em.createQuery("select count(a) from AssetItem a where a.model.id = :model and a.serialNumber = :serial", Long.class)
-                    .setParameter("model", modelId).setParameter("serial", serial)
-                    .getSingleResult() > 0) bad("Serial number is already registered for this model: " + serial);
+                String code = row == null ? "" : AssetIdentity.normalize(row.assetCode());
+                String serial = row == null ? "" : AssetIdentity.normalize(row.serialNumber());
+                List<String> errors = new ArrayList<>();
+                if (code.isEmpty() || code.length() > 255) errors.add("Asset code must contain 1 to 255 characters.");
+                if (serial.isEmpty() || serial.length() > 255) errors.add("Serial number must contain 1 to 255 characters.");
+                if (codes.getOrDefault(code, 0) > 1) errors.add("Duplicate asset code in this list. Related rows: " + relatedRows(request, code, true));
+                if (serials.getOrDefault(serial, 0) > 1) errors.add("Duplicate serial number in this list. Related rows: " + relatedRows(request, serial, false));
                 var data = new HashMap<>(request.common()); data.put("assetCode", code); data.put("serialNumber", serial);
-                ids.add(((Number) inventory.save("assets", null, data).get("id")).longValue());
-            } catch (ResponseStatusException ex) {
-                throw new ResponseStatusException(ex.getStatusCode(), "Row " + (i + 1) + ": " + ex.getReason());
-            }
+                String invalid = inventory.validateAsset(data);
+                if (invalid != null) errors.add(invalid);
+                errors.addAll(AssetIdentity.conflicts(registered, code, serial));
+                results.add(new RowResult(i + 1, code, serial, errors.isEmpty() ? "VALID" : "REJECTED", errors));
+                dataRows.add(data);
         }
-        return save(request.requestId(), "assets", fingerprint, ids, Integer.toString(ids.size()));
+        boolean valid = results.stream().allMatch(row -> row.errors().isEmpty());
+        if (!valid || review) {
+            String detail = valid ? "All rows validated. Confirm the complete batch."
+                : String.join("; ", results.stream().filter(row -> !row.errors().isEmpty())
+                    .map(row -> "Row " + row.row() + ": " + String.join(" ", row.errors())).toList());
+            var result = new AssetResult(null, valid, detail, results);
+            audit.record("inventory/assets", 0, valid ? "BATCH_REVIEW" : "BATCH_REJECTED", null,
+                Map.of("requestId", request.requestId(), "common", request.common(), "rowCount", results.size(), "result", result));
+            return result;
+        }
+        for (var data : dataRows) ids.add(((Number) inventory.save("assets", null, data).get("id")).longValue());
+        var receipt = save(request.requestId(), "assets", fingerprint, ids, Integer.toString(ids.size()));
+        var result = accepted(receipt, request);
+        audit.record("inventory/assets", ids.getFirst(), "BATCH_CREATE", null,
+            Map.of("requestId", request.requestId(), "common", request.common(), "rowCount", ids.size(), "result", result));
+        return result;
+    }
+
+    private static List<Integer> relatedRows(AssetsRequest request, String identifier, boolean code) {
+        List<Integer> rows = new ArrayList<>();
+        for (int i = 0; i < request.items().size(); i++) {
+            var row = request.items().get(i);
+            if (row != null && identifier.equals(AssetIdentity.normalize(code ? row.assetCode() : row.serialNumber())))
+                rows.add(i + 1);
+        }
+        return rows;
+    }
+
+    private AssetResult accepted(Receipt receipt, AssetsRequest request) {
+        List<RowResult> rows = new ArrayList<>();
+        for (int i = 0; i < request.items().size(); i++) {
+            var row = request.items().get(i);
+            rows.add(new RowResult(i + 1, AssetIdentity.normalize(row.assetCode()), AssetIdentity.normalize(row.serialNumber()), "ACCEPTED", List.of()));
+        }
+        return new AssetResult(receipt, true, "All rows accepted.", rows);
     }
 
     public Receipt boxes(BoxesRequest request) {
@@ -131,20 +175,6 @@ public class StockIntakeService {
     private String fingerprint(Object request) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(json.writeValueAsString(request).getBytes(StandardCharsets.UTF_8))); }
         catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
-    }
-    private static String requiredText(String value) {
-        if (value == null || value.isBlank() || value.trim().length() > 255) bad("Asset code and serial number must contain 1 to 255 characters.");
-        return value.trim();
-    }
-    private static long modelId(Object value) {
-        try {
-            long id = new BigDecimal(String.valueOf(value).trim()).longValueExact();
-            if (id <= 0) throw new IllegalArgumentException();
-            return id;
-        } catch (IllegalArgumentException | ArithmeticException ex) {
-            bad("Select a valid model ID.");
-            return 0;
-        }
     }
     private static BigInteger positiveInteger(String value, int row) {
         if (value == null || !value.matches("[1-9][0-9]{0,14}")) bad("Row " + (row + 1) + ": quantities must be positive whole numbers, up to 15 digits.");

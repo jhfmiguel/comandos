@@ -77,7 +77,7 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
         {error && <Message type="error" text={error} onClose={() => setError("")} />}
         {pending && !busy && <Message type="warn" text="The result could not be confirmed. Retry with the same request to avoid issuing twice." />}
         {completed && <Message type="success" text={`Custody #${completed.id} issued successfully.`} />}
-        <form onSubmit={issue}>
+        <form data-comandos-erp-form="true" onSubmit={issue}>
             <fieldset className={styles.fields} disabled={busy || !!pending || !!completed}>
                 <div className={styles.field}><label htmlFor="core-organizationId">Organization *</label>
                     <ReferenceField service={core} field={organizationField} value={organization} organizationId={null}
