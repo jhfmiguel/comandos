@@ -2,11 +2,14 @@
 
 import * as React from "react"
 
+import { ChevronLeft, ChevronRight } from "@primeicons/react"
+
 import { Tabs } from "@primereact/ui/tabs"
 import type { TabsRootChangeEvent } from "@primereact/ui/tabs"
 
 import { Layout } from "components/layout"
 import { useComandosPreferences } from "components/settings/preferences-provider"
+import { PurchasePanel } from "components/erp/purchases"
 import { InventorySalesPanel } from "components/erp/sales"
 import { CustodyPanel } from "components/erp/custody"
 import { AmmunitionConsumptionPanel } from "components/erp/ammunition-consumption"
@@ -17,6 +20,7 @@ import { ReservationPanel } from "components/erp/reservations"
 import { MaintenancePanel } from "components/erp/maintenance"
 
 type TransactionTab =
+    | "purchase"
     | "sale"
     | "custody"
     | "ammunition-consumption"
@@ -30,6 +34,7 @@ const transactionTabs: Array<{
     value: TransactionTab
     label: string
 }> = [
+    { value: "purchase", label: "Purchase" },
     { value: "sale", label: "Sale" },
     { value: "custody", label: "Custody" },
     { value: "ammunition-consumption", label: "Ammunition consumption" },
@@ -42,6 +47,8 @@ const transactionTabs: Array<{
 
 function TransactionPanel({ value }: { value: TransactionTab }) {
     switch (value) {
+        case "purchase":
+            return <PurchasePanel />
         case "sale":
             return <InventorySalesPanel />
         case "custody":
@@ -63,7 +70,7 @@ function TransactionPanel({ value }: { value: TransactionTab }) {
 
 export function TransactionsWorkspace() {
     const { tr } = useComandosPreferences()
-    const [activeTab, setActiveTab] = React.useState<TransactionTab>("sale")
+    const [activeTab, setActiveTab] = React.useState<TransactionTab>("purchase")
 
     return (
         <Layout title="Transactions">
@@ -75,12 +82,23 @@ export function TransactionsWorkspace() {
                 selectOnFocus
             >
                 <Tabs.List>
-                    {transactionTabs.map((tab) => (
-                        <Tabs.Tab key={tab.value} value={tab.value}>
-                            {tr(tab.label)}
-                        </Tabs.Tab>
-                    ))}
-                    <Tabs.Indicator />
+                    <Tabs.Prev aria-label={tr("Previous")}>
+                        <ChevronLeft />
+                    </Tabs.Prev>
+
+                    <Tabs.Content>
+                        {transactionTabs.map((tab) => (
+                            <Tabs.Tab key={tab.value} value={tab.value}>
+                                {tr(tab.label)}
+                            </Tabs.Tab>
+                        ))}
+
+                        <Tabs.Indicator />
+                    </Tabs.Content>
+
+                    <Tabs.Next aria-label={tr("Next")}>
+                        <ChevronRight />
+                    </Tabs.Next>
                 </Tabs.List>
 
                 <Tabs.Panels>

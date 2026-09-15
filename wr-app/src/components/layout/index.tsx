@@ -36,7 +36,8 @@ export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
                         size="small"
                         iconOnly
                         aria-label="Toggle sidebar"
-                    >
+                    
+                        className="comandos-sidebar-trigger">
                         <SidebarIcon />
                     </Sidebar.Trigger>
 

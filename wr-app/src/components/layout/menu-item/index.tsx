@@ -85,6 +85,31 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
     const [submenuOpen, setSubmenuOpen] = React.useState(isRouteActive)
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({})
 
+    
+    const [mobile, setMobile] = React.useState(false)
+    const [collapsedPopupOpen, setCollapsedPopupOpen] = React.useState(false)
+
+    React.useEffect(() => {
+        const media = window.matchMedia("(max-width: 768px)")
+
+        const syncMobile = (): void => {
+            setMobile(media.matches)
+
+            if (!media.matches) {
+                setCollapsedPopupOpen(false)
+            }
+        }
+
+        syncMobile()
+        media.addEventListener("change", syncMobile)
+
+        return () => media.removeEventListener("change", syncMobile)
+    }, [])
+
+    React.useEffect(() => {
+        setCollapsedPopupOpen(false)
+    }, [pathname])
+
     const removeCurrentFocus = (): void => {
 
         const activeElement = document.activeElement
@@ -105,11 +130,17 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
     const handleSubmenuToggle = (): void => {
 
         handleMenuSelection()
+
+        if (mobile && props.collapsed) {
+            setCollapsedPopupOpen((currentValue) => !currentValue)
+            return
+        }
+
         setSubmenuOpen((currentValue) => !currentValue)
 
     }
 
-    const renderExpandedItems = (
+const renderExpandedItems = (
         items: Array<SubMenuItem>,
         depth = 0,
         parentKey = props.menuKey
@@ -334,9 +365,9 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
 
                 )}
 
-                {props.collapsed && (
+                {props.collapsed && (!mobile || collapsedPopupOpen) && (
 
-                    <div className="comandos-sidebar-popup">
+                    <div className={`comandos-sidebar-popup ${mobile ? "comandos-sidebar-popup-mobile-click" : ""}`}>
 
                         <div className="comandos-sidebar-popup-title">
                             {props.label}

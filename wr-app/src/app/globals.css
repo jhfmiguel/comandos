@@ -4579,3 +4579,675 @@ html[data-theme][data-palette] form[data-comandos-erp-form="true"]
     border-color: var(--comandos-accent) !important;
 }
 /* COMANDOS_MAIN_TABS_PALETTE_END */
+/* COMANDOS GLOBAL RESPONSIVE FOUNDATION V1 */
+
+/* Prevent children from forcing layouts wider than the viewport. */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+main,
+section,
+article,
+form,
+.p-component {
+    min-width: 0;
+}
+
+/* Generic ERP page containers. */
+.registration-page,
+.erp-page,
+.workspace-page,
+.page-content,
+.content-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Forms: desktop first, then collapse safely. */
+.registration-form-grid,
+.comandos-responsive-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.registration-field,
+.form-field,
+.field {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.registration-field-full,
+.comandos-grid-full,
+.form-field-full {
+    grid-column: 1 / -1;
+}
+
+.registration-field input,
+.registration-field textarea,
+.registration-field select,
+.registration-input,
+.form-field input,
+.form-field textarea,
+.form-field select,
+.p-inputtext,
+.p-inputnumber,
+.p-inputnumber-input,
+.p-dropdown,
+.p-select,
+.p-multiselect,
+.p-calendar,
+.p-datepicker-input,
+.p-autocomplete,
+.p-autocomplete-input,
+.p-password,
+.p-password-input,
+.p-inputwrapper,
+.p-iconfield {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Headers and toolbars can wrap instead of overflowing. */
+.registration-header,
+.page-header,
+.workspace-header,
+.toolbar,
+.actions,
+.comandos-responsive-actions,
+.p-toolbar,
+.p-toolbar-group-start,
+.p-toolbar-group-center,
+.p-toolbar-group-end {
+    min-width: 0;
+}
+
+.registration-header,
+.page-header,
+.workspace-header,
+.comandos-responsive-actions,
+.p-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.registration-header > *,
+.page-header > *,
+.workspace-header > *,
+.p-toolbar > * {
+    min-width: 0;
+}
+
+/* PrimeReact tabs: horizontal scroll is preferable to clipping. */
+.p-tabs,
+.p-tabview,
+.p-tabview-nav-container,
+.p-tablist {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.p-tablist,
+.p-tabview-nav {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Tables remain usable on narrow screens. */
+.p-datatable,
+.p-datatable-wrapper,
+.table-wrapper,
+.data-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.p-datatable-wrapper,
+.table-wrapper,
+.data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.p-datatable table {
+    width: 100%;
+}
+
+/* Dialogs and overlays must fit phones/tablets. */
+.p-dialog {
+    max-width: calc(100vw - 2rem);
+}
+
+.p-dialog-content,
+.p-dialog-header,
+.p-dialog-footer {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.p-dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Cards and panels never force horizontal overflow. */
+.p-card,
+.p-panel,
+.p-fieldset,
+.card,
+.panel {
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Long technical values, emails, IDs and descriptions may wrap. */
+td,
+th,
+.p-card-content,
+.p-panel-content,
+.registration-page p,
+.workspace-page p {
+    overflow-wrap: anywhere;
+}
+
+/* Large screens can use denser grids where explicitly requested. */
+@media (min-width: 1200px) {
+    .comandos-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .comandos-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+}
+
+/* Tablet. */
+@media (max-width: 992px) {
+    .comandos-grid-3,
+    .comandos-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .p-dialog {
+        width: min(92vw, 48rem) !important;
+    }
+}
+
+/* Phone. */
+@media (max-width: 768px) {
+    .registration-page,
+    .erp-page,
+    .workspace-page,
+    .page-content,
+    .content-wrapper {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .registration-form-grid,
+    .comandos-responsive-form-grid,
+    .comandos-grid-3,
+    .comandos-grid-4 {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .registration-field-full,
+    .comandos-grid-full,
+    .form-field-full {
+        grid-column: auto;
+    }
+
+    .registration-header,
+    .page-header,
+    .workspace-header {
+        align-items: stretch;
+    }
+
+    .registration-header > *,
+    .page-header > *,
+    .workspace-header > * {
+        width: 100%;
+    }
+
+    .actions,
+    .comandos-responsive-actions,
+    .p-dialog-footer {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .actions > button,
+    .actions > .p-button,
+    .comandos-responsive-actions > button,
+    .comandos-responsive-actions > .p-button,
+    .p-dialog-footer > button,
+    .p-dialog-footer > .p-button {
+        width: 100%;
+    }
+
+    .p-paginator {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+
+    .p-dialog {
+        width: calc(100vw - 1rem) !important;
+        max-height: calc(100dvh - 1rem);
+        margin: 0.5rem;
+    }
+
+    .p-dialog-content {
+        overflow-y: auto;
+    }
+
+    .p-toast {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+    }
+}
+
+/* Small phones. */
+@media (max-width: 480px) {
+    .registration-page,
+    .erp-page,
+    .workspace-page,
+    .page-content,
+    .content-wrapper {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    h1 {
+        font-size: clamp(1.35rem, 7vw, 1.8rem);
+    }
+
+    h2 {
+        font-size: clamp(1.15rem, 6vw, 1.5rem);
+    }
+
+    .p-button {
+        max-width: 100%;
+    }
+
+    .p-tab,
+    .p-tabview-nav-link {
+        white-space: nowrap;
+    }
+}
+/* COMANDOS SCROLLABLE MAIN TABS */
+.p-tabs {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.p-tablist {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.p-tablist [data-pc-section="content"] {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.p-tab {
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+    .p-tablist {
+        position: relative;
+    }
+
+    .p-tablist [data-pc-section="prev"],
+    .p-tablist [data-pc-section="next"] {
+        flex: 0 0 auto;
+        z-index: 1;
+    }
+}
+/* COMANDOS RESPONSIVE MAIN SINGLE COLUMN */
+
+/*
+ * Responsive rule for the ERP main content:
+ * when the viewport reaches tablet/mobile sizes, all main content
+ * compositions become a single vertical column.
+ */
+@media (max-width: 992px) {
+    main .registration-form-grid,
+    main .comandos-responsive-form-grid,
+    main .comandos-grid-2,
+    main .comandos-grid-3,
+    main .comandos-grid-4,
+    main .grid,
+    main .form-grid,
+    main .fields-grid,
+    main .details-grid,
+    main .summary-grid,
+    main .cards-grid,
+    main .dashboard-grid,
+    main .content-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    main .registration-field-full,
+    main .comandos-grid-full,
+    main .form-field-full {
+        grid-column: 1 !important;
+    }
+
+    main .registration-header,
+    main .page-header,
+    main .workspace-header,
+    main .toolbar,
+    main .actions,
+    main .comandos-responsive-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    main .registration-header > *,
+    main .page-header > *,
+    main .workspace-header > *,
+    main .toolbar > *,
+    main .actions > *,
+    main .comandos-responsive-actions > * {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    main .p-card,
+    main .p-panel,
+    main .p-fieldset,
+    main .card,
+    main .panel {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    main input,
+    main textarea,
+    main select,
+    main .p-inputtext,
+    main .p-inputnumber,
+    main .p-inputnumber-input,
+    main .p-select,
+    main .p-dropdown,
+    main .p-multiselect,
+    main .p-datepicker,
+    main .p-autocomplete,
+    main .p-password,
+    main .p-iconfield,
+    main .p-inputwrapper {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /*
+     * Data tables remain one component in the vertical flow.
+     * Their internal columns scroll horizontally instead of breaking
+     * the page layout.
+     */
+    main .p-datatable,
+    main .p-datatable-wrapper,
+    main .table-wrapper,
+    main .data-table-wrapper {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    main .p-datatable-wrapper,
+    main .table-wrapper,
+    main .data-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /*
+     * Main tabs keep the PrimeReact scrollable-tabs pattern:
+     * Prev | scrollable Content | Next.
+     */
+    main .p-tabs,
+    main .p-tablist {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    main {
+        min-width: 0;
+    }
+
+    main .registration-page,
+    main .erp-page,
+    main .workspace-page,
+    main .page-content,
+    main .content-wrapper {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    main .actions > button,
+    main .actions > .p-button,
+    main .comandos-responsive-actions > button,
+    main .comandos-responsive-actions > .p-button {
+        width: 100%;
+    }
+}
+/* COMANDOS MOBILE SIDEBAR OVERLAY */
+@media (max-width: 768px) {
+    /*
+     * Collapsed icon rail remains small.
+     * When expanded, the sidebar becomes an overlay and does not resize main.
+     */
+    #comandos-sidebar {
+        position: relative;
+        z-index: 40;
+    }
+
+    #comandos-sidebar .comandos-sidebar-aside {
+        transition: width 180ms ease, transform 180ms ease;
+    }
+
+    #comandos-sidebar[data-state="open"] .comandos-sidebar-aside,
+    #comandos-sidebar[data-open="true"] .comandos-sidebar-aside,
+    #comandos-sidebar[aria-expanded="true"] .comandos-sidebar-aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        max-width: min(86vw, 20rem);
+        box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 28%);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .comandos-sidebar-main {
+        position: relative;
+        z-index: 1;
+        min-width: 0;
+    }
+
+    /*
+     * Keep the main content in its collapsed-menu position while the menu
+     * is expanded. The expanded menu therefore covers main instead of
+     * pushing or shrinking it.
+     */
+    #comandos-sidebar[data-state="open"] + .comandos-sidebar-main,
+    #comandos-sidebar[data-open="true"] + .comandos-sidebar-main,
+    #comandos-sidebar[aria-expanded="true"] + .comandos-sidebar-main {
+        margin-left: 0 !important;
+        transform: none !important;
+    }
+}
+/* COMANDOS MOBILE SIDEBAR OVERLAY V3 EXPLICIT STATE */
+@media (max-width: 768px) {
+    /*
+     * CRITICAL:
+     * Sidebar.Spacer is the element that reserves horizontal space in
+     * Sidebar.Layout. It must ALWAYS remain at collapsed width on mobile,
+     * even while the visible Aside is expanded.
+     */
+    #comandos-sidebar .comandos-sidebar-spacer {
+        width: 3.5rem !important;
+        min-width: 3.5rem !important;
+        max-width: 3.5rem !important;
+        flex: 0 0 3.5rem !important;
+    }
+
+    #comandos-sidebar {
+        width: 3.5rem !important;
+        min-width: 3.5rem !important;
+        max-width: 3.5rem !important;
+        flex: 0 0 3.5rem !important;
+        overflow: visible !important;
+        z-index: 1000 !important;
+    }
+
+    /*
+     * This class is controlled directly by React using:
+     * mobile && sidebarOpen.
+     * It does not rely on PrimeReact's internal data-state attributes.
+     */
+    #comandos-sidebar .comandos-sidebar-mobile-overlay-open {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        z-index: 2147483000 !important;
+        width: min(20rem, 86vw) !important;
+        min-width: min(20rem, 86vw) !important;
+        max-width: 86vw !important;
+        height: 100dvh !important;
+        margin: 0 !important;
+        transform: none !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        box-shadow: 0 0 1.75rem rgb(0 0 0 / 40%) !important;
+    }
+
+    /*
+     * Main always occupies the space calculated from the collapsed rail.
+     * Opening the visible menu cannot alter these values.
+     */
+    .comandos-sidebar-main {
+        min-width: 0 !important;
+        width: calc(100% - 3.5rem) !important;
+        max-width: calc(100% - 3.5rem) !important;
+        margin-left: 0 !important;
+        transform: none !important;
+        transition: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+}
+/* COMANDOS SIDEBAR TRIGGER THEME SIZE V2 */
+.comandos-sidebar-trigger {
+    width: 2rem !important;
+    min-width: 2rem !important;
+    max-width: 2rem !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+    max-height: 2rem !important;
+    padding: 0 !important;
+    flex: 0 0 2rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.comandos-sidebar-trigger svg,
+.comandos-sidebar-trigger .p-button-icon {
+    width: 1rem !important;
+    height: 1rem !important;
+    font-size: 1rem !important;
+}
+/* COMANDOS MOBILE COLLAPSED SUBMENU CLICK V2 */
+@media (max-width: 768px) {
+    /*
+     * On mobile the collapsed submenu is rendered only after click.
+     * Once rendered, force it visible and ignore hover-only visibility.
+     */
+    .comandos-sidebar-popup-mobile-click {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
+/* COMANDOS COMMAND CENTER SPRINT ACTION V2 */
+.command-sprint-primary-action {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: -3rem;
+    margin-bottom: 0.45rem;
+}
+
+.command-sprint-new-requirement {
+    background: #4650d8 !important;
+    border-color: #4650d8 !important;
+    color: #fff !important;
+    min-height: 3.75rem;
+    padding-inline: 1.5rem !important;
+}
+
+.command-sprint-new-requirement:hover {
+    background: #3e47c4 !important;
+    border-color: #3e47c4 !important;
+}
+
+@media (max-width: 768px) {
+    .command-sprint-primary-action {
+        margin-top: 1rem;
+        margin-bottom: .75rem;
+        justify-content: stretch;
+    }
+    .command-sprint-new-requirement { width: 100% !important; }
+}

@@ -800,7 +800,7 @@ function AuditHistory(): React.JSX.Element {
 
                     {loading && (
                         <p role="status">
-                            Loading audit historyâ€¦
+                            Loading audit history…
                         </p>
                     )}
 
@@ -846,7 +846,7 @@ function AuditHistory(): React.JSX.Element {
                     {!detail &&
                         !detailError && (
                             <p role="status">
-                                Loading event detailsâ€¦
+                                Loading event details…
                             </p>
                         )}
 

@@ -12,7 +12,7 @@ import { convertToIsoDate, formatDate } from "utils/date";
 
 import axios from "axios";
 
-import { Plus, Pencil, Trash } from "@primeicons/react";
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "@primeicons/react";
 import { Button } from "@primereact/ui/button";
 import { Dialog } from "@primereact/ui/dialog";
 import { InputText } from "@primereact/ui/inputtext";
@@ -272,18 +272,30 @@ export function RecordWorkspace({
 
                                 <Tabs.List>
 
-                                    {workspaceTabs.map((tab) => (
+                                    <Tabs.Prev aria-label={tr("Previous")}>
+                                        <ChevronLeft />
+                                    </Tabs.Prev>
 
-                                        <Tabs.Tab
-                                            key={tab.resource}
-                                            value={tab.resource}
-                                        >
-                                            {tr(tab.label)}
-                                        </Tabs.Tab>
+                                    <Tabs.Content>
 
-                                    ))}
+                                        {workspaceTabs.map((tab) => (
 
-                                    <Tabs.Indicator />
+                                            <Tabs.Tab
+                                                key={tab.resource}
+                                                value={tab.resource}
+                                            >
+                                                {tr(tab.label)}
+                                            </Tabs.Tab>
+
+                                        ))}
+
+                                        <Tabs.Indicator />
+
+                                    </Tabs.Content>
+
+                                    <Tabs.Next aria-label={tr("Next")}>
+                                        <ChevronRight />
+                                    </Tabs.Next>
 
                                 </Tabs.List>
 

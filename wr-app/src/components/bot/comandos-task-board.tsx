@@ -12,7 +12,6 @@ import {
     GripVertical,
     MoreHorizontal,
     Pencil,
-    Plus,
     Printer,
     Redo2,
     Search,
@@ -42,7 +41,6 @@ type Props = {
     moduleName: string
     requirements: TaskBoardRequirement[]
     busy: boolean
-    onCreate: () => void
     onStatusChange: (id: string, status: BoardStatus) => void
     onEdit: (requirement: TaskBoardRequirement) => void
     onDelete: (requirement: TaskBoardRequirement) => void
@@ -103,7 +101,6 @@ export function ComandosTaskBoard({
     moduleName,
     requirements,
     busy,
-    onCreate,
     onStatusChange,
     onEdit,
     onDelete,
@@ -537,7 +534,8 @@ export function ComandosTaskBoard({
                             <X size={15} />
                         </button>
                     )}
-                </div>
+
+</div>
 
                 <select
                     value={priorityFilter}
@@ -683,14 +681,7 @@ export function ComandosTaskBoard({
                     )}
                 </div>
 
-                <button
-                    type="button"
-                    className="taskboard-add-button"
-                    onClick={onCreate}
-                >
-                    <Plus size={16} />
-                    Novo requisito
-                </button>
+                
             </div>
 
             {selection.length > 0 && (

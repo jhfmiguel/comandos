@@ -2008,14 +2008,15 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                     </div>
 
                     <div className="command-actions">
-                        <button
+                    <button
                             className="command-button command-button-primary"
                             onClick={openNewSprint}
                         >
                             <Plus size={16} />
                             Nova sprint
                         </button>
-                    </div>
+                    
+                </div>
                 </div>
 
                 <section
@@ -2178,6 +2179,42 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                 )}
 
                 
+                <style jsx global>{`
+                    .command-center .command-new-requirement-button {
+                        background: #4650d8 !important;
+                        background-color: #4650d8 !important;
+                        border-color: #4650d8 !important;
+                        color: #ffffff !important;
+                    }
+
+                    .command-center .command-new-requirement-button:hover:not(:disabled) {
+                        background: #3e47c4 !important;
+                        background-color: #3e47c4 !important;
+                        border-color: #3e47c4 !important;
+                        color: #ffffff !important;
+                    }
+
+                    .command-center .command-new-requirement-button svg {
+                        color: #ffffff !important;
+                        stroke: #ffffff !important;
+                    }
+
+                    @media (max-width: 768px) {
+                        .command-center .command-toolbar {
+                            align-items: stretch;
+                        }
+
+                        .command-center .command-toolbar .command-actions {
+                            width: 100%;
+                        }
+
+                        .command-center .command-new-requirement-button {
+                            width: 100%;
+                            justify-content: center;
+                        }
+                    }
+                `}</style>
+
                 <div className="command-toolbar">
                     <div>
                         <span className="eyebrow">SPRINT ATUAL</span>
@@ -2185,19 +2222,9 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                     </div>
 
                     <div className="command-actions">
-                        <label className="command-search">
-                            <Search size={16} />
-                            <input
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                                placeholder="Buscar requisito"
-                            />
-                        </label>
-
                         <button
-                            className="command-button command-button-primary"
+                            type="button"
+                            className="command-button command-new-requirement-button"
                             onClick={openNewRequirement}
                         >
                             <Plus size={16} />
@@ -2343,7 +2370,6 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                     moduleName={selectedSprint.name}
                     requirements={filteredRequirements}
                     busy={busy}
-                    onCreate={openNewRequirement}
                     onStatusChange={updateStatus}
                     onEdit={openEditRequirement}
                     onDelete={deleteRequirement}

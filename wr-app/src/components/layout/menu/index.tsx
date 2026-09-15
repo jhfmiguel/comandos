@@ -52,6 +52,33 @@ export const Menu: React.FC = () => {
     const pathname = usePathname()
 
     const [sidebarOpen, setSidebarOpen] = React.useState(persistedSidebarOpen)
+    const [mobile, setMobile] = React.useState(false)
+
+    React.useEffect(() => {
+        const media = window.matchMedia("(max-width: 768px)")
+
+        const syncViewport = () => {
+            const isMobile = media.matches
+            setMobile(isMobile)
+
+            if (isMobile) {
+                persistedSidebarOpen = false
+                setSidebarOpen(false)
+            }
+        }
+
+        syncViewport()
+        media.addEventListener("change", syncViewport)
+
+        return () => media.removeEventListener("change", syncViewport)
+    }, [])
+
+    React.useEffect(() => {
+        if (mobile && sidebarOpen) {
+            persistedSidebarOpen = false
+            setSidebarOpen(false)
+        }
+    }, [pathname])
 
     const [selection, setSelection] = React.useState<{ pathname: string; menu: string | null }>({ pathname, menu: null })
     const selectedMenu = selection.pathname === pathname ? selection.menu : null
@@ -87,9 +114,27 @@ export const Menu: React.FC = () => {
             className="comandos-sidebar"
         >
 
-            <Sidebar.Spacer />
+            <Sidebar.Spacer className="comandos-sidebar-spacer" />
 
-            <Sidebar.Aside className="comandos-sidebar-aside">
+            <Sidebar.Aside
+                className={`comandos-sidebar-aside ${mobile && sidebarOpen ? "comandos-sidebar-mobile-overlay-open" : ""}`}
+                onClickCapture={(event: React.MouseEvent<HTMLElement>) => {
+                    if (!mobile || !sidebarOpen) {
+                        return
+                    }
+
+                    const target = event.target
+                    if (!(target instanceof Element)) {
+                        return
+                    }
+
+                    const link = target.closest("a")
+                    if (link) {
+                        persistedSidebarOpen = false
+                        setSidebarOpen(false)
+                    }
+                }}
+            >
 
                 <Sidebar.Panel className="comandos-sidebar-panel">
 
