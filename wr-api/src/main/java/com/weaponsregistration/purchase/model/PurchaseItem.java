@@ -28,6 +28,9 @@ public class PurchaseItem extends CoreEntity {
     @Column(name = "discount", nullable = false, precision = 19, scale = 4)
     public BigDecimal discount = BigDecimal.ZERO;
 
+    @Column(name = "condition_description", length = 1000)
+    public String conditionDescription;
+
     @Column(name = "notes", length = 2000)
     public String notes;
 

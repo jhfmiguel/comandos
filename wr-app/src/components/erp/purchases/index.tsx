@@ -12,6 +12,9 @@ import { createErpService } from "api/services/erp.service";
 import { purchaseService } from "api/services/purchase.service";
 import type { ErpField, ErpValue } from "api/models/erp";
 import type {
+    AcquisitionDocumentRequest,
+    AcquisitionDocumentType,
+    AcquisitionType,
     BiddingModality,
     CreatePurchaseItemRequest,
     DirectContractingType,
@@ -43,6 +46,7 @@ type PurchaseLine = {
     quantity: string;
     unitPrice: string;
     discount: string;
+    conditionDescription: string;
     notes: string;
 };
 
@@ -52,6 +56,7 @@ const emptyLine = (): PurchaseLine => ({
     quantity: "1",
     unitPrice: "0",
     discount: "0",
+    conditionDescription: "",
     notes: ""
 });
 
@@ -88,6 +93,15 @@ export function PurchaseWorkspace() {
 function PurchaseForm({ onNew }: { onNew: () => void }) {
     const [organization, setOrganization] = React.useState<ErpValue>(null);
     const [supplier, setSupplier] = React.useState<ErpValue>(null);
+    const [acquisitionType, setAcquisitionType] = React.useState<AcquisitionType>("ONEROUS");
+    const [originDescription, setOriginDescription] = React.useState("");
+    const [freight, setFreight] = React.useState("0");
+    const [taxes, setTaxes] = React.useState("0");
+    const [otherCosts, setOtherCosts] = React.useState("0");
+    const [paymentConditions, setPaymentConditions] = React.useState("");
+    const [deliveryConditions, setDeliveryConditions] = React.useState("");
+    const [warrantyConditions, setWarrantyConditions] = React.useState("");
+    const [documents, setDocuments] = React.useState<AcquisitionDocumentRequest[]>([]);
     const [purchaseNumber, setPurchaseNumber] = React.useState("");
     const [purchaseDate, setPurchaseDate] = React.useState(() => new Date().toISOString().slice(0, 10));
     const [notes, setNotes] = React.useState("");
@@ -119,6 +133,7 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
             quantity: Number(line.quantity),
             unitPrice: Number(line.unitPrice),
             discount: Number(line.discount || 0),
+            conditionDescription: line.conditionDescription.trim() || undefined,
             notes: line.notes.trim() || undefined
         }));
 
@@ -129,11 +144,19 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
             const result = await purchaseService.create({
                 buyerOrganizationId: Number(organization),
                 supplierOrganizationId: supplier ? Number(supplier) : undefined,
+                acquisitionType,
+                originDescription: originDescription.trim() || undefined,
                 purchaseNumber: purchaseNumber.trim(),
                 purchaseDate,
                 notes: notes.trim() || undefined,
-                items
-            });
+                freight: Number(freight || 0),
+                taxes: Number(taxes || 0),
+                otherCosts: Number(otherCosts || 0),
+                paymentConditions: paymentConditions.trim() || undefined,
+                deliveryConditions: deliveryConditions.trim() || undefined,
+                warrantyConditions: warrantyConditions.trim() || undefined,
+                items,
+                documents            });
             setCompleted(result);
             setRefresh(value => value + 1);
         } catch (caught) {
@@ -185,6 +208,32 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                             Person/supplier roles can be generalized in the next backend evolution.
                         </small>
                     </div>
+                    <div className={styles.field}>
+                        <label htmlFor="acquisition-type">Tipo de aquisiÃ§Ã£o *</label>
+                        <select id="acquisition-type" value={acquisitionType} onChange={event => setAcquisitionType(event.target.value as AcquisitionType)}>
+                            <option value="ONEROUS">Onerosa / compra</option>
+                            <option value="FREE">Gratuita</option>
+                        </select>
+                    </div>
+                    <div className={styles.field}>
+                        <label htmlFor="origin-description">Origem</label>
+                        <input id="origin-description" maxLength={1000} value={originDescription} onChange={event => setOriginDescription(event.target.value)} />
+                    </div>
+                    <div className={styles.field}>
+                        <label htmlFor="purchase-freight">Frete</label>
+                        <input id="purchase-freight" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={freight} onChange={event => setFreight(event.target.value)} />
+                    </div>
+                    <div className={styles.field}>
+                        <label htmlFor="purchase-taxes">Tributos</label>
+                        <input id="purchase-taxes" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={taxes} onChange={event => setTaxes(event.target.value)} />
+                    </div>
+                    <div className={styles.field}>
+                        <label htmlFor="purchase-other-costs">Outros custos</label>
+                        <input id="purchase-other-costs" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={otherCosts} onChange={event => setOtherCosts(event.target.value)} />
+                    </div>
+                    <div className={styles.field}><label>CondiÃ§Ãµes de pagamento</label><textarea value={paymentConditions} onChange={event => setPaymentConditions(event.target.value)} /></div>
+                    <div className={styles.field}><label>CondiÃ§Ãµes de entrega</label><textarea value={deliveryConditions} onChange={event => setDeliveryConditions(event.target.value)} /></div>
+                    <div className={styles.field}><label>Garantia / condiÃ§Ãµes</label><textarea value={warrantyConditions} onChange={event => setWarrantyConditions(event.target.value)} /></div>
 
                     <div className={styles.field}>
                         <label htmlFor="purchase-number">Purchase number *</label>
@@ -230,12 +279,156 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                 )}
 
                 {completed && <PurchaseSummary purchase={completed} />}
-
-                <div className={styles.actions}>
+                <section>
+                    <div className={styles.toolbar}>
+                        <h2>Documentos da aquisiÃ§Ã£o</h2>
+                        <Button
+                            type="button"
+                            className="comandos-accent-button"
+                            disabled={busy || !!completed}
+                            onClick={() => setDocuments([...documents, { documentType: "OTHER" }])}
+                        >
+                            + Documento
+                        </Button>
+                    </div>
+                    <div className={styles.tableContainer}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>NÃºmero</th>
+                                    <th>Data</th>
+                                    <th>Emissor</th>
+                                    <th>Valor</th>
+                                    <th>Arquivo / referÃªncia</th>
+                                    <th>AÃ§Ãµes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {documents.map((doc, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <select
+                                                value={doc.documentType}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, documentType: event.target.value as AcquisitionDocumentType }
+                                                            : item
+                                                    ))
+                                                }
+                                            >
+                                                <option value="CONTRACT">Contrato</option>
+                                                <option value="BUDGET_COMMITMENT">Empenho</option>
+                                                <option value="INVOICE">Nota fiscal</option>
+                                                <option value="PROCUREMENT_PROCESS">Processo</option>
+                                                <option value="BIDDING_NOTICE">Edital</option>
+                                                <option value="DIRECT_CONTRACTING_ACT">Ato de contrataÃ§Ã£o direta</option>
+                                                <option value="FREE_ACQUISITION_TERM">Termo de aquisiÃ§Ã£o gratuita</option>
+                                                <option value="DONATION_TERM">Termo de doaÃ§Ã£o</option>
+                                                <option value="TRANSFER_TERM">Termo de transferÃªncia</option>
+                                                <option value="AUTHORIZATION">AutorizaÃ§Ã£o</option>
+                                                <option value="DELIVERY_DOCUMENT">Documento de entrega</option>
+                                                <option value="OTHER">Outro</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input
+                                                value={doc.documentNumber ?? ""}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, documentNumber: event.target.value }
+                                                            : item
+                                                    ))
+                                                }
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="date"
+                                                value={doc.issueDate ?? ""}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, issueDate: event.target.value }
+                                                            : item
+                                                    ))
+                                                }
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                value={doc.issuer ?? ""}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, issuer: event.target.value }
+                                                            : item
+                                                    ))
+                                                }
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={doc.amount ?? ""}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? {
+                                                                ...item,
+                                                                amount: event.target.value
+                                                                    ? Number(event.target.value)
+                                                                    : undefined
+                                                            }
+                                                            : item
+                                                    ))
+                                                }
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                value={doc.storageReference ?? ""}
+                                                onChange={event =>
+                                                    setDocuments(documents.map((item, itemIndex) =>
+                                                        itemIndex === index
+                                                            ? { ...item, storageReference: event.target.value }
+                                                            : item
+                                                    ))
+                                                }
+                                            />
+                                        </td>
+                                        <td>
+                                            <Button
+                                                type="button"
+                                                severity="secondary"
+                                                disabled={busy || !!completed}
+                                                onClick={() =>
+                                                    setDocuments(documents.filter((_, itemIndex) => itemIndex !== index))
+                                                }
+                                            >
+                                                Remover
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {!documents.length && (
+                                    <tr>
+                                        <td colSpan={7}>Nenhum documento adicionado.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+<div className={styles.actions}>
                     {completed ? (
                         <Button
                             type="button"
-                            className="registration-yellow-button"
+                            className="comandos-accent-button"
                             onClick={onNew}
                         >
                             + Purchase
@@ -243,7 +436,7 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                     ) : (
                         <Button
                             type="submit"
-                            className="registration-yellow-button"
+                            className="comandos-accent-button"
                             disabled={!valid || busy}
                         >
                             {busy ? "Saving…" : "Save purchase"}
@@ -290,7 +483,7 @@ function PurchaseItems({
                 <h2>Purchase items</h2>
                 <Button
                     type="button"
-                    className="registration-yellow-button"
+                    className="comandos-accent-button"
                     disabled={disabled || lines.length >= 100}
                     onClick={() => onChange([...lines, emptyLine()])}
                 >
@@ -306,6 +499,7 @@ function PurchaseItems({
                             <th>Quantity</th>
                             <th>Unit price</th>
                             <th>Discount</th>
+                            <th>CondiÃ§Ã£o</th>
                             <th>Notes</th>
                             <th className={styles.actionCell}>Actions</th>
                         </tr>
@@ -351,6 +545,9 @@ function PurchaseItems({
                                         value={line.discount}
                                         onChange={event => update(line.key, { discount: event.target.value })}
                                     />
+                                </td>
+                                <td>
+                                    <input aria-label="CondiÃ§Ã£o do item" maxLength={1000} value={line.conditionDescription} onChange={event => update(line.key, { conditionDescription: event.target.value })} />
                                 </td>
                                 <td>
                                     <input
@@ -544,11 +741,10 @@ function ProcurementSection({
                         </>
                     )}
                 </fieldset>
-
-                <div className={styles.actions}>
+<div className={styles.actions}>
                     <Button
                         type="submit"
-                        className="registration-yellow-button"
+                        className="comandos-accent-button"
                         disabled={busy}
                     >
                         {busy ? "Saving…" : "Save procurement"}

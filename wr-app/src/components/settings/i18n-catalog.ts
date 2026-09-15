@@ -71,7 +71,7 @@ export const translationPairs: TranslationPair[] = [
 
     // Purchases / procurement
     ["Purchase", "Compra"],
-    ["Purchases", "Compras"],
+    ["Purchases", "Aquisições"],
     ["Purchase history", "Histórico de compras"],
     ["Purchase items", "Itens da compra"],
     ["Purchase number", "Número da compra"],
@@ -783,6 +783,7 @@ export const translationPairs: TranslationPair[] = [
     ["Loading records...", "Carregando registros..."],
     ["Number", "Número"],
 
+    ["Select different source and destination units authorized by your profile.", "Seleciione unidades de origem e destino diferentes, autorizadas pelo seu perfil."],
 ]
 
 const englishToPortuguese = new Map<string, string>(translationPairs)

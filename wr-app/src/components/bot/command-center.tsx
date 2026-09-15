@@ -2181,16 +2181,16 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                 
                 <style jsx global>{`
                     .command-center .command-new-requirement-button {
-                        background: #4650d8 !important;
-                        background-color: #4650d8 !important;
-                        border-color: #4650d8 !important;
+                        background: var(--comandos-accent) !important;
+                        background-color: var(--comandos-accent) !important;
+                        border-color: var(--comandos-accent) !important;
                         color: #ffffff !important;
                     }
 
                     .command-center .command-new-requirement-button:hover:not(:disabled) {
-                        background: #3e47c4 !important;
-                        background-color: #3e47c4 !important;
-                        border-color: #3e47c4 !important;
+                        background: var(--comandos-accent-hover) !important;
+                        background-color: var(--comandos-accent-hover) !important;
+                        border-color: var(--comandos-accent-hover) !important;
                         color: #ffffff !important;
                     }
 

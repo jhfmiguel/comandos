@@ -5251,3 +5251,28 @@ th,
     }
     .command-sprint-new-requirement { width: 100% !important; }
 }
+/* Buttons that follow the Accent Color selected in COMANDOS preferences. */
+.comandos-accent-button,
+.comandos-accent-button.p-button {
+    background: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+    color: var(--comandos-accent-contrast, #ffffff) !important;
+}
+
+.comandos-accent-button:hover:not(:disabled),
+.comandos-accent-button.p-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--comandos-accent) 88%, black) !important;
+    border-color: color-mix(in srgb, var(--comandos-accent) 88%, black) !important;
+}
+
+.comandos-accent-button:active:not(:disabled),
+.comandos-accent-button.p-button:active:not(:disabled) {
+    background: color-mix(in srgb, var(--comandos-accent) 78%, black) !important;
+    border-color: color-mix(in srgb, var(--comandos-accent) 78%, black) !important;
+}
+
+.comandos-accent-button:focus-visible,
+.comandos-accent-button.p-button:focus-visible {
+    outline: 2px solid var(--comandos-accent) !important;
+    outline-offset: 2px;
+}

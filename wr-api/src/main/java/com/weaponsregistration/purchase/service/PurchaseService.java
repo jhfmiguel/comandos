@@ -1,5 +1,4 @@
 package com.weaponsregistration.purchase.service;
-
 import com.weaponsregistration.core.model.Organization;
 import com.weaponsregistration.inventory.model.ItemModel;
 import com.weaponsregistration.purchase.dto.PurchaseContract.*;
@@ -12,149 +11,61 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-
 @Service
 public class PurchaseService {
-    private final PurchaseRepository purchaseRepository;
-    private final ProcurementProcessRepository procurementRepository;
-    private final EntityManager entityManager;
-
-    public PurchaseService(PurchaseRepository purchaseRepository,
-                           ProcurementProcessRepository procurementRepository,
-                           EntityManager entityManager) {
-        this.purchaseRepository = purchaseRepository;
-        this.procurementRepository = procurementRepository;
-        this.entityManager = entityManager;
-    }
-
-    @Transactional
-    public PurchaseView create(CreatePurchaseRequest request) {
-        if (request == null || request.buyerOrganizationId() == null)
-            throw new IllegalArgumentException("Buyer organization is required.");
-        if (request.purchaseNumber() == null || request.purchaseNumber().isBlank())
-            throw new IllegalArgumentException("Purchase number is required.");
-        if (request.items() == null || request.items().isEmpty())
-            throw new IllegalArgumentException("Purchase requires at least one item.");
-
-        Organization buyer = findOrganization(request.buyerOrganizationId());
-        Organization supplier = request.supplierOrganizationId() == null
-            ? null : findOrganization(request.supplierOrganizationId());
-
-        Purchase purchase = new Purchase();
-        purchase.buyerOrganization = buyer;
-        purchase.supplierOrganization = supplier;
-        purchase.purchaseNumber = request.purchaseNumber().trim();
-        purchase.purchaseDate = request.purchaseDate() == null ? LocalDate.now() : request.purchaseDate();
-        purchase.notes = request.notes();
-
-        for (CreatePurchaseItemRequest r : request.items()) {
-            if (r.itemModelId() == null || r.quantity() == null ||
-                r.quantity().compareTo(BigDecimal.ZERO) <= 0)
-                throw new IllegalArgumentException("Valid item and quantity are required.");
-            if (r.unitPrice() == null || r.unitPrice().compareTo(BigDecimal.ZERO) < 0)
-                throw new IllegalArgumentException("Unit price cannot be negative.");
-
-            ItemModel model = entityManager.find(ItemModel.class, r.itemModelId());
-            if (model == null) throw new EntityNotFoundException("ItemModel not found: " + r.itemModelId());
-
-            PurchaseItem item = new PurchaseItem();
-            item.purchase = purchase;
-            item.itemModel = model;
-            item.quantity = r.quantity();
-            item.unitPrice = r.unitPrice();
-            item.discount = r.discount() == null ? BigDecimal.ZERO : r.discount();
-            item.notes = r.notes();
-            purchase.items.add(item);
-        }
-
-        purchase.recalculateTotals();
-        return toView(purchaseRepository.save(purchase));
-    }
-
-    @Transactional
-    public PurchaseView configureProcurement(Long purchaseId, CreateProcurementRequest request) {
-        Purchase purchase = findPurchase(purchaseId);
-        if (request == null || request.procurementMethod() == null)
-            throw new IllegalArgumentException("Procurement method is required.");
-
-        boolean isPublic = Boolean.TRUE.equals(purchase.buyerOrganization.publicOrganization);
-        if (isPublic && request.procurementMethod() == ProcurementMethod.NOT_REQUIRED)
-            throw new IllegalArgumentException("Public organization requires procurement.");
-        if (!isPublic && request.procurementMethod() != ProcurementMethod.NOT_REQUIRED)
-            throw new IllegalArgumentException("Private organization does not require public procurement.");
-        if (request.procurementMethod() == ProcurementMethod.BIDDING && request.biddingModality() == null)
-            throw new IllegalArgumentException("Bidding modality is required.");
-        if (request.procurementMethod() == ProcurementMethod.DIRECT_CONTRACTING &&
-            request.directContractingType() == null)
-            throw new IllegalArgumentException("Direct contracting type is required.");
-        if (request.procurementMethod() == ProcurementMethod.DIRECT_CONTRACTING &&
-            (request.legalBasis() == null || request.legalBasis().isBlank()))
-            throw new IllegalArgumentException("Legal basis is required.");
-
-        ProcurementProcess process = purchase.procurementProcess == null
-            ? new ProcurementProcess() : purchase.procurementProcess;
-        process.organization = purchase.buyerOrganization;
-        process.processNumber = request.processNumber();
-        process.objectDescription = request.objectDescription();
-        process.justification = request.justification();
-        process.procurementMethod = request.procurementMethod();
-        process.biddingModality = request.biddingModality();
-        process.directContractingType = request.directContractingType();
-        process.estimatedValue = request.estimatedValue() == null ? purchase.total : request.estimatedValue();
-        process.legalBasis = request.legalBasis();
-        process.supplierChoiceReason = request.supplierChoiceReason();
-        process.priceJustification = request.priceJustification();
-
-        purchase.procurementProcess = procurementRepository.save(process);
-        purchase.status = request.procurementMethod() == ProcurementMethod.NOT_REQUIRED
-            ? PurchaseStatus.AUTHORIZED : PurchaseStatus.PROCUREMENT_IN_PROGRESS;
-        return toView(purchaseRepository.save(purchase));
-    }
-
-    @Transactional(readOnly = true)
-    public PurchaseView get(Long id) { return toView(findPurchase(id)); }
-
-    @Transactional(readOnly = true)
-    public List<PurchaseView> list(Long organizationId) {
-        return purchaseRepository.findByBuyerOrganizationIdOrderByCreatedAtDesc(organizationId)
-            .stream().map(this::toView).toList();
-    }
-
-    @Transactional
-    public PurchaseView cancel(Long id) {
-        Purchase purchase = findPurchase(id);
-        if (purchase.status == PurchaseStatus.RECEIVED)
-            throw new IllegalStateException("Received purchase cannot be cancelled.");
-        purchase.status = PurchaseStatus.CANCELLED;
-        return toView(purchaseRepository.save(purchase));
-    }
-
-    private Organization findOrganization(Long id) {
-        Organization value = entityManager.find(Organization.class, id);
-        if (value == null) throw new EntityNotFoundException("Organization not found: " + id);
-        return value;
-    }
-
-    private Purchase findPurchase(Long id) {
-        return purchaseRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Purchase not found: " + id));
-    }
-
-    private PurchaseView toView(Purchase p) {
-        ProcurementView procurement = null;
-        if (p.procurementProcess != null) {
-            ProcurementProcess x = p.procurementProcess;
-            procurement = new ProcurementView(x.id, x.processNumber, x.procurementMethod,
-                x.biddingModality, x.directContractingType, x.status, x.estimatedValue, x.legalBasis);
-        }
-        List<PurchaseItemView> items = p.items.stream()
-            .map(i -> new PurchaseItemView(i.id, i.itemModel.id, i.itemModel.name,
-                i.quantity, i.receivedQuantity, i.unitPrice, i.discount, i.calculateTotal()))
-            .toList();
-        return new PurchaseView(p.id, p.buyerOrganization.id, p.buyerOrganization.name,
-            p.supplierOrganization == null ? null : p.supplierOrganization.id,
-            p.supplierOrganization == null ? null : p.supplierOrganization.name,
-            p.purchaseNumber, p.purchaseDate, p.status, p.subtotal, p.discount,
-            p.freight, p.taxes, p.total, procurement, items);
-    }
+ private final PurchaseRepository purchases; private final ProcurementProcessRepository procurements; private final EntityManager em;
+ public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){this.purchases=p;this.procurements=pr;this.em=em;}
+ @Transactional public PurchaseView create(CreatePurchaseRequest r){
+  if(r==null||r.buyerOrganizationId()==null)throw new IllegalArgumentException("Buyer organization is required.");
+  if(blank(r.purchaseNumber()))throw new IllegalArgumentException("Acquisition number is required.");
+  if(r.items()==null||r.items().isEmpty())throw new IllegalArgumentException("Acquisition requires at least one item.");
+  Purchase p=new Purchase();p.buyerOrganization=org(r.buyerOrganizationId());p.supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());
+  p.acquisitionType=r.acquisitionType()==null?AcquisitionType.ONEROUS:r.acquisitionType();p.originDescription=trim(r.originDescription());
+  p.purchaseNumber=r.purchaseNumber().trim();p.purchaseDate=r.purchaseDate()==null?LocalDate.now():r.purchaseDate();
+  p.discount=money(r.discount());p.freight=money(r.freight());p.taxes=money(r.taxes());p.otherCosts=money(r.otherCosts());
+  p.paymentConditions=trim(r.paymentConditions());p.deliveryConditions=trim(r.deliveryConditions());p.warrantyConditions=trim(r.warrantyConditions());p.notes=trim(r.notes());
+  if(p.acquisitionType==AcquisitionType.ONEROUS&&p.supplierOrganization==null)throw new IllegalArgumentException("Supplier is required for onerous acquisition.");
+  if(p.acquisitionType==AcquisitionType.FREE&&p.supplierOrganization==null&&blank(p.originDescription))throw new IllegalArgumentException("Origin is required for free acquisition.");
+  for(CreatePurchaseItemRequest x:r.items()){
+   if(x.itemModelId()==null||x.quantity()==null||x.quantity().signum()<=0)throw new IllegalArgumentException("Valid item and quantity are required.");
+   ItemModel m=em.find(ItemModel.class,x.itemModelId());if(m==null)throw new EntityNotFoundException("ItemModel not found: "+x.itemModelId());
+   PurchaseItem i=new PurchaseItem();i.purchase=p;i.itemModel=m;i.quantity=x.quantity();i.unitPrice=p.acquisitionType==AcquisitionType.FREE?BigDecimal.ZERO:money(x.unitPrice());
+   i.discount=p.acquisitionType==AcquisitionType.FREE?BigDecimal.ZERO:money(x.discount());i.conditionDescription=trim(x.conditionDescription());i.notes=trim(x.notes());p.items.add(i);
+  }
+  if(p.acquisitionType==AcquisitionType.FREE){p.discount=BigDecimal.ZERO;p.freight=BigDecimal.ZERO;p.taxes=BigDecimal.ZERO;p.otherCosts=BigDecimal.ZERO;}
+  if(r.documents()!=null)for(DocumentRequest x:r.documents()){if(x.documentType()==null)throw new IllegalArgumentException("Document type is required.");
+   AcquisitionDocument d=new AcquisitionDocument();d.purchase=p;d.documentType=x.documentType();d.documentNumber=trim(x.documentNumber());d.issueDate=x.issueDate();
+   d.issuer=trim(x.issuer());d.amount=x.amount()==null?null:money(x.amount());d.storageReference=trim(x.storageReference());d.notes=trim(x.notes());p.documents.add(d);}
+  p.recalculateTotals();return view(purchases.save(p));
+ }
+ @Transactional public PurchaseView configureProcurement(Long id,CreateProcurementRequest r){
+  Purchase p=find(id);boolean pub=Boolean.TRUE.equals(p.buyerOrganization.publicOrganization);
+  if(r==null||r.procurementMethod()==null)throw new IllegalArgumentException("Procurement method is required.");
+  if(!pub&&r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Private acquisition must not be forced into public procurement.");
+  if(pub&&p.acquisitionType==AcquisitionType.ONEROUS&&r.procurementMethod()==ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Public onerous acquisition requires an applicable procurement/direct-contracting process.");
+  if(r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED&&blank(r.processNumber()))throw new IllegalArgumentException("Process number is required.");
+  if(r.procurementMethod()==ProcurementMethod.BIDDING&&r.biddingModality()==null)throw new IllegalArgumentException("Bidding modality is required.");
+  if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&r.directContractingType()==null)throw new IllegalArgumentException("Direct contracting type is required.");
+  if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.legalBasis()))throw new IllegalArgumentException("Legal basis is required.");
+  if(r.procurementMethod()==ProcurementMethod.NOT_REQUIRED){p.procurementProcess=null;p.status=PurchaseStatus.AUTHORIZED;return view(purchases.save(p));}
+  ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organization=p.buyerOrganization;x.processNumber=r.processNumber().trim();
+  x.objectDescription=r.objectDescription();x.justification=r.justification();x.procurementMethod=r.procurementMethod();x.biddingModality=r.procurementMethod()==ProcurementMethod.BIDDING?r.biddingModality():null;
+  x.directContractingType=r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING?r.directContractingType():null;x.estimatedValue=r.estimatedValue()==null?p.total:r.estimatedValue();
+  x.legalBasis=r.legalBasis();x.supplierChoiceReason=r.supplierChoiceReason();x.priceJustification=r.priceJustification();p.procurementProcess=procurements.save(x);p.status=PurchaseStatus.PROCUREMENT_IN_PROGRESS;
+  return view(purchases.save(p));
+ }
+ @Transactional(readOnly=true) public PurchaseView get(Long id){return view(find(id));}
+ @Transactional(readOnly=true) public List<PurchaseView> list(Long organizationId){return purchases.findByBuyerOrganizationIdOrderByCreatedAtDesc(organizationId).stream().map(this::view).toList();}
+ @Transactional public PurchaseView cancel(Long id){Purchase p=find(id);if(p.status==PurchaseStatus.RECEIVED)throw new IllegalStateException("Received acquisition cannot be cancelled.");p.status=PurchaseStatus.CANCELLED;return view(purchases.save(p));}
+ private PurchaseView view(Purchase p){
+  ProcurementView pv=null;if(p.procurementProcess!=null){var x=p.procurementProcess;pv=new ProcurementView(x.id,x.processNumber,x.procurementMethod,x.biddingModality,x.directContractingType,x.status,x.estimatedValue,x.legalBasis);}
+  var iv=p.items.stream().map(i->new PurchaseItemView(i.id,i.itemModel.id,i.itemModel.name,i.quantity,i.receivedQuantity,i.unitPrice,i.discount,i.calculateTotal(),i.conditionDescription)).toList();
+  var dv=p.documents.stream().map(d->new DocumentView(d.id,d.documentType,d.documentNumber,d.issueDate,d.issuer,d.amount,d.storageReference,d.notes)).toList();
+  return new PurchaseView(p.id,p.buyerOrganization.id,p.buyerOrganization.name,p.buyerOrganization.publicOrganization,p.supplierOrganization==null?null:p.supplierOrganization.id,p.supplierOrganization==null?null:p.supplierOrganization.name,
+   p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
+ }
+ private Organization org(Long id){Organization o=em.find(Organization.class,id);if(o==null)throw new EntityNotFoundException("Organization not found: "+id);return o;}
+ private Purchase find(Long id){return purchases.findById(id).orElseThrow(()->new EntityNotFoundException("Purchase not found: "+id));}
+ private BigDecimal money(BigDecimal v){if(v==null)return BigDecimal.ZERO;if(v.signum()<0)throw new IllegalArgumentException("Financial values cannot be negative.");return v;}
+ private String trim(String v){return v==null?null:v.trim();}private boolean blank(String v){return v==null||v.isBlank();}
 }
