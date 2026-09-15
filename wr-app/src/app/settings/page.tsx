@@ -28,7 +28,8 @@ const fixedPalettes: ComandosPalette[] = [
     "orange",
     "pink",
     "black",
-    "gray"
+    "gray",
+    "white"
 ]
 
 export default function SettingsPage() {

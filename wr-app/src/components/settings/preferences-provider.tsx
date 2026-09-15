@@ -19,6 +19,7 @@ export type ComandosPalette =
     | "orange"
     | "black"
     | "gray"
+    | "white"
     | "pink"
     | "custom"
 
@@ -49,6 +50,7 @@ type TranslationKey =
     | "orange"
     | "black"
     | "gray"
+    | "white"
     | "savedAutomatically"
     | "botWorking"
     | "botWaiting"
@@ -101,6 +103,7 @@ const uiTranslations: Record<
         custom: "Personalizada",
         black: "Preta",
         gray: "Cinza",
+        white: "Branco",
         savedAutomatically:
             "As preferências são salvas automaticamente neste navegador.",
         botWorking: "trabalhando",
@@ -138,6 +141,7 @@ const uiTranslations: Record<
         custom: "Custom",
         black: "Black",
         gray: "Gray",
+        white: "White",
         savedAutomatically:
             "Preferences are saved automatically in this browser.",
         botWorking: "working",
@@ -232,7 +236,8 @@ const readClientSnapshot = (): PreferenceSnapshot => {
             palette === "custom" ||
             palette === "pink" ||
             palette === "black" ||
-            palette === "gray"
+            palette === "gray" ||
+            palette === "white"
                 ? palette
                 : defaults.palette
     }

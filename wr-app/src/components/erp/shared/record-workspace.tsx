@@ -20,6 +20,7 @@ import type {
 } from "@primereact/ui/datatable";
 
 import { Paginator } from "@primereact/ui/paginator";
+import { Tabs } from "@primereact/ui/tabs";
 
 import type {
     PaginatorPagesInstance,
@@ -95,19 +96,30 @@ function errorMessage(error: unknown): string {
 }
 
 
-export function RecordWorkspace({ module, title, initialResource, description, showNavigation = true }: {
+export function RecordWorkspace({
+    module,
+    title,
+    initialResource,
+    description,
+    showNavigation = true,
+    tabs
+}: {
     module: ErpModule;
     title: string;
     initialResource: string;
     description: string;
     showNavigation?: boolean;
+    tabs?: Array<{
+        resource: string;
+        label: string;
+    }>;
 }) {
 
     const service = React.useMemo(() => createErpService(module), [module]);
     const { session } = useSession();
     const { tr } = useComandosPreferences();
     const accessRevision = JSON.stringify(session?.access);
-    
+
     const [catalog, setCatalog] = React.useState<ErpResource[]>([]);
     const [catalogLoaded, setCatalogLoaded] = React.useState(false);
     const [selected, setSelected] = React.useState(initialResource);
@@ -119,9 +131,14 @@ export function RecordWorkspace({ module, title, initialResource, description, s
         const controller = new AbortController();
 
         service.catalog(controller.signal).then(data => {
-            if (!controller.signal.aborted) { setCatalog(data); setCatalogLoaded(true); }
+            if (!controller.signal.aborted) {
+                setCatalog(data);
+                setCatalogLoaded(true);
+            }
         }).catch(error => {
-            if (!controller.signal.aborted) setError(errorMessage(error));
+            if (!controller.signal.aborted) {
+                setError(errorMessage(error));
+            }
         });
 
         return () => controller.abort();
@@ -149,73 +166,174 @@ export function RecordWorkspace({ module, title, initialResource, description, s
     const resource = catalog.find(
         (item) => item.key === selectedResourceKey
     ) ?? catalog[0];
-    
+
+    const workspaceTabs = tabs ?? [];
+
     return (
 
         <Layout title={tr(title)}>
 
             <div className={styles.workspace}>
-                
+
                 <p className={styles.intro}>{tr(description)}</p>
-                
+
                 {error && <Message type="error" text={error} />}
-                {error && <Button type="button" onClick={() => { setError(""); setRetry(value => value + 1); }}>{tr("Retry")}</Button>}
-                {!catalogLoaded && !error && <p role="status">{tr("Loading records…")}</p>}
-                {catalogLoaded && !catalog.length && <Message type="info" text={tr("No resources are available for your access profile.")} />}
+                {error && (
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            setError("");
+                            setRetry(value => value + 1);
+                        }}
+                    >
+                        {tr("Retry")}
+                    </Button>
+                )}
+
+                {!catalogLoaded && !error && (
+                    <p role="status">{tr("Loading records…")}</p>
+                )}
+
+                {catalogLoaded && !catalog.length && (
+                    <Message
+                        type="info"
+                        text={tr("No resources are available for your access profile.")}
+                    />
+                )}
+
                 {!!catalog.length && (
-                    
-                    <div className={showNavigation ? styles.shell : `${styles.shell} ${styles.shellSingle}`}>
-                        
+
+                    <div
+                        className={
+                            showNavigation
+                                ? styles.shell
+                                : `${styles.shell} ${styles.shellSingle}`
+                        }
+                    >
+
                         {showNavigation && (
 
-                        
-                            <nav aria-label={`${title} resources`} className={styles.navigation}>
+                            <nav
+                                aria-label={`${title} resources`}
+                                className={styles.navigation}
+                            >
 
-                        
-                                                        {[...new Set(catalog.map(item => item.group))].map(group => (
+                                {[...new Set(catalog.map(item => item.group))].map(group => (
 
-                        
-                                                            <div key={group}>
+                                    <div key={group}>
 
-                        
-                                                                
+                                        <p className={styles.group}>
+                                            {tr(group)}
+                                        </p>
 
-                        
-                                                                <p className={styles.group}>{tr(group)}</p>
+                                        {catalog
+                                            .filter(item => item.group === group)
+                                            .map(item => (
 
-                        
-                                                                {catalog.filter(item => item.group === group).map(item => (
+                                                <button
+                                                    key={item.key}
+                                                    type="button"
+                                                    aria-current={
+                                                        resource?.key === item.key
+                                                            ? "page"
+                                                            : undefined
+                                                    }
+                                                    onClick={() => setSelected(item.key)}
+                                                >
+                                                    {tr(item.label)}
+                                                </button>
 
-                        
-                                                                    <button key={item.key} type="button" aria-current={resource?.key === item.key ? "page" : undefined}
+                                            ))
+                                        }
 
-                        
-                                                                        onClick={() => setSelected(item.key)}>{tr(item.label)}</button>
+                                    </div>
 
-                        
-                                                                ))}
+                                ))}
 
-                        
-                            
+                            </nav>
 
-                        
-                                                            </div>
-
-                        
-                                                        ))}
-
-                        
-                                                    </nav>
-
-                        
                         )}
-                        {resource && <ResourcePanel key={resource.key} resource={resource} service={service} />}
+
+                        {!!workspaceTabs.length ? (
+
+                            <Tabs.Root
+                                defaultValue={workspaceTabs[0].resource}
+                                selectOnFocus
+                            >
+
+                                <Tabs.List>
+
+                                    {workspaceTabs.map((tab) => (
+
+                                        <Tabs.Tab
+                                            key={tab.resource}
+                                            value={tab.resource}
+                                        >
+                                            {tr(tab.label)}
+                                        </Tabs.Tab>
+
+                                    ))}
+
+                                    <Tabs.Indicator />
+
+                                </Tabs.List>
+
+                                <Tabs.Panels>
+
+                                    {workspaceTabs.map((tab) => {
+
+                                        const tabResource = catalog.find(
+                                            (item) =>
+                                                item.key === tab.resource ||
+                                                normalizeResourceName(item.label) === tab.resource
+                                        );
+
+                                        return (
+
+                                            <Tabs.Panel
+                                                key={tab.resource}
+                                                value={tab.resource}
+                                            >
+
+                                                {tabResource && (
+                                                    <ResourcePanel
+                                                        resource={tabResource}
+                                                        service={service}
+                                                    />
+                                                )}
+
+                                            </Tabs.Panel>
+
+                                        );
+
+                                    })}
+
+                                </Tabs.Panels>
+
+                            </Tabs.Root>
+
+                        ) : (
+
+                            resource && (
+                                <ResourcePanel
+                                    key={resource.key}
+                                    resource={resource}
+                                    service={service}
+                                />
+                            )
+
+                        )}
 
                     </div>
+
                 )}
+
             </div>
+
         </Layout>
+
     );
+
 }
 
 function getErpServerFilters(

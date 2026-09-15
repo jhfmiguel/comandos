@@ -4060,3 +4060,496 @@ html[data-theme="dark"] .comandos-custom-color-popup {
     object-fit: contain !important;
 }
 /* COMANDOS_SIDEBAR_LOGO_SMALL_END */
+
+/* COMANDOS_WHITE_PALETTE_V7_START */
+:root[data-palette="white"] {
+    --comandos-accent: #ffffff;
+    --comandos-accent-hover: #f2f2f2;
+    --comandos-accent-strong: #e6e6e6;
+    --comandos-accent-rgb: 255, 255, 255;
+    --comandos-accent-contrast: #1f1f1f;
+}
+
+.palette-preview-white {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(127, 127, 127, 0.55) !important;
+}
+/* COMANDOS_WHITE_PALETTE_V7_END */
+
+/* COMANDOS_WHITE_PALETTE_VISUAL_FIX_V1_START */
+
+/*
+ * Paleta branca:
+ * usa os mesmos tokens que governam as demais paletas do ERP.
+ * O sistema existente usa --comandos-accent, --comandos-accent-hover,
+ * --comandos-accent-soft e ainda possui componentes antigos ligados
+ * a --comandos-yellow. Por isso ambos precisam ser sincronizados.
+ */
+html[data-palette="white"],
+:root[data-palette="white"] {
+    --comandos-accent: #ffffff !important;
+    --comandos-accent-hover: #f2f2f2 !important;
+    --comandos-accent-soft: rgba(255, 255, 255, 0.18) !important;
+
+    --comandos-yellow: #ffffff !important;
+    --comandos-yellow-soft: #f2f2f2 !important;
+    --comandos-yellow-muted: #d9d9d9 !important;
+}
+
+/* A amostra da paleta deve ser efetivamente branca. */
+html[data-palette="white"] .palette-preview-white,
+:root[data-palette="white"] .palette-preview-white,
+.palette-preview-white {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #b8b8b8 !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+        0 0 0 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Botao da propria paleta branca selecionada. */
+html[data-palette="white"] .comandos-palette-circle-button.is-selected,
+html[data-palette="white"] .comandos-settings-page button.is-selected {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.20) !important;
+}
+
+/*
+ * Componentes da tela de configuracoes que ainda usam
+ * --comandos-yellow diretamente.
+ */
+html[data-palette="white"] .comandos-settings-kicker {
+    color: #ffffff !important;
+}
+
+html[data-palette="white"] .comandos-theme-options button.is-selected,
+html[data-palette="white"] .comandos-theme-icon-button.is-selected {
+    border-color: #ffffff !important;
+    outline-color: #ffffff !important;
+    box-shadow: 0 0 0 1px #ffffff !important;
+}
+
+html[data-palette="white"] .comandos-theme-options button.is-selected svg,
+html[data-palette="white"] .comandos-theme-icon-button.is-selected svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+/* Foco e destaque passam a seguir a paleta branca. */
+html[data-palette="white"] input:focus,
+html[data-palette="white"] textarea:focus,
+html[data-palette="white"] select:focus,
+html[data-palette="white"] .p-inputtext:focus,
+html[data-palette="white"] [data-scope="datatable"] input:focus {
+    border-color: #ffffff !important;
+    outline-color: #ffffff !important;
+    box-shadow: 0 0 0 1px #ffffff !important;
+}
+
+/* Elementos institucionais e navegacao que usam o accent global. */
+html[data-palette="white"] .comandos-sidebar-brand,
+html[data-palette="white"] .comandos-sidebar-brand span,
+html[data-palette="white"] .comandos-sidebar-brand svg,
+html[data-palette="white"] .comandos-sidebar-skull,
+html[data-palette="white"] .comandos-sidebar-skull-detail {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+/* Botoes governados pela paleta precisam manter texto legivel no branco. */
+html[data-palette="white"] .registration-yellow-button,
+html[data-palette="white"] .prime-yellow-button,
+html[data-palette="white"] .command-center .command-button,
+html[data-palette="white"] .command-center .command-button-primary,
+html[data-palette="white"] .comandos-taskboard .taskboard-add-button {
+    background-color: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #171717 !important;
+}
+
+html[data-palette="white"] .registration-yellow-button svg,
+html[data-palette="white"] .prime-yellow-button svg,
+html[data-palette="white"] .command-center .command-button svg,
+html[data-palette="white"] .command-center .command-button-primary svg,
+html[data-palette="white"] .comandos-taskboard .taskboard-add-button svg {
+    color: #171717 !important;
+    stroke: #171717 !important;
+}
+
+html[data-palette="white"] .registration-yellow-button:hover:not(:disabled),
+html[data-palette="white"] .prime-yellow-button:hover:not(:disabled),
+html[data-palette="white"] .command-center .command-button:hover:not(:disabled),
+html[data-palette="white"] .command-center .command-button-primary:hover:not(:disabled),
+html[data-palette="white"] .comandos-taskboard .taskboard-add-button:hover:not(:disabled) {
+    background-color: #f2f2f2 !important;
+    border-color: #f2f2f2 !important;
+    color: #171717 !important;
+}
+
+/* COMANDOS_WHITE_PALETTE_VISUAL_FIX_V1_END */
+
+/* COMANDOS_MAIN_HEADER_MATCH_MAIN_START */
+/*
+ * O header superior pertence visualmente ao Main.
+ * Usa exatamente o mesmo token de fundo do Sidebar.Main,
+ * preservando automaticamente os modos claro/escuro.
+ */
+html[data-theme] .comandos-sidebar-main,
+html[data-theme] .comandos-main-header {
+    background: var(--comandos-bg) !important;
+    background-color: var(--comandos-bg) !important;
+}
+
+html[data-theme] .comandos-main-header {
+    border-color: var(--comandos-border-soft) !important;
+}
+/* COMANDOS_MAIN_HEADER_MATCH_MAIN_END */
+
+/* COMANDOS_ERP_FORM_PALETTE_SYNC_START */
+/*
+ * Formularios abertos por "+ Novo Registro":
+ * todos os destaques visuais passam a seguir a paleta ativa.
+ */
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+input:not([type="checkbox"]):not([type="radio"]):focus,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"] select:focus,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"] textarea:focus,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"] .p-inputtext:focus,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+[data-scope="inputtext"]:focus,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+[data-scope="select"][data-part="root"]:focus-within,
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+.p-select:focus-within {
+    border-color: var(--comandos-accent) !important;
+    box-shadow:
+        0 0 0 1px var(--comandos-accent) !important;
+    outline: none !important;
+}
+
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+input[type="checkbox"],
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+input[type="radio"] {
+    accent-color: var(--comandos-accent) !important;
+}
+
+/*
+ * Botoes normais do formulario (Salvar/Atualizar/Voltar/etc.)
+ * acompanham accent / hover / strong da paleta.
+ * Danger continua preservado.
+ */
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+button:not(.p-button-danger):not([data-severity="danger"]) {
+    background-color: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+    color: var(--comandos-accent-contrast) !important;
+}
+
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+button:not(.p-button-danger):not([data-severity="danger"])
+:hover:not(:disabled) {
+    background-color: var(--comandos-accent-hover) !important;
+    border-color: var(--comandos-accent-hover) !important;
+    color: var(--comandos-accent-contrast) !important;
+}
+
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+button:not(.p-button-danger):not([data-severity="danger"])
+:active:not(:disabled) {
+    background-color: var(--comandos-accent-strong) !important;
+    border-color: var(--comandos-accent-strong) !important;
+    color: var(--comandos-accent-contrast) !important;
+}
+
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+button:not(.p-button-danger):not([data-severity="danger"])
+:focus-visible {
+    background-color: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+    color: var(--comandos-accent-contrast) !important;
+    box-shadow:
+        0 0 0 0.2rem
+        rgba(var(--comandos-accent-rgb), 0.30) !important;
+    outline: none !important;
+}
+
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+button:not(.p-button-danger):not([data-severity="danger"])
+:disabled {
+    background-color: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+    color: var(--comandos-accent-contrast) !important;
+}
+
+/*
+ * Componentes PrimeReact compostos que podem aparecer nos formulários.
+ */
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+[data-scope="select"][data-part="root"][data-focus-visible],
+html[data-theme][data-palette] form[data-comandos-erp-form="true"]
+[data-scope="select"][data-part="root"][data-state="open"] {
+    border-color: var(--comandos-accent) !important;
+    box-shadow:
+        0 0 0 1px var(--comandos-accent) !important;
+}
+
+/* COMANDOS_ERP_FORM_PALETTE_SYNC_END */
+
+/* COMANDOS_SIDEBAR_LOGO_SIZE_POSITION_START */
+/*
+ * Logo do menu lateral expandido:
+ * - aumenta levemente em relacao aos 5.5rem atuais;
+ * - aproxima a logo do topo reduzindo o espaco superior.
+ */
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-brand {
+    margin-top: -0.35rem !important;
+}
+
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo {
+    width: 6rem !important;
+    height: 6rem !important;
+    margin-top: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo-image {
+    width: 6rem !important;
+    height: 6rem !important;
+    max-width: 6rem !important;
+    max-height: 6rem !important;
+    object-fit: contain !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_SIZE_POSITION_END */
+
+/* COMANDOS_SIDEBAR_LOGO_TOP_ALIGN_START */
+/*
+ * Alinha verticalmente a logo do menu, aberto ou recolhido,
+ * com o icone Sidebar do cabecalho principal.
+ * O SVG do Sidebar.Trigger nao possui margin-top adicional,
+ * portanto a referencia de alinhamento e margin-top: 0.
+ */
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-brand,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-brand,
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo,
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo-image,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo-image {
+    margin-top: 0 !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_TOP_ALIGN_END */
+
+/* COMANDOS_SIDEBAR_BRAND_NO_PADDING_START */
+/* Remove todo o padding do link que envolve a logo do menu lateral. */
+.comandos-sidebar-brand {
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+}
+/* COMANDOS_SIDEBAR_BRAND_NO_PADDING_END */
+
+/* COMANDOS_SIDEBAR_LOGO_TRIGGER_ALIGN_START */
+/*
+ * O Sidebar.Trigger do header fica dentro de um header h-12 (3rem),
+ * centralizado por items-center. Para a logo começar na mesma linha
+ * visual do botão, removemos espacamentos do header/menu da sidebar
+ * e posicionamos o brand no topo da mesma faixa de 3rem.
+ */
+.comandos-sidebar [data-scope="sidebar"][data-part="header"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.comandos-sidebar [data-scope="sidebar"][data-part="menu"] {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.comandos-sidebar [data-scope="sidebar"][data-part="menuitem"]:has(.comandos-sidebar-brand) {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.comandos-sidebar .comandos-sidebar-brand {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    min-height: 3rem !important;
+    height: 3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.comandos-sidebar .comandos-sidebar-logo,
+.comandos-sidebar .comandos-sidebar-logo-image {
+    margin-top: 0 !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_TRIGGER_ALIGN_END */
+
+/* COMANDOS_SIDEBAR_BRAND_MATCH_LOGO_START */
+/*
+ * O <a>.comandos-sidebar-brand passa a ter exatamente
+ * a mesma largura e altura da logomarca em cada estado.
+ */
+.comandos-sidebar[data-state="expanded"] {
+    --comandos-sidebar-logo-size: 6rem;
+}
+
+.comandos-sidebar[data-state="collapsed"] {
+    --comandos-sidebar-logo-size: 1.25rem;
+}
+
+.comandos-sidebar .comandos-sidebar-brand,
+.comandos-sidebar .comandos-sidebar-logo,
+.comandos-sidebar .comandos-sidebar-logo-image {
+    width: var(--comandos-sidebar-logo-size) !important;
+    height: var(--comandos-sidebar-logo-size) !important;
+    min-width: var(--comandos-sidebar-logo-size) !important;
+    min-height: var(--comandos-sidebar-logo-size) !important;
+    max-width: var(--comandos-sidebar-logo-size) !important;
+    max-height: var(--comandos-sidebar-logo-size) !important;
+    box-sizing: border-box !important;
+}
+
+.comandos-sidebar .comandos-sidebar-brand {
+    padding: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.comandos-sidebar .comandos-sidebar-logo-image {
+    object-fit: contain !important;
+}
+/* COMANDOS_SIDEBAR_BRAND_MATCH_LOGO_END */
+
+/* COMANDOS_SIDEBAR_BRAND_MATCH_LOGO_HEIGHT_START */
+/*
+ * O link .comandos-sidebar-brand passa a ter exatamente a mesma
+ * altura da logo em cada estado do menu.
+ */
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-brand {
+    height: 6rem !important;
+    min-height: 6rem !important;
+    max-height: 6rem !important;
+    padding: 0 !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-brand {
+    height: 1.25rem !important;
+    min-height: 1.25rem !important;
+    max-height: 1.25rem !important;
+    padding: 0 !important;
+}
+/* COMANDOS_SIDEBAR_BRAND_MATCH_LOGO_HEIGHT_END */
+
+/* COMANDOS_SIDEBAR_LOGO_MENU_MARGIN_RESET_START */
+/*
+ * Primeiro Sidebar.Menu dentro do Sidebar.Header:
+ * este e exclusivamente o container da logomarca.
+ */
+.comandos-sidebar .p-sidebar-header > .p-sidebar-menu {
+    margin-top: 20px !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_MENU_MARGIN_RESET_END */
+
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_LARGER_START */
+/* Aumenta somente a logomarca quando a sidebar esta recolhida. */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    min-height: 2.5rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo-image {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    min-height: 2.5rem !important;
+    max-width: 2.5rem !important;
+    max-height: 2.5rem !important;
+    object-fit: contain !important;
+}
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_LARGER_END */
+
+/* COMANDOS_SIDEBAR_LOGO_SIZE_TUNING_START */
+/* Novo aumento leve das logos nos dois estados da sidebar. */
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo,
+.comandos-sidebar[data-state="expanded"] .comandos-sidebar-logo-image {
+    width: 6.75rem !important;
+    height: 6.75rem !important;
+    min-width: 6.75rem !important;
+    min-height: 6.75rem !important;
+    max-width: 6.75rem !important;
+    max-height: 6.75rem !important;
+    object-fit: contain !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo-image {
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+    max-width: 3rem !important;
+    max-height: 3rem !important;
+    object-fit: contain !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_SIZE_TUNING_END */
+
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_FINAL_START */
+/* Logo da sidebar recolhida: maior e posicionada a 20px do topo. */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo-image {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    min-width: 3.5rem !important;
+    min-height: 3.5rem !important;
+    max-width: 3.5rem !important;
+    max-height: 3.5rem !important;
+    object-fit: contain !important;
+}
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_FINAL_END */
+
+/* COMANDOS_SIDEBAR_LOGO_SHARED_MARGIN_TOP_START */
+/*
+ * A logo grande e a pequena usam exatamente o mesmo afastamento superior.
+ * A margem e aplicada ao menu exclusivo da logomarca, independentemente
+ * de a sidebar estar expanded ou collapsed.
+ */
+.comandos-sidebar .p-sidebar-header > .p-sidebar-menu {
+    margin-top: 20px !important;
+}
+/* COMANDOS_SIDEBAR_LOGO_SHARED_MARGIN_TOP_END */
+
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_OFFSET_START */
+/* Desce somente a logomarca quando a sidebar esta recolhida. */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo {
+    transform: translateY(10px) !important;
+}
+/* COMANDOS_SIDEBAR_COLLAPSED_LOGO_OFFSET_END */
+
+/* COMANDOS_SIDEBAR_MENU_ITEMS_DOWN_START */
+/*
+ * Desce a area de navegacao sem alterar logo nem rodape.
+ */
+.comandos-sidebar .comandos-sidebar-content {
+    padding-top: 20px !important;
+}
+/* COMANDOS_SIDEBAR_MENU_ITEMS_DOWN_END */
+
+/* COMANDOS_SIDEBAR_NAV_GROUP_MARGIN_START */
+/* Margem superior aplicada ao grupo que contem os itens de navegacao. */
+.comandos-sidebar .comandos-sidebar-content > .p-sidebar-group {
+    margin-top: 20px !important;
+}
+/* COMANDOS_SIDEBAR_NAV_GROUP_MARGIN_END */

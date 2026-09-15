@@ -6,17 +6,17 @@ import { usePathname } from "next/navigation"
 import * as React from "react"
 
 import {
+    ArrowRightArrowLeft,
     Bell,
     ChevronDown,
     ChevronUp,
     Cog,
     Home,
-    ListCheck,
     Shield,
     SignOut,
+    SlidersV,
     Users
 } from "@primeicons/react"
-
 import { Avatar } from "@primereact/ui/avatar"
 import { Menu as PopupMenu } from "@primereact/ui/menu"
 import type { MenuRootOpenChangeEvent } from "@primereact/ui/menu"
@@ -148,7 +148,7 @@ export const Menu: React.FC = () => {
                                         menuKey="command-center"
                                         href="/bot"
                                         label={tr("Command Center")}
-                                        icon={ListCheck}
+                                        icon={SlidersV}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
@@ -234,7 +234,7 @@ export const Menu: React.FC = () => {
 
                                     <MenuItem
                                         menuKey="inventory"
-                                        label={tr("Assets and inventory")}
+                                        label={tr("Inventory")}
                                         icon={Shield}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
@@ -391,6 +391,10 @@ export const Menu: React.FC = () => {
                                                     {
                                                         href: "/erp/inventory?resource=stock-lots",
                                                         label: "Stock lots"
+                                                    },
+                                                    {
+                                                        href: "/erp/inventory-counts",
+                                                        label: "Physical inventory"
                                                     }
                                                 ]
                                             },
@@ -409,10 +413,11 @@ export const Menu: React.FC = () => {
                                             }
                                         ]}
                                     />
+
                                     <MenuItem
-                                        menuKey="equipment-movement"
-                                        label={tr("Equipment Movement")}
-                                        icon={Shield}
+                                        menuKey="transactions"
+                                        label={tr("Transactions")}
+                                        icon={ArrowRightArrowLeft}
                                         collapsed={!sidebarOpen}
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
@@ -451,9 +456,6 @@ export const Menu: React.FC = () => {
                                             }
                                         ]}
                                     />
-                                    <MenuItem menuKey="inventory-counts" href="/erp/inventory-counts" label={tr("Physical inventory")} icon={Shield}
-                                        collapsed={!sidebarOpen} selectedMenu={selectedMenu} onSelect={setSelectedMenu} />
-
                                     {can("audit", "READ") && <MenuItem
                                         menuKey="audit"
                                         href="/erp/audit"
