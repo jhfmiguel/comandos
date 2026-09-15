@@ -1,49 +1,27 @@
 import { FormatUtils } from "@4us-dev/utils"
+import type { ComandosLocale } from "utils/locale"
 
 const formatUtils = new FormatUtils()
 
-/**
- * Formats a raw numerical string into a Brazilian Date mask (DD/MM/YYYY).
- * @param value The raw string input from the field
- * @returns A formatted date string
- */
-export const formatDate = (value: string): string => {
-    
-    if (!value) return ''
-
-    // Extracts only the numeric digits from the input
-    const cleanData = formatUtils.formatOnlyIntegers(value).slice(0, 8)
-    const size = cleanData.length
-
-    if (size <= 2) {
-        return cleanData;
-    }
-    if (size <= 4) {
-        return cleanData.substring(0, 2) + '/' + cleanData.substring(2)
-    }
-    
-    // Returns the full mask (DD/MM/YYYY) for lengths greater than 4 up to 8
-    return cleanData.substring(0, 2) + '/' + cleanData.substring(2, 4) + '/' + cleanData.substring(4)
+export const formatDate = (value: string, _locale: ComandosLocale = "pt-BR"): string => {
+    if (!value) return ""
+    const digits = formatUtils.formatOnlyIntegers(value).slice(0, 8)
+    if (digits.length <= 2) return digits
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
 }
 
-
-/**
- * Converts a Brazilian date string (DD/MM/YYYY) into an ISO date string (YYYY-MM-DD).
- * @param dateStr The formatted Brazilian date string (e.g., "16/12/1982")
- * @returns An ISO date string (e.g., "1982-12-16") or an empty string if invalid
- */
-export const convertToIsoDate = (dateStr: string | undefined | null): string => {
-    if (!dateStr) return '';
-    
-    // Splits the string by the slash character
-    const parts = dateStr.split('/');
-    
-    // Checks if we have exactly day, month, and year parts
-    if (parts.length !== 3) return dateStr;
-
-    const [day, month, year] = parts;
-    
-    // Returns in the YYYY-MM-DD format expected by Java's LocalDate
-    return `${year}-${month}-${day}`;
-};
-
+export const convertToIsoDate = (
+    dateStr: string | undefined | null,
+    locale: ComandosLocale = "pt-BR"
+): string => {
+    if (!dateStr) return ""
+    const parts = dateStr.split("/")
+    if (parts.length !== 3) return dateStr
+    if (locale === "en-US") {
+        const [month, day, year] = parts
+        return `${year}-${month}-${day}`
+    }
+    const [day, month, year] = parts
+    return `${year}-${month}-${day}`
+}

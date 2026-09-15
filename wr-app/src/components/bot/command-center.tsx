@@ -16,6 +16,7 @@ import { AngleLeft } from "@primeicons/react/angle-left"
 import { AngleRight } from "@primeicons/react/angle-right"
 import { EllipsisH } from "@primeicons/react/ellipsis-h"
 import { Layout } from "components"
+import { notify } from "components/common/toast"
 import { ComandosTaskBoard } from "./comandos-task-board"
 import { ArrowUTurnUpLeft, Pause, Pencil, Play, Stop, Trash } from "@primeicons/react"
 
@@ -205,7 +206,13 @@ export function CommandCenter() {
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null)
     const [showSprintForm, setShowSprintForm] = useState(false)
     const [editingSprintKey, setEditingSprintKey] = useState<string | null>(null)
-    const [notice, setNotice] = useState("")
+    const setNotice = (message: string) => {
+        if (!message) return
+
+        notify.success({
+            description: message
+        })
+    }
     const [botStatus, setBotStatus] = useState<BotStatus>({
         state: "offline",
         message: "Worker ainda não iniciou.",
@@ -2217,18 +2224,6 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                         Planejamento local; execução real na fila abaixo
                     </div>
                 </div>
-
-                {notice && (
-                    <div className="command-notice">
-                        {notice}
-                        <button
-                            aria-label="Fechar aviso"
-                            onClick={() => setNotice("")}
-                        >
-                            <X size={15} />
-                        </button>
-                    </div>
-                )}
 
                 {showRequirementForm && (
                     <section className="requirement-form">

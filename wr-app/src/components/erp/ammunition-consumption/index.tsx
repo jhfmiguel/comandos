@@ -20,9 +20,13 @@ const errorText = (error: unknown) => axios.isAxiosError(error) && typeof error.
     ? error.response.data.detail : "Unable to complete the request. Check the API connection and try again.";
 type Selected = AmmunitionStockOption & { quantity: string; result: string };
 
-export function AmmunitionConsumptionWorkspace() {
+export function AmmunitionConsumptionPanel() {
     const [generation, setGeneration] = React.useState(0);
-    return <Layout title="Ammunition consumption"><ConsumptionForm key={generation} onNew={() => setGeneration(value => value + 1)} /></Layout>;
+    return <ConsumptionForm key={generation} onNew={() => setGeneration(value => value + 1)} />;
+}
+
+export function AmmunitionConsumptionWorkspace() {
+    return <Layout title="Ammunition consumption"><AmmunitionConsumptionPanel /></Layout>;
 }
 
 function ConsumptionForm({ onNew }: { onNew: () => void }) {

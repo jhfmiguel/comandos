@@ -8,6 +8,7 @@ import { formatReal } from "utils/money"
 
 // IMPORTED: Using the centralized numeric utility function
 import { formatOnlyNumbers } from "utils/numeric"
+import { useComandosPreferences } from "components/settings/preferences-provider"
 
 const formatUtils = new FormatUtils()
 
@@ -121,11 +122,12 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
     const { value, onChange, name, id, label, columnClasses, error, ...restProps } = props
 
     const safeValue = typeof value === "object" ? "" : (value ?? "")
+    const { locale } = useComandosPreferences()
 
     const onMoneyChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
         const input = event.currentTarget
         const digits = event.target.value.replace(/\D/g, "")
-        const formattedValue = digits ? formatReal(digits) : ""
+        const formattedValue = digits ? formatReal(digits, locale) : ""
 
         if (onChange) {
             event.target.value = formattedValue
@@ -213,13 +215,16 @@ export const InputCEP: React.FC< InputProps > = ( props: InputProps ) => {
     )
 }
 
-export const InputDate: React.FC< InputProps > = ( props: InputProps ) => {
+export const InputDate: React.FC<InputProps> = (props: InputProps) => {
+    const { locale } = useComandosPreferences()
+
     return (
-        <Input { ...props } 
-            formatter = { (value: string) => formatDate(value) ?? "" } 
-            onlyNumbers={ true }
-            inputMode = "numeric" 
-            maxLength={10} 
+        <Input
+            {...props}
+            formatter={(value: string) => formatDate(value, locale)}
+            onlyNumbers
+            inputMode="numeric"
+            maxLength={10}
         />
     )
 }

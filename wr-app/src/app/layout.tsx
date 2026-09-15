@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import "primeflex/primeflex.css";
+import "primeicons/primeicons.css";
 
 import "components/common/loader/loader.css";
 import PrimeSSRProvider from "../../prime-ssr-provider";

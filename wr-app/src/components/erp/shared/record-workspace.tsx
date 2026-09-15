@@ -2,6 +2,14 @@
 
 import * as React from "react";
 
+import {
+    formatLocaleDate,
+    formatLocaleDateTime,
+    formatLocaleNumber,
+    parseLocaleDecimal
+} from "utils/locale";
+import { convertToIsoDate, formatDate } from "utils/date";
+
 import axios from "axios";
 
 import { Plus, Pencil, Trash } from "@primeicons/react";
@@ -112,6 +120,7 @@ export function RecordWorkspace({
     tabs?: Array<{
         resource: string;
         label: string;
+        content?: React.ReactNode;
     }>;
 }) {
 
@@ -295,11 +304,13 @@ export function RecordWorkspace({
                                                 value={tab.resource}
                                             >
 
-                                                {tabResource && (
-                                                    <ResourcePanel
-                                                        resource={tabResource}
-                                                        service={service}
-                                                    />
+                                                {tab.content ?? (
+                                                    tabResource && (
+                                                        <ResourcePanel
+                                                            resource={tabResource}
+                                                            service={service}
+                                                        />
+                                                    )
                                                 )}
 
                                             </Tabs.Panel>
@@ -368,7 +379,7 @@ function getErpServerFilters(
 }
 
 function ResourcePanel({ resource, service }: { resource: ErpResource; service: ErpService }) {
-    const { tr } = useComandosPreferences();
+    const { tr, locale } = useComandosPreferences();
     const allowed = (action: string) => !resource.readOnly && (!resource.actions || resource.actions.includes(action));
     
     const [search, setSearch] = React.useState("");
@@ -431,15 +442,35 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                 .includes(field.name));
     
     const display = (record: ErpRecord, field: ErpField): string => {
-        
         const value = record[field.name];
-        
+
         if (value == null || value === "") return "—";
         if (field.type === "reference") return record.referenceLabels[field.name] || `#${value}`;
         if (field.type === "boolean") return value ? tr("Yes") : tr("No");
 
-        return String(value).replaceAll("_", " ");
-    
+        if (field.type === "integer") {
+            const numericValue = Number(value);
+            return Number.isFinite(numericValue)
+                ? formatLocaleNumber(numericValue, locale, { maximumFractionDigits: 0 })
+                : String(value);
+        }
+
+        if (field.type === "decimal") {
+            const numericValue = Number(value);
+            return Number.isFinite(numericValue)
+                ? formatLocaleNumber(numericValue, locale)
+                : String(value);
+        }
+
+        if (field.type === "date") {
+            return formatLocaleDate(String(value), locale);
+        }
+
+        if (["datetime", "date-time", "local-date-time"].includes(field.type)) {
+            return formatLocaleDateTime(String(value), locale);
+        }
+
+        return tr(String(value).replaceAll("_", " "));
     };
 
     return (
@@ -791,9 +822,19 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
 }) {
 
-    const { tr } = useComandosPreferences();
+    const { tr, locale } = useComandosPreferences();
 
-    const [values, setValues] = React.useState<Record<string, ErpValue>>
+        const maskDecimalInput = (value: string): string => {
+        const digits = value.replace(/\D/g, "").slice(0, 17);
+        if (!digits) return "";
+
+        return new Intl.NumberFormat(locale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(Number(digits) / 100);
+    };
+
+const [values, setValues] = React.useState<Record<string, ErpValue>>
         (() => Object.fromEntries(resource.fields.map(field => 
         [field.name, field.type === "password" ? "" 
             : record?.[field.name] 
@@ -836,7 +877,27 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                     if (saving.current) return;
                                     saving.current = true; setBusy(true); setError("");
                                     try {
-                                        const payload = Object.fromEntries(resource.fields.filter(field => !field.readOnly).map(field => [field.name, values[field.name]]));
+                                        const payload = Object.fromEntries(
+                                            resource.fields
+                                                .filter(field => !field.readOnly)
+                                                .map(field => {
+                                                    const value = values[field.name];
+
+                                                    if (field.type === "decimal") {
+                                                        return [field.name, value === "" ? null : parseLocaleDecimal(String(value), locale)];
+                                                    }
+
+                                                    if (field.type === "integer") {
+                                                        return [field.name, value === "" ? null : Number(value)];
+                                                    }
+
+                                                    if (field.type === "date") {
+                                                        return [field.name, value === "" ? null : convertToIsoDate(String(value), locale)];
+                                                    }
+
+                                                    return [field.name, value];
+                                                })
+                                        );
                                         await service.save(resource.key, { ...payload, ...(record ? { version: record.version } : {}) }, record?.id);
                                         onSaved();
                                     } catch (error) { setError(errorMessage(error)); }
@@ -875,13 +936,39 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
                                                     <option value="">Select an option</option>
                                                     {field.choices.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
                                                 </select>
+                                            ) : field.type === "decimal" ? (
+                                                <input
+                                                    id={`core-${field.name}`}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    required={required}
+                                                    value={String(values[field.name] ?? "")}
+                                                    onChange={event => change(field, maskDecimalInput(event.target.value))}
+                                                />
+                                            ) : field.type === "date" ? (
+                                                <input
+                                                    id={`core-${field.name}`}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    placeholder={locale === "pt-BR" ? "DD/MM/AAAA" : "MM/DD/YYYY"}
+                                                    maxLength={10}
+                                                    required={required}
+                                                    value={String(values[field.name] ?? "")}
+                                                    onChange={event => change(field, formatDate(event.target.value, locale))}
+                                                />
                                             ) : (
-                                                <input id={`core-${field.name}`} type={["decimal", "integer"].includes(field.type) ? "number" : field.type}
-                                                    step={field.type === "decimal" ? "0.0001" : field.type === "integer" ? "1" : undefined}
-                                                    min={["decimal", "integer"].includes(field.type) ? "0" : undefined} required={required} value={String(values[field.name] ?? "")}
-                                                    maxLength={field.type === "password" ? 72 : 255} minLength={field.type === "password" ? 12 : undefined}
+                                                <input
+                                                    id={`core-${field.name}`}
+                                                    type={field.type === "integer" ? "number" : field.type}
+                                                    step={field.type === "integer" ? "1" : undefined}
+                                                    min={field.type === "integer" ? "0" : undefined}
+                                                    required={required}
+                                                    value={String(values[field.name] ?? "")}
+                                                    maxLength={field.type === "password" ? 72 : 255}
+                                                    minLength={field.type === "password" ? 12 : undefined}
                                                     autoComplete={field.type === "password" ? "new-password" : undefined}
-                                                    onChange={event => change(field, event.target.value)} />
+                                                    onChange={event => change(field, event.target.value)}
+                                                />
                                             )}
                                             {field.type === "password" && <small>At least 12 characters. {record ? "Leave blank to keep the current password." : ""}</small>}
                                             {field.readOnly && <small>Calculated by inventory operations.</small>}

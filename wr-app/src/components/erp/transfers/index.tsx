@@ -21,11 +21,13 @@ const errorText = (error: unknown) => axios.isAxiosError(error) && typeof error.
     ? error.response.data.detail : "Unable to complete the request. Check the API connection and try again.";
 type Selected = TransferStockOption & { quantity: string };
 
-export function TransferWorkspace() {
+export function TransferPanel() {
     const [generation, setGeneration] = React.useState(0);
-    return <Layout title="Inventory transfers">
-        <TransferForm key={generation} onNew={() => setGeneration(value => value + 1)} />
-    </Layout>;
+    return <TransferForm key={generation} onNew={() => setGeneration(value => value + 1)} />;
+}
+
+export function TransferWorkspace() {
+    return <Layout title="Inventory transfers"><TransferPanel /></Layout>;
 }
 
 function TransferForm({ onNew }: { onNew: () => void }) {

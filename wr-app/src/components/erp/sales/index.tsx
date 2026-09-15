@@ -37,9 +37,13 @@ function units(value: string): bigint {
 function amount(value: bigint): string { return `${value / 10000n}.${(value % 10000n).toString().padStart(4, "0")}`; }
 function subtotal(item: CartLine): bigint { return (units(item.quantity) * units(item.unitPrice) + 5000n) / 10000n; }
 
-export function InventorySalesWorkspace() {
+export function InventorySalesPanel() {
     const [generation, setGeneration] = React.useState(0);
-    return <Layout title="Inventory sales"><SalesForm key={generation} onNewSale={() => setGeneration(value => value + 1)} /></Layout>;
+    return <SalesForm key={generation} onNewSale={() => setGeneration(value => value + 1)} />;
+}
+
+export function InventorySalesWorkspace() {
+    return <Layout title="Inventory sales"><InventorySalesPanel /></Layout>;
 }
 
 function SalesForm({ onNewSale }: { onNewSale: () => void }) {

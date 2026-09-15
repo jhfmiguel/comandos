@@ -27,9 +27,13 @@ const returnConditionField = reference("returnConditionTypeId", "Return conditio
 const errorText = (error: unknown) => axios.isAxiosError(error) && typeof error.response?.data?.detail === "string"
     ? error.response.data.detail : "Unable to complete the request. Check the API connection and try again.";
 
-export function CustodyWorkspace() {
+export function CustodyPanel() {
     const [generation, setGeneration] = React.useState(0);
-    return <Layout title="Equipment custody"><CustodyForm key={generation} onNew={() => setGeneration(value => value + 1)} /></Layout>;
+    return <CustodyForm key={generation} onNew={() => setGeneration(value => value + 1)} />;
+}
+
+export function CustodyWorkspace() {
+    return <Layout title="Equipment custody"><CustodyPanel /></Layout>;
 }
 
 function CustodyForm({ onNew }: { onNew: () => void }) {

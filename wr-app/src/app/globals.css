@@ -4553,3 +4553,29 @@ html[data-theme][data-palette] form[data-comandos-erp-form="true"]
     margin-top: 20px !important;
 }
 /* COMANDOS_SIDEBAR_NAV_GROUP_MARGIN_END */
+/* COMANDOS_MAIN_TABS_PALETTE_START */
+/*
+ * Tabs do conteudo principal acompanham a paleta escolhida pelo usuario.
+ * A cor vem do sistema global existente: --comandos-accent.
+ */
+[data-scope="tabs"][data-part="tab"][aria-selected="true"] {
+    color: var(--comandos-accent) !important;
+}
+
+[data-scope="tabs"][data-part="indicator"] {
+    background-color: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+}
+
+/* Compatibilidade com classes renderizadas pelo PrimeReact. */
+.p-tabs-tab[aria-selected="true"],
+.p-tab-active {
+    color: var(--comandos-accent) !important;
+}
+
+.p-tabs-indicator,
+.p-tablist-active-bar {
+    background-color: var(--comandos-accent) !important;
+    border-color: var(--comandos-accent) !important;
+}
+/* COMANDOS_MAIN_TABS_PALETTE_END */

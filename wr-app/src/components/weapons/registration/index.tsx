@@ -22,6 +22,7 @@ import {
 } from "components";
 
 import { Alert } from "components/common/message";
+import { useComandosPreferences } from "components/settings/preferences-provider";
 
 import { Weapon } from "api/models/weapons";
 import { useWeaponService } from "api/services";
@@ -67,6 +68,7 @@ interface MessageErrors {
 
 export const WeaponsRegistration: React.FC = () => {
     const router = useRouter();
+    const { locale } = useComandosPreferences();
     const searchParams = useSearchParams();
 
     const service = useWeaponService();
@@ -132,7 +134,7 @@ export const WeaponsRegistration: React.FC = () => {
     }, [queryId]);
 
     const submit = async (): Promise<void> => {
-        const numericPrice = convertToBigDecimal(price);
+        const numericPrice = convertToBigDecimal(price, locale);
 
         const weapon: Weapon = {
             id,
