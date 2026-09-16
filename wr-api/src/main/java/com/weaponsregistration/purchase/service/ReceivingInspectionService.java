@@ -1,69 +1,16 @@
 package com.weaponsregistration.purchase.service;
-
 import com.weaponsregistration.purchase.dto.ReceivingInspectionContract;
-import com.weaponsregistration.purchase.model.EquipmentReceiving;
-import com.weaponsregistration.purchase.model.ReceivingInspection;
-import com.weaponsregistration.purchase.model.ReceivingStatus;
-import com.weaponsregistration.purchase.repository.EquipmentReceivingRepository;
-import com.weaponsregistration.purchase.repository.ReceivingInspectionRepository;
+import com.weaponsregistration.purchase.model.*;
+import com.weaponsregistration.purchase.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Service
 public class ReceivingInspectionService {
-    private final ReceivingInspectionRepository inspectionRepository;
-    private final EquipmentReceivingRepository receivingRepository;
-
-    public ReceivingInspectionService(
-        ReceivingInspectionRepository inspectionRepository,
-        EquipmentReceivingRepository receivingRepository
-    ) {
-        this.inspectionRepository = inspectionRepository;
-        this.receivingRepository = receivingRepository;
-    }
-
-    public List<ReceivingInspection> list(Long receivingId) {
-        if (receivingId == null) {
-            return inspectionRepository.findAll();
-        }
-        return inspectionRepository.findAll().stream()
-            .filter(item -> item.receiving != null && receivingId.equals(item.receiving.id))
-            .toList();
-    }
-
-    @Transactional
-    public ReceivingInspection create(Long receivingId, ReceivingInspectionContract.CreateRequest request) {
-        EquipmentReceiving receiving = receivingRepository.findById(receivingId)
-            .orElseThrow(() -> new IllegalArgumentException("Receiving not found: " + receivingId));
-
-        ReceivingInspection inspection = new ReceivingInspection();
-        inspection.receiving = receiving;
-        inspection.inspectedAt = request.inspectedAt() == null ? LocalDateTime.now() : request.inspectedAt();
-        inspection.inspector = request.inspector();
-        inspection.provisionalReceipt = Boolean.TRUE.equals(request.provisionalReceipt());
-        inspection.definitiveReceipt = Boolean.TRUE.equals(request.definitiveReceipt());
-        inspection.approved = Boolean.TRUE.equals(request.approved());
-        inspection.nonConformity = request.nonConformity();
-        inspection.decisionNotes = request.decisionNotes();
-        inspection = inspectionRepository.save(inspection);
-
-        receiving.status = resolveStatus(inspection);
-        receivingRepository.save(receiving);
-        return inspection;
-    }
-
-    private ReceivingStatus resolveStatus(ReceivingInspection inspection) {
-        if (!inspection.approved) {
-            return ReceivingStatus.REJECTED;
-        }
-        if (inspection.definitiveReceipt) {
-            return ReceivingStatus.DEFINITIVELY_ACCEPTED;
-        }
-        if (inspection.provisionalReceipt) {
-            return ReceivingStatus.PROVISIONALLY_ACCEPTED;
-        }
-        return ReceivingStatus.UNDER_INSPECTION;
-    }
+ private final ReceivingInspectionRepository inspections;private final EquipmentReceivingRepository receivings;private final EquipmentReceivingItemRepository items;
+ public ReceivingInspectionService(ReceivingInspectionRepository a,EquipmentReceivingRepository b,EquipmentReceivingItemRepository c){inspections=a;receivings=b;items=c;}
+ public List<ReceivingInspection> list(Long id){return id==null?inspections.findAll():inspections.findAll().stream().filter(x->x.receiving!=null&&id.equals(x.receiving.id)).toList();}
+ @Transactional public ReceivingInspection create(Long id,ReceivingInspectionContract.CreateRequest r){EquipmentReceiving e=receivings.findById(id).orElseThrow(()->new IllegalArgumentException("Receiving not found: "+id));if(!Boolean.TRUE.equals(e.physicalChecked)||!Boolean.TRUE.equals(e.documentsChecked))throw new IllegalStateException("Physical and documentary checks are required before acceptance.");ReceivingInspection x=new ReceivingInspection();x.receiving=e;x.inspectedAt=r.inspectedAt()==null?LocalDateTime.now():r.inspectedAt();x.inspector=r.inspector();x.provisionalReceipt=Boolean.TRUE.equals(r.provisionalReceipt());x.definitiveReceipt=Boolean.TRUE.equals(r.definitiveReceipt());x.approved=Boolean.TRUE.equals(r.approved());x.nonConformity=r.nonConformity();x.decisionNotes=r.decisionNotes();x=inspections.save(x);for(var item:items.findByReceivingIdOrderByCreatedAtAsc(id)){item.acceptedQuantity=x.approved?item.receivedQuantity:BigDecimal.ZERO;item.rejectedQuantity=x.approved?BigDecimal.ZERO:item.receivedQuantity;items.save(item);}e.status=!x.approved?ReceivingStatus.REJECTED:x.definitiveReceipt?ReceivingStatus.DEFINITIVELY_ACCEPTED:x.provisionalReceipt?ReceivingStatus.PROVISIONALLY_ACCEPTED:ReceivingStatus.UNDER_INSPECTION;receivings.save(e);return x;}
 }

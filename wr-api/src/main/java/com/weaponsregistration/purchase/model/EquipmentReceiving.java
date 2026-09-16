@@ -15,6 +15,8 @@ public class EquipmentReceiving extends CoreEntity {
  @Column(name="invoice_number",length=160) public String invoiceNumber;
  @Column(name="received_at") public LocalDateTime receivedAt;
  @Column(name="received_by",length=255) public String receivedBy;
+ @Column(name="physical_checked",nullable=false) public Boolean physicalChecked=false;
+ @Column(name="documents_checked",nullable=false) public Boolean documentsChecked=false;
  @Enumerated(EnumType.STRING) @Column(name="status",nullable=false,length=40) public ReceivingStatus status=ReceivingStatus.EXPECTED;
  @Column(name="notes",length=4000) public String notes;
 }
