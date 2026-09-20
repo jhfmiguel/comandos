@@ -26,4 +26,18 @@ public class StockMovement extends CoreEntity {
     public BigDecimal quantity = BigDecimal.ZERO;
     @Column(name = "moved_at", nullable = false)
     public LocalDateTime movedAt;
+    @Column(name = "operator_id") public Long operatorId;
+    @Column(name = "operator_login", length = 255) public String operatorLogin;
+    @Column(name = "reference_type", length = 100) public String referenceType;
+    @Column(name = "reference_id") public Long referenceId;
+    @Column(name = "notes", length = 1000) public String notes;
+    @PreUpdate
+    private void preventUpdate() {
+        throw new IllegalStateException("Stock movement history is immutable.");
+    }
+
+    @PreRemove
+    private void preventDelete() {
+        throw new IllegalStateException("Stock movement history is immutable.");
+    }
 }

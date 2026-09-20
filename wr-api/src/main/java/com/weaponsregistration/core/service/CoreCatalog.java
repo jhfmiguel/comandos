@@ -45,6 +45,18 @@ public final class CoreCatalog {
             new Field("email", "Email", "email", false, null, List.of()),
             new Field("active", "Active", "boolean", true, null, List.of())
         )),
+        new Resource("person-addresses", "Endereços", "People", PersonAddress.class, List.of(
+            new Field("personId", "Person", "reference", true, "people", List.of()),
+            new Field("type", "Tipo de endereço", "choice", true, null, List.of("RESIDENTIAL", "BUSINESS", "MAILING", "OTHER")),
+            new Field("postalCode", "CEP", "text", true, null, List.of()),
+            new Field("street", "Logradouro", "text", true, null, List.of()),
+            new Field("number", "Número", "text", true, null, List.of()),
+            new Field("complement", "Complemento", "text", false, null, List.of()),
+            new Field("district", "Bairro", "text", false, null, List.of()),
+            new Field("city", "Cidade", "text", true, null, List.of()),
+            new Field("state", "UF", "text", true, null, List.of()),
+            new Field("primaryAddress", "Endereço principal", "boolean", true, null, List.of())
+        )),
         new Resource("roles", "Person roles", "People", PersonRole.class, List.of(
             new Field("code", "Code", "text", true, null, List.of()),
             new Field("name", "Name", "text", true, null, List.of())

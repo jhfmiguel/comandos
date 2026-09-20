@@ -348,14 +348,14 @@ public class InventoryService {
             if (id != null && entity instanceof ItemModel && !data.containsKey(field.name())
                     && Set.of("armamentTypeId", "armamentClassificationId").contains(field.name())) continue;
             Object raw = data.get(field.name());
-            if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber").contains(field.name()) && raw instanceof String text)
+            if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && raw instanceof String text)
                 raw = AssetIdentity.normalize(text);
             Object value = parse(field, raw);
             if (value instanceof CoreEntity reference) access.requireEntity(
                 field.reference().startsWith("core/") ? field.reference() : "inventory/" + field.reference(), "READ", reference);
             if (id != null && field.createOnly()) {
                 Object current = read(entity, field.property());
-                if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber").contains(field.name()) && current instanceof String text)
+                if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && current instanceof String text)
                     current = AssetIdentity.normalize(text);
                 boolean equal = current instanceof CoreEntity ref ? value instanceof CoreEntity other && Objects.equals(ref.id, other.id)
                     : current instanceof BigDecimal decimal && value instanceof BigDecimal other ? decimal.compareTo(other) == 0 : Objects.equals(current, value);
@@ -371,7 +371,7 @@ public class InventoryService {
             // share this check under the catalog lock, before stock or audit writes.
             if (entity instanceof AssetItem asset) {
                 var errors = AssetIdentity.conflicts(em.createQuery("select a from AssetItem a", AssetItem.class)
-                    .getResultList(), asset.assetCode, asset.serialNumber);
+                    .getResultList(), asset.assetCode, asset.serialNumber, asset.internalCode);
                 if (!errors.isEmpty()) conflict(String.join(" ", errors));
             }
             if (entity instanceof StockLot lot) lot.openingPackaging = packaging;
@@ -426,7 +426,7 @@ public class InventoryService {
         } else if (entity instanceof AssetItem asset) {
             movement.asset = asset; movement.location = asset.location; movement.quantity = BigDecimal.ONE;
         } else return;
-        em.persist(movement);
+        movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
     }
 
     private Object parse(InventoryCatalog.Field field, Object raw) {

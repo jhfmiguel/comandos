@@ -1,5 +1,19 @@
 import axios from "axios"
 
+export interface ReceivingSerialDecision {
+    serialId: number
+    accepted: boolean
+    rejectionReason?: string
+}
+
+export interface ReceivingItemDecision {
+    receivingItemId: number
+    acceptedQuantity: number
+    rejectedQuantity: number
+    divergenceDescription?: string
+    serials?: ReceivingSerialDecision[]
+}
+
 export interface ReceivingInspectionInput {
     inspectedAt?: string
     inspector?: string
@@ -8,6 +22,7 @@ export interface ReceivingInspectionInput {
     approved: boolean
     nonConformity?: string
     decisionNotes?: string
+    items: ReceivingItemDecision[]
 }
 
 const baseUrl = "/api/erp/receiving-inspections"

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { PostalCodeField } from "components/erp/core/postal-code-field";
 
 import {
     formatLocaleDate,
@@ -65,33 +66,6 @@ function createErpTableFilters(
     });
 
     return filters;
-
-}
-
-function getErpFilterSearch(
-    filters: DataTableFilterMeta
-): string {
-
-    return Object.values(filters)
-        .map((filter) => {
-
-            if (
-                !filter ||
-                typeof filter !== "object" ||
-                !("value" in filter)
-            ) {
-                return "";
-            }
-
-            const value = filter.value;
-
-            return value == null
-                ? ""
-                : String(value).trim();
-
-        })
-        .filter(Boolean)
-        .join(" ");
 
 }
 
@@ -394,7 +368,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     const { tr, locale } = useComandosPreferences();
     const allowed = (action: string) => !resource.readOnly && (!resource.actions || resource.actions.includes(action));
     
-    const [search, setSearch] = React.useState("");
+    const [search] = React.useState("");
     const [serverFilters, setServerFilters] = React.useState<Record<string, string>>({});
     const [page, setPage] = React.useState(0);
     const [filters, setFilters] = React.useState<DataTableFilterMeta>(
@@ -930,7 +904,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
                                             {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}
                                             {resource.key === "user-profiles" && field.name === "unitId" && <small>Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.</small>}
-                                            {field.type === "reference" ? (
+                                            {resource.key === "person-addresses" && field.name === "postalCode" ? (
+                                                <PostalCodeField value={String(values.postalCode ?? "")}
+                                                    onChange={value => change(field, value)}
+                                                    onResolved={address => setValues(current => ({ ...current, ...address,
+                                                        complement: current.complement || address.complement || "" }))} />
+                                            ) : field.type === "reference" ? (
                                                 <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
                                                     modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
                                                     organizationId={values.organizationId} excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}

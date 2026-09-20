@@ -31,5 +31,7 @@ public class CustodyItem extends CoreEntity {
     @Column public String componentRole;
     @Column(nullable = false, precision = 19, scale = 4) public java.math.BigDecimal quantity = java.math.BigDecimal.ONE;
     @Column(nullable = false) public String locationName;
+    @Column(name = "delivery_condition", length = 500) public String deliveryCondition;
+    @Column(name = "accessories", length = 1000) public String accessories;
     @Column public LocalDateTime returnedAt;
 }

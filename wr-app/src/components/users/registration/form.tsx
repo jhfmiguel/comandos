@@ -25,7 +25,6 @@ import {
 
 import { convertToIsoDate } from "utils/date";
 import { formatOnlyNumbers } from "utils/numeric";
-import { useComandosPreferences } from "components/settings/preferences-provider";
 
 export interface UserFormProps {
     user: User;
@@ -47,7 +46,6 @@ export const UserForm: React.FC<UserFormProps> = ({
     onSubmit
 }) => {
     const router = useRouter();
-    const { locale } = useComandosPreferences();
 
     const formik = useFormik<User>({
         initialValues: getFormattedInitialValues(user),

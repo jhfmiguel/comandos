@@ -15,6 +15,11 @@ public class Donation extends CoreEntity {
     @Column(nullable=false) public String donorName;
     @Column(nullable=false) public String doneeName;
     @Column(nullable=false, length=255) public String term;
+    @Column(name="direction", nullable=false, length=30) public String direction = "OUTGOING";
+    @Column(name="document_reference", length=500) public String documentReference;
+    @Column(name="approved_by_id") public Long approvedById;
+    @Column(name="approved_by_login") public String approvedByLogin;
+    @Column(name="approved_at") public LocalDateTime approvedAt;
     @Column(nullable=false, length=30) public String status = "FINALIZED";
     @Column(nullable=false) public LocalDateTime finalizedAt;
     @Column public Long finalizedById;

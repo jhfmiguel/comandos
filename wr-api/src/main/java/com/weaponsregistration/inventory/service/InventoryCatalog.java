@@ -82,7 +82,7 @@ public final class InventoryCatalog {
         new Resource("categories", "Item categories", "Catalog", ItemCategory.class, List.of(
             new Field("parentCategoryId", "Parent category", "reference", false, "categories", List.of(), false, false),
             new Field("name", "Name", "text", true, null, List.of(), false, false),
-            new Field("family", "Equipment family", "choice", true, null, List.of("GENERAL", "FIREARM", "AMMUNITION", "GRENADE", "SPRAY", "BALLISTIC_PROTECTION", "ELECTRICAL_DEVICE", "OPTICAL"), false, false),
+            new Field("family", "Equipment family", "choice", true, null, List.of("GENERAL", "FIREARM", "AMMUNITION", "GRENADE", "BALLISTIC_PROTECTION", "HELMET", "SHIELD", "SPRAY", "ELECTRICAL_DEVICE", "RESTRAINT", "OPTICAL", "ACCESSORY_COMPONENT", "TACTICAL_EQUIPMENT", "OTHER"), false, false),
             new Field("serialized", "Serialized", "boolean", true, null, List.of(), false, false),
             new Field("lotControlled", "Lot controlled", "boolean", true, null, List.of(), false, false),
             new Field("consumable", "Consumable", "boolean", true, null, List.of(), false, false)
@@ -130,6 +130,7 @@ public final class InventoryCatalog {
         new Resource("ammunition-specifications", "Ammunition specifications", "Controlled equipment", AmmunitionSpecification.class, List.of(
             new Field("modelId", "Ammunition model", "reference", true, "models", List.of(), false, true),
             new Field("caliber", "Caliber", "text", true, null, List.of(), false, false),
+            new Field("ammunitionType", "Ammunition type", "text", true, null, List.of(), false, false),
             new Field("lethalityClassification", "Lethality classification", "choice", true, null,
                 List.of("LETHAL", "LESS_LETHAL"), false, false),
             new Field("projectileType", "Projectile type", "text", true, null, List.of(), false, false),
@@ -140,12 +141,16 @@ public final class InventoryCatalog {
             new Field("modelId", "Grenade model", "reference", true, "models", List.of(), false, true),
             new Field("grenadeType", "Grenade type", "text", true, null, List.of(), false, false),
             new Field("agent", "Agent", "text", true, null, List.of(), false, false),
+            new Field("composition", "Composition", "text", true, null, List.of(), false, false),
+            new Field("shelfLifeMonths", "Shelf life (months)", "integer", true, null, List.of(), false, false),
             new Field("delaySeconds", "Delay time (seconds)", "integer", true, null, List.of(), false, false),
             new Field("safetyRadius", "Safety radius (m)", "decimal", true, null, List.of(), false, false)
         ), false),
         new Resource("spray-specifications", "Spray specifications", "Controlled equipment", SpraySpecification.class, List.of(
             new Field("modelId", "Spray model", "reference", true, "models", List.of(), false, true),
             new Field("agent", "Agent", "text", true, null, List.of(), false, false),
+            new Field("composition", "Composition", "text", true, null, List.of(), false, false),
+            new Field("shelfLifeMonths", "Shelf life (months)", "integer", true, null, List.of(), false, false),
             new Field("concentration", "Concentration (%)", "decimal", true, null, List.of(), false, false),
             new Field("volumeMl", "Volume (mL)", "decimal", true, null, List.of(), false, false),
             new Field("rangeMeters", "Range (m)", "decimal", true, null, List.of(), false, false)
@@ -155,7 +160,9 @@ public final class InventoryCatalog {
             new Field("protectionType", "Protection type", "text", true, null, List.of(), false, false),
             new Field("protectionLevel", "Protection level", "text", true, null, List.of(), false, false),
             new Field("material", "Material", "text", true, null, List.of(), false, false),
-            new Field("certification", "Certification", "text", true, null, List.of(), false, false)
+            new Field("certification", "Certification", "text", true, null, List.of(), false, false),
+            new Field("size", "Size", "text", true, null, List.of(), false, false),
+            new Field("serviceLifeMonths", "Service life (months)", "integer", true, null, List.of(), false, false)
         ), false),
         new Resource("electrical-device-specifications", "Electrical device specifications", "Controlled equipment", ElectricalDeviceSpecification.class, List.of(
             new Field("modelId", "Electrical device model", "reference", true, "models", List.of(), false, true),
@@ -166,9 +173,52 @@ public final class InventoryCatalog {
         new Resource("optical-specifications", "Optical specifications", "Controlled equipment", OpticalSpecification.class, List.of(
             new Field("modelId", "Optical model", "reference", true, "models", List.of(), false, true),
             new Field("opticalType", "Optical type", "text", true, null, List.of(), false, false),
+            new Field("minimumMagnification", "Minimum magnification", "decimal", true, null, List.of(), false, false),
             new Field("maximumMagnification", "Maximum magnification", "decimal", true, null, List.of(), false, false),
+            new Field("objectiveDiameterMm", "Objective diameter (mm)", "decimal", false, null, List.of(), false, false),
+            new Field("reticle", "Reticle", "text", true, null, List.of(), false, false),
+            new Field("fieldOfView", "Field of view", "text", false, null, List.of(), false, false),
             new Field("nightVision", "Night vision", "boolean", true, null, List.of(), false, false),
             new Field("thermalVision", "Thermal vision", "boolean", true, null, List.of(), false, false)
+        ), false),
+        new Resource("helmet-specifications", "Helmet specifications", "Controlled equipment", HelmetSpecification.class, List.of(
+            new Field("modelId", "Helmet model", "reference", true, "models", List.of(), false, true),
+            new Field("protectionLevel", "Protection level", "text", true, null, List.of(), false, false),
+            new Field("material", "Material", "text", true, null, List.of(), false, false),
+            new Field("size", "Size", "text", true, null, List.of(), false, false),
+            new Field("weightGrams", "Weight (g)", "decimal", false, null, List.of(), false, false),
+            new Field("certification", "Certification", "text", false, null, List.of(), false, false)
+        ), false),
+        new Resource("shield-specifications", "Shield specifications", "Controlled equipment", ShieldSpecification.class, List.of(
+            new Field("modelId", "Shield model", "reference", true, "models", List.of(), false, true),
+            new Field("shieldType", "Shield type", "text", true, null, List.of(), false, false),
+            new Field("protectionLevel", "Protection level", "text", false, null, List.of(), false, false),
+            new Field("material", "Material", "text", true, null, List.of(), false, false),
+            new Field("heightMm", "Height (mm)", "decimal", false, null, List.of(), false, false),
+            new Field("widthMm", "Width (mm)", "decimal", false, null, List.of(), false, false),
+            new Field("weightGrams", "Weight (g)", "decimal", false, null, List.of(), false, false)
+        ), false),
+        new Resource("restraint-specifications", "Restraint specifications", "Controlled equipment", RestraintSpecification.class, List.of(
+            new Field("modelId", "Restraint model", "reference", true, "models", List.of(), false, true),
+            new Field("restraintType", "Restraint type", "choice", true, null, List.of("HANDCUFF", "LEG_IRON", "DISPOSABLE_RESTRAINT", "TRANSPORT_RESTRAINT", "OTHER"), false, false),
+            new Field("material", "Material", "text", true, null, List.of(), false, false),
+            new Field("lockingMechanism", "Locking mechanism", "text", false, null, List.of(), false, false),
+            new Field("doubleLock", "Double lock", "boolean", true, null, List.of(), false, false)
+        ), false),
+        new Resource("accessory-component-specifications", "Accessory/component specifications", "Controlled equipment", AccessoryComponentSpecification.class, List.of(
+            new Field("modelId", "Accessory/component model", "reference", true, "models", List.of(), false, true),
+            new Field("componentType", "Component type", "text", true, null, List.of(), false, false),
+            new Field("compatibleWith", "Compatibility", "text", false, null, List.of(), false, false),
+            new Field("mountingInterface", "Mounting/interface", "text", false, null, List.of(), false, false),
+            new Field("controlledComponent", "Controlled component", "boolean", true, null, List.of(), false, false)
+        ), false),
+        new Resource("tactical-equipment-specifications", "Tactical equipment specifications", "Controlled equipment", TacticalEquipmentSpecification.class, List.of(
+            new Field("modelId", "Tactical equipment model", "reference", true, "models", List.of(), false, true),
+            new Field("equipmentType", "Equipment type", "text", true, null, List.of(), false, false),
+            new Field("material", "Material", "text", false, null, List.of(), false, false),
+            new Field("size", "Size", "text", false, null, List.of(), false, false),
+            new Field("weightGrams", "Weight (g)", "decimal", false, null, List.of(), false, false),
+            new Field("operationalNotes", "Operational notes", "text", false, null, List.of(), false, false)
         ), false),
         new Resource("regulatory-controls", "Regulatory controls", "Controlled equipment", RegulatoryControl.class, List.of(
             new Field("assetId", "Firearm asset", "reference", true, "assets", List.of(), false, true),
@@ -237,6 +287,7 @@ public final class InventoryCatalog {
             new Field("locationId", "Location", "reference", true, "locations", List.of(), false, true),
             new Field("assetCode", "Asset code", "text", true, null, List.of(), false, true),
             new Field("serialNumber", "Serial number", "text", false, null, List.of(), false, true),
+            new Field("internalCode", "Internal code", "text", false, null, List.of(), false, true),
             new Field("condition", "Condition", "choice", true, null, List.of("NEW", "GOOD", "NEEDS_INSPECTION", "DAMAGED"), false, false),
             new Field("status", "Availability", "choice", true, null, List.of("DRAFT", "AVAILABLE", "BLOCKED", "CUSTODIED", "IN_MAINTENANCE", "SOLD", "DONATED", "DISPOSED"), false, false),
             new Field("validUntil", "Valid until", "date", false, null, List.of(), false, false),

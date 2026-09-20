@@ -1,5 +1,6 @@
 package com.weaponsregistration.purchase.service;
 import com.weaponsregistration.core.model.Organization;
+import com.weaponsregistration.core.model.Person;
 import com.weaponsregistration.inventory.model.ItemModel;
 import com.weaponsregistration.purchase.dto.PurchaseContract.*;
 import com.weaponsregistration.purchase.model.*;
@@ -17,15 +18,15 @@ public class PurchaseService {
  public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){this.purchases=p;this.procurements=pr;this.em=em;}
  @Transactional public PurchaseView create(CreatePurchaseRequest r){
   if(r==null||r.buyerOrganizationId()==null)throw new IllegalArgumentException("Buyer organization is required.");
+  if(r.originPersonId()==null)throw new IllegalArgumentException("Acquisition origin person is required.");
   if(blank(r.purchaseNumber()))throw new IllegalArgumentException("Acquisition number is required.");
   if(r.items()==null||r.items().isEmpty())throw new IllegalArgumentException("Acquisition requires at least one item.");
-  Purchase p=new Purchase();p.buyerOrganization=org(r.buyerOrganizationId());p.supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());
+  Purchase p=new Purchase();p.buyerOrganization=org(r.buyerOrganizationId());p.supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());p.originPerson=person(r.originPersonId());
   p.acquisitionType=r.acquisitionType()==null?AcquisitionType.ONEROUS:r.acquisitionType();p.originDescription=trim(r.originDescription());
   p.purchaseNumber=r.purchaseNumber().trim();p.purchaseDate=r.purchaseDate()==null?LocalDate.now():r.purchaseDate();
   p.discount=money(r.discount());p.freight=money(r.freight());p.taxes=money(r.taxes());p.otherCosts=money(r.otherCosts());
   p.paymentConditions=trim(r.paymentConditions());p.deliveryConditions=trim(r.deliveryConditions());p.warrantyConditions=trim(r.warrantyConditions());p.notes=trim(r.notes());
-  if(p.acquisitionType==AcquisitionType.ONEROUS&&p.supplierOrganization==null)throw new IllegalArgumentException("Supplier is required for onerous acquisition.");
-  if(p.acquisitionType==AcquisitionType.FREE&&p.supplierOrganization==null&&blank(p.originDescription))throw new IllegalArgumentException("Origin is required for free acquisition.");
+  if(p.originPerson==null)throw new IllegalArgumentException("Acquisition origin person is required.");
   for(CreatePurchaseItemRequest x:r.items()){
    if(x.itemModelId()==null||x.quantity()==null||x.quantity().signum()<=0)throw new IllegalArgumentException("Valid item and quantity are required.");
    ItemModel m=em.find(ItemModel.class,x.itemModelId());if(m==null)throw new EntityNotFoundException("ItemModel not found: "+x.itemModelId());
@@ -44,9 +45,12 @@ public class PurchaseService {
   if(!pub&&r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Private acquisition must not be forced into public procurement.");
   if(pub&&p.acquisitionType==AcquisitionType.ONEROUS&&r.procurementMethod()==ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Public onerous acquisition requires an applicable procurement/direct-contracting process.");
   if(r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED&&blank(r.processNumber()))throw new IllegalArgumentException("Process number is required.");
+  if(r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED&&blank(r.objectDescription()))throw new IllegalArgumentException("Procurement object is required.");
   if(r.procurementMethod()==ProcurementMethod.BIDDING&&r.biddingModality()==null)throw new IllegalArgumentException("Bidding modality is required.");
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&r.directContractingType()==null)throw new IllegalArgumentException("Direct contracting type is required.");
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.legalBasis()))throw new IllegalArgumentException("Legal basis is required.");
+  if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.supplierChoiceReason()))throw new IllegalArgumentException("Supplier choice reason is required for direct contracting.");
+  if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.priceJustification()))throw new IllegalArgumentException("Price justification is required for direct contracting.");
   if(r.procurementMethod()==ProcurementMethod.NOT_REQUIRED){p.procurementProcess=null;p.status=PurchaseStatus.AUTHORIZED;return view(purchases.save(p));}
   ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organization=p.buyerOrganization;x.processNumber=r.processNumber().trim();
   x.objectDescription=r.objectDescription();x.justification=r.justification();x.procurementMethod=r.procurementMethod();x.biddingModality=r.procurementMethod()==ProcurementMethod.BIDDING?r.biddingModality():null;
@@ -62,9 +66,10 @@ public class PurchaseService {
   var iv=p.items.stream().map(i->new PurchaseItemView(i.id,i.itemModel.id,i.itemModel.name,i.quantity,i.receivedQuantity,i.unitPrice,i.discount,i.calculateTotal(),i.conditionDescription)).toList();
   var dv=p.documents.stream().map(d->new DocumentView(d.id,d.documentType,d.documentNumber,d.issueDate,d.issuer,d.amount,d.storageReference,d.notes)).toList();
   return new PurchaseView(p.id,p.buyerOrganization.id,p.buyerOrganization.name,p.buyerOrganization.publicOrganization,p.supplierOrganization==null?null:p.supplierOrganization.id,p.supplierOrganization==null?null:p.supplierOrganization.name,
-   p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
+   p.originPerson.id,p.originPerson.fullName,p.originPerson.personType,p.originPerson.taxId,p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
  }
  private Organization org(Long id){Organization o=em.find(Organization.class,id);if(o==null)throw new EntityNotFoundException("Organization not found: "+id);return o;}
+ private Person person(Long id){Person p=em.find(Person.class,id);if(p==null)throw new EntityNotFoundException("Person not found: "+id);if(!Boolean.TRUE.equals(p.active))throw new IllegalArgumentException("Acquisition origin person must be active.");return p;}
  private Purchase find(Long id){return purchases.findById(id).orElseThrow(()->new EntityNotFoundException("Purchase not found: "+id));}
  private BigDecimal money(BigDecimal v){if(v==null)return BigDecimal.ZERO;if(v.signum()<0)throw new IllegalArgumentException("Financial values cannot be negative.");return v;}
  private String trim(String v){return v==null?null:v.trim();}private boolean blank(String v){return v==null||v.isBlank();}

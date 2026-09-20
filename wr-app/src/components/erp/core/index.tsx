@@ -30,6 +30,10 @@ const sectionTabs: Record<
             label: "People"
         },
         {
+            resource: "person-addresses",
+            label: "Endereços"
+        },
+        {
             resource: "person-roles",
             label: "Person roles"
         },

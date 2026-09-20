@@ -18,6 +18,7 @@ import { TransferPanel } from "components/erp/transfers"
 import { DisposalPanel } from "components/erp/disposals"
 import { ReservationPanel } from "components/erp/reservations"
 import { MaintenancePanel } from "components/erp/maintenance"
+import { LifecyclePanel } from "components/erp/lifecycle"
 
 type TransactionTab =
     | "purchase"
@@ -29,6 +30,7 @@ type TransactionTab =
     | "disposal"
     | "reservation"
     | "maintenance"
+    | "lifecycle"
 
 const transactionTabs: Array<{
     value: TransactionTab
@@ -42,7 +44,8 @@ const transactionTabs: Array<{
     { value: "transfer", label: "Transfer" },
     { value: "disposal", label: "Disposal" },
     { value: "reservation", label: "Reservation" },
-    { value: "maintenance", label: "Maintenance and inspection" }
+    { value: "maintenance", label: "Maintenance and inspection" },
+    { value: "lifecycle", label: "Lifecycle control" }
 ]
 
 function TransactionPanel({ value }: { value: TransactionTab }) {
@@ -65,6 +68,8 @@ function TransactionPanel({ value }: { value: TransactionTab }) {
             return <ReservationPanel />
         case "maintenance":
             return <MaintenancePanel />
+        case "lifecycle":
+            return <LifecyclePanel />
     }
 }
 

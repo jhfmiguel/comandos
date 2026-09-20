@@ -2,6 +2,7 @@ package com.weaponsregistration.core.controller;
 
 import com.weaponsregistration.core.service.CoreCatalog;
 import com.weaponsregistration.core.service.CoreService;
+import com.weaponsregistration.core.service.CepService;
 import com.weaponsregistration.security.service.AccessPolicy;
 
 import java.util.List;
@@ -15,16 +16,25 @@ public class CoreController {
 	
     private final CoreService service;
     private final AccessPolicy access;
+    private final CepService cep;
     
     public CoreController(
     		CoreService service, 
-    		AccessPolicy access
+    		AccessPolicy access,
+            CepService cep
     ) { 
     	this.service = service; 
-    	this.access = access; 
+    	this.access = access;
+        this.cep = cep;
     }
 
     
+    @GetMapping("/postal-codes/{postalCode}")
+    public Map<String, String> postalCode(@PathVariable String postalCode) {
+        access.requireAny("core/people", "READ");
+        return cep.lookup(postalCode);
+    }
+
     @GetMapping("/catalog")
     public List<Map<String, Object>> catalog() {
         

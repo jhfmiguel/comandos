@@ -626,7 +626,8 @@ class InventoryApiTests {
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "2")).get("id").asLong();
         var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "caliber", "12 GA",
-            "lethalityClassification", "LESS_LETHAL", "projectileType", "Kinetic impact projectile", "caseType", "Polymer", "primerType", "Boxer"));
+            "ammunitionType", "CARTRIDGE", "lethalityClassification", "LESS_LETHAL",
+            "projectileType", "Kinetic impact projectile", "caseType", "Polymer", "primerType", "Boxer"));
         assertEquals(400, request("POST", "inventory/ammunition-specifications", data).status());
         data.put("modelId", ammunitionModel);
         var specification = create("inventory/ammunition-specifications", data);
@@ -653,7 +654,8 @@ class InventoryApiTests {
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
         var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "grenadeType", "TRAINING",
-            "agent", "INERT", "delaySeconds", 4, "safetyRadius", "15.5000"));
+            "agent", "INERT", "composition", "INERT TRAINING COMPOUND", "shelfLifeMonths", 60,
+            "delaySeconds", 4, "safetyRadius", "15.5000"));
         assertEquals(400, request("POST", "inventory/grenade-specifications", data).status());
         data.put("modelId", grenadeModel); data.put("delaySeconds", 0);
         assertEquals(400, request("POST", "inventory/grenade-specifications", data).status());
@@ -684,6 +686,7 @@ class InventoryApiTests {
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
         var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "agent", "OC",
+            "composition", "OC SOLUTION", "shelfLifeMonths", 36,
             "concentration", "10", "volumeMl", "50", "rangeMeters", "4.5"));
         assertEquals(400, request("POST", "inventory/spray-specifications", data).status());
         data.put("modelId", sprayModel); data.put("concentration", "101");
@@ -714,7 +717,8 @@ class InventoryApiTests {
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
         var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "protectionType", "VEST",
-            "protectionLevel", "LEVEL III-A", "material", "Aramid", "certification", "CERT-001"));
+            "protectionLevel", "LEVEL III-A", "material", "Aramid", "certification", "CERT-001",
+            "size", "M", "serviceLifeMonths", 60));
         assertEquals(400, request("POST", "inventory/ballistic-protection-specifications", data).status());
         data.put("modelId", ballisticModel);
         var specification = create("inventory/ballistic-protection-specifications", data);
@@ -771,7 +775,8 @@ class InventoryApiTests {
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
         var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "opticalType", "WEAPON_SIGHT",
-            "maximumMagnification", "8", "nightVision", false, "thermalVision", true));
+            "minimumMagnification", "1", "maximumMagnification", "8", "reticle", "MIL-DOT",
+            "nightVision", false, "thermalVision", true));
         assertEquals(400, request("POST", "inventory/optical-specifications", data).status());
         data.put("modelId", opticalModel); data.put("maximumMagnification", "0");
         assertEquals(400, request("POST", "inventory/optical-specifications", data).status());

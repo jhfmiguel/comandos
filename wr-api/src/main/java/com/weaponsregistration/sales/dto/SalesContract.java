@@ -24,7 +24,10 @@ public final class SalesContract {
 			Long buyerId, 
 			PaymentMethod paymentMethod, 
 			List<LineRequest> items,
-            Long unitId
+            Long unitId,
+            String processNumber,
+            String legalBasis,
+            String documentReference
 		
 	) {}
     

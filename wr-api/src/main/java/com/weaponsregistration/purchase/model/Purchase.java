@@ -1,6 +1,7 @@
 package com.weaponsregistration.purchase.model;
 import com.weaponsregistration.core.model.CoreEntity;
 import com.weaponsregistration.core.model.Organization;
+import com.weaponsregistration.core.model.Person;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import java.util.List;
 public class Purchase extends CoreEntity {
  @ManyToOne(optional=false) @JoinColumn(name="buyer_organization_id",nullable=false) public Organization buyerOrganization;
  @ManyToOne @JoinColumn(name="supplier_organization_id") public Organization supplierOrganization;
+ @ManyToOne(optional=false) @JoinColumn(name="origin_person_id",nullable=false) public Person originPerson;
  @OneToOne @JoinColumn(name="procurement_process_id") public ProcurementProcess procurementProcess;
  @Enumerated(EnumType.STRING) @Column(name="acquisition_type",nullable=false,length=30) public AcquisitionType acquisitionType=AcquisitionType.ONEROUS;
  @Column(name="origin_description",length=1000) public String originDescription;

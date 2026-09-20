@@ -67,11 +67,73 @@ class CoreApiTests {
         return new HashMap<>(Map.of("organizationId", organizationId, "name", "Headquarters", "code", unique(), "type", "Office"));
     }
 
+    private Map<String, Object> addressData(long personId, String number, boolean primary) {
+        var data = new HashMap<String, Object>(Map.of("personId", personId, "type", "RESIDENTIAL",
+            "postalCode", "01001-000", "street", "Praça da Sé", "number", number,
+            "complement", "Sala 2", "city", "São Paulo", "state", "SP", "primaryAddress", primary));
+        return data;
+    }
+
+    @Test
+    void addressesSupportMultipleEntriesManualEditsAndArchiving() throws Exception {
+        long personId = person().get("id").asLong();
+        var data = addressData(personId, "10", true);
+        var first = create("person-addresses", data);
+        long id = first.get("id").asLong();
+        assertEquals("01001000", first.get("postalCode").asText());
+        assertEquals("10", first.get("number").asText());
+        assertEquals("Sala 2", first.get("complement").asText());
+        assertEquals(409, request("POST", "person-addresses", addressData(personId, "20", true)).status());
+        var duplicate = addressData(personId, "10", false);
+        duplicate.put("street", "praça da sé");
+        assertEquals(409, request("POST", "person-addresses", duplicate).status());
+        create("person-addresses", addressData(personId, "20", false));
+        var invalid = addressData(personId, "30", false);
+        invalid.put("postalCode", "123");
+        assertEquals(400, request("POST", "person-addresses", invalid).status());
+        invalid.put("postalCode", "01001000");
+        invalid.put("state", "XX");
+        assertEquals(400, request("POST", "person-addresses", invalid).status());
+        data.put("version", first.get("version").asLong());
+        data.put("street", "Logradouro corrigido manualmente");
+        var saved = request("PUT", "person-addresses/" + id, data);
+        assertEquals(200, saved.status(), saved.raw());
+        assertEquals("Logradouro corrigido manualmente", saved.body().get("street").asText());
+        assertEquals(409, request("PUT", "person-addresses/" + id, data).status());
+        data.put("version", saved.body().get("version").asLong());
+        data.put("personId", person().get("id").asLong());
+        assertEquals(400, request("PUT", "person-addresses/" + id, data).status());
+        assertEquals(409, request("DELETE", "person-addresses/" + id + "?version=0", null).status());
+        assertEquals(204, request("DELETE", "person-addresses/" + id + "?version=" + saved.body().get("version").asLong(), null).status());
+        assertEquals(404, request("GET", "person-addresses/" + id, null).status());
+        assertTrue(jdbc.queryForObject("select archived from erp_person_address where id = ?", Boolean.class, id));
+        assertEquals("Logradouro corrigido manualmente", jdbc.queryForObject("select street from erp_person_address where id = ?", String.class, id));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_person_address where person_id = ?", Long.class, personId));
+        create("person-addresses", addressData(personId, "40", true));
+        assertEquals(400, request("GET", "postal-codes/invalid", null).status());
+    }
+
+    @Test
+    void concurrentAddressCreationAllowsOnlyOnePrimary() throws Exception {
+        long personId = person().get("id").asLong();
+        var first = CompletableFuture.supplyAsync(() -> {
+            try { return request("POST", "person-addresses", addressData(personId, "1", true)).status(); }
+            catch (Exception ex) { throw new RuntimeException(ex); }
+        });
+        var second = CompletableFuture.supplyAsync(() -> {
+            try { return request("POST", "person-addresses", addressData(personId, "2", true)).status(); }
+            catch (Exception ex) { throw new RuntimeException(ex); }
+        });
+        var statuses = java.util.List.of(first.get(), second.get());
+        assertTrue(statuses.contains(201), statuses.toString());
+        assertTrue(statuses.contains(409), statuses.toString());
+    }
+
     @Test
     void catalogExposesAllCoreResourcesWithoutPersistenceClasses() throws Exception {
         var result = request("GET", "catalog", null);
         assertEquals(200, result.status());
-        assertEquals(13, result.body().size());
+        assertEquals(14, result.body().size());
         assertFalse(result.raw().contains("com.weaponsregistration"));
         for (var resource : result.body()) {
             var page = request("GET", resource.get("key").asText() + "?search=example", null);

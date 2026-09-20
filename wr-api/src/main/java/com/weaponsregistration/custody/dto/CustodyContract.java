@@ -5,7 +5,7 @@ import java.util.List;
 public final class CustodyContract {
     private CustodyContract() {}
     public record IssueRequest(String requestId, Long organizationId, Long unitId, Long recipientId,
-        Long authorizerId, String purpose, String dueAt, List<Long> assetIds, List<Long> equipmentSetIds, Long recipientUnitId) {}
+        Long authorizerId, String purpose, String dueAt, List<Long> assetIds, List<Long> equipmentSetIds, Long recipientUnitId, String recipientType, String custodyScope, String durationType, String teamOperation, String responsibilityTerm, String deliveryCondition, String accessories) {}
     public record ReturnRequest(String requestId, List<Long> itemIds, Long conditionTypeId, String inspectionNotes) {}
     public record StockOption(long assetId, String assetCode, String serialNumber, String modelName, String locationName) {}
     public record EquipmentSetOption(long equipmentSetId, String code, String name, int componentCount) {}

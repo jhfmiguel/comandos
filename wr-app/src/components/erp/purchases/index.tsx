@@ -18,7 +18,6 @@ import type {
     BiddingModality,
     CreatePurchaseItemRequest,
     DirectContractingType,
-    ItemModelOption,
     ProcurementMethod,
     PurchaseView
 } from "api/models/erp/purchase";
@@ -37,7 +36,7 @@ const reference = (name: string, label: string, resource: string, required = tru
 });
 
 const organizationField = reference("buyerOrganizationId", "Organization", "organizations");
-const supplierField = reference("supplierOrganizationId", "Supplier", "organizations", false);
+const originPersonField = reference("originPersonId", "Acquisition origin", "people");
 const itemModelField = reference("itemModelId", "Equipment / item", "item-models");
 
 type PurchaseLine = {
@@ -92,7 +91,7 @@ export function PurchaseWorkspace() {
 
 function PurchaseForm({ onNew }: { onNew: () => void }) {
     const [organization, setOrganization] = React.useState<ErpValue>(null);
-    const [supplier, setSupplier] = React.useState<ErpValue>(null);
+    const [originPerson, setOriginPerson] = React.useState<ErpValue>(null);
     const [acquisitionType, setAcquisitionType] = React.useState<AcquisitionType>("ONEROUS");
     const [originDescription, setOriginDescription] = React.useState("");
     const [freight, setFreight] = React.useState("0");
@@ -113,6 +112,7 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
 
     const valid = Boolean(
         organization &&
+        originPerson &&
         purchaseNumber.trim() &&
         purchaseDate &&
         lines.length &&
@@ -143,7 +143,7 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
         try {
             const result = await purchaseService.create({
                 buyerOrganizationId: Number(organization),
-                supplierOrganizationId: supplier ? Number(supplier) : undefined,
+                originPersonId: Number(originPerson),
                 acquisitionType,
                 originDescription: originDescription.trim() || undefined,
                 purchaseNumber: purchaseNumber.trim(),
@@ -195,28 +195,27 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                     </div>
 
                     <div className={styles.field}>
-                        <label>Supplier</label>
+                        <label>Acquisition origin *</label>
                         <ReferenceField
                             service={core}
-                            field={supplierField}
-                            value={supplier}
+                            field={originPersonField}
+                            value={originPerson}
                             organizationId={null}
-                            onChange={setSupplier}
+                            onChange={setOriginPerson}
                         />
                         <small>
-                            The backend currently represents the supplier as an Organization.
-                            Person/supplier roles can be generalized in the next backend evolution.
+                            Select a registered natural person or legal entity as supplier/origin.
                         </small>
                     </div>
                     <div className={styles.field}>
-                        <label htmlFor="acquisition-type">Tipo de aquisiÃ§Ã£o *</label>
+                        <label htmlFor="acquisition-type">Tipo de aquisição *</label>
                         <select id="acquisition-type" value={acquisitionType} onChange={event => setAcquisitionType(event.target.value as AcquisitionType)}>
                             <option value="ONEROUS">Onerosa / compra</option>
                             <option value="FREE">Gratuita</option>
                         </select>
                     </div>
                     <div className={styles.field}>
-                        <label htmlFor="origin-description">Origem</label>
+                        <label htmlFor="origin-description">Origin complement</label>
                         <input id="origin-description" maxLength={1000} value={originDescription} onChange={event => setOriginDescription(event.target.value)} />
                     </div>
                     <div className={styles.field}>
@@ -231,9 +230,9 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                         <label htmlFor="purchase-other-costs">Outros custos</label>
                         <input id="purchase-other-costs" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={otherCosts} onChange={event => setOtherCosts(event.target.value)} />
                     </div>
-                    <div className={styles.field}><label>CondiÃ§Ãµes de pagamento</label><textarea value={paymentConditions} onChange={event => setPaymentConditions(event.target.value)} /></div>
-                    <div className={styles.field}><label>CondiÃ§Ãµes de entrega</label><textarea value={deliveryConditions} onChange={event => setDeliveryConditions(event.target.value)} /></div>
-                    <div className={styles.field}><label>Garantia / condiÃ§Ãµes</label><textarea value={warrantyConditions} onChange={event => setWarrantyConditions(event.target.value)} /></div>
+                    <div className={styles.field}><label>Condições de pagamento</label><textarea value={paymentConditions} onChange={event => setPaymentConditions(event.target.value)} /></div>
+                    <div className={styles.field}><label>Condições de entrega</label><textarea value={deliveryConditions} onChange={event => setDeliveryConditions(event.target.value)} /></div>
+                    <div className={styles.field}><label>Garantia / condições</label><textarea value={warrantyConditions} onChange={event => setWarrantyConditions(event.target.value)} /></div>
 
                     <div className={styles.field}>
                         <label htmlFor="purchase-number">Purchase number *</label>
@@ -281,7 +280,7 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                 {completed && <PurchaseSummary purchase={completed} />}
                 <section>
                     <div className={styles.toolbar}>
-                        <h2>Documentos da aquisiÃ§Ã£o</h2>
+                        <h2>Documentos da aquisição</h2>
                         <Button
                             type="button"
                             className="comandos-accent-button"
@@ -296,12 +295,12 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                             <thead>
                                 <tr>
                                     <th>Tipo</th>
-                                    <th>NÃºmero</th>
+                                    <th>Número</th>
                                     <th>Data</th>
                                     <th>Emissor</th>
                                     <th>Valor</th>
-                                    <th>Arquivo / referÃªncia</th>
-                                    <th>AÃ§Ãµes</th>
+                                    <th>Arquivo / referência</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -323,11 +322,11 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                                                 <option value="INVOICE">Nota fiscal</option>
                                                 <option value="PROCUREMENT_PROCESS">Processo</option>
                                                 <option value="BIDDING_NOTICE">Edital</option>
-                                                <option value="DIRECT_CONTRACTING_ACT">Ato de contrataÃ§Ã£o direta</option>
-                                                <option value="FREE_ACQUISITION_TERM">Termo de aquisiÃ§Ã£o gratuita</option>
-                                                <option value="DONATION_TERM">Termo de doaÃ§Ã£o</option>
-                                                <option value="TRANSFER_TERM">Termo de transferÃªncia</option>
-                                                <option value="AUTHORIZATION">AutorizaÃ§Ã£o</option>
+                                                <option value="DIRECT_CONTRACTING_ACT">Ato de contratação direta</option>
+                                                <option value="FREE_ACQUISITION_TERM">Termo de aquisição gratuita</option>
+                                                <option value="DONATION_TERM">Termo de doação</option>
+                                                <option value="TRANSFER_TERM">Termo de transferência</option>
+                                                <option value="AUTHORIZATION">Autorização</option>
                                                 <option value="DELIVERY_DOCUMENT">Documento de entrega</option>
                                                 <option value="OTHER">Outro</option>
                                             </select>
@@ -499,7 +498,7 @@ function PurchaseItems({
                             <th>Quantity</th>
                             <th>Unit price</th>
                             <th>Discount</th>
-                            <th>CondiÃ§Ã£o</th>
+                            <th>Condição</th>
                             <th>Notes</th>
                             <th className={styles.actionCell}>Actions</th>
                         </tr>
@@ -547,7 +546,7 @@ function PurchaseItems({
                                     />
                                 </td>
                                 <td>
-                                    <input aria-label="CondiÃ§Ã£o do item" maxLength={1000} value={line.conditionDescription} onChange={event => update(line.key, { conditionDescription: event.target.value })} />
+                                    <input aria-label="Condição do item" maxLength={1000} value={line.conditionDescription} onChange={event => update(line.key, { conditionDescription: event.target.value })} />
                                 </td>
                                 <td>
                                     <input
@@ -764,7 +763,7 @@ function PurchaseSummary({ purchase }: { purchase: PurchaseView }) {
                 {purchase.purchaseNumber} · {purchase.purchaseDate} · {purchase.status}
             </p>
             <p>
-                Buyer: {purchase.buyerName} · Supplier: {purchase.supplierName || "Not informed"}
+                Buyer: {purchase.buyerName} · Origin: {purchase.originPersonName} ({purchase.originPersonType})
             </p>
             <table>
                 <thead>

@@ -75,24 +75,33 @@ public class AmmunitionConsumptionService {
         consumption.organization = organization; consumption.unit = unit; consumption.responsible = responsible; consumption.authorizer = authorizer;
         consumption.organizationName = organization.name; consumption.unitName = unit == null ? null : unit.name;
         consumption.responsibleName = responsible.fullName; consumption.authorizerName = authorizer.fullName;
-        consumption.purpose = request.purpose().trim(); consumption.consumedAt = now;
+        consumption.purpose = request.purpose().trim();
+        consumption.activityType = request.activityType() == null || request.activityType().isBlank() ? "OPERATION" : request.activityType().trim().toUpperCase(Locale.ROOT);
+        consumption.operationTraining = request.operationTraining() == null || request.operationTraining().isBlank() ? null : request.operationTraining().trim();
+        consumption.consumedAt = now;
         consumption.requestId = request.requestId(); consumption.requestFingerprint = fingerprint;
         var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); em.persist(consumption);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
             var balance = locked(StockBalance.class, line.balanceId());
             var lot = locked(StockLot.class, balance.lot.id);
-            validateStock(balance, lot, organization.id, request.unitId(), line.quantity());
+            BigDecimal delivered = line.deliveredQuantity() == null ? line.quantity() : line.deliveredQuantity();
+            BigDecimal used = line.usedQuantity() == null ? line.quantity() : line.usedQuantity();
+            BigDecimal returned = line.returnedQuantity() == null ? delivered.subtract(used) : line.returnedQuantity();
+            if (delivered == null || used == null || returned == null || delivered.signum() <= 0 || used.signum() < 0 || returned.signum() < 0
+                    || used.add(returned).compareTo(delivered) != 0) bad("Delivered quantity must equal used plus returned quantity.");
+            validateStock(balance, lot, organization.id, request.unitId(), used);
             BigDecimal oldBalance = balance.available; BigDecimal oldLot = lot.availableQuantity;
-            balance.available = oldBalance.subtract(line.quantity()); lot.availableQuantity = oldLot.subtract(line.quantity());
+            balance.available = oldBalance.subtract(used); lot.availableQuantity = oldLot.subtract(used);
             var movement = new StockMovement(); movement.lot = lot; movement.location = balance.location;
-            movement.nature = "AMMUNITION_CONSUMPTION"; movement.quantity = line.quantity().negate(); movement.movedAt = now; em.persist(movement);
+            movement.nature = "CONSUMPTION_DEFLAGRATION"; movement.quantity = used.negate(); movement.movedAt = now; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
             var item = new AmmunitionConsumptionItem(); item.consumption = consumption; item.lot = lot; item.balance = balance;
             item.location = balance.location; item.movement = movement; item.modelName = lot.model.name; item.sku = lot.model.sku;
             item.lotNumber = lot.lotNumber; item.locationName = balance.location.name; item.unitOfMeasure = lot.model.unitOfMeasure;
-            item.quantity = line.quantity(); item.result = line.result().trim(); em.persist(item);
+            item.quantity = used; item.deliveredQuantity = delivered; item.usedQuantity = used; item.returnedQuantity = returned;
+            item.result = line.result().trim(); em.persist(item);
             stockChanges.add(Map.of("balanceId", balance.id, "lotId", lot.id, "before", oldBalance, "after", balance.available,
-                "quantity", line.quantity(), "movementNature", movement.nature));
+                "quantity", used, "movementNature", movement.nature));
         }
         em.flush();
         var result = view(consumption);
@@ -119,10 +128,12 @@ public class AmmunitionConsumptionService {
     private ConsumptionView view(AmmunitionConsumption value) {
         var items = em.createQuery("select i from AmmunitionConsumptionItem i where i.consumption.id = :id order by i.id", AmmunitionConsumptionItem.class)
             .setParameter("id", value.id).getResultList().stream().map(i -> new ItemView(i.id, i.lot.id, i.balance.id, i.sku,
-                i.modelName, i.lotNumber, i.locationName, i.unitOfMeasure, i.quantity, i.result, i.movement.id)).toList();
+                i.modelName, i.lotNumber, i.locationName, i.unitOfMeasure, i.quantity, i.result, i.movement.id,
+                i.deliveredQuantity, i.usedQuantity, i.returnedQuantity)).toList();
         return new ConsumptionView(value.id, value.organization.id, value.organizationName, value.unit == null ? null : value.unit.id,
             value.unitName, value.responsible.id, value.responsibleName, value.authorizer.id, value.authorizerName, value.purpose,
-            value.status, value.consumedAt.toString(), value.finalizedById, value.finalizedByLogin, items);
+            value.status, value.consumedAt.toString(), value.finalizedById, value.finalizedByLogin, items,
+            value.activityType, value.operationTraining);
     }
     private StockOption stockView(StockBalance b) { return new StockOption(b.id, b.lot.id, b.lot.model.sku, b.lot.model.name,
         b.lot.lotNumber, b.location.name, b.lot.model.unitOfMeasure, b.available,
@@ -162,7 +173,7 @@ public class AmmunitionConsumptionService {
     private static String fingerprint(FinalizeRequest r) {
         String lines = r.items().stream().sorted(Comparator.comparing(LineRequest::balanceId))
             .map(i -> i.balanceId() + ":" + i.quantity().stripTrailingZeros().toPlainString() + ":" + i.result().trim()).toList().toString();
-        return hash(r.organizationId() + "|" + r.unitId() + "|" + r.responsibleId() + "|" + r.authorizerId() + "|" + r.purpose().trim() + "|" + lines);
+        return hash(r.organizationId() + "|" + r.unitId() + "|" + r.responsibleId() + "|" + r.authorizerId() + "|" + r.purpose().trim() + "|" + r.activityType() + "|" + r.operationTraining() + "|" + lines);
     }
     private static String hash(String value) { try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
         .digest(value.getBytes(StandardCharsets.UTF_8))); } catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); } }

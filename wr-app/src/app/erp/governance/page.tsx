@@ -1,0 +1,1 @@
+import{GovernanceWorkspace}from"components/erp/governance";export default function Page(){return <GovernanceWorkspace/>}

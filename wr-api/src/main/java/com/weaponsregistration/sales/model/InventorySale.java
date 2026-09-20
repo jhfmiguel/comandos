@@ -19,6 +19,11 @@ public class InventorySale extends CoreEntity {
     @Column(nullable = false) public String organizationName;
     @Column(nullable = false) public String buyerName;
     @Enumerated(EnumType.STRING) @Column(nullable = false) public PaymentMethod paymentMethod;
+    @Column(name = "process_number", length = 255) public String processNumber;
+    @Column(name = "legal_basis", length = 500) public String legalBasis;
+    @Column(name = "document_reference", length = 1000) public String documentReference;
+    @Column(name = "withdrawn_at") public LocalDateTime withdrawnAt;
+    @Column(name = "withdrawn_by_login") public String withdrawnByLogin;
     @Column(nullable = false) public String status = "FINALIZED";
     @Column(nullable = false) public LocalDateTime finalizedAt;
     @Column public Long finalizedById;

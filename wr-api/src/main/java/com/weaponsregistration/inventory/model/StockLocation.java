@@ -23,4 +23,8 @@ public class StockLocation extends CoreEntity {
     public String type;
     @Column(name = "controlled", nullable = false)
     public Boolean controlled = false;
+    @Column(name = "code", unique = true, length = 100) public String code;
+    @Column(name = "warehouse_type", length = 100) public String warehouseType;
+    @Column(name = "address", length = 500) public String address;
+    @Column(name = "active", nullable = false) public Boolean active = true;
 }

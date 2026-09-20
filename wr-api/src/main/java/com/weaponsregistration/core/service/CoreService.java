@@ -51,6 +51,7 @@ public class CoreService {
         }
 
         List<String> clauses = new ArrayList<>();
+        if (spec.entity() == PersonAddress.class) clauses.add("e.archived = false");
         Map<String, Object> parameters = new LinkedHashMap<>();
 
         if (search != null && !search.isBlank()) {
@@ -262,6 +263,9 @@ public class CoreService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This record has changed. Reload before saving.");
         }
         Map<String, Object> before = id == null ? null : view(spec, entity);
+        if (entity instanceof PersonAddress address && id != null
+                && !Objects.equals(address.person.id, positiveLong(data.get("personId"), "Person", false)))
+            bad("An address cannot be transferred to another person.");
         for (var field : spec.fields()) {
             Object raw = data.get(field.name());
             if (field.type().equals("password")) {
@@ -315,12 +319,34 @@ public class CoreService {
         if (!Objects.equals(entity.version, version))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This record has changed. Reload before deleting.");
         var before = view(CoreCatalog.get(resource), entity);
-        em.remove(entity);
+        if (entity instanceof PersonAddress address) {
+            em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
+            address.archived = true;
+            address.primaryAddress = false;
+        } else em.remove(entity);
         em.flush();
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 
     private void validate(CoreEntity entity) {
+        if (entity instanceof PersonAddress address) {
+            if (!address.postalCode.matches("[0-9]{5}-?[0-9]{3}")) bad("CEP inválido. Informe oito dígitos.");
+            address.postalCode = address.postalCode.replace("-", "");
+            address.state = address.state.toUpperCase(Locale.ROOT);
+            if (!Set.of("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO").contains(address.state)) bad("UF inválida.");
+            // The person lock serializes duplicate and primary checks, including concurrent inserts.
+            var others = em.createQuery("select a from PersonAddress a where a.person.id = :person and a.archived = false and a.id <> :id", PersonAddress.class)
+                .setParameter("person", address.person.id).setParameter("id", address.id == null ? -1L : address.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT).getResultList();
+            for (var other : others) {
+                if (address.primaryAddress && other.primaryAddress)
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um endereço principal. Desmarque o atual antes de escolher outro.");
+                if (address.postalCode.equals(other.postalCode) && address.street.equalsIgnoreCase(other.street)
+                        && address.number.equalsIgnoreCase(other.number)
+                        && Objects.toString(address.complement, "").equalsIgnoreCase(Objects.toString(other.complement, "")))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Este endereço já está cadastrado para a pessoa.");
+            }
+        }
         if (entity instanceof Person person) {
             if (person.birthDate != null && person.birthDate.isAfter(LocalDate.now())) bad("Birth date cannot be in the future.");
             if ("LEGAL_ENTITY".equals(person.personType) && person.birthDate != null) bad("Legal entities cannot have a birth date.");
@@ -367,6 +393,12 @@ public class CoreService {
     // Acquire scope locks before loading related entities so hierarchy checks see
     // the latest committed relationships, including concurrent parent changes.
     private void lockScope(CoreCatalog.Resource spec, Long id, Map<String, Object> data) {
+        if (spec.entity() == PersonAddress.class) {
+            var person = em.find(Person.class, positiveLong(data.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
+            if (person == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found.");
+            access.requireEntity("core/people", "READ", person);
+            return;
+        }
         if (spec.entity() != OrganizationalUnit.class && spec.entity() != PersonRoleAssignment.class
                 && spec.entity() != UserProfile.class) return;
         Set<Long> organizations = new TreeSet<>();
@@ -383,7 +415,7 @@ public class CoreService {
 
     private CoreEntity find(CoreCatalog.Resource spec, long id) {
         var entity = em.find(spec.entity(), id);
-        if (entity == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, spec.label() + ": record not found.");
+        if (entity == null || entity instanceof PersonAddress address && address.archived) throw new ResponseStatusException(HttpStatus.NOT_FOUND, spec.label() + ": record not found.");
         return entity;
     }
 

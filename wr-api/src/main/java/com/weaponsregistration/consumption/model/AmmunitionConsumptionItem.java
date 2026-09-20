@@ -19,5 +19,8 @@ public class AmmunitionConsumptionItem extends CoreEntity {
     @Column(nullable = false) public String locationName;
     @Column(nullable = false) public String unitOfMeasure;
     @Column(nullable = false, precision = 19, scale = 4) public BigDecimal quantity;
+    @Column(name = "delivered_quantity", nullable = false, precision = 19, scale = 4) public BigDecimal deliveredQuantity;
+    @Column(name = "used_quantity", nullable = false, precision = 19, scale = 4) public BigDecimal usedQuantity;
+    @Column(name = "returned_quantity", nullable = false, precision = 19, scale = 4) public BigDecimal returnedQuantity;
     @Column(nullable = false, length = 255) public String result;
 }

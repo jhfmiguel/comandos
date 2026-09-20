@@ -16,6 +16,8 @@ public class AmmunitionConsumption extends CoreEntity {
     @Column(nullable = false) public String responsibleName;
     @Column(nullable = false) public String authorizerName;
     @Column(nullable = false, length = 255) public String purpose;
+    @Column(name = "activity_type", nullable = false, length = 40) public String activityType = "OPERATION";
+    @Column(name = "operation_training", length = 255) public String operationTraining;
     @Column(nullable = false, length = 30) public String status = "FINALIZED";
     @Column(nullable = false) public LocalDateTime consumedAt;
     @Column public Long finalizedById;

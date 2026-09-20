@@ -101,6 +101,12 @@ public class CustodyService {
         custody.organizationName = organization.name; custody.unitName = unit == null ? null : unit.name;
         custody.recipientName = recipient == null ? recipientUnit.name : recipient.fullName; custody.authorizerName = authorizer.fullName;
         custody.purpose = request.purpose().trim(); custody.deliveredAt = deliveredAt; custody.dueAt = dueAt;
+        custody.recipientType = request.recipientType() == null || request.recipientType().isBlank() ? (recipient == null ? "UNIT" : "PERSON") : request.recipientType().trim().toUpperCase(Locale.ROOT);
+        custody.custodyScope = request.custodyScope() == null || request.custodyScope().isBlank() ? "INDIVIDUAL" : request.custodyScope().trim().toUpperCase(Locale.ROOT);
+        custody.durationType = request.durationType() == null || request.durationType().isBlank() ? (dueAt == null ? "PERMANENT" : "TEMPORARY") : request.durationType().trim().toUpperCase(Locale.ROOT);
+        custody.teamOperation = request.teamOperation() == null || request.teamOperation().isBlank() ? null : request.teamOperation().trim();
+        custody.responsibilityTerm = request.responsibilityTerm() == null || request.responsibilityTerm().isBlank() ? null : request.responsibilityTerm().trim();
+        custody.deliveryCondition = request.deliveryCondition() == null || request.deliveryCondition().isBlank() ? null : request.deliveryCondition().trim();
         custody.requestId = request.requestId(); custody.requestFingerprint = fingerprint;
         var actor = audit.actor(); custody.issuedById = actor.id(); custody.issuedByLogin = actor.login();
         em.persist(custody);
@@ -309,11 +315,11 @@ public class CustodyService {
 
     private StockMovement movement(AssetItem asset, String nature, BigDecimal quantity, LocalDateTime at) {
         var movement = new StockMovement(); movement.asset = asset; movement.location = asset.location;
-        movement.nature = nature; movement.quantity = quantity; movement.movedAt = at; em.persist(movement); return movement;
+        movement.nature = nature; movement.quantity = quantity; movement.movedAt = at; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement); return movement;
     }
     private StockMovement movement(StockBalance balance, String nature, BigDecimal quantity, LocalDateTime at) {
         var movement = new StockMovement(); movement.lot = balance.lot; movement.location = balance.location;
-        movement.nature = nature; movement.quantity = quantity; movement.movedAt = at; em.persist(movement); return movement;
+        movement.nature = nature; movement.quantity = quantity; movement.movedAt = at; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement); return movement;
     }
 
     private boolean setCurrentlyAvailable(EquipmentSet set) {

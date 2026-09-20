@@ -6,7 +6,7 @@ import java.util.List;
 public final class PurchaseContract {
  private PurchaseContract(){}
  public record CreatePurchaseRequest(
-  Long buyerOrganizationId,Long supplierOrganizationId,AcquisitionType acquisitionType,String originDescription,
+  Long buyerOrganizationId,Long supplierOrganizationId,Long originPersonId,AcquisitionType acquisitionType,String originDescription,
   String purchaseNumber,LocalDate purchaseDate,BigDecimal discount,BigDecimal freight,BigDecimal taxes,BigDecimal otherCosts,
   String paymentConditions,String deliveryConditions,String warrantyConditions,String notes,
   List<CreatePurchaseItemRequest> items,List<DocumentRequest> documents){}
@@ -18,7 +18,7 @@ public final class PurchaseContract {
  public record DocumentView(Long id,AcquisitionDocumentType documentType,String documentNumber,LocalDate issueDate,String issuer,BigDecimal amount,String storageReference,String notes){}
  public record ProcurementView(Long id,String processNumber,ProcurementMethod procurementMethod,BiddingModality biddingModality,DirectContractingType directContractingType,ProcurementStatus status,BigDecimal estimatedValue,String legalBasis){}
  public record PurchaseView(Long id,Long buyerOrganizationId,String buyerName,Boolean publicBuyer,Long supplierOrganizationId,String supplierName,
-  AcquisitionType acquisitionType,String originDescription,String purchaseNumber,LocalDate purchaseDate,PurchaseStatus status,BigDecimal subtotal,
+  Long originPersonId,String originPersonName,String originPersonType,String originPersonTaxId,AcquisitionType acquisitionType,String originDescription,String purchaseNumber,LocalDate purchaseDate,PurchaseStatus status,BigDecimal subtotal,
   BigDecimal discount,BigDecimal freight,BigDecimal taxes,BigDecimal otherCosts,BigDecimal total,String paymentConditions,String deliveryConditions,
   String warrantyConditions,String notes,ProcurementView procurement,List<PurchaseItemView> items,List<DocumentView> documents){}
 }

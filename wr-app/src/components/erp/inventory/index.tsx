@@ -37,6 +37,11 @@ const sectionTabs = {
         { resource: "ballistic-protection-specifications", label: "Ballistic protection" },
         { resource: "electrical-device-specifications", label: "Electrical device" },
         { resource: "optical-specifications", label: "Optical" },
+        { resource: "helmet-specifications", label: "Helmet" },
+        { resource: "shield-specifications", label: "Shield" },
+        { resource: "restraint-specifications", label: "Handcuffs/restraints" },
+        { resource: "accessory-component-specifications", label: "Accessories/components" },
+        { resource: "tactical-equipment-specifications", label: "Tactical equipment" },
         { resource: "regulatory-controls", label: "Regulatory controls" }
     ],
     compliance: [
@@ -66,7 +71,7 @@ export function InventoryWorkspace({ initialResource = "item-categories", sectio
             module="inventory"
             title="Assets and inventory"
             initialResource={tabs?.[0]?.resource ?? initialResource}
-            description="Manage equipment models, firearm and ammunition specifications, registrations, individual assets, stock lots, and technical characteristics."
+            description="Manage equipment models, type-specific technical specifications, identification, individual assets, controlled lots, locations, conditions and immutable stock movement history."
             showNavigation={false}
             tabs={tabs}
         />

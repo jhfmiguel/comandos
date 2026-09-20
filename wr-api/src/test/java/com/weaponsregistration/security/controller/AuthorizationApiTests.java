@@ -315,7 +315,7 @@ class AuthorizationApiTests {
     void systemAdministratorCanManageAccessAndInvalidScopesGrantNothing() throws Exception {
         var f = fixture(); grant(f, "*", "*", "SYSTEM", null); login(f);
         var result = request("GET", "/api/erp/core/catalog", null);
-        assertEquals(200, result.status(), result.raw()); assertEquals(13, result.body().size());
+        assertEquals(200, result.status(), result.raw()); assertEquals(14, result.body().size());
         assertEquals(201, request("POST", "/api/erp/core/profiles", Map.of("name", UUID.randomUUID().toString(), "level", "SYSTEM")).status());
         var invalid = fixture();
         grant(invalid, "*", "*", "SYSTEM", invalid.unit());

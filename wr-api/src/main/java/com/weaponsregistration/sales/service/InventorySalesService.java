@@ -89,7 +89,12 @@ public class InventorySalesService {
         sale.organizationName = organization.name;
         sale.buyerName = buyer.fullName;
         sale.paymentMethod = request.paymentMethod();
+        sale.processNumber = request.processNumber() == null || request.processNumber().isBlank() ? null : request.processNumber().trim();
+        sale.legalBasis = request.legalBasis() == null || request.legalBasis().isBlank() ? null : request.legalBasis().trim();
+        sale.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
         sale.finalizedAt = LocalDateTime.now();
+        sale.withdrawnAt = sale.finalizedAt;
+        sale.withdrawnByLogin = audit.actor().login();
         var actor = audit.actor();
         sale.finalizedById = actor.id();
         sale.finalizedByLogin = actor.login();
@@ -153,7 +158,7 @@ public class InventorySalesService {
             movement.nature = "SALE";
             movement.quantity = item.quantity.negate();
             movement.movedAt = sale.finalizedAt;
-            em.persist(movement);
+            movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
             item.movement = movement;
             em.persist(item);
         }
@@ -230,7 +235,7 @@ public class InventorySalesService {
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items()) {
             var sold = byId.get(line.saleItemId()); var item = new SaleReturnItem(); item.saleReturn=operation;item.saleItem=sold;item.quantity=line.quantity();item.refundAmount=sold.unitPrice.multiply(line.quantity()).setScale(4,RoundingMode.HALF_UP);operation.refundAmount=operation.refundAmount.add(item.refundAmount);
-            var movement=new StockMovement();movement.asset=sold.asset;movement.lot=sold.lot;movement.location=sold.location;movement.nature=request.cancellation()?"SALE_CANCELLATION":"SALE_RETURN";movement.quantity=line.quantity();movement.movedAt=operation.returnedAt;em.persist(movement);item.movement=movement;
+            var movement=new StockMovement();movement.asset=sold.asset;movement.lot=sold.lot;movement.location=sold.location;movement.nature=request.cancellation()?"SALE_CANCELLATION":"SALE_RETURN";movement.quantity=line.quantity();movement.movedAt=operation.returnedAt;movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);item.movement=movement;
             if(sold.asset!=null){var asset=locked(AssetItem.class,sold.asset.id);if(!"SOLD".equals(asset.status))conflict("The sold asset cannot be returned in its current state.");asset.status=canRestore(asset)?"AVAILABLE":"BLOCKED";changes.add(Map.of("assetId",asset.id,"after",asset.status));}
             else{var balance=em.createQuery("select b from StockBalance b where b.lot.id=:lot and b.location.id=:location",StockBalance.class).setParameter("lot",sold.lot.id).setParameter("location",sold.location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultStream().findFirst().orElseGet(()->{var b=new StockBalance();b.lot=sold.lot;b.location=sold.location;em.persist(b);return b;});var lot=locked(StockLot.class,sold.lot.id);balance.available=balance.available.add(line.quantity());lot.availableQuantity=lot.availableQuantity.add(line.quantity());changes.add(Map.of("balanceId",balance.id,"quantity",decimal(line.quantity())));}
             em.persist(item);

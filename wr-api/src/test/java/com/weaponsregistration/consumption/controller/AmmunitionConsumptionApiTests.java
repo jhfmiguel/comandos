@@ -48,7 +48,7 @@ class AmmunitionConsumptionApiTests {
         assertEquals("8.2500", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
         assertEquals("8.2500", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
         assertEquals(first.body().get("id").asLong(), request("POST", "ammunition-consumptions", data).body().get("id").asLong());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'ammunition-consumptions' and record_id = ?", Long.class, first.body().get("id").asLong()));
     }
     @Test void insufficientSecondLineRollsBackEveryDeduction() throws Exception {
@@ -59,7 +59,7 @@ class AmmunitionConsumptionApiTests {
         data.put("items", List.of(Map.of("balanceId", s.balance(), "quantity", "1", "result", "Used"), Map.of("balanceId", otherBalance, "quantity", "99", "result", "Used")));
         assertEquals(409, request("POST", "ammunition-consumptions", data).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_ammunition_consumption where request_id = ?", Long.class, data.get("requestId")));
-        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
         assertEquals("10.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
         assertEquals("10.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
     }
@@ -72,7 +72,7 @@ class AmmunitionConsumptionApiTests {
         assertEquals(0, request("GET", "ammunition-consumptions/stock?organizationId=" + s.organization() + "&unitId=" + s.unit(), null).body().get("totalElements").asInt());
         assertEquals(400, request("POST", "ammunition-consumptions", payload(s, "1")).status());
         assertEquals("9.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
     }
     @Test void concurrentRetriesProduceOnlyOneConsumption() throws Exception {
         var s = setup(); var data = payload(s, "2");
@@ -86,7 +86,7 @@ class AmmunitionConsumptionApiTests {
         }
         assertEquals("8.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
         assertEquals("8.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'AMMUNITION_CONSUMPTION' and lot_id = ?", Long.class, s.lot()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
     }
     @Test void stockAndHistoryAreScopedAndValidationRejectsInvalidLines() throws Exception {
         var s = setup(); assertEquals(1, request("GET", "ammunition-consumptions/stock?organizationId=" + s.organization() + "&unitId=" + s.unit(), null).body().get("totalElements").asInt());

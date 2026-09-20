@@ -68,7 +68,7 @@ public class StockIntakeService {
                 var data = new HashMap<>(request.common()); data.put("assetCode", code); data.put("serialNumber", serial);
                 String invalid = inventory.validateAsset(data);
                 if (invalid != null) errors.add(invalid);
-                errors.addAll(AssetIdentity.conflicts(registered, code, serial));
+                errors.addAll(AssetIdentity.conflicts(registered, code, serial, null));
                 results.add(new RowResult(i + 1, code, serial, errors.isEmpty() ? "VALID" : "REJECTED", errors));
                 dataRows.add(data);
         }

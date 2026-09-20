@@ -137,7 +137,7 @@ public class DisposalService {
         item.unitOfMeasure = item.model.unitOfMeasure;
         StockMovement movement = new StockMovement(); movement.asset = item.asset; movement.lot = item.lot;
         movement.location = item.location; movement.nature = "DISPOSAL"; movement.quantity = item.quantity.negate();
-        movement.movedAt = process.finalizedAt; em.persist(movement); item.movement = movement; em.persist(item);
+        movement.movedAt = process.finalizedAt; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement); item.movement = movement; em.persist(item);
     }
 
     private DisposalView view(DisposalProcess process) {

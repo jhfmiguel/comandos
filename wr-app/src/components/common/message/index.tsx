@@ -2,7 +2,6 @@
 
 import * as React from "react"
 
-import type { ToastType } from "@primereact/ui/toaster"
 
 import {
     COMANDOS_TOAST_GROUP,
@@ -81,7 +80,7 @@ export const Message: React.FC<MessageProps> = ({
         const options = {
             title: field || undefined,
             description: text,
-            onDismiss: (_toastItem: ToastType) => {
+            onDismiss: () => {
                 onCloseRef.current?.()
             }
         }

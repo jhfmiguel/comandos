@@ -26,4 +26,8 @@ public class StockLot extends CoreEntity {
     @Column(columnDefinition = "text") public String openingPackaging;
     @Column(name = "valid_until", nullable = true)
     public LocalDate validUntil;
+    @Column(name = "condition", nullable = false, length = 100)
+    public String condition = "GOOD";
+    @Column(name = "status", nullable = false, length = 100)
+    public String status = "AVAILABLE";
 }

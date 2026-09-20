@@ -95,6 +95,8 @@ public class InventoryRules {
                 bad("Delay time must be greater than zero.");
             if (specification.safetyRadius == null || specification.safetyRadius.signum() <= 0)
                 bad("Safety radius must be greater than zero.");
+            if (specification.shelfLifeMonths == null || specification.shelfLifeMonths <= 0)
+                bad("Shelf life must be greater than zero.");
         }
         if (entity instanceof SpraySpecification specification) {
             if (!"SPRAY".equals(specification.model.category.family))
@@ -106,10 +108,15 @@ public class InventoryRules {
                 bad("Volume must be greater than zero.");
             if (specification.rangeMeters == null || specification.rangeMeters.signum() <= 0)
                 bad("Range must be greater than zero.");
+            if (specification.shelfLifeMonths == null || specification.shelfLifeMonths <= 0)
+                bad("Shelf life must be greater than zero.");
         }
-        if (entity instanceof BallisticProtectionSpecification specification
-                && !"BALLISTIC_PROTECTION".equals(specification.model.category.family))
-            bad("Ballistic protection specifications require a model in the BALLISTIC_PROTECTION family.");
+        if (entity instanceof BallisticProtectionSpecification specification) {
+            if (!"BALLISTIC_PROTECTION".equals(specification.model.category.family))
+                bad("Ballistic protection specifications require a model in the BALLISTIC_PROTECTION family.");
+            if (specification.serviceLifeMonths == null || specification.serviceLifeMonths <= 0)
+                bad("Service life must be greater than zero.");
+        }
         if (entity instanceof ElectricalDeviceSpecification specification) {
             if (!"ELECTRICAL_DEVICE".equals(specification.model.category.family))
                 bad("Electrical device specifications require a model in the ELECTRICAL_DEVICE family.");
@@ -121,8 +128,36 @@ public class InventoryRules {
         if (entity instanceof OpticalSpecification specification) {
             if (!"OPTICAL".equals(specification.model.category.family))
                 bad("Optical specifications require a model in the OPTICAL family.");
+            if (specification.minimumMagnification == null || specification.minimumMagnification.signum() <= 0)
+                bad("Minimum magnification must be greater than zero.");
             if (specification.maximumMagnification == null || specification.maximumMagnification.signum() <= 0)
                 bad("Maximum magnification must be greater than zero.");
+            if (specification.maximumMagnification.compareTo(specification.minimumMagnification) < 0)
+                bad("Maximum magnification cannot be lower than minimum magnification.");
+            positiveOptional(specification.objectiveDiameterMm, "Objective diameter");
+        }
+        if (entity instanceof HelmetSpecification specification) {
+            if (!"HELMET".equals(specification.model.category.family))
+                bad("Helmet specifications require a model in the HELMET family.");
+            positiveOptional(specification.weightGrams, "Helmet weight");
+        }
+        if (entity instanceof ShieldSpecification specification) {
+            if (!"SHIELD".equals(specification.model.category.family))
+                bad("Shield specifications require a model in the SHIELD family.");
+            positiveOptional(specification.heightMm, "Shield height");
+            positiveOptional(specification.widthMm, "Shield width");
+            positiveOptional(specification.weightGrams, "Shield weight");
+        }
+        if (entity instanceof RestraintSpecification specification
+                && !"RESTRAINT".equals(specification.model.category.family))
+            bad("Restraint specifications require a model in the RESTRAINT family.");
+        if (entity instanceof AccessoryComponentSpecification specification
+                && !"ACCESSORY_COMPONENT".equals(specification.model.category.family))
+            bad("Accessory/component specifications require a model in the ACCESSORY_COMPONENT family.");
+        if (entity instanceof TacticalEquipmentSpecification specification) {
+            if (!"TACTICAL_EQUIPMENT".equals(specification.model.category.family))
+                bad("Tactical equipment specifications require a model in the TACTICAL_EQUIPMENT family.");
+            positiveOptional(specification.weightGrams, "Tactical equipment weight");
         }
         if (entity instanceof RegulatoryControl control) {
             if (!"FIREARM".equals(control.asset.model.category.family))
@@ -408,4 +443,8 @@ public class InventoryRules {
         if (order == null || order < 0) bad("Display order cannot be negative.");
     }
     private static void bad(String message) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
+
+    private void positiveOptional(BigDecimal value, String label) {
+        if (value != null && value.signum() <= 0) bad(label + " must be greater than zero.");
+    }
 }

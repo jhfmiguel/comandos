@@ -1,0 +1,7 @@
+package com.weaponsregistration.report.controller;
+import com.weaponsregistration.report.dto.ArmamentReportContract.*;import com.weaponsregistration.report.service.ArmamentReportService;import java.util.*;import org.springframework.web.bind.annotation.*;
+@RestController@RequestMapping("/api/erp/armament-reports")public class ArmamentReportController{private final ArmamentReportService s;public ArmamentReportController(ArmamentReportService s){this.s=s;}
+ @GetMapping("/dashboard")public Dashboard dashboard(@RequestParam long organizationId,@RequestParam(required=false)Long unitId){return s.dashboard(organizationId,unitId);}@GetMapping("/alerts")public List<Alert>alerts(@RequestParam long organizationId,@RequestParam(required=false)Long unitId){return s.alerts(organizationId,unitId);}
+ @GetMapping("/assets")public List<Position>assets(@RequestParam long organizationId,@RequestParam(required=false)Long unitId,@RequestParam(required=false)String q){return s.assets(organizationId,unitId,q);}@GetMapping("/lots")public List<LotPosition>lots(@RequestParam long organizationId,@RequestParam(required=false)Long unitId){return s.lots(organizationId,unitId);}
+ @GetMapping("/history")public List<History>history(@RequestParam(required=false)String resource,@RequestParam(required=false)Long recordId){return s.history(resource,recordId);}@GetMapping("/bundle")public Bundle bundle(@RequestParam long organizationId,@RequestParam(required=false)Long unitId){return s.bundle(organizationId,unitId);}
+}

@@ -6,5 +6,12 @@ import com.weaponsregistration.core.model.*;import com.weaponsregistration.inven
  @ManyToOne(optional=false)@JoinColumn(name="destination_unit_id",nullable=false)public OrganizationalUnit destinationUnit;
  @ManyToOne(optional=false)@JoinColumn(name="destination_location_id",nullable=false)public StockLocation destinationLocation;
  @Column(nullable=false)public String organizationName;@Column(nullable=false)public String sourceUnitName;@Column(nullable=false)public String destinationUnitName;@Column(nullable=false)public String destinationLocationName;
- @Column(nullable=false,length=255)public String purpose;@Column(nullable=false,length=30)public String status="FINALIZED";@Column(nullable=false)public LocalDateTime sentAt;@Column public Long finalizedById;@Column public String finalizedByLogin;@Column(nullable=false,unique=true,length=36)public String requestId;@Column(nullable=false,length=64)public String requestFingerprint;
+ @Column(nullable=false,length=255)public String purpose;
+ @Column(name="transfer_type",nullable=false,length=30)public String transferType="INTERNAL";
+ @Column(name="legal_instrument",length=255)public String legalInstrument;
+ @Column(name="document_reference",length=500)public String documentReference;
+ @Column(name="approved_by_id")public Long approvedById;
+ @Column(name="approved_by_login")public String approvedByLogin;
+ @Column(name="approved_at")public LocalDateTime approvedAt;
+ @Column(nullable=false,length=30)public String status="FINALIZED";@Column(nullable=false)public LocalDateTime sentAt;@Column public Long finalizedById;@Column public String finalizedByLogin;@Column(nullable=false,unique=true,length=36)public String requestId;@Column(nullable=false,length=64)public String requestFingerprint;
 }

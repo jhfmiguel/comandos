@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Plus, Search, X } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Plus, X } from "lucide-react"
 
 
 import { Paginator } from "@primereact/ui/paginator"
@@ -131,11 +131,6 @@ const queueLabels: Record<string, string> = {
     failed: "Falhou"
 }
 
-const executionModeLabels: Record<ExecutionMode, string> = {
-    continuous: "Trabalhe sem parar",
-    until: "Trabalhe até o requisito selecionado"
-}
-
 const slugify = (value: string) => value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -169,7 +164,7 @@ const formatRateLimitReset = (botStatus: BotStatus) => {
     const message = botStatus.message || ""
 
     const resetMatch = message.match(
-        /(?:rate limit\s+resets?\s+(?:on|at)|resets?\s+(?:on|at)|try again at|liberad[oa]\s+(?:Ã s|as)|dispon[iÃ­]vel\s+(?:Ã s|as))\s+([^.;\r\n]+)/i
+        /(?:rate limit\s+resets?\s+(?:on|at)|resets?\s+(?:on|at)|try again at|liberad[oa]\s+(?:Ã s|as)|dispon[ií]vel\s+(?:Ã s|as))\s+([^.;\r\n]+)/i
     )
 
     if (!resetMatch?.[1]) {
@@ -201,7 +196,7 @@ export function CommandCenter() {
     const [selectedModule, setSelectedModule] = useState<ModuleKey>("armamento")
     const [selectedStopTask, setSelectedStopTask] = useState("")
     const [selectedExecutionMode, setSelectedExecutionMode] = useState<ExecutionMode>("continuous")
-    const [search, setSearch] = useState("")
+    const [search] = useState("")
     const [showRequirementForm, setShowRequirementForm] = useState(false)
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null)
     const [showSprintForm, setShowSprintForm] = useState(false)
@@ -360,7 +355,7 @@ export function CommandCenter() {
         selectedStopTask,
         loaded
     ])
-    const refreshStatus = async () => {
+    const refreshStatus = useCallback(async () => {
         try {
             const response = await fetch("/api/bot/status", { cache: "no-store" })
 
@@ -421,7 +416,7 @@ export function CommandCenter() {
                 message: "Não foi possível consultar o worker."
             }))
         }
-    }
+    }, [])
 
     useEffect(() => {
         const initialRefresh = window.setTimeout(() => {
@@ -432,13 +427,11 @@ export function CommandCenter() {
             void refreshStatus()
         }, 2000)
 
-        botStatus.state === "working" ||
-        botStatus.state === "validating"
-    return () => {
+        return () => {
             window.clearTimeout(initialRefresh)
             window.clearInterval(timer)
         }
-    }, [])
+    }, [refreshStatus])
 
     const filteredRequirements = useMemo(
         () => requirements.filter((requirement) => {

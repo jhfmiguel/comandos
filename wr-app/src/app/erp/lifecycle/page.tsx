@@ -1,0 +1,1 @@
+import{LifecycleWorkspace}from"components/erp/lifecycle";export default function Page(){return <LifecycleWorkspace/>}

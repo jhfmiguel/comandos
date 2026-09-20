@@ -106,10 +106,6 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
         return () => media.removeEventListener("change", syncMobile)
     }, [])
 
-    React.useEffect(() => {
-        setCollapsedPopupOpen(false)
-    }, [pathname])
-
     const removeCurrentFocus = (): void => {
 
         const activeElement = document.activeElement
@@ -240,6 +236,7 @@ const renderExpandedItems = (
                             event.stopPropagation()
                             removeCurrentFocus()
                             props.onSelect(props.menuKey)
+                            setCollapsedPopupOpen(false)
 
                         }}
                     >
@@ -313,6 +310,7 @@ const renderExpandedItems = (
                         event.stopPropagation()
                         removeCurrentFocus()
                         props.onSelect(props.menuKey)
+                        setCollapsedPopupOpen(false)
 
                     }}
                 >

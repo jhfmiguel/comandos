@@ -14,8 +14,7 @@ import {
     Home,
     Shield,
     SignOut,
-    SlidersV,
-    Users
+    SlidersV
 } from "@primeicons/react"
 import { History as HistoryIcon } from "@primeicons/react"
 import { Avatar } from "@primereact/ui/avatar"
@@ -72,13 +71,6 @@ export const Menu: React.FC = () => {
 
         return () => media.removeEventListener("change", syncViewport)
     }, [])
-
-    React.useEffect(() => {
-        if (mobile && sidebarOpen) {
-            persistedSidebarOpen = false
-            setSidebarOpen(false)
-        }
-    }, [pathname])
 
     const [selection, setSelection] = React.useState<{ pathname: string; menu: string | null }>({ pathname, menu: null })
     const selectedMenu = selection.pathname === pathname ? selection.menu : null
@@ -247,6 +239,16 @@ export const Menu: React.FC = () => {
                                             { href: "/erp/inventory?section=inventory", label: "Inventory" },
                                             { href: "/erp/inventory?section=stock", label: "Stock" }
                                         ]}
+                                    />
+
+<MenuItem
+                                        menuKey="armament-governance"
+                                        href="/erp/governance"
+                                        label={tr("Governance and reports")}
+                                        icon={Shield}
+                                        collapsed={!sidebarOpen}
+                                        selectedMenu={selectedMenu}
+                                        onSelect={setSelectedMenu}
                                     />
 
 <MenuItem

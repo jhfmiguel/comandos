@@ -72,7 +72,8 @@ public class AccessPolicy {
     }
 
     private List<Grant> matching(String resource, String action, Scope scope) {
-        String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" : resource;
+        String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
+            "core/person-addresses".equals(resource) ? "core/people" : resource;
         String requiredAction = ACCESS_RESOURCES.contains(resource) ? "MANAGE" : action;
         return grants().stream().filter(g -> (g.resource().equals(requiredResource) || g.resource().equals("*"))
             && (g.action().equals(requiredAction) || g.action().equals("*")))

@@ -123,6 +123,10 @@ public class TransferService {
         transfer.destinationUnitName = destinationUnit.name;
         transfer.destinationLocationName = destinationLocation.name;
         transfer.purpose = request.purpose().trim();
+        transfer.transferType = request.transferType() == null || request.transferType().isBlank() ? "INTERNAL" : request.transferType().trim().toUpperCase(Locale.ROOT);
+        transfer.legalInstrument = request.legalInstrument() == null || request.legalInstrument().isBlank() ? null : request.legalInstrument().trim();
+        transfer.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
+        var transferApprover = audit.actor(); transfer.approvedById = transferApprover.id(); transfer.approvedByLogin = transferApprover.login(); transfer.approvedAt = LocalDateTime.now();
         transfer.sentAt = LocalDateTime.now();
         var actor = audit.actor();
         transfer.finalizedById = actor.id();
@@ -258,7 +262,7 @@ public class TransferService {
         movement.nature = nature;
         movement.quantity = quantity;
         movement.movedAt = movedAt;
-        em.persist(movement);
+        movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
         return movement;
     }
 

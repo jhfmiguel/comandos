@@ -3,7 +3,8 @@ import type { ComandosLocale } from "utils/locale"
 
 const formatUtils = new FormatUtils()
 
-export const formatDate = (value: string, _locale: ComandosLocale = "pt-BR"): string => {
+export const formatDate = (value: string, locale: ComandosLocale = "pt-BR"): string => {
+    void locale
     if (!value) return ""
     const digits = formatUtils.formatOnlyIntegers(value).slice(0, 8)
     if (digits.length <= 2) return digits

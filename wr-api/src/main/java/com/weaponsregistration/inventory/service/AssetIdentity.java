@@ -14,7 +14,7 @@ final class AssetIdentity {
             .replaceAll("[\\p{javaWhitespace}\\p{Z}]", "").toUpperCase(Locale.ROOT);
     }
 
-    static List<String> conflicts(List<AssetItem> assets, String code, String serial) {
+    static List<String> conflicts(List<AssetItem> assets, String code, String serial, String internalCode) {
         List<String> errors = new ArrayList<>();
         for (var asset : assets) {
             String related = " Individual asset (#" + asset.id + ").";

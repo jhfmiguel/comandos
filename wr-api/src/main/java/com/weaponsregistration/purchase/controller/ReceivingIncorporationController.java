@@ -1,10 +1,10 @@
 package com.weaponsregistration.purchase.controller;
 
 import com.weaponsregistration.purchase.dto.ReceivingIncorporationContract;
-import com.weaponsregistration.purchase.model.ReceivingIncorporation;
 import com.weaponsregistration.purchase.service.ReceivingIncorporationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,13 +17,15 @@ public class ReceivingIncorporationController {
     }
 
     @GetMapping
-    public List<ReceivingIncorporation> list(@RequestParam(required = false) Long receivingId) {
+    public List<ReceivingIncorporationContract.View> list(
+        @RequestParam(required = false) Long receivingId
+    ) {
         return service.list(receivingId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReceivingIncorporation create(
+    public ReceivingIncorporationContract.View create(
         @RequestBody ReceivingIncorporationContract.CreateRequest request
     ) {
         return service.create(request);

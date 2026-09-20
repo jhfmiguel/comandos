@@ -22,6 +22,12 @@ public class Custody extends CoreEntity {
     @Column(nullable = false) public String recipientName;
     @Column(nullable = false) public String authorizerName;
     @Column(nullable = false, length = 255) public String purpose;
+    @Column(name = "recipient_type", nullable = false, length = 30) public String recipientType = "PERSON";
+    @Column(name = "custody_scope", nullable = false, length = 30) public String custodyScope = "INDIVIDUAL";
+    @Column(name = "duration_type", nullable = false, length = 30) public String durationType = "TEMPORARY";
+    @Column(name = "team_operation", length = 255) public String teamOperation;
+    @Column(name = "responsibility_term", length = 1000) public String responsibilityTerm;
+    @Column(name = "delivery_condition", length = 500) public String deliveryCondition;
     @Column(nullable = false, length = 30) public String status = "ACTIVE";
     @Column(nullable = false) public LocalDateTime deliveredAt;
     @Column public LocalDateTime dueAt;
