@@ -11,8 +11,13 @@
 - Registrar riscos, migrações e pendências que não façam parte da primeira entrega.
 - Produzir relatório final e parar o bot para validação do usuário.
 
+## Escopo
+Implementar exclusivamente o trabalho descrito no objetivo desta tarefa, respeitando a arquitetura, os padrões e as integrações existentes do ERP Comandos.
 ## Critérios de aceite
 - [ ] API e frontend validados no HEAD final.
 - [ ] Documentação corresponde ao código.
 - [ ] Pendências/riscos estão explícitos.
 - [ ] Bot para e aguarda autorização antes de iniciar outro módulo.
+ 
+## Condição de parada
+Encerrar esta tarefa somente após implementar o objetivo e satisfazer os critérios de aceite aplicáveis. Não iniciar outra tarefa; o worker controla a continuidade da fila.

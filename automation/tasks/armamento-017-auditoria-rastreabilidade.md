@@ -9,7 +9,12 @@
 - Revisar escopo organizacional de leitura sem expor dados de outra unidade.
 - Registrar explicitamente o que ficará para infraestrutura (retenção/tamper-evidence/exportação).
 
+## Escopo
+Implementar exclusivamente o trabalho descrito no objetivo desta tarefa, respeitando a arquitetura, os padrões e as integrações existentes do ERP Comandos.
 ## Critérios de aceite
 - [ ] Todas as operações críticas do Armamento geram evento estruturado.
 - [ ] Consultas respeitam autorização e filtros necessários.
 - [ ] Testes comprovam imutabilidade e rastreabilidade ponta a ponta.
+ 
+## Condição de parada
+Encerrar esta tarefa somente após implementar o objetivo e satisfazer os critérios de aceite aplicáveis. Não iniciar outra tarefa; o worker controla a continuidade da fila.

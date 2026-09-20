@@ -9,7 +9,12 @@
 - Expor em contratos, persistência, cadastro, detalhe, consulta e auditoria.
 - Manter compatibilidade com registros existentes e criar testes.
 
+## Escopo
+Implementar exclusivamente o trabalho descrito no objetivo desta tarefa, respeitando a arquitetura, os padrões e as integrações existentes do ERP Comandos.
 ## Critérios de aceite
 - [ ] Recall possui descrição editável/consultável.
 - [ ] Recall Item possui descrição editável/consultável.
 - [ ] API, frontend e testes passam.
+ 
+## Condição de parada
+Encerrar esta tarefa somente após implementar o objetivo e satisfazer os critérios de aceite aplicáveis. Não iniciar outra tarefa; o worker controla a continuidade da fila.

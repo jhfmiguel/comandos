@@ -9,7 +9,12 @@
 - Verificar origem, destino, recebedor, motivo e resultado antes da confirmação.
 - Corrigir inconsistências de estado/erro/repetição encontradas.
 
+## Escopo
+Implementar exclusivamente o trabalho descrito no objetivo desta tarefa, respeitando a arquitetura, os padrões e as integrações existentes do ERP Comandos.
 ## Critérios de aceite
 - [ ] Todos os fluxos de movimentação relevantes podem ser iniciados e acompanhados.
 - [ ] Pessoa e unidade são suportadas onde o domínio exige.
 - [ ] Nenhum erro deixa operação ambígua ou duplica movimentação.
+ 
+## Condição de parada
+Encerrar esta tarefa somente após implementar o objetivo e satisfazer os critérios de aceite aplicáveis. Não iniciar outra tarefa; o worker controla a continuidade da fila.

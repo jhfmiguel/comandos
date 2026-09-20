@@ -9,7 +9,12 @@
 - Só atualizar responsabilidade/localização na etapa definida pelo fluxo aprovado.
 - Testar idempotência e concorrência do fluxo completo.
 
+## Escopo
+Implementar exclusivamente o trabalho descrito no objetivo desta tarefa, respeitando a arquitetura, os padrões e as integrações existentes do ERP Comandos.
 ## Critérios de aceite
 - [ ] Regra de aceite/rejeição está implementada ou decisão de negócio está documentada.
 - [ ] Origem, destino, itens, responsáveis e histórico permanecem íntegros.
 - [ ] Testes cobrem o ciclo completo.
+ 
+## Condição de parada
+Encerrar esta tarefa somente após implementar o objetivo e satisfazer os critérios de aceite aplicáveis. Não iniciar outra tarefa; o worker controla a continuidade da fila.
