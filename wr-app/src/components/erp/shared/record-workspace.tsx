@@ -828,15 +828,21 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
     
     const [busy, setBusy] = React.useState(false);
     const saving = React.useRef(false);
+    const manuallyEditedAddressFields = React.useRef(new Set<string>());
     const [error, setError] = React.useState("");
     
-    const change = (field: ErpField, value: ErpValue) => 
+    const change = (field: ErpField, value: ErpValue) => {
+        if (resource.key === "person-addresses") {
+            if (field.name === "postalCode") manuallyEditedAddressFields.current.clear();
+            else manuallyEditedAddressFields.current.add(field.name);
+        }
         setValues(current => ({ ...current, [field.name]: value,
         ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
         ...(resource.key === "models" && field.name === "armamentTypeId" ? { armamentClassificationId: "" } : {}),
         ...(field.name === "organizationId" ? { ...(resource.fields.some(f => f.name === "unitId") ? { unitId: "" } : {}), 
         ...(resource.fields.some(f => f.name === "parentUnitId") ? { parentUnitId: "" } : {}) } : {})
     }));
+    };
 
     return (
         
@@ -898,7 +904,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
                                         const required = field.required && !(record && field.type === "password");
-                                        return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && field.createOnly)}>
+                                        return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (field.createOnly || resource.key === "person-addresses" && field.name === "personId"))}>
                                             <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
                                             {resource.key === "profiles" && field.name === "level" && <small>Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.</small>}
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
@@ -907,8 +913,10 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                             {resource.key === "person-addresses" && field.name === "postalCode" ? (
                                                 <PostalCodeField value={String(values.postalCode ?? "")}
                                                     onChange={value => change(field, value)}
-                                                    onResolved={address => setValues(current => ({ ...current, ...address,
-                                                        complement: current.complement || address.complement || "" }))} />
+                                                    onResolved={address => setValues(current => ({ ...current,
+                                                        ...Object.fromEntries(Object.entries(address).filter(([key]) => !manuallyEditedAddressFields.current.has(key))),
+                                                        complement: manuallyEditedAddressFields.current.has("complement")
+                                                            ? current.complement : current.complement || address.complement || "" }))} />
                                             ) : field.type === "reference" ? (
                                                 <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
                                                     modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
@@ -962,6 +970,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                                 />
                                             )}
                                             {field.type === "password" && <small>At least 12 characters. {record ? "Leave blank to keep the current password." : ""}</small>}
+                                            {resource.key === "person-addresses" && field.name === "primaryAddress" && <small>Somente um endereço principal por pessoa. Desmarque o atual antes de escolher outro.</small>}
                                             {field.readOnly && <small>Calculated by inventory operations.</small>}
                                             {record && field.createOnly && <small>Fixed after registration.</small>}
                                         </fieldset>;

@@ -312,6 +312,32 @@ class AuthorizationApiTests {
     }
 
     @Test
+    void addressesInheritPeoplePermissions() throws Exception {
+        var f = fixture(); login(f);
+        assertEquals(403, request("GET", "/api/erp/core/person-addresses", null).status());
+        assertEquals(403, request("GET", "/api/erp/core/postal-codes/invalid", null).status());
+        grant(f, "core/people", "READ", "SYSTEM", null);
+        assertEquals(200, request("GET", "/api/erp/core/person-addresses", null).status());
+        assertEquals(400, request("GET", "/api/erp/core/postal-codes/invalid", null).status());
+        var data = new HashMap<String, Object>(Map.of("personId", f.person(), "type", "RESIDENTIAL", "postalCode", "01001000",
+            "street", "Praça da Sé", "number", "10", "city", "São Paulo", "state", "SP", "primaryAddress", true));
+        assertEquals(403, request("POST", "/api/erp/core/person-addresses", data).status());
+        grant(f, "core/people", "CREATE", "SYSTEM", null);
+        var created = request("POST", "/api/erp/core/person-addresses", data);
+        assertEquals(201, created.status(), created.raw());
+        String path = "/api/erp/core/person-addresses/" + created.body().get("id").asLong();
+        data.put("version", 0);
+        assertEquals(403, request("PUT", path, data).status());
+        assertEquals(403, request("DELETE", path + "?version=0", null).status());
+        grant(f, "core/people", "UPDATE", "SYSTEM", null);
+        data.put("number", "20");
+        var saved = request("PUT", path, data);
+        assertEquals(200, saved.status(), saved.raw());
+        grant(f, "core/people", "DELETE", "SYSTEM", null);
+        assertEquals(204, request("DELETE", path + "?version=" + saved.body().get("version").asLong(), null).status());
+    }
+
+    @Test
     void systemAdministratorCanManageAccessAndInvalidScopesGrantNothing() throws Exception {
         var f = fixture(); grant(f, "*", "*", "SYSTEM", null); login(f);
         var result = request("GET", "/api/erp/core/catalog", null);
