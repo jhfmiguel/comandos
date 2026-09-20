@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PENDENTE.** `Recall` possui reason/status e `RecallItem` possui action, mas nenhum dos dois possui o campo `description` solicitado.
 
-## Trabalho restante
+## Objetivo
 - Adicionar description em Recall e RecallItem.
 - Definir tamanho máximo e comportamento para vazio/nulo.
 - Expor em contratos, persistência, cadastro, detalhe, consulta e auditoria.

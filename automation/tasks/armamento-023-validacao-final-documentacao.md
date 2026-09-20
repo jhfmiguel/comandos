@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PENDENTE E DEVE SER A ÚLTIMA TAREFA DO ARMAMENTO.**
 
-## Trabalho restante
+## Objetivo
 - Executar suíte completa da API.
 - Executar lint/build e homologação final do frontend.
 - Revisar contratos, permissões, estados e documentação.

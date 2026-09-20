@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PARCIAL.** Há consultas, paginação e buscas nos workspaces, inclusive por patrimônio/série em fluxos específicos.
 
-## Trabalho restante
+## Objetivo
 - Consolidar uma consulta principal do armamento por asset code, serial, modelo, status, unidade e localização.
 - Confirmar filtros no servidor e paginação para volumes grandes.
 - Preservar filtros relevantes em query parameters para recarga/compartilhamento.

@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **IMPLEMENTADA, NÃO HOMOLOGADA POR COMPLETO.** Processo de descarte, destruição, estoque, idempotência, permissões, auditoria e interface existem.
 
-## Trabalho restante
+## Objetivo
 - Homologar baixa/destruição no navegador com PostgreSQL.
 - Confirmar bloqueios para cautela, transferência, reserva, inventário e manutenção ativos.
 - Revisar distinção de baixa lógica, inativação e destruição física.

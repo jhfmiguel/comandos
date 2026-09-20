@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PARCIAL.** Existe `AuditRecord` imutável, filtros, snapshots antes/depois, ator autenticado e registros em diversos serviços. A documentação ainda declara lacunas de cobertura e de proteção/retencão.
 
-## Trabalho restante
+## Objetivo
 - Conferir cobertura de eventos para custódia, transferência, manutenção, descarte, inventário, consumo, doação, recebimento/incorporação e workflow.
 - Garantir filtros por item, usuário, operação, unidade e período conforme aplicável.
 - Revisar escopo organizacional de leitura sem expor dados de outra unidade.

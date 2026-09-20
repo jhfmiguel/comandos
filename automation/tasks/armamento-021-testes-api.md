@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **IMPLEMENTADA EM BOA PARTE, VALIDAÇÃO FINAL PENDENTE.** Há suítes específicas para inventário, autorização, cautela, transferência, manutenção, descarte, inventário físico, auditoria, consumo, vendas, doações, reservas e CEP. A última validação documentada antecede parte das mudanças dos commits 037/038.
 
-## Trabalho restante
+## Objetivo
 - Executar `mvnw.cmd test` no estado atual.
 - Corrigir qualquer regressão.
 - Completar casos faltantes de status, lifecycle/workflow/report e novas especificações.

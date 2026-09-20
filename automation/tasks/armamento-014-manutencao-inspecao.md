@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **IMPLEMENTADA, NÃO HOMOLOGADA POR COMPLETO.** Planos, ordens, diagnóstico, serviços, teste funcional, peças, inspeções periódicas e vínculo com devolução bloqueante existem.
 
-## Trabalho restante
+## Objetivo
 - Executar fluxo completo no navegador com PostgreSQL: abertura, manutenção, peças/serviços, conclusão aprovada e reprovada.
 - Validar inspeções periódicas e anexos/evidências do ciclo de vida.
 - Corrigir qualquer inconsistência encontrada e atualizar documentação/testes.

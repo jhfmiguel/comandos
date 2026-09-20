@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PARCIAL.** Existe `EquipmentStatePolicy` e os fluxos alteram status, mas a matriz não está consolidada de forma coerente em todo o módulo. Foi encontrada divergência nominal: a política usa `IN_CUSTODY`/`MAINTENANCE`, enquanto fluxos existentes usam `CUSTODIED`/`IN_MAINTENANCE`.
 
-## Trabalho restante
+## Objetivo
 - Unificar os códigos canônicos de status usados por política, custódia, manutenção, transferência, venda, descarte, inspeção e ocorrências.
 - Centralizar e documentar transições permitidas.
 - Garantir bloqueio uniforme das operações incompatíveis.

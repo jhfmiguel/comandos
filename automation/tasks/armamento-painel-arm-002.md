@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PARCIAL.** As telas principais existem, mas a homologação de todos os fluxos ainda não foi concluída.
 
-## Trabalho restante
+## Objetivo
 - Validar de ponta a ponta kits, doações, consumo, baixa/destruição e conclusão de manutenção com PostgreSQL.
 - Corrigir erros de interface/contrato encontrados nessa homologação.
 - Executar lint e build no estado final.

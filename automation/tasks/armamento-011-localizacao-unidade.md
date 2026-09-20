@@ -3,7 +3,7 @@
 ## Estado após auditoria do commit 038
 **PARCIAL.** `StockLocation`, unidade organizacional, filtros por escopo e atualização de localização em transferências já existem.
 
-## Trabalho restante
+## Objetivo
 - Revisar todas as alterações de localização para garantir uma única localização vigente por ativo.
 - Validar de forma uniforme unidade inexistente/inativa e escopo de acesso.
 - Confirmar auditoria estruturada de origem, destino, operador e data em todos os fluxos que mudam localização.
