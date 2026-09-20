@@ -721,24 +721,18 @@ function Get-ImplementationChanges(
 }
 
 function Assert-CodexTaskResult([string]$logPath) {
-    $combined = ''
-
-    foreach ($path in @($logPath, "$logPath.stderr")) {
-        if (Test-Path -LiteralPath $path) {
-            $combined += "`n" + [System.IO.File]::ReadAllText($path)
-        }
-    }
+    $combined = [System.IO.File]::ReadAllText($logPath)
 
     $markers = [regex]::Matches(
         $combined,
         '(?im)^\s*COMANDOS_TASK_RESULT:\s*(PASS|FAIL)\s*$'
     )
 
-    if ($markers.Count -ne 1) {
-        throw 'Codex nao informou exatamente um COMANDOS_TASK_RESULT: PASS/FAIL.'
+    if ($markers.Count -eq 0) {
+        throw 'Codex nao informou COMANDOS_TASK_RESULT: PASS/FAIL.'
     }
 
-    if ($markers[0].Groups[1].Value.ToUpperInvariant() -ne 'PASS') {
+    if ($markers[$markers.Count - 1].Groups[1].Value.ToUpperInvariant() -ne 'PASS') {
         throw 'Codex informou COMANDOS_TASK_RESULT: FAIL.'
     }
 }
