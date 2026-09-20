@@ -15,4 +15,7 @@ public class Brand extends CoreEntity {
     public String name;
     @Column(name = "manufacturer", nullable = false, length = 255)
     public String manufacturer;
+    /** ISO 3166-1 alpha-2 country of manufacture; null means not informed. */
+    @Column(name = "manufacturing_country_code", length = 2)
+    public String manufacturingCountryCode;
 }

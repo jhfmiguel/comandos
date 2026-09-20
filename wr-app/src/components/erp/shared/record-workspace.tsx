@@ -425,7 +425,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     const columns = resource.fields
                                 .filter(field => field.type !== "password")
                                 .filter((field, index) => resource.readOnly || index < 4 || ["status", "availableQuantity"]
-                                .includes(field.name));
+                                .includes(field.name) || (["recalls", "recall-items"].includes(resource.key) && field.name === "description"));
     
     const display = (record: ErpRecord, field: ErpField): string => {
         const value = record[field.name];
@@ -906,6 +906,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                         const required = field.required && !(record && field.type === "password");
                                         return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (field.createOnly || resource.key === "person-addresses" && field.name === "personId"))}>
                                             <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
+                                            {resource.key === "models" && field.name === "manufacturerCode" && (
+                                                <small>{tr("Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.")}</small>
+                                            )}
                                             {resource.key === "profiles" && field.name === "level" && <small>Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.</small>}
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
                                             {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}

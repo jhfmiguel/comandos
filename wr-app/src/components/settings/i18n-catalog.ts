@@ -202,6 +202,8 @@ export const translationPairs: TranslationPair[] = [
     ["Acquisition state", "Estado de aquisição"],
     ["Acquisition origin", "Origem de aquisição"],
     ["Manufacturer", "Fabricante"],
+    ["Country of manufacture (ISO)", "País de fabricação (ISO)"],
+    ["Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.", "Código de catálogo/peça do fabricante para o modelo; distinto do número de série e do SKU interno."],
     ["Caliber", "Calibre"],
     ["Lot", "Lote"],
     ["Lots", "Lotes"],

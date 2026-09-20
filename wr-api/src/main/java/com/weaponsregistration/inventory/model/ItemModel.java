@@ -27,6 +27,7 @@ public class ItemModel extends CoreEntity {
     public String name;
     @Column(name = "unit_of_measure", nullable = false, length = 255)
     public String unitOfMeasure;
+    /** Manufacturer's catalog/part code for this model, not an individual serial number or internal SKU. */
     @Column(name = "manufacturer_code", nullable = true, length = 255)
     public String manufacturerCode;
     @Column(name = "sku", nullable = false, length = 255)

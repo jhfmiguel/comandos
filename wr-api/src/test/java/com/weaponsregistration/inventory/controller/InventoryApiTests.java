@@ -38,6 +38,63 @@ class InventoryApiTests {
     }
     private String unique() { return UUID.randomUUID().toString(); }
     @Test
+    void brandCountryUsesIsoChoicesPreservesLegacyClientsAndAuditsChanges() throws Exception {
+        var catalog = request("GET", "inventory/catalog", null);
+        assertEquals(200, catalog.status());
+        boolean found = false;
+        for (var resource : catalog.body()) if (resource.get("key").asText().equals("brands")) {
+            for (var field : resource.get("fields")) if (field.get("name").asText().equals("manufacturingCountryCode")) {
+                found = true;
+                assertEquals("choice", field.get("type").asText());
+                assertFalse(field.get("required").asBoolean());
+                assertTrue(field.get("choices").toString().contains("\"BR\""));
+            }
+        }
+        assertTrue(found);
+        var data = new HashMap<String, Object>(Map.of("name", unique(), "manufacturer", "Test"));
+        var legacy = create("inventory/brands", data);
+        assertTrue(legacy.get("manufacturingCountryCode").isNull());
+        for (Object invalid : List.of("ZZ", "BRA", "br", "Brasil", 12)) {
+            data.put("manufacturingCountryCode", invalid);
+            assertEquals(400, request("POST", "inventory/brands", data).status());
+        }
+        data.put("name", unique()); data.put("manufacturingCountryCode", "BR");
+        var saved = create("inventory/brands", data);
+        long id = saved.get("id").asLong();
+        String path = "inventory/brands/" + id;
+        assertEquals("BR", request("GET", path, null).body().get("manufacturingCountryCode").asText());
+        assertEquals(id, request("GET", "inventory/brands?search=" + data.get("name") + "&filter.manufacturingCountryCode=BR", null)
+            .body().get("content").get(0).get("id").asLong());
+        data.put("version", saved.get("version").asLong()); data.put("manufacturingCountryCode", "DE");
+        var edited = request("PUT", path, data);
+        assertEquals(200, edited.status(), edited.raw());
+        var audit = jdbc.queryForMap("select before_json, after_json from erp_audit_record where resource='inventory/brands' and record_id=? and action='UPDATE'", id);
+        assertEquals("BR", json.readTree(audit.get("before_json").toString()).get("manufacturingCountryCode").asText());
+        assertEquals("DE", json.readTree(audit.get("after_json").toString()).get("manufacturingCountryCode").asText());
+        data.put("version", edited.body().get("version").asLong()); data.remove("manufacturingCountryCode");
+        var preserved = request("PUT", path, data);
+        assertEquals(200, preserved.status(), preserved.raw());
+        assertEquals("DE", preserved.body().get("manufacturingCountryCode").asText());
+        data.put("version", preserved.body().get("version").asLong()); data.put("manufacturingCountryCode", "ZZ");
+        assertEquals(400, request("PUT", path, data).status());
+        assertEquals("DE", request("GET", path, null).body().get("manufacturingCountryCode").asText());
+        data.put("manufacturingCountryCode", null);
+        var cleared = request("PUT", path, data);
+        assertEquals(200, cleared.status(), cleared.raw());
+        assertTrue(cleared.body().get("manufacturingCountryCode").isNull());
+
+        var setup = setup(false);
+        var model = request("GET", "inventory/models/" + setup.model(), null).body();
+        var modelData = new HashMap<String, Object>();
+        for (String field : List.of("name", "unitOfMeasure", "sku", "listPrice")) modelData.put(field, model.get(field).asText());
+        modelData.put("categoryId", setup.category()); modelData.put("brandId", model.get("brandId").asLong());
+        modelData.put("version", model.get("version").asLong()); modelData.put("manufacturerCode", "Part-001/Ab");
+        var updated = request("PUT", "inventory/models/" + setup.model(), modelData);
+        assertEquals(200, updated.status(), updated.raw());
+        assertEquals("Part-001/Ab", updated.body().get("manufacturerCode").asText());
+        assertEquals(model.get("sku").asText(), updated.body().get("sku").asText());
+    }
+    @Test
     void equipmentModelLookupFiltersPersistedFamiliesBeforePaginationIncludingLegacyModels() throws Exception {
         String token = unique();
         var families = List.of("FIREARM", "AMMUNITION", "GRENADE", "SPRAY", "BALLISTIC_PROTECTION", "ELECTRICAL_DEVICE", "OPTICAL");

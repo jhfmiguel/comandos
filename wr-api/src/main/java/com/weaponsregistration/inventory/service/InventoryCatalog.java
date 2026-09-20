@@ -89,7 +89,9 @@ public final class InventoryCatalog {
         ), false),
         new Resource("brands", "Brands", "Catalog", Brand.class, List.of(
             new Field("name", "Name", "text", true, null, List.of(), false, false),
-            new Field("manufacturer", "Manufacturer", "text", true, null, List.of(), false, false)
+            new Field("manufacturer", "Manufacturer", "text", true, null, List.of(), false, false),
+            new Field("manufacturingCountryCode", "Country of manufacture (ISO)", "choice", false, null,
+                java.util.Arrays.stream(java.util.Locale.getISOCountries()).sorted().toList(), false, false)
         ), false),
         new Resource("models", "Item models", "Catalog", ItemModel.class, List.of(
             new Field("armamentTypeId", "Armament type", "reference", false, "armament-types", List.of(), false, false),
@@ -252,13 +254,15 @@ public final class InventoryCatalog {
             new Field("unitId", "Organizational unit", "reference", false, "core/units", List.of(), false, true),
             new Field("number", "Recall number", "text", true, null, List.of(), false, true),
             new Field("reason", "Reason", "text", true, null, List.of(), false, false),
-            new Field("status", "Status", "choice", true, null, List.of("OPEN", "IN_PROGRESS", "CLOSED", "CANCELLED"), false, false)
+            new Field("status", "Status", "choice", true, null, List.of("OPEN", "IN_PROGRESS", "CLOSED", "CANCELLED"), false, false),
+            new Field("description", "Description", "text", false, null, List.of(), false, false)
         ), false),
         new Resource("recall-items", "Recall items", "Compliance", RecallItem.class, List.of(
             new Field("recallId", "Recall", "reference", true, "recalls", List.of(), false, true),
             new Field("assetId", "Individual asset", "reference", false, "assets", List.of(), false, true),
             new Field("lotId", "Stock lot", "reference", false, "lots", List.of(), false, true),
-            new Field("action", "Required action", "text", true, null, List.of(), false, false)
+            new Field("action", "Required action", "text", true, null, List.of(), false, false),
+            new Field("description", "Description", "text", false, null, List.of(), false, false)
         ), false),
         new Resource("locations", "Stock locations", "Inventory", StockLocation.class, List.of(
             new Field("organizationId", "Organization", "reference", true, "core/organizations", List.of(), false, false),

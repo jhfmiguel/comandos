@@ -344,9 +344,15 @@ public class InventoryService {
         if (id != null && !Objects.equals(entity.version, integer(data.get("version"), true))) conflict("This record has changed. Reload before saving.");
         for (var field : spec.fields()) {
             if (field.readOnly()) continue;
+            // Older clients must not erase the optional country on brand updates.
+            if (id != null && entity instanceof Brand && field.name().equals("manufacturingCountryCode")
+                    && !data.containsKey(field.name())) continue;
             // Preserve references when an older client omits the new model fields.
             if (id != null && entity instanceof ItemModel && !data.containsKey(field.name())
                     && Set.of("armamentTypeId", "armamentClassificationId").contains(field.name())) continue;
+            // Preserve descriptions when older clients omit the new field on update.
+            if (id != null && (entity instanceof Recall || entity instanceof RecallItem)
+                    && field.name().equals("description") && !data.containsKey("description")) continue;
             Object raw = data.get(field.name());
             if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && raw instanceof String text)
                 raw = AssetIdentity.normalize(text);

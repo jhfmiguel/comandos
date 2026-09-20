@@ -1,5 +1,7 @@
 # Asset and inventory foundation
 
+Current validation and release limitations: [Armamento 023 report](armamento-023-final-validation.md).
+
 This module continues the official [ERP architecture](arquitetura-erp-seguranca.md)
 without changing existing User, Weapon, or Sale workflows.
 
@@ -113,7 +115,7 @@ Base path: `/api/erp/inventory`.
 | item-values | Values attached to assets | Validated CRUD |
 | lots | Initial quantity-controlled lots | Create/update; no generic deletion |
 | balances | Available/reserved/blocked quantity per lot and location | Read-only |
-| movements | Immutable opening movement records | Read-only |
+| movements | Immutable opening and workflow movement records | Read-only |
 | expirations | Asset or lot expiration controls | Validated CRUD; no deletion |
 | certifications | Asset or lot certificates and validity | Validated CRUD; no deletion |
 | recalls | Organization recall processes | Validated CRUD; no deletion |
@@ -147,7 +149,8 @@ at most 15 integer digits and four fractional digits.
 
 Lists support `search`, `page`, and `size` (maximum 100). Locations, assets, lots,
 balances, and movements also support `organizationId` filtering. These filters
-are query features, not authorization boundaries.
+are query features. With permission enforcement enabled, AccessPolicy also
+restricts reads and writes by the granted organization/unit scope.
 
 ## Verification
 
@@ -171,25 +174,30 @@ deployment behavior or browser interactions.
 
 ## Current boundaries
 
-There are no purchase receipts, separate shipment workflows,
-reservations, counts/reconciliation, disposal, or reversals yet. Each will have
-its own business entity and transaction workflow. Generic stock deletion is
+Reservations, physical counts, disposal, transfers, maintenance, custody and
+sale returns have dedicated workflows; receiving also has dedicated workspaces.
+Their presence does not certify final browser acceptance. Generic stock deletion is
 intentionally unavailable because it would discard the opening history.
 
-Category family is a classification field; dedicated firearm/ammunition/etc.
-specification tables remain to be implemented. Parent-category characteristics
+Category family is a classification field; dedicated specification tables exist
+for firearms, ammunition, grenades, sprays, ballistic protection, electrical
+devices, optics, helmets, shields, restraints, accessories and tactical equipment.
+Parent-category characteristics
 are not inherited automatically. Changes to required specifications after stock
 exists require a future schema-evolution workflow.
 
 The availability states now include DRAFT, AVAILABLE, BLOCKED, CUSTODIED, SOLD,
-DONATED and DISPOSED. Workflow states are changed only by their corresponding operations. These do
+IN_MAINTENANCE, DONATED and DISPOSED. Workflow states are changed only by their corresponding operations. These do
 not replace the planned configurable states
 and state history. Expiration is checked when an available asset/lot is saved;
 scheduled expiration handling remains to be added. Sale finalization now checks
 expiration again and fulfills stock in the same transaction.
 
-The core access configuration still does not enforce authentication, permissions,
-or tenant isolation. The new [Inventory sales](sales.md) module connects Person
+Authentication and scoped permissions are implemented but disabled by default
+in development. Enable both `ERP_REQUIRE_LOGIN` and `ERP_ENFORCE_PERMISSIONS`
+after provisioning access; permission enforcement requires login enforcement.
+Shared catalogs require SYSTEM grants; operational scope follows AccessPolicy.
+The [Inventory sales](sales.md) module connects Person
 buyers to these assets and lots through `/erp/sales`. The legacy sales screen
 continues independently. Remaining requirements stay in the official architecture.
 # Donation movements
@@ -240,5 +248,6 @@ organization-wide set accepts components from any of its units.
 
 An active set must contain at least one component. Its composition is locked
 until the set is deactivated, and one individual asset cannot belong to two
-active sets. Composition does not reserve or move stock. Future custody support
-will use the set as the source for one atomic issue and return operation.
+active sets. Composition does not reserve or move stock. Custody expands active
+sets atomically and requires all pending components of a set to be returned
+together; see [Custody](custody.md).
