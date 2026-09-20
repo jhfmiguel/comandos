@@ -241,14 +241,10 @@ function Get-ActiveCodexRateLimit {
             return $null
         }
 
-        $displayText = [string]$state.displayText
-
-        if ([string]::IsNullOrWhiteSpace($displayText)) {
-            $displayText = $resetAt.ToString(
-                'MMM d, yyyy h:mm tt',
-                [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
-            )
-        }
+        $displayText = $resetAt.ToString(
+            'dd/MM/yyyy HH:mm',
+            [System.Globalization.CultureInfo]::GetCultureInfo('pt-BR')
+        )
 
         return [pscustomobject]@{
             ResetAt = $resetAt
@@ -320,7 +316,10 @@ function Get-CodexResetInfo([string]$logPath) {
         if ($null -ne $parsed) {
             return [pscustomobject]@{
                 ResetAt = $parsed
-                DisplayText = $raw
+                DisplayText = $parsed.ToString(
+                    'dd/MM/yyyy HH:mm',
+                    [System.Globalization.CultureInfo]::GetCultureInfo('pt-BR')
+                )
             }
         }
     }
@@ -445,8 +444,8 @@ function Stop-BotForCodexUnavailable(
         $resetInfo = [pscustomobject]@{
             ResetAt = $fallbackAt
             DisplayText = $fallbackAt.ToString(
-                'MMM d, yyyy h:mm tt',
-                [System.Globalization.CultureInfo]::GetCultureInfo('en-US')
+                'dd/MM/yyyy HH:mm',
+                [System.Globalization.CultureInfo]::GetCultureInfo('pt-BR')
             )
         }
     }

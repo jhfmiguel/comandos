@@ -154,7 +154,7 @@ const formatRateLimitReset = (botStatus: BotStatus) => {
                 year: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
-                second: "2-digit"
+                hour12: false
             })
         }
 
@@ -172,7 +172,11 @@ const formatRateLimitReset = (botStatus: BotStatus) => {
     }
 
     const messageReset = resetMatch[1].trim()
-    const parsedMessageReset = new Date(messageReset)
+    const normalizedMessageReset = messageReset.replace(
+        /(\d{1,2})(st|nd|rd|th)\b/gi,
+        "$1"
+    )
+    const parsedMessageReset = new Date(normalizedMessageReset)
 
     if (!Number.isNaN(parsedMessageReset.getTime())) {
         return parsedMessageReset.toLocaleString("pt-BR", {

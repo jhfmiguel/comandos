@@ -91,13 +91,18 @@ async function readRateLimitResetAt() {
                 continue
             }
 
-            const parsed = new Date(rawValue)
+            const normalizedValue = rawValue.replace(
+                /(\d{1,2})(st|nd|rd|th)\b/gi,
+                "$1"
+            )
+
+            const parsed = new Date(normalizedValue)
 
             if (!Number.isNaN(parsed.getTime())) {
                 return parsed.toISOString()
             }
 
-            return rawValue
+            continue
         }
     }
 
