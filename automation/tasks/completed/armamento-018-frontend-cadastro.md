@@ -22,3 +22,7 @@ Formulários, validação, cadastro unitário e em lote quando aplicável, integ
 
 ## Condição de parada
 Parar após validar o frontend de cadastro. Não iniciar consulta.
+
+
+## Auditoria da fila
+Classificada como concluída na auditoria do estado do módulo após o commit 038.

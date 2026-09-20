@@ -1,24 +1,15 @@
 # Armamento 020 - frontend de movimentação
 
-## Objetivo
-Finalizar as telas de custódia, cautela, transferência, manutenção e baixa.
+## Estado após auditoria do commit 038
+**PARCIAL.** Existem interfaces dedicadas para cautela, transferência, manutenção, descarte, inventário, vendas, doações e consumo, com proteção contra duplo envio em vários fluxos.
 
-## Contexto e prioridade
-Movimentações alteram responsabilidade e saldo. A interface deve tornar o estado da operação explícito e impedir duplo envio ou confirmação ambígua.
-
-## Escopo
-Fluxos de movimentação do armamento com confirmação, autorização, validação, histórico e feedback visual.
-
-## Regras técnicas
-- Desabilitar ações enquanto uma operação estiver em andamento.
-- Exigir confirmação para ações irreversíveis.
-- Mostrar origem, destino, recebedor, motivo e resultado antes da confirmação.
-- Atualizar a consulta somente após resposta de sucesso da API.
+## Trabalho restante
+- Homologar no navegador os fluxos ainda não validados: doações, consumo, baixa/destruição e conclusão de manutenção; incluir kits quando aplicável.
+- Garantir confirmação explícita nas ações irreversíveis.
+- Verificar origem, destino, recebedor, motivo e resultado antes da confirmação.
+- Corrigir inconsistências de estado/erro/repetição encontradas.
 
 ## Critérios de aceite
-- [ ] Movimentações podem ser iniciadas e acompanhadas.
-- [ ] Recebedor pessoa ou unidade é suportado.
-- [ ] Estados e erros não deixam operações ambíguas.
-
-## Condição de parada
-Parar após validar o frontend de movimentação. Não iniciar testes abrangentes da API.
+- [ ] Todos os fluxos de movimentação relevantes podem ser iniciados e acompanhados.
+- [ ] Pessoa e unidade são suportadas onde o domínio exige.
+- [ ] Nenhum erro deixa operação ambígua ou duplica movimentação.

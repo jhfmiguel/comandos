@@ -1,24 +1,14 @@
 # Armamento 014 - manutenção e inspeção
 
-## Objetivo
-Implementar manutenção, inspeção e indisponibilidade operacional de armamentos.
+## Estado após auditoria do commit 038
+**IMPLEMENTADA, NÃO HOMOLOGADA POR COMPLETO.** Planos, ordens, diagnóstico, serviços, teste funcional, peças, inspeções periódicas e vínculo com devolução bloqueante existem.
 
-## Contexto e dependências
-Manutenção e inspeção podem alterar o status operacional, mas não devem apagar custódia, localização ou auditoria anteriores.
-
-## Escopo
-Ordens, registros de inspeção, responsáveis, datas, resultado, anexos se suportados e impacto no status operacional.
-
-## Regras técnicas
-- Diferenciar manutenção preventiva, corretiva e inspeção quando o domínio suportar.
-- Validar datas, responsável, resultado e item relacionado.
-- Definir retorno ao serviço e tratamento de reprovação.
-- Registrar relação com o status alterado.
+## Trabalho restante
+- Executar fluxo completo no navegador com PostgreSQL: abertura, manutenção, peças/serviços, conclusão aprovada e reprovada.
+- Validar inspeções periódicas e anexos/evidências do ciclo de vida.
+- Corrigir qualquer inconsistência encontrada e atualizar documentação/testes.
 
 ## Critérios de aceite
-- [ ] Manutenção e inspeção podem ser registradas e consultadas.
-- [ ] Armamento em manutenção respeita as restrições de uso.
-- [ ] Histórico e testes estão disponíveis.
-
-## Condição de parada
-Parar após validar manutenção e inspeção. Não iniciar baixa ou descarte.
+- [ ] Fluxo completo aprovado no navegador e API.
+- [ ] Ativo em manutenção não pode ser usado indevidamente.
+- [ ] Retorno ao serviço/bloqueio e histórico estão corretos.

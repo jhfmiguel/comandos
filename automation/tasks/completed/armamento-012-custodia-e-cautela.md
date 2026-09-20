@@ -22,3 +22,7 @@ Permitir cautela para pessoa ou unidade organizacional, com emissão, recebiment
 
 ## Condição de parada
 Parar após validar custódia e cautela. Não iniciar transferências.
+
+
+## Auditoria da fila
+Classificada como concluída na auditoria do estado do módulo após o commit 038.

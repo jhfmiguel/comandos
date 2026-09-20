@@ -22,3 +22,7 @@ Garantir vínculo único entre asset code, número de série e individual asset,
 
 ## Condição de parada
 Parar após validar identificação patrimonial. Não iniciar status operacional.
+
+
+## Auditoria da fila
+Classificada como concluída na auditoria do estado do módulo após o commit 038.

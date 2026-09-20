@@ -1,23 +1,15 @@
 # Armamento 011 - localização e unidade responsável
 
-## Objetivo
-Associar armamentos à localização e à unidade organizacional responsável.
+## Estado após auditoria do commit 038
+**PARCIAL.** `StockLocation`, unidade organizacional, filtros por escopo e atualização de localização em transferências já existem.
 
-## Contexto e dependências
-Localização e unidade são dimensões usadas por consulta, cautela, transferência e inventário físico. Não confundir unidade responsável com recebedor temporário.
-
-## Escopo
-Implementar seleção, persistência, consulta e validação de unidade e localização, respeitando autorização.
-
-## Regras técnicas
-- Validar hierarquia, atividade e escopo de acesso da unidade.
-- Evitar duas localizações vigentes para o mesmo item sem regra de vigência.
-- Auditar origem, destino, operador e data de cada alteração.
+## Trabalho restante
+- Revisar todas as alterações de localização para garantir uma única localização vigente por ativo.
+- Validar de forma uniforme unidade inexistente/inativa e escopo de acesso.
+- Confirmar auditoria estruturada de origem, destino, operador e data em todos os fluxos que mudam localização.
+- Adicionar testes para os casos faltantes.
 
 ## Critérios de aceite
-- [ ] Unidade responsável e localização podem ser informadas e consultadas.
-- [ ] Unidade inexistente, inativa ou sem permissão é rejeitada.
-- [ ] Alterações geram auditoria e testes.
-
-## Condição de parada
-Parar após validar localização e unidade responsável. Não iniciar cautela.
+- [ ] Unidade responsável e localização são consistentes em todos os fluxos.
+- [ ] Unidade inválida/inativa/sem permissão é rejeitada.
+- [ ] Mudanças de localização são auditáveis e testadas.

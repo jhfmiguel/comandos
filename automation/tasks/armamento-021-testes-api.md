@@ -1,24 +1,15 @@
 # Armamento 021 - testes da API
 
-## Objetivo
-Completar a cobertura automatizada da API do módulo de armamento.
+## Estado após auditoria do commit 038
+**IMPLEMENTADA EM BOA PARTE, VALIDAÇÃO FINAL PENDENTE.** Há suítes específicas para inventário, autorização, cautela, transferência, manutenção, descarte, inventário físico, auditoria, consumo, vendas, doações, reservas e CEP. A última validação documentada antecede parte das mudanças dos commits 037/038.
 
-## Contexto e prioridade
-Esta tarefa é uma barreira antes da validação final. Os testes devem proteger regras de domínio, autorização, saldos e rastreabilidade, não apenas códigos HTTP.
-
-## Escopo
-Testar cadastro, classificação, identificação, status, unidade, custódia, transferência, manutenção, baixa, inventário, auditoria e regras de autorização.
-
-## Regras técnicas
-- Cobrir sucesso, validação, duplicidade, ausência, conflito e acesso negado.
-- Isolar banco e dados entre testes.
-- Testar transações e idempotência nas operações de movimentação.
-- Não relaxar autorização ou asserções apenas para fazer a suíte passar.
+## Trabalho restante
+- Executar `mvnw.cmd test` no estado atual.
+- Corrigir qualquer regressão.
+- Completar casos faltantes de status, lifecycle/workflow/report e novas especificações.
+- Garantir sucesso, validação, conflito, duplicidade, idempotência e autorização.
 
 ## Critérios de aceite
-- [ ] Casos de sucesso, validação e autorização estão cobertos.
-- [ ] Testes isolam dados e são repetíveis.
-- [ ] Maven test passa.
-
-## Condição de parada
-Parar após a suíte relevante da API passar. Não iniciar testes do frontend.
+- [ ] Suíte completa da API passa no HEAD atual.
+- [ ] Regras críticas possuem cobertura de regressão.
+- [ ] Testes são repetíveis e isolados.

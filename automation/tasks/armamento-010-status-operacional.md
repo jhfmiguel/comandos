@@ -1,24 +1,15 @@
 # Armamento 010 - status operacional
 
-## Objetivo
-Implementar o ciclo de status operacional dos armamentos.
+## Estado após auditoria do commit 038
+**PARCIAL.** Existe `EquipmentStatePolicy` e os fluxos alteram status, mas a matriz não está consolidada de forma coerente em todo o módulo. Foi encontrada divergência nominal: a política usa `IN_CUSTODY`/`MAINTENANCE`, enquanto fluxos existentes usam `CUSTODIED`/`IN_MAINTENANCE`.
 
-## Contexto e dependências
-Status impacta cautela, transferência, manutenção, inventário e descarte. A matriz de transições deve ser explícita e auditável.
-
-## Escopo
-Definir estados, transições permitidas, validações, autorização, auditoria e apresentação no frontend.
-
-## Regras técnicas
-- Documentar estado inicial, estados terminais e transições autorizadas.
-- Bloquear uso/movimentação incompatível com o status atual.
-- Exigir motivo e evidência quando a transição for sensível.
-- Preservar histórico anterior e posterior.
+## Trabalho restante
+- Unificar os códigos canônicos de status usados por política, custódia, manutenção, transferência, venda, descarte, inspeção e ocorrências.
+- Centralizar e documentar transições permitidas.
+- Garantir bloqueio uniforme das operações incompatíveis.
+- Cobrir transições válidas e inválidas com testes e auditoria.
 
 ## Critérios de aceite
-- [ ] Estados e transições inválidas são bloqueados.
-- [ ] O status atual aparece na consulta e no detalhe.
-- [ ] Alterações são auditadas e testadas.
-
-## Condição de parada
-Parar após validar status e transições. Não iniciar localização.
+- [ ] Não há nomes de status conflitantes entre serviços.
+- [ ] Matriz de transições é explícita e testada.
+- [ ] Status atual é exibido corretamente na consulta/detalhe.

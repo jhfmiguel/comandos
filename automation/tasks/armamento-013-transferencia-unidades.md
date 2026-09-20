@@ -1,24 +1,15 @@
 # Armamento 013 - transferência entre unidades
 
-## Objetivo
-Implementar transferências de armamentos entre unidades organizacionais.
+## Estado após auditoria do commit 038
+**PARCIAL.** Transferência atômica entre unidades, ativos/lotes, escopo, idempotência, movimentos e auditoria já existem. O fluxo atual finaliza diretamente e não implementa o aceite/rejeição da unidade destino previsto na tarefa original.
 
-## Contexto e dependências
-Transferência altera localização, responsabilidade e possivelmente custódia. Depende de unidade válida, item movimentável e status compatível.
-
-## Escopo
-Origem, destino, autorização, estados da transferência, aceite, rejeição, auditoria e telas do fluxo.
-
-## Regras técnicas
-- Modelar origem e destino sem alterar o histórico de operações anteriores.
-- Impedir aceite pelo próprio contexto quando a regra de segregação exigir.
-- Não concluir transferência sem aceite ou justificativa de rejeição.
-- Garantir idempotência para evitar duplicação por reenvio.
+## Trabalho restante
+- Implementar estados de solicitação/envio/aceite/rejeição, ou documentar formalmente decisão de negócio que elimine o aceite.
+- Se mantido aceite: segregar autorização de origem/destino e exigir justificativa na rejeição.
+- Só atualizar responsabilidade/localização na etapa definida pelo fluxo aprovado.
+- Testar idempotência e concorrência do fluxo completo.
 
 ## Critérios de aceite
-- [ ] Transferência possui origem, destino, itens e responsável.
-- [ ] Unidade destino pode aceitar ou rejeitar com histórico.
-- [ ] Saldos, custódia e localização são atualizados corretamente.
-
-## Condição de parada
-Parar após validar transferência entre unidades. Não iniciar manutenção.
+- [ ] Regra de aceite/rejeição está implementada ou decisão de negócio está documentada.
+- [ ] Origem, destino, itens, responsáveis e histórico permanecem íntegros.
+- [ ] Testes cobrem o ciclo completo.

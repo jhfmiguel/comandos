@@ -22,3 +22,7 @@ Planejamento, contagem por unidade/local, divergências, reconciliação, justif
 
 ## Condição de parada
 Parar após validar inventário físico. Não iniciar auditoria avançada.
+
+
+## Auditoria da fila
+Classificada como concluída na auditoria do estado do módulo após o commit 038.

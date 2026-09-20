@@ -1,21 +1,15 @@
 # ARM-002 - Concluir interface de armamento
 
-## Objetivo
+## Estado após auditoria do commit 038
+**PARCIAL.** As telas principais existem, mas a homologação de todos os fluxos ainda não foi concluída.
 
-Fechar as telas de cadastro, consulta e movimentação do módulo.
-
-## Escopo
-
-Módulo: Armamento
-Tipo: Requisito
-Prioridade: Alta
+## Trabalho restante
+- Validar de ponta a ponta kits, doações, consumo, baixa/destruição e conclusão de manutenção com PostgreSQL.
+- Corrigir erros de interface/contrato encontrados nessa homologação.
+- Executar lint e build no estado final.
+- Não duplicar telas ou fluxos já existentes.
 
 ## Critérios de aceite
-
-- [ ] Fluxos acessíveis, estados tratados e lint passando.
-- [ ] Testes automatizados relevantes passam.
-- [ ] Não alterar módulos sem relação direta.
-
-## Condição de parada
-
-Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alterados, validações executadas e pendências no relatório final.
+- [ ] Fluxos principais do Armamento homologados no navegador.
+- [ ] Estados de erro, vazio, sucesso e repetição idempotente verificados.
+- [ ] Lint e build passam no estado final.

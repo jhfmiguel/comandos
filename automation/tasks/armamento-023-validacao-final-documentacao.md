@@ -1,24 +1,18 @@
 # Armamento 023 - validação final e documentação
 
-## Objetivo
-Fechar a entrega do módulo de armamento com validação integrada e documentação.
+## Estado após auditoria do commit 038
+**PENDENTE E DEVE SER A ÚLTIMA TAREFA DO ARMAMENTO.**
 
-## Contexto e prioridade
-Esta é a última etapa do pacote original de armamento antes das melhorias adicionais de munição, parametrização e filtros por tipo. Deve produzir um retrato confiável do que está pronto e do que continua pendente.
-
-## Escopo
-Executar testes da API, lint/build/validações do frontend, revisar contratos, atualizar documentação do módulo e registrar pendências reais.
-
-## Regras técnicas
-- Não esconder testes quebrados, warnings relevantes ou endpoints ausentes.
-- Conferir consistência entre documentação, telas, API e permissões.
-- Registrar riscos de produção e migrações necessárias.
+## Trabalho restante
+- Executar suíte completa da API.
+- Executar lint/build e homologação final do frontend.
+- Revisar contratos, permissões, estados e documentação.
+- Atualizar manual e documentação do módulo com o comportamento realmente entregue.
+- Registrar riscos, migrações e pendências que não façam parte da primeira entrega.
+- Produzir relatório final e parar o bot para validação do usuário.
 
 ## Critérios de aceite
-- [ ] API compila e testes passam.
-- [ ] Frontend compila, lint passa e fluxos principais são válidos.
-- [ ] Documentação descreve comportamento, permissões e operações.
-- [ ] Pendências estão registradas sem ocultar falhas.
-
-## Condição de parada
-Parar após produzir o relatório final do armamento. Não iniciar outro módulo nem o Command Center do bot nesta tarefa.
+- [ ] API e frontend validados no HEAD final.
+- [ ] Documentação corresponde ao código.
+- [ ] Pendências/riscos estão explícitos.
+- [ ] Bot para e aguarda autorização antes de iniciar outro módulo.

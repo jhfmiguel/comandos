@@ -1,24 +1,15 @@
 # Armamento 019 - frontend de consulta
 
-## Objetivo
-Finalizar consulta, filtros, detalhe e histórico de armamentos.
+## Estado após auditoria do commit 038
+**PARCIAL.** Há consultas, paginação e buscas nos workspaces, inclusive por patrimônio/série em fluxos específicos.
 
-## Contexto e prioridade
-A consulta deve ser a forma principal de localizar um armamento sem navegar por telas diferentes. O resultado precisa refletir unidade, localização, status, cautela e identificadores atuais.
-
-## Escopo
-Listagens, pesquisa por asset code/serial, filtros de status/unidade, detalhe, auditoria e estados vazios.
-
-## Regras técnicas
-- Usar paginação, ordenação e filtros suportados pela API.
-- Evitar filtrar somente no cliente quando o volume puder crescer.
-- Preservar query parameters ao recarregar ou compartilhar a consulta.
-- Restringir informações conforme autorização do usuário.
+## Trabalho restante
+- Consolidar uma consulta principal do armamento por asset code, serial, modelo, status, unidade e localização.
+- Confirmar filtros no servidor e paginação para volumes grandes.
+- Preservar filtros relevantes em query parameters para recarga/compartilhamento.
+- Exibir detalhe integrado com status, localização, custódia e histórico/auditoria conforme permissão.
 
 ## Critérios de aceite
-- [ ] Consulta encontra armamentos pelos identificadores principais.
-- [ ] Filtros e paginação respeitam contratos reais.
-- [ ] Loading, erro e vazio estão tratados.
-
-## Condição de parada
-Parar após validar o frontend de consulta. Não iniciar movimentação.
+- [ ] Um armamento pode ser localizado diretamente pelos identificadores principais.
+- [ ] Filtros/paginação usam contratos reais da API.
+- [ ] Loading, erro, vazio e autorização estão tratados.

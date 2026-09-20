@@ -1,25 +1,15 @@
 # Armamento 022 - testes do frontend
 
-## Objetivo
-Validar os fluxos de interface do módulo de armamento.
+## Estado após auditoria do commit 038
+**PARCIAL.** Existem scripts de validação em navegador e rodadas anteriores de lint/build, mas não há validação final documentada após os commits 037/038.
 
-## Contexto e prioridade
-Validar os fluxos que o usuário realmente executa, incluindo formulários, filtros, lotes, cautela por unidade e movimentações. Não considerar apenas a compilação como validação suficiente.
-
-## Escopo
-Executar e completar lint, build e validações de navegador existentes para cadastro, consulta, movimentação, custódia e inventário.
-
-## Regras técnicas
-- Verificar chamadas reais e contratos, sem aceitar mocks permanentes.
-- Conferir responsividade e ausência de sobreposição.
-- Registrar falhas com rota, ação, resposta e reprodução.
-- Separar falhas preexistentes de regressões da etapa.
+## Trabalho restante
+- Executar `yarn lint` e `yarn build` no HEAD atual.
+- Executar os scripts de navegador existentes contra PostgreSQL.
+- Completar a homologação dos fluxos faltantes.
+- Verificar responsividade, console, estados de erro/vazio/sucesso e contratos reais.
 
 ## Critérios de aceite
-- [ ] Lint passa.
-- [ ] Build passa.
-- [ ] Fluxos principais não apresentam erro de console ou contrato.
-- [ ] Estados de erro, vazio e sucesso são verificados.
-
-## Condição de parada
-Parar após validar o frontend. Não corrigir módulos sem relação com armamento.
+- [ ] Lint e build passam.
+- [ ] Fluxos principais passam sem erro de console/contrato.
+- [ ] Resultado da validação fica documentado.
