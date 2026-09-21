@@ -1,3 +1,3 @@
-import { WeaponsList } from 'components'
+import { ArmamentQuery } from 'components/erp/armament-query'
 
-export default WeaponsList
+export default ArmamentQuery
