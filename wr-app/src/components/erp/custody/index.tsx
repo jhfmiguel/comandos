@@ -198,19 +198,21 @@ function CustodyHistory({ organizationId, unitId, refresh }: { organizationId: n
         .then(value => { if (!controller.signal.aborted) { setResult(value); setError(""); } })
         .catch(error => { if (!controller.signal.aborted) setError(errorText(error)); }); return () => controller.abort();
     }, [organizationId, unitId, page, refresh, revision]);
+    const returnSubmitting = React.useRef(false);
     async function returnItems(custody: Custody, itemIds: number[]) {
+        if (returnSubmitting.current) return;
         if (!returnCondition && !pendingReturn) return;
         const pending = pendingReturn ?? { custodyId: custody.id, itemIds, requestId: crypto.randomUUID(),
             conditionTypeId: Number(returnCondition), inspectionNotes };
         if (pending.custodyId !== custody.id || pending.itemIds.join(",") !== itemIds.join(",")) return;
-        setReturning(true); setPendingReturn(pending); setError("");
+        returnSubmitting.current = true; setReturning(true); setPendingReturn(pending); setError("");
         try { await api.returnItems(custody.id, itemIds, pending.requestId, pending.conditionTypeId, pending.inspectionNotes);
             setPendingReturn(null); setReturnCondition(null); setInspectionNotes(""); setRevision(value => value + 1); }
         catch (error) {
             const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-            if (status && status >= 400 && status < 500) setPendingReturn(null);
+            if (!pendingReturn && status && status >= 400 && status < 500) setPendingReturn(null);
             setError(errorText(error));
-        } finally { setReturning(false); }
+        } finally { returnSubmitting.current = false; setReturning(false); }
     }
     return <section className="mt-8"><div className={styles.toolbar}><h2>Custody history</h2>
         <Button type="button" severity="secondary" onClick={() => setRevision(value => value + 1)}>Refresh history</Button></div>

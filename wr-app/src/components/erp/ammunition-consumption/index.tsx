@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { confirmMovement } from "components/erp/shared/confirm-movement";
 import axios from "axios";
 import { Button } from "@primereact/ui/button";
 import { Layout } from "components/layout";
@@ -31,6 +32,7 @@ export function AmmunitionConsumptionWorkspace() {
 
 function ConsumptionForm({ onNew }: { onNew: () => void }) {
     const { can } = useSession();
+    const submitting = React.useRef(false);
     const [organization, setOrganization] = React.useState<ErpValue>(null); const [unit, setUnit] = React.useState<ErpValue>(null);
     const [responsible, setResponsible] = React.useState<ErpValue>(null); const [authorizer, setAuthorizer] = React.useState<ErpValue>(null);
     const [purpose, setPurpose] = React.useState(""); const [selected, setSelected] = React.useState<Selected[]>([]);
@@ -42,14 +44,15 @@ function ConsumptionForm({ onNew }: { onNew: () => void }) {
     const canCreate = can("ammunition-consumptions", "CREATE", organizationId, unitId);
     const validItems = selected.length > 0 && selected.every(item => Number(item.quantity) > 0 && Number(item.quantity) <= Number(item.available) && item.result.trim());
     async function finalize(event: React.FormEvent) {
-        event.preventDefault(); if (!organizationId || !responsible || !authorizer || !validItems || !canCreate || busy) return;
+        event.preventDefault(); if (!organizationId || !responsible || !authorizer || !validItems || !canCreate || busy || submitting.current || completed || !purpose.trim()) return;
+        if (!pending && !confirmMovement(event.currentTarget as HTMLFormElement, "Result: permanently deduct ammunition from the source stock. No destination stock is created.", selected.map(i => `${i.lotNumber} ? ${i.locationName} ? ${i.quantity} ${i.unitOfMeasure} ? ${i.result}`).join("\n"))) return;
         const request = pending ?? { requestId: crypto.randomUUID(), organizationId, unitId, responsibleId: Number(responsible),
             authorizerId: Number(authorizer), purpose, items: selected.map(item => ({ balanceId: item.balanceId, quantity: Number(item.quantity), result: item.result })) };
-        setBusy(true); setPending(request); setError("");
+        submitting.current = true; setBusy(true); setPending(request); setError("");
         try { setCompleted(await api.finalize(request)); setPending(null); setRefresh(value => value + 1); }
         catch (caught) { const status = axios.isAxiosError(caught) ? caught.response?.status : undefined;
-            if (status && status >= 400 && status < 500) setPending(null); setError(errorText(caught)); }
-        finally { setBusy(false); }
+            if (!pending && status && status >= 400 && status < 500) setPending(null); setError(errorText(caught)); }
+        finally { submitting.current = false; setBusy(false); }
     }
     return <div className={styles.workspace}><p className={styles.intro}>Record authorized ammunition use and deduct each lot from inventory.</p>
         {error && <Message type="error" text={error} onClose={() => setError("")} />}
@@ -64,7 +67,7 @@ function ConsumptionForm({ onNew }: { onNew: () => void }) {
             <Field label="Authorizer *"><ReferenceField service={core} field={ref("authorizerId", "Authorizer", "people")} value={authorizer} organizationId={null} onChange={setAuthorizer} /></Field>
             <div className={styles.field}><label htmlFor="consumption-purpose">Purpose *</label><input id="consumption-purpose" required maxLength={255} value={purpose} onChange={event => setPurpose(event.target.value)} /></div>
         </fieldset>
-        {organizationId && canRead && canCreate && !completed && <StockPicker organizationId={organizationId} unitId={unitId} selected={selected}
+        {organizationId && canRead && canCreate && !completed && !busy && !pending && <StockPicker key={`${organizationId}-${unitId}`} organizationId={organizationId} unitId={unitId} selected={selected}
             onAdd={item => setSelected([...selected, { ...item, quantity: "1", result: "Consumed" }])} />}
         <div className={styles.tableContainer}><table><caption>Consumption items</caption><thead><tr><th>Ammunition / lot</th><th>Available</th><th>Quantity *</th><th>Result *</th><th className={styles.actionCell}>Actions</th></tr></thead><tbody>
             {selected.map(item => <tr key={item.balanceId}><td>{item.sku} · {item.modelName}<br />Lot {item.lotNumber} · {item.locationName}</td><td>{item.available} {item.unitOfMeasure}</td>
@@ -77,7 +80,7 @@ function ConsumptionForm({ onNew }: { onNew: () => void }) {
         </tbody></table></div><div className={styles.actions}>{completed ? <Button type="button" className="registration-yellow-button" onClick={onNew}>+ Consumption</Button>
             : <Button type="submit" className="registration-yellow-button" disabled={busy || !validItems || !canCreate}>{busy ? "Finalizing…" : pending ? "Retry finalize" : "Finalize consumption"}</Button>}</div></form>
         {!canCreate && <Message type="info" text="Select an organization and an authorized unit when required by your profile." />}
-        {organizationId && canRead && <History organizationId={organizationId} unitId={unitId} refresh={refresh} />}</div>;
+        {organizationId && canRead && <History key={`${organizationId}-${unitId}`} organizationId={organizationId} unitId={unitId} refresh={refresh} />}</div>;
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div className={styles.field}><label>{label}</label>{children}</div>; }
 
