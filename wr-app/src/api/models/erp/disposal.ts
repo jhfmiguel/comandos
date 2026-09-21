@@ -1,5 +1,5 @@
 export interface DisposalStockOption { kind:"ASSET"|"LOT";stockId:number;code:string;modelName:string;sku:string;locationName:string;unitOfMeasure:string;available:string }
 export interface DisposalLine { id:number;assetId:number|null;lotId:number|null;modelName:string;sku:string;stockCode:string;locationName:string;unitOfMeasure:string;quantity:string;movementId:number }
 export interface DisposalProcess { id:number;organizationId:number;organizationName:string;unitId:number|null;unitName:string|null;processNumber:string;reason:string;status:string;finalizedAt:string;finalizedById:number|null;finalizedByLogin:string|null;destructionMethod:string|null;destroyedAt:string|null;destructionCertificate:string|null;items:DisposalLine[] }
-export interface DisposalRequest { requestId:string;organizationId:number;unitId?:number;processNumber:string;reason:string;destructionMethod?:string;destroyedAt?:string;destructionCertificate?:string;items:{assetId?:number;balanceId?:number;quantity:number}[] }
+export interface DisposalRequest { requestId:string;confirmed:boolean;organizationId:number;unitId?:number;processNumber:string;reason:string;destructionMethod?:string;destroyedAt?:string;destructionCertificate?:string;items:{assetId?:number;balanceId?:number;quantity:number}[] }
 export interface DisposalPage<T>{content:T[];totalElements:number;page:number;size:number}

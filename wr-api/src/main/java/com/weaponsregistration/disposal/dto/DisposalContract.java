@@ -7,7 +7,8 @@ public final class DisposalContract {
     private DisposalContract() {}
     public record LineRequest(Long assetId, Long balanceId, BigDecimal quantity) {}
     public record FinalizeRequest(String requestId, Long organizationId, Long unitId, String processNumber, String reason,
-        String destructionMethod, String destroyedAt, String destructionCertificate, List<LineRequest> items) {}
+        String destructionMethod, String destroyedAt, String destructionCertificate, List<LineRequest> items,
+        Boolean confirmed) {}
     public record StockOption(String kind, long stockId, String code, String modelName, String sku, String locationName,
         String unitOfMeasure, String available) {}
     public record LineView(long id, Long assetId, Long lotId, String modelName, String sku, String stockCode,

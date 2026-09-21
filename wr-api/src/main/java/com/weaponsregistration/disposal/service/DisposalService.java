@@ -41,6 +41,8 @@ public class DisposalService {
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where e.location.organization.id=:organization"
             + (unitId == null ? "" : " and e.location.unit.id=:unit")
             + (assets ? " and e.status='AVAILABLE'" : " and e.available>0")
+            + (assets ? "" : " and e.reserved=0")
+            + " and not exists (select c.id from InventoryCount c where c.location.id=e.location.id and c.status.code in ('OPEN','COUNTED'))"
             + " and (lower(" + code + ") like :search escape '!' or lower(" + model + ".name) like :search escape '!'"
             + " or lower(" + model + ".sku) like :search escape '!')";
         var query = em.createQuery("select e" + from + " order by e.id", CoreEntity.class);
@@ -62,6 +64,7 @@ public class DisposalService {
     public DisposalView finalize(FinalizeRequest request) {
         validate(request);
         access.requireScope("disposals", "CREATE", request.organizationId(), request.unitId());
+        access.requireScope("disposals", "APPROVE", request.organizationId(), request.unitId());
         lockCatalog();
         Organization organization = locked(Organization.class, request.organizationId());
         if (!organization.active) bad("Organization must be active.");
@@ -125,6 +128,7 @@ public class DisposalService {
             asset.status = "DISPOSED";
         } else {
             StockBalance balance = locked(StockBalance.class, line.balanceId()); scope(balance.location, process);
+            if (balance.reserved.signum() > 0) conflict("Release active reservations before disposing this stock balance.");
             StockLot lot = locked(StockLot.class, balance.lot.id);
             if (balance.available.compareTo(line.quantity()) < 0 || lot.availableQuantity.compareTo(line.quantity()) < 0)
                 conflict("Insufficient available stock for lot " + lot.lotNumber + ".");
@@ -156,9 +160,15 @@ public class DisposalService {
 
     private void scope(StockLocation location, DisposalProcess process) {
         access.requireScope("disposals", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
+        access.requireScope("disposals", "APPROVE", location.organization.id, location.unit == null ? null : location.unit.id);
         if (!location.organization.id.equals(process.organization.id) || process.unit != null
                 && (location.unit == null || !location.unit.id.equals(process.unit.id)))
             bad("Every item must belong to the selected organization and unit.");
+        // Opening a count locks the same organization, so its snapshot cannot race this check.
+        long activeCounts = em.createQuery("select count(c) from InventoryCount c where c.location.id=:location"
+                + " and c.status.code in ('OPEN','COUNTED')", Long.class)
+            .setParameter("location", location.id).getSingleResult();
+        if (activeCounts > 0) conflict("Finish or cancel the active inventory count before disposing stock at this location.");
     }
 
     private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
@@ -170,6 +180,7 @@ public class DisposalService {
     private void validate(FinalizeRequest request) {
         if (request == null || request.organizationId() == null || blank(request.processNumber()) || blank(request.reason()))
             bad("Organization, process number and reason are required.");
+        if (!Boolean.TRUE.equals(request.confirmed())) bad("Explicit confirmation is required for irreversible disposal.");
         uuid(request.requestId()); limit(request.processNumber(), "Process number"); limit(request.reason(), "Reason");
         int destructionFields = (blank(request.destructionMethod()) ? 0 : 1) + (blank(request.destroyedAt()) ? 0 : 1)
             + (blank(request.destructionCertificate()) ? 0 : 1);
