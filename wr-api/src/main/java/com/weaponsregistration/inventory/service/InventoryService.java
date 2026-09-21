@@ -49,6 +49,18 @@ public class InventoryService {
         List<String> clauses = new ArrayList<>();
         Map<String, Object> parameters = new LinkedHashMap<>();
 
+        // Assets inherit their organizational unit from their current location.
+        String unit = requestParams.get("filter.unit");
+        if ("assets".equals(resource) && unit != null && !unit.isBlank()) {
+            clauses.add("(lower(e.location.unit.name) like :assetUnit escape '!' or lower(e.location.unit.code) like :assetUnit escape '!')");
+            parameters.put("assetUnit", likeTerm(unit));
+        }
+        String assetId = requestParams.get("assetId");
+        if ("movements".equals(resource) && assetId != null) {
+            clauses.add("e.asset.id = :assetId");
+            parameters.put("assetId", integer(assetId, false));
+        }
+
         // The persisted model -> category -> family relationship also covers legacy models
         // without an optional armament type or classification.
         String modelFamily = requestParams.get("filter.modelFamily");
@@ -486,6 +498,12 @@ public class InventoryService {
         result.put("label", label(entity));
         if (entity instanceof ItemModel model) result.put("modelFamily", model.category.family);
         Map<String, String> labels = new LinkedHashMap<>();
+        if (entity instanceof AssetItem asset) {
+            result.put("organizationId", asset.location.organization.id);
+            result.put("unitId", asset.location.unit == null ? null : asset.location.unit.id);
+            labels.put("organizationId", label(asset.location.organization));
+            if (asset.location.unit != null) labels.put("unitId", label(asset.location.unit));
+        }
         for (var field : spec.fields()) {
             Object value = read(entity, field.property());
             if (value instanceof CoreEntity ref) { result.put(field.name(), ref.id); labels.put(field.name(), label(ref)); }

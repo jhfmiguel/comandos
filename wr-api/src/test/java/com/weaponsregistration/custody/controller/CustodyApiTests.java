@@ -61,6 +61,42 @@ class CustodyApiTests {
     }
 
     @Test
+    void armamentQueryCombinesFiltersPagesAndLoadsOnlySelectedAssetHistory() throws Exception {
+        var s = setup();
+        var first = request("GET", "inventory/assets/" + s.first(), null).body();
+        String filters = "&filter.modelId=Service&filter.status=AVAILABLE&filter.unit=Operational&filter.locationId=Armory";
+        String path = "inventory/assets?organizationId=" + s.organization() + filters;
+        var page = request("GET", path + "&size=1&page=1", null);
+        assertEquals(200, page.status(), page.raw());
+        assertEquals(2, page.body().get("totalElements").asInt());
+        assertEquals(1, page.body().get("content").size());
+        assertEquals(s.second(), page.body().get("content").get(0).get("id").asLong());
+        assertEquals(s.unit(), first.get("unitId").asLong());
+        assertEquals(s.organization(), first.get("organizationId").asLong());
+        for (String field : List.of("assetCode", "serialNumber")) {
+            var found = request("GET", path + "&filter." + field + "=" + first.get(field).asText(), null);
+            assertEquals(1, found.body().get("totalElements").asInt());
+            assertEquals(s.first(), found.body().get("content").get(0).get("id").asLong());
+        }
+        assertEquals(0, request("GET", path + "&filter.assetCode=nonexistent", null).body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "inventory/assets?filter.unit=" + unique(), null).body().get("totalElements").asInt());
+        assertEquals(400, request("GET", path + "&page=-1", null).status());
+        var issued = request("POST", "custodies", issue(s, List.of(s.first())));
+        assertEquals(200, issued.status(), issued.raw());
+        var custodies = request("GET", "custodies/by-asset/" + s.first(), null);
+        assertEquals(200, custodies.status(), custodies.raw());
+        assertEquals(1, custodies.body().get("totalElements").asInt());
+        assertEquals(issued.body().get("id").asLong(), custodies.body().get("content").get(0).get("id").asLong());
+        assertEquals(0, request("GET", "custodies/by-asset/" + s.second(), null).body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "custodies/by-asset/" + s.first() + "?page=1", null).body().get("content").size());
+        assertEquals(400, request("GET", "custodies/by-asset/" + s.first() + "?page=-1", null).status());
+        var movements = request("GET", "inventory/movements?assetId=" + s.first() + "&size=1", null);
+        assertEquals(200, movements.status(), movements.raw());
+        assertEquals(2, movements.body().get("totalElements").asInt());
+        assertEquals(s.first(), movements.body().get("content").get(0).get("assetId").asLong());
+    }
+
+    @Test
     void organizationalUnitReceivesEquipmentAndReturnsItWithRecipientSnapshot() throws Exception {
         var s = setup();
         long receivingUnit = create("core/units", Map.of("organizationId", s.organization(), "code", unique(),
@@ -142,6 +178,7 @@ class CustodyApiTests {
         assertEquals(2, completed.body().get("returns").size());
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_RETURN' and location_id = ?", Long.class, s.location()));
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'custodies' and record_id = ? and action = 'RETURN'", Long.class, custody));
+        com.weaponsregistration.audit.controller.AuditTraceAssertions.trace(port,"custodies",custody,"assetId="+s.first()+"&unitId="+s.unit(),"ISSUE","RETURN","RETURN");
     }
 
     @Test

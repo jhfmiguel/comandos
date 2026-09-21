@@ -371,6 +371,13 @@ class InventoryApiTests {
         assertEquals(200, result.status(), result.raw());
         assertEquals("2", result.body().get("quantity").asText());
         assertEquals(2, result.body().get("recordIds").size());
+        for (var itemId : result.body().get("recordIds")) {
+            var trace = request("GET", "audit?resource=inventory/assets&assetId=" + itemId.asLong(), null);
+            assertEquals(200, trace.status(), trace.raw());
+            assertEquals(2, trace.body().get("totalElements").asInt());
+            assertEquals("BATCH_CREATE", trace.body().get("content").get(0).get("action").asText());
+            assertEquals("CREATE", trace.body().get("content").get(1).get("action").asText());
+        }
         long first = result.body().get("recordIds").get(0).asLong();
         assertEquals(code.toUpperCase(Locale.ROOT), jdbc.queryForObject("select asset_code from erp_asset_item where id=?", String.class, first));
         assertEquals(serial.toUpperCase(Locale.ROOT), jdbc.queryForObject("select serial_number from erp_asset_item where id=?", String.class, first));
@@ -434,6 +441,8 @@ class InventoryApiTests {
         assertEquals(200, created.status(), created.raw());
         assertEquals("550", created.body().get("quantity").asText());
         long lot = created.body().get("recordIds").get(0).asLong();
+        com.weaponsregistration.audit.controller.AuditTraceAssertions.trace(port, "inventory/lots", lot,
+            "lotId=" + lot, "CREATE");
         assertEquals(550, jdbc.queryForObject("select available from erp_stock_balance where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
         assertEquals(550, jdbc.queryForObject("select quantity from erp_stock_movement where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
         assertEquals("10 x 50 + 2 x 25", request("GET", "inventory/lots/" + lot, null).body().get("openingPackaging").asText());

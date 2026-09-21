@@ -37,7 +37,85 @@ class AuthorizationApiTests {
         long location, long otherLocation, long model, long asset, long otherAsset, long otherSale) {}
     record Result(int status, JsonNode body, String raw) {}
 
+    @Test
+    void armamentQueryAndCustodyHistoryRespectReadPermissions() throws Exception {
+        var f = fixture(); login(f);
+        assertEquals(403, request("GET", "/api/erp/custodies/by-asset/" + f.asset(), null).status());
+        grant(f, "inventory/assets", "READ", "UNIT", f.unit());
+        var result = request("GET", "/api/erp/inventory/assets?filter.unit=Main&size=1", null);
+        assertEquals(200, result.status(), result.raw());
+        assertEquals(1, result.body().get("totalElements").asInt());
+        assertEquals(f.asset(), result.body().get("content").get(0).get("id").asLong());
+        assertEquals(403, request("GET", "/api/erp/inventory/assets/" + f.otherAsset(), null).status());
+        grant(f, "custodies", "READ", "UNIT", f.unit());
+        assertEquals(200, request("GET", "/api/erp/custodies/by-asset/" + f.asset(), null).status());
+        assertEquals(0, request("GET", "/api/erp/custodies/by-asset/" + f.otherAsset(), null).body().get("totalElements").asInt());
+    }
+
+    @Test
+    void lifecycleWorkflowAndReportsEnforceActionsAndUnitScope() throws Exception {
+        var f = fixture(); login(f);
+        String scope = "organizationId=" + f.organization() + "&unitId=" + f.unit();
+        for (String path : List.of("lifecycle/inspections", "lifecycle/occurrences", "workflows",
+            "armament-reports/dashboard", "armament-reports/alerts", "armament-reports/assets", "armament-reports/lots")) {
+            assertEquals(403, request("GET", "/api/erp/" + path + "?" + scope, null).status(), path);
+        }
+        grant(f, "inventory/assets", "READ", "UNIT", f.unit());
+        for (String path : List.of("lifecycle/inspections", "lifecycle/occurrences", "workflows",
+            "armament-reports/dashboard", "armament-reports/alerts", "armament-reports/assets", "armament-reports/lots")) {
+            assertEquals(200, request("GET", "/api/erp/" + path + "?" + scope, null).status(), path);
+            assertEquals(403, request("GET", "/api/erp/" + path + "?organizationId=" + f.otherOrganization(), null).status(), path);
+            assertEquals(403, request("GET", "/api/erp/" + path + "?organizationId=" + f.organization(), null).status(), path);
+        }
+        var inspection = Map.of("organizationId", f.organization(), "unitId", f.unit(), "assetId", f.asset(),
+            "checklist", "Safety", "result", "FAILED");
+        assertEquals(403, request("POST", "/api/erp/lifecycle/inspections", inspection).status());
+        long update = grant(f, "inventory/assets", "UPDATE", "UNIT", f.unit());
+        var inspected = request("POST", "/api/erp/lifecycle/inspections", inspection);
+        assertEquals(201, inspected.status(), inspected.raw());
+        var workflow = Map.of("organizationId", f.organization(), "unitId", f.unit(), "operationType", "MAINTENANCE",
+            "resource", "inventory/assets", "recordId", f.asset(), "justification", "Repair");
+        assertEquals(403, request("POST", "/api/erp/workflows", workflow).status());
+        grant(f, "inventory/assets", "CREATE", "UNIT", f.unit());
+        var forbiddenWorkflow = new HashMap<String, Object>(workflow);
+        forbiddenWorkflow.put("organizationId", f.otherOrganization());
+        forbiddenWorkflow.remove("unitId");
+        assertEquals(403, request("POST", "/api/erp/workflows", forbiddenWorkflow).status());
+        forbiddenWorkflow.put("organizationId", f.organization());
+        assertEquals(403, request("POST", "/api/erp/workflows", forbiddenWorkflow).status());
+        var created = request("POST", "/api/erp/workflows", workflow);
+        assertEquals(201, created.status(), created.raw());
+        String path = "/api/erp/workflows/" + created.body().get("id").asLong();
+        assertEquals(200, request("POST", path + "/analyze", null).status());
+        jdbc.update("delete from erp_profile_permission where id=?", update);
+        assertEquals(403, request("POST", path + "/authorize", null).status());
+        assertEquals("ANALYZED", request("GET", path, null).body().get("status").asText());
+        assertEquals(403, request("POST", "/api/erp/lifecycle/inspections/" + inspected.body().get("id").asLong() + "/approve", null).status());
+        assertEquals(403, request("GET", "/api/erp/armament-reports/history", null).status());
+        assertEquals(403, request("GET", "/api/erp/armament-reports/bundle?" + scope, null).status());
+        grant(f, "audit", "READ", "SYSTEM", null);
+        assertEquals(200, request("GET", "/api/erp/armament-reports/bundle?" + scope, null).status());
+    }
+
     private <T> T persist(T entity) { em.persist(entity); return entity; }
+    @Test
+    void irreversibleDisposalRequiresScopedApprovalAndChecksRevocation() throws Exception {
+        var f=fixture(); login(f);
+        var data=Map.of("requestId",UUID.randomUUID().toString(),"organizationId",f.organization(),"unitId",f.unit(),
+            "processNumber",UUID.randomUUID().toString(),"reason","Unserviceable","confirmed",true,
+            "items",List.of(Map.of("assetId",f.asset(),"quantity",1)));
+        grant(f,"disposals","READ","UNIT",f.unit());
+        grant(f,"disposals","CREATE","UNIT",f.unit());
+        assertEquals(403,request("POST","/api/erp/disposals",data).status());
+        long approval=grant(f,"disposals","APPROVE","UNIT",f.unit());
+        var wrongScope=new HashMap<String,Object>(data);wrongScope.remove("unitId");
+        assertEquals(403,request("POST","/api/erp/disposals",wrongScope).status());
+        var result=request("POST","/api/erp/disposals",data);
+        assertEquals(200,result.status(),result.raw());
+        assertEquals(result.body().get("id"),request("POST","/api/erp/disposals",data).body().get("id"));
+        jdbc.update("delete from erp_profile_permission where id=?",approval);
+        assertEquals(403,request("POST","/api/erp/disposals",data).status());
+    }
     private Fixture fixture() {
         return tx.execute(status -> {
             var person = new Person(); person.fullName = "Buyer"; person.personType = "INDIVIDUAL"; persist(person);
@@ -356,6 +434,9 @@ class AuthorizationApiTests {
         var f = fixture(); grant(f, "audit", "READ", "ORGANIZATION", null); login(f);
         assertEquals(403, request("GET", "/api/erp/audit", null).status());
         assertEquals(403, request("GET", "/api/erp/audit/1", null).status());
+        grant(f, "audit", "READ", "UNIT", f.unit());
+        assertEquals(403, request("GET", "/api/erp/audit?unitId=" + f.unit() + "&organizationId=" + f.organization(), null).status());
+        assertEquals(403, request("GET", "/api/erp/armament-reports/history", null).status());
         grant(f, "audit", "READ", "SYSTEM", null);
         assertEquals(200, request("GET", "/api/erp/audit", null).status());
     }

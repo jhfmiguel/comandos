@@ -239,6 +239,17 @@ public class CustodyService {
         access.requireEntity("custodies", "READ", custody); return view(custody);
     }
 
+    public Page<CustodyView> byAsset(long assetId, int page) {
+        access.requireAny("custodies", "READ");
+        pagination(page);
+        String from = " from Custody c where exists (select i.id from CustodyItem i where i.custody = c and i.asset.id = :asset) and "
+            + access.predicate("custodies", "READ", "c");
+        var query = em.createQuery("select c" + from + " order by c.id desc", Custody.class).setParameter("asset", assetId);
+        var count = em.createQuery("select count(c)" + from, Long.class).setParameter("asset", assetId);
+        return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
+            count.getSingleResult(), page, PAGE_SIZE);
+    }
+
     private CustodyView view(Custody custody) {
         var items = em.createQuery("select i from CustodyItem i where i.custody.id = :custody order by i.id", CustodyItem.class)
             .setParameter("custody", custody.id).getResultList().stream().map(i -> { var inspection = em.createQuery(

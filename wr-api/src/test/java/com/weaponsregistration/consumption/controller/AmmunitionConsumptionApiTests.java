@@ -45,6 +45,7 @@ class AmmunitionConsumptionApiTests {
     @Test void finalizationDeductsExactStockAndIsIdempotent() throws Exception {
         var s = setup(); var data = payload(s, "2.2500"); var first = request("POST", "ammunition-consumptions", data);
         assertEquals(200, first.status(), first.raw()); assertEquals("FINALIZED", first.body().get("status").asText());
+        com.weaponsregistration.audit.controller.AuditTraceAssertions.trace(port,"ammunition-consumptions",first.body().get("id").asLong(),"lotId="+s.lot()+"&unitId="+s.unit(),"FINALIZE");
         assertEquals("8.2500", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
         assertEquals("8.2500", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
         assertEquals(first.body().get("id").asLong(), request("POST", "ammunition-consumptions", data).body().get("id").asLong());

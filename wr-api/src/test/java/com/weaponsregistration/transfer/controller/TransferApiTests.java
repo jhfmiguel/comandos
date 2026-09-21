@@ -52,6 +52,22 @@ class TransferApiTests {
         assertEquals(transferId, repeated.body().get("id").asLong());
         assertEquals(2, jdbc.queryForObject("select count(*) from erp_inventory_transfer_item where transfer_id=?", Integer.class, transferId));
         assertEquals(1, jdbc.queryForObject("select count(*) from erp_audit_record where resource='transfers' and record_id=?", Integer.class, transferId));
+        // The intake remains attributed to the original unit after the asset moves.
+        var intake = request("GET", "audit?resource=inventory/assets&action=CREATE&assetId=" + setup.asset()
+            + "&unitId=" + setup.sourceUnit(), null);
+        assertEquals(200, intake.status(), intake.raw());
+        assertEquals(1, intake.body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "audit?resource=inventory/assets&action=CREATE&assetId=" + setup.asset()
+            + "&unitId=" + setup.destinationUnit(), null).body().get("totalElements").asInt());
+        for (long unit : List.of(setup.sourceUnit(), setup.destinationUnit())) {
+            var events = request("GET", "audit?resource=transfers&assetId=" + setup.asset() + "&lotId=" + setup.lot()
+                + "&organizationId=" + setup.organization() + "&unitId=" + unit, null);
+            assertEquals(200, events.status(), events.raw());
+            assertEquals(1, events.body().get("totalElements").asInt());
+            var detail = request("GET", "audit/" + events.body().get("content").get(0).get("id").asLong(), null);
+            assertEquals(transferId, detail.body().get("after").get("transfer").get("id").asLong());
+            assertEquals(2, detail.body().get("after").get("transfer").get("items").size());
+        }
     }
 
     @Test

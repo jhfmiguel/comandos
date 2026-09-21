@@ -26,4 +26,6 @@ public class CustodyController {
     @GetMapping public Page<CustodyView> list(@RequestParam long organizationId, @RequestParam(required = false) Long unitId,
         @RequestParam(defaultValue = "0") int page) { return service.list(organizationId, unitId, page); }
     @GetMapping("/{id}") public CustodyView get(@PathVariable long id) { return service.get(id); }
+    @GetMapping("/by-asset/{assetId}") public Page<CustodyView> byAsset(@PathVariable long assetId,
+        @RequestParam(defaultValue = "0") int page) { return service.byAsset(assetId, page); }
 }
