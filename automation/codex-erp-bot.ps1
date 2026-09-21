@@ -6,6 +6,7 @@ param(
     [int]$CodexRetrySeconds = 300,
     [int]$MaxTasks = 0,
     [string]$TaskName = '',
+    [switch]$RateLimitResume,
     [string]$Workstream = '',
     [ValidateSet('continuous', 'until')]
     [string]$ExecutionMode = 'continuous',
@@ -327,7 +328,10 @@ function Get-CodexResetInfo([string]$logPath) {
     return $null
 }
 
-function Register-CodexResumeTask([datetime]$resumeAt) {
+function Register-CodexResumeTask(
+    [datetime]$resumeAt,
+    [string]$resumeTaskName = ''
+) {
     $now = Get-Date
 
     if ($resumeAt -le $now) {
@@ -361,7 +365,11 @@ function Register-CodexResumeTask([datetime]$resumeAt) {
     if ($StopAfterTask) {
         $arguments += @('-StopAfterTask', ('"' + $StopAfterTask + '"'))
     }
-if ($TaskName) {
+    if ($resumeTaskName) {
+        $arguments += @('-TaskName', ('"' + $resumeTaskName + '"'))
+        $arguments += '-RateLimitResume'
+    }
+    elseif ($TaskName) {
         $arguments += @('-TaskName', ('"' + $TaskName + '"'))
     }
 
@@ -454,7 +462,9 @@ function Stop-BotForCodexUnavailable(
         $resetInfo.ResetAt `
         $resetInfo.DisplayText
 
-    $scheduledAt = Register-CodexResumeTask $resetInfo.ResetAt
+    $scheduledAt = Register-CodexResumeTask `
+        $resetInfo.ResetAt `
+        $taskName
 
     $message = (
         'Codex liberado para trabalhar às {0}.' -f
@@ -865,6 +875,12 @@ try {
 while ($true) {
     Wait-IfPaused ''
     $task = Get-PendingTask
+
+    if ($RateLimitResume -and $null -ne $task) {
+        Write-Host ("Retomando tarefa apos rate limit: {0}" -f $task.Name)
+        $TaskName = ''
+        $RateLimitResume = $false
+    }
     if ($null -eq $task) {
         if ($Once) {
             Write-BotStatus 'completed' 'NÃ£o hÃ¡ mais tarefas no escopo.'
@@ -883,7 +899,9 @@ while ($true) {
     $activeRateLimit = Get-ActiveCodexRateLimit
 
     if ($null -ne $activeRateLimit) {
-        [void](Register-CodexResumeTask $activeRateLimit.ResetAt)
+        [void](Register-CodexResumeTask `
+            $activeRateLimit.ResetAt `
+            $task.Name)
 
         Write-BotStatus `
             'waiting' `
@@ -942,18 +960,18 @@ while ($true) {
 
     if ($reachedStopAfterTask) {
 
-        Write-BotStatus 
+        Write-BotStatus
 
-            'completed' 
+            'completed'
 
-            ('Requisito limite concluido: ' + $task.Name) 
+            ('Requisito limite concluido: ' + $task.Name)
 
             $task.Name
 
 
-        Show-CompletionNotice 
+        Show-CompletionNotice
 
-            'COMANDOS Codex Bot finalizado' 
+            'COMANDOS Codex Bot finalizado'
 
             ('Requisito limite concluido: ' + $task.Name)
 
