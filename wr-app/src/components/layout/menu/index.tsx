@@ -231,6 +231,7 @@ export const Menu: React.FC = () => {
                                         selectedMenu={selectedMenu}
                                         onSelect={setSelectedMenu}
                                         subItems={[
+                                            { href: "/queries/weapons", label: "Consulta de armamento" },
                                             { href: "/erp/inventory?section=reference-data", label: "Reference data" },
                                             { href: "/erp/inventory?section=catalog", label: "Catalog" },
                                             { href: "/erp/inventory?section=specifications", label: "Specifications" },
@@ -389,5 +390,4 @@ export const Menu: React.FC = () => {
     )
 
 }
-
 
