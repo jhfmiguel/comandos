@@ -11,3 +11,5 @@ wr-app/.backup-*/
 automation/runtime/
 wr-app/lint-*.log
 wr-app/typecheck-*.log
+
+automation/attachments/

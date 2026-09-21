@@ -35,6 +35,13 @@ export type TaskBoardRequirement = {
     priority: BoardPriority
     acceptance: string
     createdAt: string
+    attachments?: {
+        name: string
+        path: string
+        size: number
+        type: string
+    }[]
+
 }
 
 type Props = {
@@ -932,47 +939,6 @@ export function ComandosTaskBoard({
                                                                     <span>
                                                                         {requirement.createdAt}
                                                                     </span>
-                                                                </div>
-
-                                                                <div className="taskboard-card-actions">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(event) => {
-                                                                            event.stopPropagation()
-                                                                            onEdit(requirement)
-                                                                        }}
-                                                                        aria-label={`Editar ${requirement.id}`}
-                                                                        title="Editar"
-                                                                    >
-                                                                        <Pencil size={16} />
-                                                                    </button>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={busy}
-                                                                        onClick={(event) => {
-                                                                            event.stopPropagation()
-                                                                            void onSend(requirement)
-                                                                        }}
-                                                                        aria-label={`Enviar ${requirement.id} ao bot`}
-                                                                        title="Enviar ao bot"
-                                                                        className="send"
-                                                                    >
-                                                                        <Send size={16} />
-                                                                    </button>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(event) => {
-                                                                            event.stopPropagation()
-                                                                            onDelete(requirement)
-                                                                        }}
-                                                                        aria-label={`Excluir ${requirement.id}`}
-                                                                        title="Excluir"
-                                                                        className="delete"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
                                                                 </div>
                                                             </article>
                                                         )

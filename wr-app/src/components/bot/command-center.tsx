@@ -33,6 +33,13 @@ type Sprint = {
     steps: number
 }
 
+type RequirementAttachment = {
+    name: string
+    path: string
+    size: number
+    type: string
+}
+
 type Requirement = {
     id: string
     title: string
@@ -43,6 +50,7 @@ type Requirement = {
     priority: "Alta" | "Média" | "Baixa"
     acceptance: string
     createdAt: string
+    attachments?: RequirementAttachment[]
 }
 
 type QueuedTask = {
@@ -227,6 +235,8 @@ export function CommandCenter() {
         priority: "Média" as Requirement["priority"],
         acceptance: ""
     })
+    const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
+    const [removedAttachments, setRemovedAttachments] = useState<RequirementAttachment[]>([])
 
     const [sprintForm, setSprintForm] = useState({
         name: "",
@@ -524,7 +534,19 @@ Prioridade: ${requirement.priority}
 - [ ] Testes automatizados relevantes passam.
 - [ ] Não alterar módulos sem relação direta.
 
-## Condição de parada
+${requirement.attachments?.length
+    ? `## Anexos
+
+Os arquivos abaixo fazem parte deste requisito.
+
+IMPORTANTE: leia e analise estes arquivos antes de implementar o requisito. Os caminhos são relativos à raiz do repositório.
+
+${requirement.attachments
+    .map((attachment) => `- \`${attachment.path}\` — ${attachment.name}`)
+    .join("\n")}
+
+`
+    : ""}## Condição de parada
 
 Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alterados, validações executadas e pendências no relatório final.
 `
@@ -538,12 +560,16 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
             priority: "Média",
             acceptance: ""
         })
+        setAttachmentFiles([])
+        setRemovedAttachments([])
         setEditingRequirementId(null)
         setShowRequirementForm(false)
     }
 
     const openNewRequirement = () => {
         setEditingRequirementId(null)
+        setAttachmentFiles([])
+        setRemovedAttachments([])
         setForm({
             title: "",
             description: "",
@@ -556,6 +582,8 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
 
     const openEditRequirement = (requirement: Requirement) => {
         setEditingRequirementId(requirement.id)
+        setAttachmentFiles([])
+        setRemovedAttachments([])
         setForm({
             title: requirement.title,
             description: requirement.description,
@@ -566,67 +594,150 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
         setShowRequirementForm(true)
     }
 
-    const saveRequirement = () => {
+    const saveRequirement = async () => {
         if (!selectedSprint) return
 
-        if (!form.title.trim() || !form.description.trim() || !form.acceptance.trim()) {
+        if (
+            !form.title.trim() ||
+            !form.description.trim() ||
+            !form.acceptance.trim()
+        ) {
             setNotice("Preencha título, descrição e critérios de aceite.")
             return
         }
 
-        if (editingRequirementId) {
-            setRequirements((current) => current.map((requirement) =>
-                requirement.id === editingRequirementId
-                    ? {
-                        ...requirement,
-                        title: form.title.trim(),
-                        description: form.description.trim(),
-                        type: form.type,
-                        priority: form.priority,
-                        acceptance: form.acceptance.trim()
-                    }
-                    : requirement
-            ))
+        try {
+            if (editingRequirementId) {
+                const existingRequirement = requirements.find(
+                    (requirement) =>
+                        requirement.id === editingRequirementId
+                )
 
-            setNotice(`${editingRequirementId} atualizado.`)
-            resetRequirementForm()
-            return
-        }
+                if (!existingRequirement) {
+                    setNotice("Requisito não encontrado.")
+                    return
+                }
 
-        const prefix = getPrefix(selectedSprint)
-        const sequenceBase = selectedModule === "armamento" ? 32 : 0
-        const sequencePattern = new RegExp(`^${prefix}-(\\d{3})$`)
+                const uploadedAttachments =
+                    await uploadRequirementAttachments(
+                        editingRequirementId,
+                        attachmentFiles
+                    )
 
-        const highestExistingSequence = requirements
-            .filter((requirement) => requirement.module === selectedModule)
-            .map((requirement) => {
-                const match = requirement.id.match(sequencePattern)
-                return match ? Number(match[1]) : 0
-            })
-            .reduce(
-                (highest, current) => Math.max(highest, current),
-                sequenceBase
+                if (removedAttachments.length > 0) {
+                    await deleteRequirementAttachments(
+                        editingRequirementId,
+                        removedAttachments
+                    )
+                }
+
+                const removedPaths = new Set(
+                    removedAttachments.map(
+                        (attachment) => attachment.path
+                    )
+                )
+
+                const attachments = [
+                    ...(existingRequirement.attachments ?? []).filter(
+                        (attachment) =>
+                            !removedPaths.has(attachment.path)
+                    ),
+                    ...uploadedAttachments
+                ]
+
+                setRequirements((current) =>
+                    current.map((requirement) =>
+                        requirement.id === editingRequirementId
+                            ? {
+                                ...requirement,
+                                title: form.title.trim(),
+                                description: form.description.trim(),
+                                type: form.type,
+                                priority: form.priority,
+                                acceptance: form.acceptance.trim(),
+                                attachments
+                            }
+                            : requirement
+                    )
+                )
+
+                setNotice(`${editingRequirementId} atualizado.`)
+                resetRequirementForm()
+                return
+            }
+
+            const prefix = getPrefix(selectedSprint)
+            const sequenceBase =
+                selectedModule === "armamento" ? 32 : 0
+
+            const sequencePattern =
+                new RegExp(`^${prefix}-(\\d{3})$`)
+
+            const highestExistingSequence = requirements
+                .filter(
+                    (requirement) =>
+                        requirement.module === selectedModule
+                )
+                .map((requirement) => {
+                    const match =
+                        requirement.id.match(sequencePattern)
+
+                    return match
+                        ? Number(match[1])
+                        : 0
+                })
+                .reduce(
+                    (highest, current) =>
+                        Math.max(highest, current),
+                    sequenceBase
+                )
+
+            const nextSequence =
+                highestExistingSequence + 1
+
+            const requirementId =
+                `${prefix}-${String(nextSequence).padStart(3, "0")}`
+
+            const attachments =
+                await uploadRequirementAttachments(
+                    requirementId,
+                    attachmentFiles
+                )
+
+            const newRequirement: Requirement = {
+                id: requirementId,
+                title: form.title.trim(),
+                description: form.description.trim(),
+                module: selectedModule,
+                type: form.type,
+                status: "Backlog",
+                priority: form.priority,
+                acceptance: form.acceptance.trim(),
+                createdAt:
+                    new Date().toISOString().slice(0, 10),
+                attachments
+            }
+
+            setRequirements((current) => [
+                newRequirement,
+                ...current
+            ])
+
+            setNotice(
+                `${newRequirement.id} adicionado ao backlog.`
             )
 
-        const nextSequence = highestExistingSequence + 1
+            resetRequirementForm()
+        } catch (error) {
+            console.error(error)
 
-        const newRequirement: Requirement = {
-            id: `${prefix}-${String(nextSequence).padStart(3, "0")}`,
-            title: form.title.trim(),
-            description: form.description.trim(),
-            module: selectedModule,
-            type: form.type,
-            status: "Backlog",
-            priority: form.priority,
-            acceptance: form.acceptance.trim(),
-            createdAt: new Date().toISOString().slice(0, 10)
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível salvar o requisito."
+            )
         }
-
-        setRequirements((current) => [newRequirement, ...current])
-        setNotice(`${newRequirement.id} adicionado ao backlog.`)
-        resetRequirementForm()
     }
-
     const taskMatchesRequirement = (
         task: QueuedTask,
         requirement: Requirement
@@ -865,6 +976,60 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
         }
     }
 
+    const uploadRequirementAttachments = async (
+        requirementId: string,
+        files: File[]
+    ): Promise<RequirementAttachment[]> => {
+        if (files.length === 0) return []
+
+        const data = new FormData()
+        data.append("requirementId", requirementId)
+
+        files.forEach((file) => {
+            data.append("files", file)
+        })
+
+        const response = await fetch("/api/bot/attachments", {
+            method: "POST",
+            body: data
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+            throw new Error(
+                result.error || "Não foi possível salvar os anexos."
+            )
+        }
+
+        return result.attachments ?? []
+    }
+
+    const deleteRequirementAttachments = async (
+        requirementId: string,
+        attachments: RequirementAttachment[]
+    ) => {
+        if (attachments.length === 0) return
+
+        const response = await fetch("/api/bot/attachments", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                requirementId,
+                paths: attachments.map((attachment) => attachment.path)
+            })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+            throw new Error(
+                result.error || "Não foi possível remover o anexo."
+            )
+        }
+    }
     const downloadTask = (requirement: Requirement) =>
         sendRequest("/api/bot/tasks", {
             id: requirement.id,
@@ -2344,6 +2509,212 @@ Parar quando os critérios de aceite estiverem atendidos. Registrar arquivos alt
                             </label>
                         </div>
 
+                        <div
+                            style={{
+                                marginTop: "1rem",
+                                display: "grid",
+                                gap: "0.75rem"
+                            }}
+                        >
+                            <label
+                                htmlFor="requirement-attachments"
+                                style={{
+                                    display: "grid",
+                                    gap: "0.45rem"
+                                }}
+                            >
+                                <span>Anexos para o Codex</span>
+
+                                <input
+                                    id="requirement-attachments"
+                                    type="file"
+                                    multiple
+                                    onChange={(event) => {
+                                        const files = Array.from(
+                                            event.target.files ?? []
+                                        )
+
+                                        setAttachmentFiles(
+                                            (current) => [
+                                                ...current,
+                                                ...files
+                                            ]
+                                        )
+
+                                        event.target.value = ""
+                                    }}
+                                />
+                            </label>
+
+                            <small style={{ opacity: 0.7 }}>
+                                Você pode anexar imagens, PDFs,
+                                documentos, código, logs e outros
+                                arquivos úteis para o requisito.
+                            </small>
+
+                            {editingRequirementId &&
+                                (() => {
+                                    const currentRequirement =
+                                        requirements.find(
+                                            (requirement) =>
+                                                requirement.id ===
+                                                editingRequirementId
+                                        )
+
+                                    const existingAttachments =
+                                        currentRequirement?.attachments ??
+                                        []
+
+                                    const visibleAttachments =
+                                        existingAttachments.filter(
+                                            (attachment) =>
+                                                !removedAttachments.some(
+                                                    (removed) =>
+                                                        removed.path ===
+                                                        attachment.path
+                                                )
+                                        )
+
+                                    if (
+                                        visibleAttachments.length === 0
+                                    ) {
+                                        return null
+                                    }
+
+                                    return (
+                                        <div
+                                            style={{
+                                                display: "grid",
+                                                gap: "0.5rem"
+                                            }}
+                                        >
+                                            <strong>
+                                                Anexos existentes
+                                            </strong>
+
+                                            {visibleAttachments.map(
+                                                (attachment) => (
+                                                    <div
+                                                        key={
+                                                            attachment.path
+                                                        }
+                                                        style={{
+                                                            display:
+                                                                "flex",
+                                                            alignItems:
+                                                                "center",
+                                                            justifyContent:
+                                                                "space-between",
+                                                            gap: "1rem",
+                                                            padding:
+                                                                "0.65rem 0.75rem",
+                                                            border:
+                                                                "1px solid var(--surface-border, #d8dee9)",
+                                                            borderRadius:
+                                                                "0.5rem"
+                                                        }}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                overflowWrap:
+                                                                    "anywhere"
+                                                            }}
+                                                        >
+                                                            📎{" "}
+                                                            {
+                                                                attachment.name
+                                                            }
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            className="command-button"
+                                                            onClick={() =>
+                                                                setRemovedAttachments(
+                                                                    (
+                                                                        current
+                                                                    ) => [
+                                                                        ...current,
+                                                                        attachment
+                                                                    ]
+                                                                )
+                                                            }
+                                                        >
+                                                            Remover
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    )
+                                })()}
+
+                            {attachmentFiles.length > 0 && (
+                                <div
+                                    style={{
+                                        display: "grid",
+                                        gap: "0.5rem"
+                                    }}
+                                >
+                                    <strong>
+                                        Novos anexos
+                                    </strong>
+
+                                    {attachmentFiles.map(
+                                        (file, index) => (
+                                            <div
+                                                key={`${file.name}-${file.size}-${index}`}
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems:
+                                                        "center",
+                                                    justifyContent:
+                                                        "space-between",
+                                                    gap: "1rem",
+                                                    padding:
+                                                        "0.65rem 0.75rem",
+                                                    border:
+                                                        "1px solid var(--surface-border, #d8dee9)",
+                                                    borderRadius:
+                                                        "0.5rem"
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        overflowWrap:
+                                                            "anywhere"
+                                                    }}
+                                                >
+                                                    📎 {file.name}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    className="command-button"
+                                                    onClick={() =>
+                                                        setAttachmentFiles(
+                                                            (
+                                                                current
+                                                            ) =>
+                                                                current.filter(
+                                                                    (
+                                                                        _,
+                                                                        currentIndex
+                                                                    ) =>
+                                                                        currentIndex !==
+                                                                        index
+                                                                )
+                                                        )
+                                                    }
+                                                >
+                                                    Remover
+                                                </button>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <div className="form-footer">
                             <button
                                 className="command-button"
