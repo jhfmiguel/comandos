@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 const { chromium, request } = createRequire(import.meta.url)('playwright');
 
 // Use only the separate wr_validation_20260912 database and test instances.
-const appURL = 'http://localhost:3100';
+const appURL = 'http://localhost:3000';
 const apiURL = 'http://localhost:8180';
 const browserAPI = 'http://localhost:8080';
 

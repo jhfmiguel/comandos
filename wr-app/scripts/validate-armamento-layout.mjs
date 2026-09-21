@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
-// Requires the production frontend on 3100 and the isolated PostgreSQL API on 8180.
+// Requires the frontend on 3000 and the isolated PostgreSQL API on 8180.
 // This read-only smoke check supplements, but does not replace, the workflow scripts.
 const output = new URL('../../wr-api/target/browser-validation/armamento-022/', import.meta.url);
 await mkdir(output, { recursive: true });
@@ -34,12 +34,15 @@ try {
             await context.route('http://localhost:8080/api/**', route => route.continue({
                 url: route.request().url().replace('localhost:8080', 'localhost:8180'),
             }));
+            await context.route('http://localhost:3000/api/erp/**', route => route.continue({
+                url: route.request().url().replace('localhost:3000', 'localhost:8180'),
+            }));
             let dimensions;
             try {
-                const response = await page.goto(`http://localhost:3100/erp/${route}`);
+                const response = await page.goto(`http://localhost:3000/erp/${route}`);
                 assert.equal(response.status(), 200);
                 await page.waitForLoadState('networkidle');
-                assert.ok(await page.locator('main').innerText(), 'Main content must render');
+                assert.ok(await page.locator('main, .registration-page').first().innerText(), 'Main content must render');
                 assert.ok(apiResponses > 0, 'Must exercise the real API');
                 dimensions = await page.evaluate(() => ({
                     viewport: document.documentElement.clientWidth,

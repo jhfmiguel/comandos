@@ -9,3 +9,7 @@ An approved, unexpired asset returns to AVAILABLE; a rejected or expired asset r
 The maintenance resource supports READ, CREATE and COMPLETE at SYSTEM, ORGANIZATION and UNIT scope. The English interface is available at /erp/maintenance.
 
 A work order may originate from one blocking custody return inspection. The link is optional for ordinary work orders and unique when supplied. Opening validates the returned individual asset, exact organization/unit scope and blocking condition. The custody screen provides the explicit action and pre-fills the maintenance form; the operator still reviews the reason and chooses an optional plan before opening the order. Custody history then displays the generated work-order number.
+
+Periodic inspection history refreshes after every recorded or approved inspection, including consecutive submissions that display the same success message. Approving the inspection record does not release an asset whose work order is still open. Maintenance and inspection evidence can be uploaded and downloaded from their history entries.
+
+Task 014 browser/PostgreSQL validation and reproduction commands are recorded in [armamento-014-validation.md](armamento-014-validation.md).

@@ -110,7 +110,13 @@ try {
         page.once('dialog', dialog => dialog.dismiss()); await button.click(); assert.equal(submitted.length, before);
         loseResponse = index === 1;
         page.once('dialog', dialog => dialog.accept()); await button.click();
-        if (index === 1) { await detail.getByRole('button', { name: 'Retry completion', exact: true }).click(); assert.deepEqual(submitted.at(-1), submitted.at(-2)); }
+        if (index === 1) {
+            const retried = page.waitForResponse(r => r.url().endsWith(`/maintenance/orders/${order.id}/complete`) && r.request().method() === 'POST');
+            await detail.getByRole('button', { name: 'Retry completion', exact: true }).click();
+            assert.equal((await retried).status(), 200);
+            assert.equal(submitted.length, before + 2);
+            assert.deepEqual(submitted.at(-1), submitted.at(-2));
+        }
         await page.getByText(`Work order #${order.id} completed.`, { exact: true }).waitFor();
         await detail.getByText('Replacement component', { exact: false }).waitFor();
         await detail.getByText('Total cost: 32.0000', { exact: false }).waitFor();
@@ -137,11 +143,25 @@ try {
     const detail = page.locator('details').filter({ hasText: assets[2].assetCode });
     await detail.locator('summary').click(); await detail.getByRole('button', { name: 'Approve inspection' }).click();
     await detail.getByText('Approved by: maintenance-validation', { exact: false }).waitFor();
+    assert.equal((await call('GET', `inventory/assets/${assets[2].id}`)).status, 'IN_MAINTENANCE', 'Approving an inspection must not release an open work order');
     await evidence(detail, 'periodic-inspections', inspection.id, 'inspection.txt');
     await call('POST', `maintenance/orders/${inspection.generatedWorkOrderId}/complete`, completion());
     assert.equal((await call('GET', `inventory/assets/${assets[2].id}`)).status, 'AVAILABLE');
+    // Consecutive submissions display the same success message. Each must refresh history.
+    await inspectionForm.locator('select').selectOption('APPROVED');
+    for (const checklist of ['Follow-up inspection one', 'Follow-up inspection two']) {
+        await inspectionForm.locator('textarea').nth(0).fill(checklist);
+        const recorded = page.waitForResponse(r => r.url().endsWith('/lifecycle/inspections') && r.request().method() === 'POST');
+        await inspectionForm.getByRole('button', { name: 'Record inspection', exact: true }).click();
+        assert.equal((await recorded).status(), 201);
+        await page.locator('details').filter({ hasText: checklist }).locator('summary').waitFor();
+    }
+    const inspections = await call('GET', `lifecycle/inspections?organizationId=${organizationId}&unitId=${unitId}`);
+    assert.equal(inspections.totalElements, 3);
+    assert.equal(inspections.content.filter(i => i.generatedWorkOrderId).length, 1);
+    assert.equal((await call('GET', `inventory/assets/${assets[2].id}`)).status, 'AVAILABLE');
     const expired = await call('GET', `inventory/assets/${assets[3].id}`);
-    await call('PUT', `inventory/assets/${assets[3].id}`, { version: expired.version, modelId, locationId, assetCode: expired.assetCode, serialNumber: expired.serialNumber, condition: 'GOOD', status: 'AVAILABLE', currentValue: '10', validUntil: '2020-01-01' });
+    await call('PUT', `inventory/assets/${assets[3].id}`, { version: expired.version, modelId, locationId, assetCode: expired.assetCode, serialNumber: expired.serialNumber, condition: 'GOOD', status: 'BLOCKED', currentValue: '10', validUntil: '2020-01-01' });
     const expiredOrder = await call('POST', 'maintenance/orders', { ...scope, requestId: randomUUID(), assetId: assets[3].id, reason: 'Expired validation' });
     await call('POST', `maintenance/orders/${expiredOrder.id}/complete`, completion());
     assert.equal((await call('GET', `inventory/assets/${assets[3].id}`)).status, 'BLOCKED');

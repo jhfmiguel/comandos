@@ -23,7 +23,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
 }) {
     const assets = resource.key === "assets";
     const fields = resource.fields.filter(field => !field.readOnly && !(assets
-        ? ["assetCode", "serialNumber"].includes(field.name) : field.name === "initialQuantity"));
+        ? ["assetCode", "serialNumber", "internalCode"].includes(field.name) : field.name === "initialQuantity"));
     const [values, setValues] = React.useState<Record<string, ErpValue>>({ condition: "GOOD", status: "AVAILABLE", currentValue: "0" });
     const [rows, setRows] = React.useState<Pair[]>([emptyRow()]);
     const [paste, setPaste] = React.useState("");

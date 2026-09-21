@@ -6,6 +6,7 @@ const { chromium, request } = createRequire(import.meta.url)('playwright');
 const api = await request.newContext({ baseURL: 'http://localhost:8180' });
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const context = await browser.newContext();
+await context.addInitScript(() => localStorage.setItem('comandos-locale', 'en-US'));
 const page = await context.newPage();
 page.setDefaultTimeout(20000);
 const errors = [];
@@ -70,8 +71,7 @@ try {
     const ammoName = `Ammunition model ${suffix}`;
     const ammoModelId = await create('inventory/models', { name: ammoName, categoryId: ammoCategory, brandId, unitOfMeasure: 'EA', sku: `AMM-${suffix}`, listPrice: '1' });
 
-    await page.goto('http://localhost:3100/erp/inventory');
-    await page.getByRole('button', { name: 'Individual assets', exact: true }).click();
+    await page.goto('http://localhost:3000/erp/inventory?resource=assets');
     await page.getByRole('button', { name: 'New record', exact: true }).click();
     await choose('Model', modelId, modelName); await choose('Location', locationId, locationName);
     await page.getByText('Paste a list from a spreadsheet', { exact: true }).click();
@@ -99,7 +99,7 @@ try {
     assert.deepEqual(assets.map(a => [a.assetCode, a.serialNumber]), [[`CODE-A-${suffix}`, `SN-A-${suffix}`], [`CODE-B-${suffix}`, `SN-B-${suffix}`]]);
     console.log('PASS asset pairs, serial count, duplicate validation and identical retries');
 
-    await page.getByRole('button', { name: 'Stock lots', exact: true }).click();
+    await page.goto('http://localhost:3000/erp/inventory?resource=lots');
     await page.getByRole('button', { name: 'Receive ammunition boxes', exact: true }).click();
     await choose('Model', ammoModelId, ammoName); await choose('Opening location', locationId, locationName);
     await page.getByLabel('Lot number *', { exact: true }).fill(`BOX-LOT-${suffix}`);
@@ -123,7 +123,7 @@ try {
     assert.equal(Number(balances[0].available), 550);
     console.log('PASS mixed ammunition box sizes, whole quantities and retry without double stock');
 
-    await page.goto('http://localhost:3100/erp/custody');
+    await page.goto('http://localhost:3000/erp/custody');
     await choose('Organization', organizationId, organizationName);
     await page.getByRole('searchbox', { name: 'Search unit', exact: true }).fill(unitName);
     await page.getByLabel('Issuing unit', { exact: true }).selectOption(String(unitId));

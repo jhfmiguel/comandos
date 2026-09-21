@@ -4,7 +4,7 @@ const { chromium, request } = createRequire(import.meta.url)('playwright');
 
 // Run only against the separate validation API/database documented in docs/validation.md.
 const apiURL = 'http://localhost:8180';
-const appURL = 'http://localhost:3100';
+const appURL = 'http://localhost:3000';
 
 async function main() {
     const api = await request.newContext({ baseURL: apiURL });

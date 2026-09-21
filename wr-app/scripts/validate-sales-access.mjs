@@ -5,7 +5,7 @@ const { chromium, request } = createRequire(import.meta.url)('playwright');
 
 // Both API instances must use only wr_validation_20260912 (see docs/validation.md).
 const setupURL = 'http://localhost:8180';
-const appURL = 'http://localhost:3100';
+const appURL = 'http://localhost:3000';
 
 async function main() {
     const setup = await request.newContext({ baseURL: setupURL });
