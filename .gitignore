@@ -13,3 +13,5 @@ wr-app/lint-*.log
 wr-app/typecheck-*.log
 
 automation/attachments/
+
+database-backups/
