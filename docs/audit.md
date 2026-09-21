@@ -55,6 +55,7 @@ events in this delivery.
 | GET | `/api/erp/audit/{id}` | Event summary and before/after snapshots |
 
 List filters: `resource` (exact code), `recordId`, `action`, `actor` (login search),
+`actorId` (historical account ID), `assetId`, `lotId`, `organizationId`, `unitId`,
 `from` and `until` (inclusive ISO instants), and zero-based `page`. Invalid page or
 reversed time ranges return 400. POST/PUT/DELETE are not available, including to
 administrators.
@@ -85,6 +86,53 @@ PostgreSQL deployment are not certified by these checks.
 This covers successful ERP business changes. Legacy User/Weapon/Sale endpoints,
 login/logout/security failures, read-access logging, denied operations and direct
 SQL/import changes are not audited yet. Tamper-evident storage, retention,
-archival, external audit export and access to history scoped by organization/unit
-remain future work. Database administrators can still modify storage directly;
+archival and external audit export remain infrastructure work. Delegated access
+to full snapshots by organization/unit remains unsupported (fail closed).
+Database administrators can still modify storage directly;
 application read-only access is not tamper-proof retention.
+
+## Armamento coverage (task 017)
+
+| Operation | Resource / events | Trace |
+| --- | --- | --- |
+| Custody | `custodies`: ISSUE, RETURN | Custody, items, return records and stock changes |
+| Transfer | `transfers`: FINALIZE | Both units, assets/lots and paired movement IDs |
+| Maintenance | `maintenance`: CREATE_PLAN, OPEN, COMPLETE | Plan/order, asset, diagnosis, services and test; COMPLETE preserves previous order |
+| Disposal | `disposals`: FINALIZE | Process, destruction, items and stock changes |
+| Physical inventory | `inventory-counts`: OPEN, COUNT, APPROVE, CANCEL | Item quantities/results; transitions preserve previous count; approval includes adjustments |
+| Consumption | `ammunition-consumptions`: FINALIZE | Lots, quantities and movement IDs |
+| Donation | `donations`: FINALIZE | Parties, term, items and stock changes |
+| Receipt/incorporation | `inventory/assets`, `inventory/lots`: CREATE; assets BATCH_CREATE | Individual registration, opening stock and batch record IDs (including every asset in the batch) |
+| Workflow | `approval-workflows`: CREATE, ANALYZED, AUTHORIZED, EXECUTED, CONCLUDED, CANCELLED | Referenced resource/item, previous/current workflow and ordered actor-attributed transitions |
+| Inspection/occurrence | `periodic-inspections`, `exception-occurrences` | CREATE, APPROVE / RESOLVE |
+
+Structured events remain in the business transaction. Idempotent retries do not
+duplicate successful events. Batch review/rejection is also recorded explicitly
+as BATCH_REVIEW/BATCH_REJECTED, not as successful incorporation.
+
+`erp_audit_reference` stores immutable, deduplicated scalar links to items,
+organizations and units at event creation. Filters use EXISTS, so multiple lines
+cannot inflate totals or duplicate pages. Asset and lot IDs have distinct types.
+Transfer events match either participating unit; the full event still requires
+SYSTEM audit READ. Filters are search criteria, never authorization grants.
+Location scope is resolved when writing the event, never from an item's current
+location during reading. The report bundle filters its history to the requested
+organization/unit and retains the same SYSTEM audit gate. Neither UNIT nor
+ORGANIZATION grants expose snapshots through list, detail or report history.
+
+The new reference table is created by the existing development schema-update
+mechanism. Existing events are not rewritten or attributed using current item
+locations. Reference filters apply to events recorded after this deployment;
+older events remain accessible through resource/record, actor and period filters.
+Any historical index migration must use original snapshots and explicitly handle
+missing historical scope, rather than inventing it from current business data.
+
+Application immutability covers JPA dirty checking, deletion callbacks, read-only
+HTTP endpoints and transaction rollback. Production infrastructure must provide:
+
+- Database privileges separating the application writer from retention/admin roles.
+- Approved retention periods, legal holds, archival and restore verification.
+- Tamper evidence (for example independently anchored signatures or WORM storage).
+- Controlled export, destination authorization, encryption and export access logs.
+
+These infrastructure controls are not implemented or certified by this task.

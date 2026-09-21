@@ -1,6 +1,8 @@
 package com.weaponsregistration.audit.service;
 
 import com.weaponsregistration.audit.model.AuditRecord;
+import com.weaponsregistration.audit.model.AuditReference;
+import com.weaponsregistration.inventory.model.StockLocation;
 import com.weaponsregistration.security.service.AccountPrincipal;
 import com.weaponsregistration.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
@@ -44,6 +46,50 @@ public class AuditService {
         event.resource = resource; event.recordId = recordId; event.action = action;
         event.beforeJson = snapshot(before); event.afterJson = snapshot(after);
         em.persist(event);
+        Set<Reference> references = new HashSet<>();
+        add(references, resource, recordId);
+        collect(event.beforeJson == null ? null : json.readTree(event.beforeJson), references, resource);
+        collect(event.afterJson == null ? null : json.readTree(event.afterJson), references, resource);
+        // Resolve only at write time: moving/deleting an item cannot rewrite its history.
+        for (var reference : List.copyOf(references)) {
+            if (!reference.kind().equals("inventory/locations")) continue;
+            var location = em.find(StockLocation.class, reference.id());
+            if (location != null) {
+                add(references, "organization", location.organization.id);
+                if (location.unit != null) add(references, "unit", location.unit.id);
+            }
+        }
+        for (var reference : references) {
+            var row = new AuditReference();
+            row.eventId = event.id; row.kind = reference.kind(); row.targetId = reference.id();
+            em.persist(row);
+        }
+    }
+
+    private record Reference(String kind, long id) {}
+    private static void add(Set<Reference> references, String kind, long id) {
+        if (id > 0) references.add(new Reference(kind, id));
+    }
+    private void collect(JsonNode node, Set<Reference> references, String resource) {
+        if (node == null || node.isNull()) return;
+        if (node.isArray()) { node.forEach(child -> collect(child, references, resource)); return; }
+        if (!node.isObject()) return;
+        if (node.hasNonNull("resource") && node.hasNonNull("recordId") && node.get("recordId").isIntegralNumber())
+            add(references, node.get("resource").asText(), node.get("recordId").asLong());
+        for (var field : node.properties()) {
+            String kind = switch (field.getKey()) {
+                case "assetId" -> "inventory/assets";
+                case "lotId" -> "inventory/lots";
+                case "organizationId" -> "organization";
+                case "unitId", "sourceUnitId", "destinationUnitId" -> "unit";
+                case "locationId", "openingLocationId", "sourceLocationId", "destinationLocationId" -> "inventory/locations";
+                default -> null;
+            };
+            if (kind != null && field.getValue().isIntegralNumber()) add(references, kind, field.getValue().asLong());
+            if (field.getKey().equals("recordIds") && field.getValue().isArray())
+                field.getValue().forEach(id -> { if (id.isIntegralNumber()) add(references, resource, id.asLong()); });
+            collect(field.getValue(), references, resource);
+        }
     }
 
     private String snapshot(Object value) {
@@ -68,10 +114,20 @@ public class AuditService {
     }
 
     public Page list(String resource, Long recordId, String action, String actor, Instant from, Instant until, int page) {
+        return list(resource, recordId, action, actor, from, until, page, null, null, null, null, null);
+    }
+
+    public Page list(String resource, Long recordId, String action, String actor, Instant from, Instant until, int page,
+            Long assetId, Long lotId, Long actorId, Long organizationId, Long unitId) {
         access.requireAny("audit", "READ");
         if (page < 0 || page > 100000 || from != null && until != null && from.isAfter(until)) bad("Invalid audit filters.");
         List<String> clauses = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
+        referenceFilter(clauses, parameters, "assetId", "inventory/assets", assetId);
+        referenceFilter(clauses, parameters, "lotId", "inventory/lots", lotId);
+        referenceFilter(clauses, parameters, "organizationId", "organization", organizationId);
+        referenceFilter(clauses, parameters, "unitId", "unit", unitId);
+        if (actorId != null) { clauses.add("a.actorId = :actorId"); parameters.put("actorId", actorId); }
         if (resource != null && !resource.isBlank()) { clauses.add("a.resource = :resource"); parameters.put("resource", resource.trim()); }
         if (recordId != null) { clauses.add("a.recordId = :recordId"); parameters.put("recordId", recordId); }
         if (action != null && !action.isBlank()) { clauses.add("a.action = :action"); parameters.put("action", action); }
@@ -86,6 +142,13 @@ public class AuditService {
         var count = em.createQuery("select count(a) from AuditRecord a" + where, Long.class);
         parameters.forEach((key, value) -> { query.setParameter(key, value); count.setParameter(key, value); });
         return new Page(query.setFirstResult(page * 20).setMaxResults(20).getResultList().stream().map(this::summary).toList(), count.getSingleResult(), page, 20);
+    }
+
+    private void referenceFilter(List<String> clauses, Map<String, Object> parameters, String name, String kind, Long id) {
+        if (id == null) return;
+        if (id <= 0) bad("Invalid audit reference filter.");
+        clauses.add("exists (select r.id from AuditReference r where r.eventId = a.id and r.kind = '" + kind + "' and r.targetId = :" + name + ")");
+        parameters.put(name, id);
     }
 
     public Detail get(long id) {

@@ -23,6 +23,8 @@ class AuditApiTests {
     @Autowired CoreService core;
     @Autowired JdbcTemplate jdbc;
     @Autowired TransactionTemplate tx;
+    @Autowired jakarta.persistence.EntityManager em;
+    @Autowired com.weaponsregistration.audit.service.AuditService audit;
     private final JsonMapper json = JsonMapper.builder().build();
     private final HttpClient client = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).build();
     record Result(int status, JsonNode body, String raw) {}
@@ -45,6 +47,42 @@ class AuditApiTests {
         assertEquals(200, result.status(), result.raw()); return result.body();
     }
     private JsonNode detail(JsonNode event) throws Exception { return request("GET", "/api/erp/audit/" + event.get("id").asLong(), null).body(); }
+
+    @Test
+    void historicalReferencesAreTypedDeduplicatedAndFilterable() throws Exception {
+        long asset = 981234L, lot = 981235L, org = 981236L, source = 981237L, destination = 981238L;
+        tx.executeWithoutResult(status -> audit.record("transfers", 981239L, "FINALIZE", null,
+            Map.of("organizationId", org, "sourceUnitId", source, "destinationUnitId", destination,
+                "items", List.of(Map.of("assetId", asset, "lotId", lot), Map.of("assetId", asset)))));
+        String filters = "resource=transfers&assetId=" + asset + "&lotId=" + lot + "&organizationId=" + org;
+        var result = request("GET", "/api/erp/audit?" + filters + "&unitId=" + source, null);
+        assertEquals(200, result.status(), result.raw());
+        assertEquals(1, result.body().get("totalElements").asInt());
+        var event = result.body().get("content").get(0);
+        String time = event.get("occurredAt").asText();
+        assertEquals(1, request("GET", "/api/erp/audit?" + filters + "&unitId=" + destination
+            + "&action=FINALIZE&from=" + time + "&until=" + time, null).body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "/api/erp/audit?" + filters + "&unitId=981240", null).body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "/api/erp/audit?assetId=" + lot, null).body().get("totalElements").asInt());
+        assertEquals(400, request("GET", "/api/erp/audit?unitId=-1", null).status());
+        long id = event.get("id").asLong();
+        assertEquals(1, jdbc.queryForObject("select count(*) from erp_audit_reference where event_id=? and kind='inventory/assets'", Integer.class, id));
+        tx.executeWithoutResult(status -> {
+            var stored = em.find(com.weaponsregistration.audit.model.AuditRecord.class, id);
+            stored.action = "ALTERED"; stored.afterJson = "{}";
+            var reference = em.createQuery("select r from AuditReference r where r.eventId=:id", com.weaponsregistration.audit.model.AuditReference.class)
+                .setParameter("id", id).getResultList().getFirst();
+            reference.targetId = 1L;
+            em.flush();
+        });
+        assertEquals("FINALIZE", detail(event).get("event").get("action").asText());
+        assertEquals(2, detail(event).get("after").get("items").size());
+        assertEquals(1, request("GET", "/api/erp/audit?" + filters, null).body().get("totalElements").asInt());
+        assertThrows(RuntimeException.class, () -> tx.executeWithoutResult(status -> em.remove(em.find(com.weaponsregistration.audit.model.AuditRecord.class, id))));
+        assertThrows(RuntimeException.class, () -> tx.executeWithoutResult(status -> em.remove(em.createQuery(
+            "select r from AuditReference r where r.eventId=:id", com.weaponsregistration.audit.model.AuditReference.class).setParameter("id", id).getResultList().getFirst())));
+        assertEquals(1, request("GET", "/api/erp/audit?" + filters, null).body().get("totalElements").asInt());
+    }
 
     @Test
     void committedCreateUpdateDeletePreserveSnapshotsAndFailedWritesLeaveNoEvents() throws Exception {
@@ -85,6 +123,8 @@ class AuditApiTests {
         assertEquals(userId, event.get("actorId").asLong());
         assertEquals(login, event.get("actorLogin").asText());
         assertEquals("ACCOUNT", event.get("actorType").asText());
+        assertEquals(1, request("GET", "/api/erp/audit?resource=core/people&recordId=" + id + "&actorId=" + userId, null).body().get("totalElements").asInt());
+        assertEquals(0, request("GET", "/api/erp/audit?resource=core/people&recordId=" + id + "&actorId=9223372036854775807", null).body().get("totalElements").asInt());
         jdbc.update("update erp_system_user set login = ? where id = ?", "changed-" + login, userId);
         jdbc.update("delete from erp_system_user where id = ?", userId);
         assertEquals(login, jdbc.queryForObject("select actor_login from erp_audit_record where id = ?", String.class, event.get("id").asLong()));
@@ -99,6 +139,7 @@ class AuditApiTests {
         }));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_person where id = ?", Long.class, id.get()));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'core/people' and record_id = ?", Long.class, id.get()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_audit_reference where kind = 'core/people' and target_id = ?", Long.class, id.get()));
     }
 
     @Test

@@ -21,4 +21,7 @@ public class AuditRecord {
     @Column(nullable = false, updatable = false) public String action;
     @Column(columnDefinition = "text", updatable = false) public String beforeJson;
     @Column(columnDefinition = "text", updatable = false) public String afterJson;
+
+    @PreRemove
+    private void preventRemoval() { throw new IllegalStateException("Audit records cannot be deleted."); }
 }
