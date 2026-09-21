@@ -1,5 +1,9 @@
 # Validação da primeira versão — 12/09/2026
 
+Registro histórico. Para a revisão de 20/09/2026, consulte o
+[relatório Armamento 023](armamento-023-final-validation.md); os resultados abaixo
+não comprovam o HEAD atual.
+
 Esta rodada valida parte do núcleo de patrimônio e armamento. Não representa
 homologação de todo o ERP nem liberação para produção.
 

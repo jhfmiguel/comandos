@@ -2,6 +2,10 @@
 
 ## 1. Finalidade e situação atual
 
+Situação da entrega de Armamento em 20/09/2026: consulte o
+[relatório final da tarefa 023](armamento-023-final-validation.md). A homologação
+integrada permanece pendente; resultados anteriores não certificam esta revisão.
+
 O sistema reúne cadastro institucional, usuários e permissões, patrimônio e
 estoque, especificações por família de equipamento, vendas e devoluções, cautela
 de equipamentos e kits, consumo de munição, transferências, doações, reservas,
@@ -36,8 +40,9 @@ npm.cmd run dev
 ```
 
 Acesse `http://localhost:3000`. Por padrão, a API utiliza
-`http://localhost:8080`. Reiniciar a API após uma atualização permite que o modo
-de desenvolvimento crie tabelas e colunas novas sem apagar os dados existentes.
+`http://localhost:8080`. O desenvolvimento usa atualização automática de esquema
+pelo Hibernate. Isso não garante uma migração de produção: faça backup e ensaie
+a atualização e a restauração em uma cópia isolada antes de atualizar dados reais.
 
 Se a interface exibir **Unable to reach the API** ou **Unable to complete the
 request**, confirme se a API está em execução, se o frontend usa a URL correta em
@@ -440,13 +445,14 @@ regras de rastreamento e família não mudam depois que modelos usam a categoria
 
 ### 13.2 Brands — marcas
 
-Dependências: nenhuma. Escolha **Brands**, clique em **New**, informe os dois
-campos e salve.
+Dependências: nenhuma. Escolha **Brands**, clique em **New**, informe nome e
+fabricante e, opcionalmente, o país de fabricação declarado, e salve.
 
 | Campo | Obrigatório | Significado |
 | --- | --- | --- |
 | Name | Sim | Nome comercial da marca |
 | Manufacturer | Sim | Empresa fabricante |
+| Manufacturing country | Não | País de fabricação declarado da marca, código ISO de duas letras; não determina a origem de cada exemplar |
 
 ### 13.3 Item models — modelos de item
 
@@ -459,7 +465,7 @@ físico será criado posteriormente como ativo ou lote.
 | Brand | Sim | Marca do modelo |
 | Name | Sim | Nome comercial do modelo |
 | Unit of measure | Sim | Unidade usada nas quantidades, como `EA` ou `ROUND` |
-| Manufacturer code | Não | Código fornecido pelo fabricante |
+| Manufacturer code | Não | Referência de catálogo/peça do modelo fornecida pelo fabricante; diferente do SKU interno e do número de série |
 | SKU | Sim | Código único de catálogo usado nas buscas |
 | Description | Não | Descrição complementar |
 | List price | Sim | Preço unitário usado pelo backend nas vendas |
@@ -1109,6 +1115,11 @@ Abra **Assets and inventory** e use o grupo **Compliance**.
 O número identifica o documento e deve ser único por tipo na organização. Certificação vencida não pode permanecer ACTIVE.
 
 ## Recalls
+
+Recall e item de recall também aceitam **Description** opcional, com até 255
+caracteres após remover espaços nas extremidades. A descrição complementa
+**Reason** e **Required action**, sem substituí-los, e aparece em consultas,
+filtros e auditoria. Apagar seu conteúdo limpa o valor.
 
 1. Abra **Recalls**, clique em **New** e informe organização, unidade, **Recall number**, **Reason** e **Status**.
 2. Salve o recall como OPEN ou IN_PROGRESS.
