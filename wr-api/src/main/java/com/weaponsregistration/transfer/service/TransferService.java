@@ -10,6 +10,7 @@ import com.weaponsregistration.inventory.model.StockLocation;
 import com.weaponsregistration.inventory.model.StockLot;
 import com.weaponsregistration.inventory.model.StockMovement;
 import com.weaponsregistration.security.service.AccessPolicy;
+import com.weaponsregistration.transfer.dto.TransferContract.AcceptRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.FinalizeRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.LineRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.LineView;
@@ -126,7 +127,7 @@ public class TransferService {
         transfer.transferType = request.transferType() == null || request.transferType().isBlank() ? "INTERNAL" : request.transferType().trim().toUpperCase(Locale.ROOT);
         transfer.legalInstrument = request.legalInstrument() == null || request.legalInstrument().isBlank() ? null : request.legalInstrument().trim();
         transfer.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
-        var transferApprover = audit.actor(); transfer.approvedById = transferApprover.id(); transfer.approvedByLogin = transferApprover.login(); transfer.approvedAt = LocalDateTime.now();
+        transfer.status = "PENDING_ACCEPTANCE";
         transfer.sentAt = LocalDateTime.now();
         var actor = audit.actor();
         transfer.finalizedById = actor.id();
@@ -146,6 +147,35 @@ public class TransferService {
         return result;
     }
 
+    @Transactional
+    public TransferView accept(long id, AcceptRequest request) {
+        if (request == null) bad("Acceptance request is required.");
+        uuid(request.requestId());
+
+        InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
+
+        access.requireScope("transfers", "UPDATE", transfer.organization.id, transfer.destinationUnit.id);
+
+        if ("ACCEPTED".equals(transfer.status)) return view(transfer);
+        if (!"PENDING_ACCEPTANCE".equals(transfer.status)) {
+            conflict("Transfer is not pending acceptance.");
+        }
+
+        var actor = audit.actor();
+        var before = view(transfer);
+
+        transfer.status = "ACCEPTED";
+        transfer.approvedById = actor.id();
+        transfer.approvedByLogin = actor.login();
+        transfer.approvedAt = LocalDateTime.now();
+
+        em.flush();
+
+        var result = view(transfer);
+        audit.record("transfers", transfer.id, "ACCEPT", before, Map.of("transfer", result));
+        return result;
+    }
     public Page<TransferView> list(long organizationId, Long unitId, int page) {
         access.requireScope("transfers", "READ", organizationId, unitId);
         if (unitId != null) selectedUnit(organizationId, unitId);

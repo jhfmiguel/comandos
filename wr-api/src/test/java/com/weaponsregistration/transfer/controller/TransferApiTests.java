@@ -71,6 +71,30 @@ class TransferApiTests {
     }
 
     @Test
+    void destinationAcceptsPendingTransferIdempotently() throws Exception {
+        Setup setup = setup();
+        Result created = request("POST", "transfers", payload(setup));
+        assertEquals(200, created.status(), created.raw());
+        assertEquals("PENDING_ACCEPTANCE", created.body().get("status").asText());
+
+        long transferId = created.body().get("id").asLong();
+        Map<String, Object> acceptance = Map.of("requestId", unique());
+
+        Result accepted = request("POST", "transfers/" + transferId + "/accept", acceptance);
+        assertEquals(200, accepted.status(), accepted.raw());
+        assertEquals("ACCEPTED", accepted.body().get("status").asText());
+
+        Result repeated = request("POST", "transfers/" + transferId + "/accept", acceptance);
+        assertEquals(200, repeated.status(), repeated.raw());
+        assertEquals("ACCEPTED", repeated.body().get("status").asText());
+
+        assertEquals("ACCEPTED", jdbc.queryForObject(
+            "select status from erp_inventory_transfer where id=?", String.class, transferId));
+        assertEquals(1, jdbc.queryForObject(
+            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='ACCEPT'",
+            Integer.class, transferId));
+    }
+    @Test
     void invalidSecondItemRollsBackTheWholeTransfer() throws Exception {
         Setup setup = setup();
         Map<String, Object> payload = new HashMap<>(payload(setup));
