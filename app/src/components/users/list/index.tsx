@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import {
     DataTable,
     FilterMatchMode
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
 import type {
     DataTableEditingEvent,
@@ -20,29 +20,29 @@ import type {
     DataTableFilterMeta,
     DataTablePaginationInstance,
     DataTableRowEditEvent
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
-import { Paginator } from "@primereact/ui/paginator";
+import { Paginator } from "components/ui/paginator";
 
 import type {
     PaginatorPagesInstance,
     PaginatorRootChangeEvent
-} from "@primereact/ui/paginator";
+} from "components/ui/paginator";
 
-import { InputText } from "@primereact/ui/inputtext";
-import { Dialog } from "@primereact/ui/dialog";
-import { Button as PrimeButton } from "@primereact/ui/button";
+import { InputText } from "components/ui/inputtext";
+import { Dialog } from "components/ui/dialog";
+import { Button as PrimeButton } from "components/ui/button";
 
-import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
-import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
-import { AngleLeft } from "@primeicons/react/angle-left";
-import { AngleRight } from "@primeicons/react/angle-right";
-import { Check } from "@primeicons/react/check";
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
-import { Pencil } from "@primeicons/react/pencil";
-import { Plus } from "@primeicons/react/plus";
-import { Times } from "@primeicons/react/times";
-import { Trash } from "@primeicons/react/trash";
+import { AngleDoubleLeft } from "components/ui/icons";
+import { AngleDoubleRight } from "components/ui/icons";
+import { AngleLeft } from "components/ui/icons";
+import { AngleRight } from "components/ui/icons";
+import { Check } from "components/ui/icons";
+import { EllipsisH } from "components/ui/icons";
+import { Pencil } from "components/ui/icons";
+import { Plus } from "components/ui/icons";
+import { Times } from "components/ui/icons";
+import { Trash } from "components/ui/icons";
 
 import { Layout, Loader } from "components";
 
