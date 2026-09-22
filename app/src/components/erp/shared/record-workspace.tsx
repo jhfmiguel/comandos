@@ -13,34 +13,15 @@ import { convertToIsoDate, formatDate } from "utils/date";
 
 import axios from "axios";
 
-import { ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "@primeicons/react";
-import { Button } from "@primereact/ui/button";
-import { Dialog } from "@primereact/ui/dialog";
-import { InputText } from "@primereact/ui/inputtext";
 import {
-    DataTable,
-    FilterMatchMode
-} from "@primereact/ui/datatable";
-
-import type {
-    DataTableFilterInstance,
-    DataTableFilterMeta,
-    DataTablePaginationInstance
-} from "@primereact/ui/datatable";
-
-import { Paginator } from "@primereact/ui/paginator";
-import { Tabs } from "@primereact/ui/tabs";
-
-import type {
-    PaginatorPagesInstance,
-    PaginatorRootChangeEvent
-} from "@primereact/ui/paginator";
-
-import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
-import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
-import { AngleLeft } from "@primeicons/react/angle-left";
-import { AngleRight } from "@primeicons/react/angle-right";
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
+    ChevronsLeft,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsRight,
+    Plus,
+    Pencil,
+    Trash2
+} from "lucide-react";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
@@ -52,21 +33,10 @@ import { createErpService, type ErpService, type ErpModule } from "api/services/
 import styles from "./workspace.module.css";
 
 
-function createErpTableFilters(
-    fields: ErpField[]
-): DataTableFilterMeta {
+type ErpTableFilters = Record<string, string>;
 
-    const filters: DataTableFilterMeta = {};
-
-    fields.forEach((field) => {
-        filters[field.name] = {
-            value: null,
-            matchMode: FilterMatchMode.Contains
-        };
-    });
-
-    return filters;
-
+function createErpTableFilters(fields: ErpField[]): ErpTableFilters {
+    return Object.fromEntries(fields.map(field => [field.name, ""]));
 }
 
 function errorMessage(error: unknown): string {
@@ -151,6 +121,7 @@ export function RecordWorkspace({
     ) ?? catalog[0];
 
     const workspaceTabs = tabs ?? [];
+    const [activeTab, setActiveTab] = React.useState(workspaceTabs[0]?.resource ?? "");
 
     return (
 
@@ -170,7 +141,7 @@ export function RecordWorkspace({
                         }}
                     >
                         {tr("Retry")}
-                    </Button>
+                    </button>
                 )}
 
                 {!catalogLoaded && !error && (
@@ -238,79 +209,40 @@ export function RecordWorkspace({
                         )}
 
                         {!!workspaceTabs.length ? (
-
-                            <Tabs.Root
-                                defaultValue={workspaceTabs[0].resource}
-                                selectOnFocus
-                            >
-
-                                <Tabs.List>
-
-                                    <Tabs.Prev aria-label={tr("Previous")}>
-                                        <ChevronLeft />
-                                    </Tabs.Prev>
-
-                                    <Tabs.Content>
-
-                                        {workspaceTabs.map((tab) => (
-
-                                            <Tabs.Tab
-                                                key={tab.resource}
-                                                value={tab.resource}
-                                            >
-                                                {tr(tab.label)}
-                                            </Tabs.Tab>
-
-                                        ))}
-
-                                        <Tabs.Indicator />
-
-                                    </Tabs.Content>
-
-                                    <Tabs.Next aria-label={tr("Next")}>
-                                        <ChevronRight />
-                                    </Tabs.Next>
-
-                                </Tabs.List>
-
-                                <Tabs.Panels>
-
-                                    {workspaceTabs.map((tab) => {
-
-                                        const tabResource = catalog.find(
-                                            (item) =>
-                                                item.key === tab.resource ||
-                                                normalizeResourceName(item.label) === tab.resource
-                                        );
-
-                                        return (
-
-                                            <Tabs.Panel
-                                                key={tab.resource}
-                                                value={tab.resource}
-                                            >
-
-                                                {tab.content ?? (
-                                                    tabResource && (
-                                                        <ResourcePanel
-                                                            resource={tabResource}
-                                                            service={service}
-                                                        />
-                                                    )
-                                                )}
-
-                                            </Tabs.Panel>
-
-                                        );
-
-                                    })}
-
-                                </Tabs.Panels>
-
-                            </Tabs.Root>
-
+                            <div className="comandos-tabs">
+                                <div className="comandos-tabs-list" role="tablist" aria-label={tr(title)}>
+                                    {workspaceTabs.map((tab) => (
+                                        <button
+                                            key={tab.resource}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={activeTab === tab.resource}
+                                            className={`comandos-tab ${activeTab === tab.resource ? "is-active" : ""}`}
+                                            onClick={() => setActiveTab(tab.resource)}
+                                        >
+                                            {tr(tab.label)}
+                                        </button>
+                                    ))}
+                                </div>
+                                {workspaceTabs.map((tab) => {
+                                    if (activeTab !== tab.resource) return null;
+                                    const tabResource = catalog.find(
+                                        (item) =>
+                                            item.key === tab.resource ||
+                                            normalizeResourceName(item.label) === tab.resource
+                                    );
+                                    return (
+                                        <div key={tab.resource} role="tabpanel" className="comandos-tab-panel">
+                                            {tab.content ?? (
+                                                tabResource && (
+                                                    <ResourcePanel resource={tabResource} service={service} />
+                                                )
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         ) : (
-
                             resource && (
                                 <ResourcePanel
                                     key={resource.key}
@@ -318,7 +250,6 @@ export function RecordWorkspace({
                                     service={service}
                                 />
                             )
-
                         )}
 
                     </div>
@@ -333,35 +264,12 @@ export function RecordWorkspace({
 
 }
 
-function getErpServerFilters(
-    filters: DataTableFilterMeta
-): Record<string, string> {
-
+function getErpServerFilters(filters: ErpTableFilters): Record<string, string> {
     return Object.fromEntries(
         Object.entries(filters)
-            .map(([field, filter]) => {
-
-                if (
-                    !filter ||
-                    typeof filter !== "object" ||
-                    !("value" in filter)
-                ) {
-                    return [field, ""];
-                }
-
-                const value = filter.value;
-
-                return [
-                    field,
-                    value == null
-                        ? ""
-                        : String(value).trim()
-                ];
-
-            })
+            .map(([field, value]) => [field, value.trim()])
             .filter(([, value]) => value !== "")
     );
-
 }
 
 function ResourcePanel({ resource, service }: { resource: ErpResource; service: ErpService }) {
@@ -371,7 +279,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     const [search] = React.useState("");
     const [serverFilters, setServerFilters] = React.useState<Record<string, string>>({});
     const [page, setPage] = React.useState(0);
-    const [filters, setFilters] = React.useState<DataTableFilterMeta>(
+    const [filters, setFilters] = React.useState<ErpTableFilters>(
         () => createErpTableFilters(resource.fields)
     );
     const filterTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -405,11 +313,9 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
     };
     
-    const handleTableFilter = (event: {
-        filters: DataTableFilterMeta;
-    }): void => {
-
-        setFilters(event.filters);
+    const handleTableFilter = (field: string, value: string): void => {
+        const nextFilters = { ...filters, [field]: value };
+        setFilters(nextFilters);
         setPage(0);
 
         if (filterTimeoutRef.current) {
@@ -418,9 +324,8 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
         filterTimeoutRef.current = setTimeout(() => {
             setLoading(true);
-            setServerFilters(getErpServerFilters(event.filters));
+            setServerFilters(getErpServerFilters(nextFilters));
         }, 400);
-
     };
     const columns = resource.fields
                                 .filter(field => field.type !== "password")
@@ -467,251 +372,129 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                 
                 <h1 id="resource-title">{tr(resource.label)}</h1>
                 {allowed("CREATE") && 
-                <Button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
+                <button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
                     <Plus size={16} /><span>{tr("New record")}</span>
-                </Button>
+                </button>
                 }
-                {resource.key === "assets" && allowed("CREATE") && <Button type="button" severity="secondary"
-                    onClick={() => setEditor({})}>{tr("Register single asset")}</Button>}
-                {resource.key === "lots" && allowed("CREATE") && <Button type="button" className="registration-yellow-button"
-                    onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</Button>}
+                {resource.key === "assets" && allowed("CREATE") && <button type="button" className="comandos-secondary-button"
+                    onClick={() => setEditor({})}>{tr("Register single asset")}</button>}
+                {resource.key === "lots" && allowed("CREATE") && <button type="button" className="registration-yellow-button"
+                    onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</button>}
             </div>
             
             {notice && 
             <Message type={notice.type} text={notice.text} onClose={() => setNotice(null)} />
             }
 <div className={styles.tableContainer} aria-busy={loading}>
-                <DataTable.Root
-                    data={result?.content ?? []}
-                    dataKey="id"
-                    lazy
-                    paginator
-                    rows={result?.size ?? 10}
-                    totalRecords={result?.totalElements ?? 0}
-                    first={page * (result?.size ?? 10)}
-                    filters={filters}
-                    onFilter={handleTableFilter}
-                    style={{ width: "100%" }}
-                >
-                    <DataTable.TableContainer
-                        style={{
-                            width: "100%",
-                            overflowX: "auto"
-                        }}
-                    >
-                        <DataTable.Table
-                            style={{
-                                width: "100%",
-                                minWidth: "900px",
-                                tableLayout: "auto"
+                <div className="comandos-native-table-container">
+                    <table className="comandos-native-table comandos-erp-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                {columns.map((field) => (
+                                    <th key={field.name}>{tr(field.label)}</th>
+                                ))}
+                                {!resource.readOnly && <th className={styles.actionCell}>Actions</th>}
+                            </tr>
+                            <tr className="comandos-filter-row">
+                                <th />
+                                {columns.map((field) => (
+                                    <th key={field.name}>
+                                        <input
+                                            className="comandos-input comandos-input-small"
+                                            value={filters[field.name] ?? ""}
+                                            onChange={(event) => handleTableFilter(field.name, event.target.value)}
+                                            placeholder={`${tr("Search")} ${tr(field.label).toLowerCase()}...`}
+                                        />
+                                    </th>
+                                ))}
+                                {!resource.readOnly && <th />}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(result?.content ?? []).map((record, index) => (
+                                <tr key={record.id ?? index}>
+                                    <td>{record.id}</td>
+                                    {columns.map((field) => (
+                                        <td key={field.name}>{display(record, field)}</td>
+                                    ))}
+                                    {!resource.readOnly && (
+                                        <td className={styles.actionCell}>
+                                            <div className={`${styles.actions} ${styles.tableActions}`}>
+                                                <button
+                                                    type="button"
+                                                    className="comandos-icon-button"
+                                                    aria-label={`${tr("Edit")} ${record.label}`}
+                                                    disabled={!allowed("UPDATE")}
+                                                    onClick={() => setEditor({ record })}
+                                                >
+                                                    <Pencil size={18} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="comandos-icon-button comandos-icon-button-danger"
+                                                    aria-label={`${tr("Delete")} ${record.label}`}
+                                                    disabled={!allowed("DELETE")}
+                                                    onClick={() => setDeleting(record)}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="comandos-pagination">
+                    <div className="comandos-pagination-controls">
+                        <button
+                            type="button"
+                            className="comandos-icon-button"
+                            aria-label="First page"
+                            disabled={page === 0}
+                            onClick={() => { setLoading(true); setPage(0); }}
+                        >
+                            <ChevronsLeft size={18} />
+                        </button>
+                        <button
+                            type="button"
+                            className="comandos-icon-button"
+                            aria-label="Previous page"
+                            disabled={page === 0}
+                            onClick={() => { setLoading(true); setPage(value => Math.max(0, value - 1)); }}
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <span>
+                            {tr("Page")} {page + 1} / {Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
+                        </span>
+                        <button
+                            type="button"
+                            className="comandos-icon-button"
+                            aria-label="Next page"
+                            disabled={page + 1 >= Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
+                            onClick={() => { setLoading(true); setPage(value => value + 1); }}
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                        <button
+                            type="button"
+                            className="comandos-icon-button"
+                            aria-label="Last page"
+                            disabled={page + 1 >= Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
+                            onClick={() => {
+                                setLoading(true);
+                                setPage(Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)) - 1, 0));
                             }}
                         >
-                            <DataTable.THead>
-                                <DataTable.THeadRow>
-                                    <DataTable.THeadCell>
-                                        ID
-                                    </DataTable.THeadCell>
-
-                                    {columns.map((field) => (
-                                        <DataTable.THeadCell key={field.name}>
-                                            {tr(field.label)}
-                                        </DataTable.THeadCell>
-                                    ))}
-
-                                    {!resource.readOnly && (
-                                        <DataTable.THeadCell
-                                            className={styles.actionCell}
-                                            style={{
-                                                width: "8rem"
-                                            }}
-                                        >
-                                            Actions
-                                        </DataTable.THeadCell>
-                                    )}
-                                </DataTable.THeadRow>
-
-                                <DataTable.THeadRow>
-                                    <DataTable.THeadCell />
-
-                                    {columns.map((field) => (
-                                        <DataTable.THeadCell key={field.name}>
-                                            <DataTable.Filter
-                                                field={field.name}
-                                                display="row"
-                                                dataType="text"
-                                            >
-                                                {({
-                                                    value,
-                                                    onChange
-                                                }: DataTableFilterInstance) => (
-                                                    <InputText
-                                                        value={
-                                                            value == null
-                                                                ? ""
-                                                                : String(value)
-                                                        }
-                                                        onChange={(
-                                                            event: React.ChangeEvent<HTMLInputElement>
-                                                        ) => {
-                                                            onChange(
-                                                                event,
-                                                                event.target.value
-                                                            );
-                                                        }}
-                                                        placeholder={`${tr("Search")} ${tr(field.label).toLowerCase()}...`}
-                                                        size="small"
-                                                        fluid
-                                                    />
-                                                )}
-                                            </DataTable.Filter>
-                                        </DataTable.THeadCell>
-                                    ))}
-
-                                    {!resource.readOnly && (
-                                        <DataTable.THeadCell />
-                                    )}
-                                </DataTable.THeadRow>
-                            </DataTable.THead>
-
-                            <DataTable.TBody>
-                                {({
-                                    item,
-                                    index
-                                }) => {
-                                    const record =
-                                        item as ErpRecord;
-
-                                    return (
-                                    <DataTable.Row
-                                        key={
-                                            record.id ??
-                                            index
-                                        }
-                                    >
-                                        <DataTable.Cell>
-                                            {record.id}
-                                        </DataTable.Cell>
-
-                                        {columns.map((field) => (
-                                            <DataTable.Cell key={field.name}>
-                                                {display(record, field)}
-                                            </DataTable.Cell>
-                                        ))}
-
-                                        {!resource.readOnly && (
-                                            <DataTable.Cell className={styles.actionCell}>
-                                                <div className={`${styles.actions} ${styles.tableActions}`}>
-                                                    <Button
-                                                        type="button"
-                                                        variant="text"
-                                                        severity="secondary"
-                                                        aria-label={`${tr("Edit")} ${record.label}`}
-                                                        disabled={!allowed("UPDATE")}
-                                                        onClick={() => setEditor({ record })}
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </Button>
-
-                                                    <Button
-                                                        type="button"
-                                                        variant="text"
-                                                        severity="danger"
-                                                        aria-label={`${tr("Delete")} ${record.label}`}
-                                                        disabled={!allowed("DELETE")}
-                                                        onClick={() => setDeleting(record)}
-                                                    >
-                                                        <Trash size={18} />
-                                                    </Button>
-                                                </div>
-                                            </DataTable.Cell>
-                                        )}
-                                    </DataTable.Row>
-                                    );
-                                }}
-                            </DataTable.TBody>
-                        </DataTable.Table>
-                    </DataTable.TableContainer>
-
-                    <DataTable.Pagination>
-                        {({
-                            rows: currentRows
-                        }: DataTablePaginationInstance) => (
-                            <Paginator.Root
-                                className="comandos-datatable-paginator"
-                                page={page + 1}
-                                total={result?.totalElements ?? 0}
-                                itemsPerPage={
-                                    currentRows ??
-                                    result?.size ??
-                                    10
-                                }
-                                onPageChange={(
-                                    event: PaginatorRootChangeEvent
-                                ) => {
-                                    const nextPage =
-                                        event.value - 1;
-
-                                    setLoading(true);
-                                    setPage(nextPage);
-                                }}
-                            >
-                                <Paginator.Content>
-                                    <Paginator.First>
-                                        <AngleDoubleLeft />
-                                    </Paginator.First>
-
-                                    <Paginator.Prev>
-                                        <AngleLeft />
-                                    </Paginator.Prev>
-
-                                    <Paginator.Pages>
-                                        {({
-                                            paginator
-                                        }: PaginatorPagesInstance) =>
-                                            paginator?.pages.map(
-                                                (
-                                                    paginatorPage,
-                                                    pageIndex
-                                                ) =>
-                                                    paginatorPage.type === "page" ? (
-                                                        <Paginator.Page
-                                                            key={pageIndex}
-                                                            value={paginatorPage.value}
-                                                        />
-                                                    ) : (
-                                                        <Paginator.Ellipsis
-                                                            key={pageIndex}
-                                                        >
-                                                            <EllipsisH />
-                                                        </Paginator.Ellipsis>
-                                                    )
-                                            )
-                                        }
-                                    </Paginator.Pages>
-
-                                    <Paginator.Next>
-                                        <AngleRight />
-                                    </Paginator.Next>
-
-                                    <Paginator.Last>
-                                        <AngleDoubleRight />
-                                    </Paginator.Last>
-                                </Paginator.Content>
-                            </Paginator.Root>
-                        )}
-                    </DataTable.Pagination>
-
-                    <div
-                        style={{
-                            padding: "0.5rem",
-                            textAlign: "right",
-                            borderTop: "1px solid #e5e7eb",
-                            fontSize: "0.875rem"
-                        }}
-                    >
-                        Total records: {result?.totalElements ?? 0}
+                            <ChevronsRight size={18} />
+                        </button>
                     </div>
-                </DataTable.Root>
+                    <span>Total records: {result?.totalElements ?? 0}</span>
+                </div>
 
                 {loading && <p role="status">Loading recordsâ€¦</p>}
 
@@ -736,53 +519,51 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
             />
             }
             
-            <Dialog.Root open={deleting !== null} onOpenChange={(event: { value?: boolean }) => { if (!event.value && !busy) setDeleting(null); }}>
-                
-                <Dialog.Portal>
-                    
-                    <Dialog.Backdrop />
-                    
-                    <Dialog.Positioner>
-                        
-                        <Dialog.Popup className={styles.dialog}>
-                            
-                            <Dialog.Header>
-                                <Dialog.Title>Delete record</Dialog.Title>
-                            </Dialog.Header>
-                            
-                            <Dialog.Content>
-
-                                <p>Delete {deleting?.label}? Records referenced by another record cannot be deleted.</p>
-                                <div className={styles.actions}>
-                                    <Button type="button" severity="secondary" disabled={busy} onClick={() => setDeleting(null)}>Cancel</Button>
-                                    <Button 
-                                        type="button" 
-                                        severity="danger" 
-                                        disabled={busy} 
-                                        onClick={async () => {
-                                            if (!deleting || busy) return;
-                                            setBusy(true);
-                                            try {
-                                                await service.remove(resource.key, deleting);
-                                                setDeleting(null); setNotice({ type: "success", text: "Record deleted successfully." });
-                                                if (result?.content.length === 1 && page > 0) setPage(value => value - 1);
-                                                refresh();
-                                            } catch (error) { setDeleting(null); setNotice({ type: "error", text: errorMessage(error) }); }
-                                            finally { setBusy(false); }
-                                    }}>
-                                        {busy ? "Deleting…" : "Delete"}
-                                    </Button>
-                                </div>
-
-                            </Dialog.Content>
-
-                        </Dialog.Popup>
-
-                    </Dialog.Positioner>
-
-                </Dialog.Portal>
-
-            </Dialog.Root>
+            {deleting !== null && (
+                <div className="comandos-dialog-layer">
+                    <button
+                        type="button"
+                        className="comandos-dialog-backdrop"
+                        aria-label="Close dialog"
+                        disabled={busy}
+                        onClick={() => { if (!busy) setDeleting(null); }}
+                    />
+                    <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog}`}>
+                        <div className="comandos-native-dialog-header">
+                            <h2>Delete record</h2>
+                        </div>
+                        <div className="comandos-native-dialog-content">
+                            <p>Delete {deleting?.label}? Records referenced by another record cannot be deleted.</p>
+                            <div className={styles.actions}>
+                                <button type="button" className="comandos-secondary-button" disabled={busy} onClick={() => setDeleting(null)}>Cancel</button>
+                                <button
+                                    type="button"
+                                    className="comandos-red-button comandos-dialog-action-button"
+                                    disabled={busy}
+                                    onClick={async () => {
+                                        if (!deleting || busy) return;
+                                        setBusy(true);
+                                        try {
+                                            await service.remove(resource.key, deleting);
+                                            setDeleting(null);
+                                            setNotice({ type: "success", text: "Record deleted successfully." });
+                                            if (result?.content.length === 1 && page > 0) setPage(value => value - 1);
+                                            refresh();
+                                        } catch (error) {
+                                            setDeleting(null);
+                                            setNotice({ type: "error", text: errorMessage(error) });
+                                        } finally {
+                                            setBusy(false);
+                                        }
+                                    }}
+                                >
+                                    {busy ? "Deleting…" : "Delete"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </section>
     );
@@ -980,8 +761,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                     })}
                                 </fieldset>
                                 <div className={styles.actions}>
-                                    <Button type="button" severity="secondary" disabled={busy} onClick={onCancel}>Cancel</Button>
-                                    <Button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+                                    <button type="button" className="comandos-secondary-button" disabled={busy} onClick={onCancel}>Cancel</button>
+                                    <Button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
                                 </div>
                             </form>
                         </Dialog.Content>
