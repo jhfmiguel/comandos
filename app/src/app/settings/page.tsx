@@ -1,15 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { EyeDropper } from "@primeicons/react/eye-dropper"
-import { Button } from "@primereact/ui/button"
-import {
-    InputColor,
-    parseColor,
-    type InputColorRootChangeEvent
-} from "@primereact/ui/inputcolor"
-import { InputText } from "@primereact/ui/inputtext"
-import { Popover } from "@primereact/ui/popover"
+import { EyeDropper } from "components/ui/icons"
+import { Button } from "components/ui/button"
+import { InputText } from "components/ui/inputtext"
+import { Popover } from "components/ui/popover"
 import { Moon, Sun } from "lucide-react"
 
 import { Layout } from "components/layout"
@@ -44,11 +39,6 @@ export default function SettingsPage() {
         setCustomColor,
         t
     } = useComandosPreferences()
-
-    const customColorValue = React.useMemo(
-        () => parseColor(customColor),
-        [customColor]
-    )
 
     return (
         <Layout title={t("settings")}>
@@ -199,103 +189,74 @@ export default function SettingsPage() {
                             ))}
 
                             <div className="comandos-custom-palette-anchor">
-                                <InputColor.Root
-                                    value={customColorValue}
-                                    onValueChange={(
-                                        event:
-                                            InputColorRootChangeEvent
-                                    ) => {
-                                        setPalette("custom")
-                                        setCustomColor(
-                                            event.value.toString("hex")
-                                        )
-                                    }}
-                                >
-                                    <Popover.Root>
-                                        <Popover.Trigger
-                                            type="button"
-                                            className={
-                                                "comandos-palette-circle-button " +
-                                                "comandos-palette-custom-button " +
-                                                (
-                                                    palette === "custom"
-                                                        ? "is-selected"
-                                                        : ""
-                                                )
-                                            }
-                                            onClick={() =>
-                                                setPalette("custom")
-                                            }
-                                            title={t("custom")}
-                                            aria-label={t("custom")}
-                                            aria-pressed={
-                                                palette === "custom"
-                                            }
-                                        >
-                                            <span
-                                                className={
-                                                    "palette-preview " +
-                                                    "palette-preview-custom"
-                                                }
-                                                style={{
-                                                    backgroundColor:
-                                                        customColor
-                                                }}
-                                                aria-hidden="true"
-                                            />
-                                        </Popover.Trigger>
+                                <Popover.Root>
+                                    <Popover.Trigger
+                                        type="button"
+                                        className={
+                                            "comandos-palette-circle-button " +
+                                            "comandos-palette-custom-button " +
+                                            (palette === "custom" ? "is-selected" : "")
+                                        }
+                                        onClick={() => setPalette("custom")}
+                                        title={t("custom")}
+                                        aria-label={t("custom")}
+                                        aria-pressed={palette === "custom"}
+                                    >
+                                        <span
+                                            className="palette-preview palette-preview-custom"
+                                            style={{ backgroundColor: customColor }}
+                                            aria-hidden="true"
+                                        />
+                                    </Popover.Trigger>
 
-                                        <Popover.Portal>
-                                            <Popover.Positioner
-                                                sideOffset={12}
-                                                side="left"
-                                                align="start"
-                                            >
-                                                <Popover.Popup
-                                                    className={
-                                                        "w-72 p-3 space-y-3"
-                                                    }
-                                                >
-                                                    <Popover.Arrow />
+                                    <Popover.Portal>
+                                        <Popover.Positioner sideOffset={12} side="left" align="start">
+                                            <Popover.Popup className="comandos-color-popover w-72 p-3 space-y-3">
+                                                <Popover.Arrow />
 
-                                                    <InputColor.Area>
-                                                        <InputColor.AreaBackground />
-                                                        <InputColor.AreaHandle />
-                                                    </InputColor.Area>
+                                                <label className="block font-semibold">
+                                                    {t("custom")}
+                                                </label>
 
-                                                    <InputColor.Slider>
-                                                        <InputColor.TransparencyGrid />
-                                                        <InputColor.SliderTrack />
-                                                        <InputColor.SliderHandle />
-                                                    </InputColor.Slider>
+                                                <input
+                                                    type="color"
+                                                    value={customColor}
+                                                    onChange={(event) => {
+                                                        setPalette("custom")
+                                                        setCustomColor(event.target.value)
+                                                    }}
+                                                    className="comandos-native-color-picker"
+                                                    aria-label={t("custom")}
+                                                />
 
-                                                    <InputColor.Slider channel="alpha">
-                                                        <InputColor.TransparencyGrid />
-                                                        <InputColor.SliderTrack />
-                                                        <InputColor.SliderHandle />
-                                                    </InputColor.Slider>
-
-                                                    <div className="flex items-center gap-2">
-                                                        <InputColor.Input
-                                                            as={InputText}
-                                                            channel="hex"
-                                                            className="flex-1"
-                                                        />
-
-                                                        <InputColor.EyeDropper
-                                                            as={Button}
-                                                            iconOnly
-                                                            severity="secondary"
-                                                            variant="outlined"
-                                                        >
-                                                            <EyeDropper />
-                                                        </InputColor.EyeDropper>
-                                                    </div>
-                                                </Popover.Popup>
-                                            </Popover.Positioner>
-                                        </Popover.Portal>
-                                    </Popover.Root>
-                                </InputColor.Root>
+                                                <div className="flex items-center gap-2">
+                                                    <InputText
+                                                        value={customColor}
+                                                        onChange={(event) => {
+                                                            const value = event.target.value.trim()
+                                                            if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+                                                                setPalette("custom")
+                                                                setCustomColor(value)
+                                                            }
+                                                        }}
+                                                        className="flex-1"
+                                                        aria-label="HEX"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        iconOnly
+                                                        severity="secondary"
+                                                        variant="outlined"
+                                                        title={t("custom")}
+                                                        onClick={() => document.querySelector<HTMLInputElement>(".comandos-native-color-picker")?.click()}
+                                                    >
+                                                        <EyeDropper />
+                                                    </Button>
+                                                </div>
+                                            </Popover.Popup>
+                                        </Popover.Positioner>
+                                    </Popover.Portal>
+                                </Popover.Root>
                             </div>
                         </div>
                     </article>
