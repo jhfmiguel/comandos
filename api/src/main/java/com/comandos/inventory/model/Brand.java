@@ -1,0 +1,21 @@
+package com.comandos.inventory.model;
+
+import com.comandos.core.model.CoreEntity;
+import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationalUnit;
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "erp_brand", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "manufacturer"})})
+public class Brand extends CoreEntity {
+    @Column(name = "name", nullable = false, length = 255)
+    public String name;
+    @Column(name = "manufacturer", nullable = false, length = 255)
+    public String manufacturer;
+    /** ISO 3166-1 alpha-2 country of manufacture; null means not informed. */
+    @Column(name = "manufacturing_country_code", length = 2)
+    public String manufacturingCountryCode;
+}

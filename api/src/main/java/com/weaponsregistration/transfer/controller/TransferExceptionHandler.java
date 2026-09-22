@@ -1,1 +1,0 @@
-package com.weaponsregistration.transfer.controller;import com.weaponsregistration.core.controller.CoreExceptionHandler;import org.springframework.web.bind.annotation.RestControllerAdvice;@RestControllerAdvice(assignableTypes=TransferController.class)public class TransferExceptionHandler extends CoreExceptionHandler{}

@@ -1,0 +1,2 @@
+package com.comandos.maintenance.model;import com.comandos.core.model.CoreEntity;import jakarta.persistence.*;
+@Entity @Table(name="erp_maintenance_diagnosis")public class Diagnosis extends CoreEntity{@OneToOne(optional=false)@JoinColumn(name="work_order_id",nullable=false,unique=true)public WorkOrder workOrder;@Column(nullable=false)public String defect;@Column(nullable=false)public String cause;@Column(nullable=false,length=1000)public String opinion;}

@@ -1,3 +1,0 @@
-package com.weaponsregistration.sales.model;
-import com.weaponsregistration.core.model.CoreEntity;import com.weaponsregistration.inventory.model.StockMovement;import jakarta.persistence.*;import java.math.BigDecimal;
-@Entity@Table(name="erp_sale_return_item")public class SaleReturnItem extends CoreEntity{@ManyToOne(optional=false)@JoinColumn(name="sale_return_id",nullable=false)public SaleReturn saleReturn;@ManyToOne(optional=false)@JoinColumn(name="sale_item_id",nullable=false)public InventorySaleItem saleItem;@OneToOne(optional=false)@JoinColumn(name="movement_id",nullable=false,unique=true)public StockMovement movement;@Column(nullable=false,precision=19,scale=4)public BigDecimal quantity;@Column(nullable=false,precision=19,scale=4)public BigDecimal refundAmount;}

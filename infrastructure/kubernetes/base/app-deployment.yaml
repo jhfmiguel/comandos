@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comandos-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: comandos-app
+  template:
+    metadata:
+      labels:
+        app: comandos-app
+    spec:
+      containers:
+        - name: app
+          image: comandos/app:latest
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
