@@ -82,7 +82,8 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
     const Icon = props.icon
     const hasSubItems = Boolean(props.subItems?.length)
 
-    const [submenuOpen, setSubmenuOpen] = React.useState(isRouteActive)
+    const submenuOpen = props.selectedMenu === props.menuKey
+        || (props.selectedMenu === null && isRouteActive)
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({})
 
     
@@ -125,14 +126,16 @@ export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
 
     const handleSubmenuToggle = (): void => {
 
-        handleMenuSelection()
+        removeCurrentFocus()
+
+        const nextMenu = submenuOpen ? null : props.menuKey
+        props.onSelect(nextMenu)
 
         if (mobile && props.collapsed) {
-            setCollapsedPopupOpen((currentValue) => !currentValue)
-            return
+            setCollapsedPopupOpen(nextMenu === props.menuKey)
+        } else {
+            setCollapsedPopupOpen(false)
         }
-
-        setSubmenuOpen((currentValue) => !currentValue)
 
     }
 
@@ -175,10 +178,11 @@ const renderExpandedItems = (
                                 removeCurrentFocus()
                                 props.onSelect(props.menuKey)
 
-                                setOpenGroups((current) => ({
-                                    ...current,
-                                    [itemKey]: !itemOpen
-                                }))
+                                setOpenGroups(
+                                    itemOpen
+                                        ? {}
+                                        : { [itemKey]: true }
+                                )
 
                             }}
                         >

@@ -72,15 +72,13 @@ export const Menu: React.FC = () => {
         return () => media.removeEventListener("change", syncViewport)
     }, [])
 
-    const [selection, setSelection] = React.useState<{ pathname: string; menu: string | null }>({ pathname, menu: null })
-    const selectedMenu = selection.pathname === pathname ? selection.menu : null
-    const setSelectedMenu = (menu: string | null) => setSelection({ pathname, menu })
+    const [selectedMenu, setSelectedMenu] = React.useState<string | null>(null)
+
+    React.useEffect(() => {
+        setSelectedMenu(null)
+    }, [pathname])
 
     const [userMenuOpen, setUserMenuOpen] = React.useState(false)
-
-    if (selection.pathname !== pathname) {
-        setSelection({ pathname, menu: null })
-    }
 
     return (
 
