@@ -1,29 +1,24 @@
 import { InputHTMLAttributes } from "react"
 import { FormatUtils } from "@4us-dev/utils"
-import { InputGroup } from "@primereact/ui/inputgroup"
-import { InputText } from "@primereact/ui/inputtext"
-import { Label } from "@primereact/ui/label"
 import { formatDate } from "utils/date"
 import { formatReal } from "utils/money"
-
-// IMPORTED: Using the centralized numeric utility function
 import { formatOnlyNumbers } from "utils/numeric"
 import { useComandosPreferences } from "components/settings/preferences-provider"
 
 const formatUtils = new FormatUtils()
 
-interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">{
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
     size?: "small" | "large"
     label: string
     columnClasses?: string
     id: string
     error?: string
-    formatter?: ( value: string ) => string
+    formatter?: (value: string) => string
     currency?: boolean
-    onlyNumbers?: boolean 
+    onlyNumbers?: boolean
 }
 
-export const Input: React.FC<InputProps> = ( {
+export const Input: React.FC<InputProps> = ({
     label,
     columnClasses,
     id,
@@ -31,96 +26,74 @@ export const Input: React.FC<InputProps> = ( {
     formatter,
     onChange,
     currency = false,
-    onlyNumbers = false, 
-    ... inputProps
-}: InputProps ) => {
-
-    const onInputChange = ( event: React.ChangeEvent<HTMLInputElement> ) => {
+    onlyNumbers = false,
+    ...inputProps
+}) => {
+    const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let value = event.target.value
         const name = event.target.name
 
-        if (onlyNumbers) {
-            value = value.replace(/\D/g, "")
-        }
+        if (onlyNumbers) value = value.replace(/\D/g, "")
+        const formattedValue = (formatter && formatter(value)) || value
 
-        const formattedValue = ( formatter && formatter( value as string )) || value
-        
-        if ( onChange ) {
-            onChange( {
-                ... event,
+        if (onChange) {
+            onChange({
+                ...event,
                 target: {
-                    ...event.target, 
+                    ...event.target,
                     name,
                     value: formattedValue
                 }
-            } )
+            })
         }
     }
 
     const onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (onlyNumbers) {
-            const allowedKeys = [
-                "Backspace", "Delete", "Tab", "Escape", "Enter", 
-                "ArrowLeft", "ArrowRight", "Home", "End"
-            ]
-            
-            if (!/[0-9]/.test(event.key) && !allowedKeys.includes(event.key)) {
-                event.preventDefault()
-            }
+        if (!onlyNumbers) return
+
+        const allowedKeys = [
+            "Backspace", "Delete", "Tab", "Escape", "Enter",
+            "ArrowLeft", "ArrowRight", "Home", "End"
+        ]
+
+        if (!/[0-9]/.test(event.key) && !allowedKeys.includes(event.key)) {
+            event.preventDefault()
         }
     }
 
+    const control = (
+        <input
+            {...inputProps}
+            className={`comandos-input ${currency ? "comandos-currency-value " : ""}w-full`}
+            id={id}
+            value={inputProps.value ?? ""}
+            onChange={onInputChange}
+            onKeyDown={onInputKeyDown}
+        />
+    )
+
     return (
-        <div className = {`field ${columnClasses ?? ""}`}>
-            <Label 
-                className = "block font-semibold mb-2"
-                htmlFor = { id }
-            >
-            { label }
-            </Label>
-            
-            { currency ? (
-                <InputGroup.Root className="comandos-currency-input w-full">
+        <div className={`field ${columnClasses ?? ""}`}>
+            <label className="block font-semibold mb-2" htmlFor={id}>
+                {label}
+            </label>
 
-                    <InputGroup.Addon className="comandos-input-addon">
-                        R$
-                    </InputGroup.Addon>
-
-                    <InputText
-                        className="comandos-input comandos-currency-value w-full"
-                        id = { id }
-                        value = { inputProps.value ?? "" }
-                        onChange = { onInputChange }
-                        onKeyDown = { onInputKeyDown }
-                        { ... inputProps }
-                    />
-
-                </InputGroup.Root>
-            ) : (
-                <div className="w-full">
-
-                    <InputText
-                        className="comandos-input w-full"
-                        id = { id }
-                        value = { inputProps.value ?? "" }
-                        onChange = { onInputChange }
-                        onKeyDown = { onInputKeyDown }
-                        { ... inputProps }
-                    />
-
+            {currency ? (
+                <div className="comandos-currency-input w-full">
+                    <span className="comandos-input-addon" aria-hidden="true">R$</span>
+                    {control}
                 </div>
-            ) }
+            ) : (
+                <div className="w-full">{control}</div>
+            )}
 
-            { error &&
-                <p className = "text-red-500 text-sm mt-1" >{ error }</p>
-            }
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
     )
 }
 
 export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
     const { value, onChange, name, id, label, columnClasses, error, ...restProps } = props
-
     const safeValue = typeof value === "object" ? "" : (value ?? "")
     const { locale } = useComandosPreferences()
 
@@ -136,24 +109,19 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
 
         requestAnimationFrame(() => {
             const cursorPosition = input.value.length
-
             input.setSelectionRange(cursorPosition, cursorPosition)
         })
     }
 
     return (
         <div className={`field ${columnClasses ?? ""}`}>
-            <Label className="block font-semibold mb-2" htmlFor={id}>
+            <label className="block font-semibold mb-2" htmlFor={id}>
                 {label}
-            </Label>
-            
-            <InputGroup.Root className="comandos-currency-input w-full">
+            </label>
 
-                <InputGroup.Addon className="comandos-input-addon">
-                    R$
-                </InputGroup.Addon>
-
-                <InputText
+            <div className="comandos-currency-input w-full">
+                <span className="comandos-input-addon" aria-hidden="true">R$</span>
+                <input
                     {...restProps}
                     className="comandos-input comandos-currency-value w-full"
                     id={id}
@@ -163,59 +131,30 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
                     inputMode="numeric"
                     onChange={onMoneyChange}
                 />
-
-            </InputGroup.Root>
+            </div>
 
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
     )
 }
 
-export const InputCPF: React.FC< InputProps > = ( props: InputProps ) => {
-    return (
-        <Input 
-            { ...props } 
-            formatter = { formatUtils.formatCPF } 
-            onlyNumbers={true} 
-        />
-    )
-}
+export const InputCPF: React.FC<InputProps> = (props) => (
+    <Input {...props} formatter={formatUtils.formatCPF} onlyNumbers />
+)
 
-export const InputOnlyNumbers: React.FC< InputProps > = ( props: InputProps ) => {
-    return (
-        <Input 
-            { ...props } 
-            formatter = { formatOnlyNumbers } 
-            onlyNumbers = { true } 
-            inputMode = "numeric" 
-            pattern = "[0-9]*" // Kept here because this field contains only unformatted numbers
-        />
-    )
-}
+export const InputOnlyNumbers: React.FC<InputProps> = (props) => (
+    <Input {...props} formatter={formatOnlyNumbers} onlyNumbers inputMode="numeric" pattern="[0-9]*" />
+)
 
-// FIXED: Removed pattern="[0-9]*" to allow form submission with phone mask symbols
-export const InputPhone: React.FC< InputProps > = ( props: InputProps ) => {
-    return (
-        <Input { ...props } 
-            formatter = { formatUtils.formatPhone } 
-            onlyNumbers={ true }
-            inputMode = "numeric" 
-        />
-    )
-}
+export const InputPhone: React.FC<InputProps> = (props) => (
+    <Input {...props} formatter={formatUtils.formatPhone} onlyNumbers inputMode="numeric" />
+)
 
-// FIXED: Removed pattern="[0-9]*" to prevent future validation errors with CEP mask hyphens
-export const InputCEP: React.FC< InputProps > = ( props: InputProps ) => {
-    return (
-        <Input { ...props } 
-            formatter = { formatUtils.formatCEP } 
-            onlyNumbers={ true }
-            inputMode = "numeric" 
-        />
-    )
-}
+export const InputCEP: React.FC<InputProps> = (props) => (
+    <Input {...props} formatter={formatUtils.formatCEP} onlyNumbers inputMode="numeric" />
+)
 
-export const InputDate: React.FC<InputProps> = (props: InputProps) => {
+export const InputDate: React.FC<InputProps> = (props) => {
     const { locale } = useComandosPreferences()
 
     return (
