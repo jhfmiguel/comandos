@@ -2,10 +2,10 @@
 
 import * as React from "react"
 
-import { ChevronLeft, ChevronRight } from "@primeicons/react"
+import { ChevronLeft, ChevronRight } from "components/ui/icons"
 
-import { Tabs } from "@primereact/ui/tabs"
-import type { TabsRootChangeEvent } from "@primereact/ui/tabs"
+import { Tabs } from "components/ui/tabs"
+import type { TabsRootChangeEvent } from "components/ui/tabs"
 
 import { Layout } from "components/layout"
 import { useComandosPreferences } from "components/settings/preferences-provider"
