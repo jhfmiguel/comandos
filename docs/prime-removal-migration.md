@@ -19,14 +19,14 @@ que áreas legadas ainda não migradas continuem compilando entre os commits.
 - toast/notificações;
 - modal e botões da entrada de estoque;
 - formulário de vendas (autocomplete, select, tabela e exclusão);
-- listas de usuários e armas (filtros, paginação, edição inline e exclusão).
+- listas de usuários e armas (filtros, paginação, edição inline e exclusão);
+- auditoria (filtros, paginação e detalhes before/after).
 
 ## Próximos blocos
 
-1. audit;
-2. record-workspace / DataTable / Paginator / Tabs;
-3. demais diálogos/botões residuais;
-4. remoção final dos pacotes e do presente arquivo.
+1. record-workspace / DataTable / Paginator / Tabs;
+2. demais diálogos/botões residuais;
+3. remoção final dos pacotes e do presente arquivo.
 
 Quando não houver nenhum import Prime no frontend, os pacotes serão removidos do
 package.json e yarn.lock e este marcador será excluído.
