@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@primereact/ui/button";
+import { Button } from "components/ui/button";
 import { Message } from "components/common/message";
 import { httpClient } from "api/http";
 
