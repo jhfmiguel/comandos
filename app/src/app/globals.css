@@ -5649,3 +5649,23 @@ html[data-theme="dark"] .comandos-filter-row th { background:#171717; }
 }
 .comandos-tab-panel { min-width:0; }
 .comandos-erp-table { min-width:56rem; }
+
+
+/* COMANDOS reusable button primitives replacing Prime Button */
+.comandos-action-button{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:2.5rem;border-radius:.375rem;padding:.55rem .9rem;font-weight:600;cursor:pointer;transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,opacity .16s ease}
+.comandos-button-contained{border:1px solid #ff9900;background:#ff9900;color:#1f1f1f}
+.comandos-button-contained:hover:not(:disabled){background:#e68a00;border-color:#e68a00}
+.comandos-button-outlined{border:1px solid currentColor;background:transparent;color:inherit}
+.comandos-button-text{min-height:2.25rem;border:1px solid transparent;background:transparent;color:inherit;padding:.4rem .55rem}
+.comandos-button-text:hover:not(:disabled),.comandos-button-outlined:hover:not(:disabled){border-color:#ff9900;color:#ff9900;background:rgba(255,153,0,.1)}
+.comandos-button-secondary.comandos-button-contained{border-color:var(--p-content-border-color,#cbd5e1);background:var(--p-content-background,#fff);color:var(--p-content-color,#171717)}
+.comandos-button-success.comandos-button-contained{background:#16a34a;border-color:#16a34a;color:#fff}
+.comandos-button-danger.comandos-button-contained{background:#ed2100;border-color:#ed2100;color:#fff}
+.comandos-button-warn.comandos-button-contained{background:#f59e0b;border-color:#f59e0b;color:#171717}
+.comandos-button-info.comandos-button-contained{background:#2563eb;border-color:#2563eb;color:#fff}
+.comandos-button-icon-only{width:2.5rem;padding:0}
+.comandos-action-button:focus-visible{outline:2px solid #ff9900;outline-offset:2px}
+.comandos-action-button:disabled{opacity:.55;cursor:not-allowed}
+.comandos-button-spinner{width:1rem;height:1rem;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:comandos-spin .7s linear infinite}
+@keyframes comandos-spin{to{transform:rotate(360deg)}}
+html[data-theme="dark"] .comandos-button-secondary.comandos-button-contained{background:#171717;color:#f3f4f6;border-color:#3f3f46}
