@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@primereact/ui/button";
+import { Button } from "components/common/button";
 
 type Box = { boxes: string; units: string };
 const positive = /^[1-9][0-9]{0,14}$/;

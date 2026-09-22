@@ -5,7 +5,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 
-import { Button as PrimeButton } from "@primereact/ui/button";
+import { Button } from "components/common/button";
 
 import { User } from "api/models/users";
 
@@ -284,7 +284,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                         marginTop: "1rem"
                     }}
                 >
-                    <PrimeButton
+                    <Button
                         type="submit"
                         className="registration-yellow-button"
                         disabled={
@@ -296,9 +296,9 @@ export const UserForm: React.FC<UserFormProps> = ({
                             : formik.values.id
                               ? "Update"
                               : "Save"}
-                    </PrimeButton>
+                    </Button>
 
-                    <PrimeButton
+                    <Button
                         type="button"
                         className="registration-yellow-button"
                         disabled={
@@ -307,7 +307,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                         onClick={handleBack}
                     >
                         Back
-                    </PrimeButton>
+                    </Button>
                 </div>
             </form>
 

@@ -12,7 +12,7 @@ import {
 
 import * as yup from "yup";
 
-import { Button as PrimeButton } from "@primereact/ui/button";
+import { Button } from "components/common/button";
 
 import {
     Layout,
@@ -304,7 +304,7 @@ export const WeaponsRegistration: React.FC = () => {
                         marginTop: "1rem"
                     }}
                 >
-                    <PrimeButton
+                    <Button
                         type="button"
                         className="registration-yellow-button"
                         disabled={saving}
@@ -315,16 +315,16 @@ export const WeaponsRegistration: React.FC = () => {
                             : id
                               ? "Update"
                               : "Save"}
-                    </PrimeButton>
+                    </Button>
 
-                    <PrimeButton
+                    <Button
                         type="button"
                         className="registration-yellow-button"
                         disabled={saving}
                         onClick={handleBack}
                     >
                         Back
-                    </PrimeButton>
+                    </Button>
                 </div>
             </Layout>
 
