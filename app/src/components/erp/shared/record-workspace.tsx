@@ -13,34 +13,34 @@ import { convertToIsoDate, formatDate } from "utils/date";
 
 import axios from "axios";
 
-import { ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "@primeicons/react";
-import { Button } from "@primereact/ui/button";
-import { Dialog } from "@primereact/ui/dialog";
-import { InputText } from "@primereact/ui/inputtext";
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "components/ui/icons";
+import { Button } from "components/ui/button";
+import { Dialog } from "components/ui/dialog";
+import { InputText } from "components/ui/inputtext";
 import {
     DataTable,
     FilterMatchMode
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
 import type {
     DataTableFilterInstance,
     DataTableFilterMeta,
     DataTablePaginationInstance
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
-import { Paginator } from "@primereact/ui/paginator";
-import { Tabs } from "@primereact/ui/tabs";
+import { Paginator } from "components/ui/paginator";
+import { Tabs } from "components/ui/tabs";
 
 import type {
     PaginatorPagesInstance,
     PaginatorRootChangeEvent
-} from "@primereact/ui/paginator";
+} from "components/ui/paginator";
 
-import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
-import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
-import { AngleLeft } from "@primeicons/react/angle-left";
-import { AngleRight } from "@primeicons/react/angle-right";
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
+import { AngleDoubleLeft } from "components/ui/icons";
+import { AngleDoubleRight } from "components/ui/icons";
+import { AngleLeft } from "components/ui/icons";
+import { AngleRight } from "components/ui/icons";
+import { EllipsisH } from "components/ui/icons";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
