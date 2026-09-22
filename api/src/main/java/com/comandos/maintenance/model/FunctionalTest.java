@@ -1,0 +1,2 @@
+package com.comandos.maintenance.model;import com.comandos.core.model.CoreEntity;import jakarta.persistence.*;import java.time.LocalDateTime;
+@Entity @Table(name="erp_functional_test")public class FunctionalTest extends CoreEntity{@ManyToOne(optional=false)@JoinColumn(name="work_order_id",nullable=false)public WorkOrder workOrder;@Column(nullable=false)public LocalDateTime testedAt;@Column(nullable=false)public String result;@Column(nullable=false,length=1000)public String notes;}

@@ -1,0 +1,15 @@
+package com.comandos.purchase.model;
+
+public enum PurchasePlanningDocumentType {
+    DEMAND_FORMALIZATION,
+    TECHNICAL_PRELIMINARY_STUDY,
+    RISK_ANALYSIS,
+    TERMS_OF_REFERENCE,
+    PRICE_RESEARCH,
+    PRICE_COMPARISON_MAP,
+    BUDGET_RESERVATION,
+    TECHNICAL_OPINION,
+    LEGAL_OPINION,
+    AUTHORIZATION,
+    OTHER
+}

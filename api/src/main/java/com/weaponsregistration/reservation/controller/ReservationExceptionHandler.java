@@ -1,1 +1,0 @@
-package com.weaponsregistration.reservation.controller;import com.weaponsregistration.core.controller.CoreExceptionHandler;import org.springframework.web.bind.annotation.RestControllerAdvice;@RestControllerAdvice(assignableTypes=ReservationController.class)public class ReservationExceptionHandler extends CoreExceptionHandler{}

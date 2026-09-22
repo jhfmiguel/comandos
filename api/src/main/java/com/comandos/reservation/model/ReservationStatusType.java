@@ -1,0 +1,2 @@
+package com.comandos.reservation.model;import com.comandos.core.model.CoreEntity;import jakarta.persistence.*;
+@Entity@Table(name="erp_reservation_status_type")public class ReservationStatusType extends CoreEntity{@Column(nullable=false,unique=true)public String code;@Column(nullable=false)public String name;@Column public String description;@Column(nullable=false)public Boolean active=true;@Column(nullable=false)public Boolean terminal=false;@Column(nullable=false)public Integer displayOrder=0;@Column(nullable=false)public Boolean systemProtected=false;}

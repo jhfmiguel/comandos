@@ -1,0 +1,1 @@
+package com.comandos.reservation.controller;import com.comandos.core.controller.CoreExceptionHandler;import org.springframework.web.bind.annotation.RestControllerAdvice;@RestControllerAdvice(assignableTypes=ReservationController.class)public class ReservationExceptionHandler extends CoreExceptionHandler{}

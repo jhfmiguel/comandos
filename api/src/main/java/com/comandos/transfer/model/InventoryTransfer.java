@@ -1,0 +1,35 @@
+package com.comandos.transfer.model;
+import com.comandos.core.model.*;
+import com.comandos.inventory.model.StockLocation;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name="erp_inventory_transfer")
+public class InventoryTransfer extends CoreEntity {
+ @ManyToOne(optional=false) @JoinColumn(name="organization_id",nullable=false) public Organization organization;
+ @ManyToOne(optional=false) @JoinColumn(name="source_unit_id",nullable=false) public OrganizationalUnit sourceUnit;
+ @ManyToOne(optional=false) @JoinColumn(name="destination_unit_id",nullable=false) public OrganizationalUnit destinationUnit;
+ @ManyToOne(optional=false) @JoinColumn(name="destination_location_id",nullable=false) public StockLocation destinationLocation;
+ @Column(nullable=false) public String organizationName;
+ @Column(nullable=false) public String sourceUnitName;
+ @Column(nullable=false) public String destinationUnitName;
+ @Column(nullable=false) public String destinationLocationName;
+ @Column(nullable=false,length=255) public String purpose;
+ @Column(name="transfer_type",nullable=false,length=30) public String transferType="INTERNAL";
+ @Column(name="legal_instrument",length=255) public String legalInstrument;
+ @Column(name="document_reference",length=500) public String documentReference;
+ @Column(name="approved_by_id") public Long approvedById;
+ @Column(name="approved_by_login") public String approvedByLogin;
+ @Column(name="approved_at") public LocalDateTime approvedAt;
+ @Column(name="rejected_by_id") public Long rejectedById;
+ @Column(name="rejected_by_login") public String rejectedByLogin;
+ @Column(name="rejected_at") public LocalDateTime rejectedAt;
+ @Column(name="rejection_reason",length=1000) public String rejectionReason;
+ @Column(nullable=false,length=30) public String status="PENDING_ACCEPTANCE";
+ @Column(nullable=false) public LocalDateTime sentAt;
+ @Column public Long finalizedById;
+ @Column public String finalizedByLogin;
+ @Column(nullable=false,unique=true,length=36) public String requestId;
+ @Column(nullable=false,length=64) public String requestFingerprint;
+}
