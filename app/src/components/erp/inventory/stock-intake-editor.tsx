@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import axios from "axios";
-import { Button } from "@primereact/ui/button";
-import { Dialog } from "@primereact/ui/dialog";
+import { Button } from "components/ui/button";
+import { Dialog } from "components/ui/dialog";
 import { Message } from "components/common/message";
 import { ReferenceField } from "components/erp/shared/record-workspace";
 import { httpClient } from "api/http";
