@@ -156,7 +156,7 @@ The `ammunition-consumptions` resource supports `READ` and `CREATE`. Both permis
 
 # Inventory transfer permissions
 
-The `transfers` resource supports `READ` and `CREATE`. Finalization requires `CREATE` for both the source and destination unit, including every source location. `READ` controls source-stock search and history. A UNIT grant sees transfers where that unit is either the source or destination; organization and system grants retain their broader scope.
+The `transfers` resource supports `READ`, `CREATE`, `ACCEPT`, and `REJECT`. Finalization requires `CREATE` for both the source and destination unit, including every source location. `READ` controls source-stock search and history. Destination confirmation requires `ACCEPT` or `REJECT` in the destination unit scope. A UNIT grant sees transfers where that unit is either the source or destination; organization and system grants retain their broader scope.
 
 # Asset disposal permissions
 

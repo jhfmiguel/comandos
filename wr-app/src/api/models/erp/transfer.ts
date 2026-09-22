@@ -39,6 +39,13 @@ export interface InventoryTransfer {
     sentAt: string;
     finalizedById: number | null;
     finalizedByLogin: string | null;
+    approvedById: number | null;
+    approvedByLogin: string | null;
+    approvedAt: string | null;
+    rejectedById: number | null;
+    rejectedByLogin: string | null;
+    rejectedAt: string | null;
+    rejectionReason: string | null;
     items: TransferLine[];
 }
 

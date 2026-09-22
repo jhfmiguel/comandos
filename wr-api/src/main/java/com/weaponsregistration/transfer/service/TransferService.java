@@ -13,6 +13,7 @@ import com.weaponsregistration.security.service.AccessPolicy;
 import com.weaponsregistration.transfer.dto.TransferContract.AcceptRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.FinalizeRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.LineRequest;
+import com.weaponsregistration.transfer.dto.TransferContract.RejectRequest;
 import com.weaponsregistration.transfer.dto.TransferContract.LineView;
 import com.weaponsregistration.transfer.dto.TransferContract.Page;
 import com.weaponsregistration.transfer.dto.TransferContract.StockOption;
@@ -155,7 +156,7 @@ public class TransferService {
         InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
 
-        access.requireScope("transfers", "UPDATE", transfer.organization.id, transfer.destinationUnit.id);
+        access.requireScope("transfers", "ACCEPT", transfer.organization.id, transfer.destinationUnit.id);
 
         if ("ACCEPTED".equals(transfer.status)) return view(transfer);
         if (!"PENDING_ACCEPTANCE".equals(transfer.status)) {
@@ -164,6 +165,7 @@ public class TransferService {
 
         var actor = audit.actor();
         var before = view(transfer);
+        releaseAtDestination(transfer);
 
         transfer.status = "ACCEPTED";
         transfer.approvedById = actor.id();
@@ -176,6 +178,39 @@ public class TransferService {
         audit.record("transfers", transfer.id, "ACCEPT", before, Map.of("transfer", result));
         return result;
     }
+
+    @Transactional
+    public TransferView reject(long id, RejectRequest request) {
+        if (request == null || request.reason() == null || request.reason().isBlank()) {
+            bad("Rejection reason is required.");
+        }
+        uuid(request.requestId());
+        String reason = request.reason().trim();
+        if (reason.length() > 1000) bad("Rejection reason must contain at most 1000 characters.");
+
+        InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
+        access.requireScope("transfers", "REJECT", transfer.organization.id, transfer.destinationUnit.id);
+
+        if ("REJECTED".equals(transfer.status)) return view(transfer);
+        if (!"PENDING_ACCEPTANCE".equals(transfer.status)) conflict("Transfer is not pending acceptance.");
+
+        var before = view(transfer);
+        returnToSource(transfer);
+
+        var actor = audit.actor();
+        transfer.status = "REJECTED";
+        transfer.rejectedById = actor.id();
+        transfer.rejectedByLogin = actor.login();
+        transfer.rejectedAt = LocalDateTime.now();
+        transfer.rejectionReason = reason;
+        em.flush();
+
+        var result = view(transfer);
+        audit.record("transfers", transfer.id, "REJECT", before, Map.of("transfer", result));
+        return result;
+    }
+
     public Page<TransferView> list(long organizationId, Long unitId, int page) {
         access.requireScope("transfers", "READ", organizationId, unitId);
         if (unitId != null) selectedUnit(organizationId, unitId);
@@ -215,6 +250,7 @@ public class TransferService {
         em.persist(item);
         changes.add(change("inventory/assets", asset.id, source.name, destination.name));
         asset.location = destination;
+        asset.status = "TRANSFER_PENDING";
     }
 
     private void moveLot(InventoryTransfer transfer, LineRequest line, StockLocation destination,
@@ -229,8 +265,9 @@ public class TransferService {
         StockBalance destinationBalance = destinationBalance(lot, destination);
         BigDecimal sourceBefore = sourceBalance.available;
         BigDecimal destinationBefore = destinationBalance.available;
+        BigDecimal destinationBlockedBefore = destinationBalance.blocked;
         sourceBalance.available = sourceBefore.subtract(line.quantity());
-        destinationBalance.available = destinationBefore.add(line.quantity());
+        destinationBalance.blocked = destinationBlockedBefore.add(line.quantity());
         StockMovement out = movement(null, lot, sourceBalance.location, "TRANSFER_OUT", line.quantity().negate(), transfer.sentAt);
         StockMovement in = movement(null, lot, destination, "TRANSFER_IN", line.quantity(), transfer.sentAt);
         InventoryTransferItem item = item(transfer, lot.model, sourceBalance.location, destination, lot.lotNumber,
@@ -247,7 +284,60 @@ public class TransferService {
         change.put("sourceAfter", decimal(sourceBalance.available));
         change.put("destinationBefore", decimal(destinationBefore));
         change.put("destinationAfter", decimal(destinationBalance.available));
+        change.put("destinationBlockedBefore", decimal(destinationBlockedBefore));
+        change.put("destinationBlockedAfter", decimal(destinationBalance.blocked));
         changes.add(change);
+    }
+
+    private void releaseAtDestination(InventoryTransfer transfer) {
+        var items = em.createQuery("select i from InventoryTransferItem i where i.transfer.id=:id order by i.id",
+                InventoryTransferItem.class).setParameter("id", transfer.id)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        for (var item : items) {
+            if (item.asset != null) {
+                var asset = locked(AssetItem.class, item.asset.id);
+                if (!"TRANSFER_PENDING".equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                    conflict("Transferred asset is no longer pending at the destination.");
+                }
+                asset.status = "AVAILABLE";
+            } else {
+                var destination = locked(StockBalance.class, item.destinationBalance.id);
+                if (destination.blocked.compareTo(item.quantity) < 0) {
+                    conflict("Transferred lot is no longer pending at the destination.");
+                }
+                destination.blocked = destination.blocked.subtract(item.quantity);
+                destination.available = destination.available.add(item.quantity);
+            }
+        }
+    }
+
+    private void returnToSource(InventoryTransfer transfer) {
+        var items = em.createQuery("select i from InventoryTransferItem i where i.transfer.id=:id order by i.id",
+                InventoryTransferItem.class).setParameter("id", transfer.id)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        LocalDateTime now = LocalDateTime.now();
+        for (var item : items) {
+            if (item.asset != null) {
+                var asset = locked(AssetItem.class, item.asset.id);
+                if (!"TRANSFER_PENDING".equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                    conflict("Transferred asset is no longer pending at the destination.");
+                }
+                movement(asset, null, item.destinationLocation, "TRANSFER_REJECT_OUT", BigDecimal.ONE.negate(), now);
+                movement(asset, null, item.sourceLocation, "TRANSFER_REJECT_RETURN", BigDecimal.ONE, now);
+                asset.location = item.sourceLocation;
+                asset.status = "AVAILABLE";
+            } else {
+                var source = locked(StockBalance.class, item.sourceBalance.id);
+                var destination = locked(StockBalance.class, item.destinationBalance.id);
+                if (destination.blocked.compareTo(item.quantity) < 0) {
+                    conflict("Transferred lot is no longer pending at the destination.");
+                }
+                destination.blocked = destination.blocked.subtract(item.quantity);
+                source.available = source.available.add(item.quantity);
+                movement(null, item.lot, item.destinationLocation, "TRANSFER_REJECT_OUT", item.quantity.negate(), now);
+                movement(null, item.lot, item.sourceLocation, "TRANSFER_REJECT_RETURN", item.quantity, now);
+            }
+        }
     }
 
     private StockBalance destinationBalance(StockLot lot, StockLocation destination) {
@@ -306,7 +396,10 @@ public class TransferService {
         return new TransferView(transfer.id, transfer.organization.id, transfer.organizationName, transfer.sourceUnit.id,
             transfer.sourceUnitName, transfer.destinationUnit.id, transfer.destinationUnitName,
             transfer.destinationLocation.id, transfer.destinationLocationName, transfer.purpose, transfer.status,
-            transfer.sentAt.toString(), transfer.finalizedById, transfer.finalizedByLogin, items);
+            transfer.sentAt.toString(), transfer.finalizedById, transfer.finalizedByLogin,
+            transfer.approvedById, transfer.approvedByLogin, transfer.approvedAt == null ? null : transfer.approvedAt.toString(),
+            transfer.rejectedById, transfer.rejectedByLogin, transfer.rejectedAt == null ? null : transfer.rejectedAt.toString(),
+            transfer.rejectionReason, items);
     }
 
     private void requireTransferRead(InventoryTransfer transfer) {

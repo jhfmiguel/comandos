@@ -173,21 +173,62 @@ function StockPicker({ organizationId, sourceUnitId, selected, onAdd }: {
 }
 
 function History({ organizationId, unitId, refresh }: { organizationId: number; unitId?: number; refresh: number }) {
+    const { can } = useSession();
     const [page, setPage] = React.useState(0);
     const [result, setResult] = React.useState<TransferPage<InventoryTransfer> | null>(null);
     const [error, setError] = React.useState("");
+    const [actionBusy, setActionBusy] = React.useState<number | null>(null);
+    const [actionVersion, setActionVersion] = React.useState(0);
+
+    async function acceptTransfer(transfer: InventoryTransfer) {
+        setActionBusy(transfer.id);
+        setError("");
+        try {
+            await api.accept(transfer.id);
+            setActionVersion(value => value + 1);
+        } catch (caught) {
+            setError(errorText(caught));
+        } finally {
+            setActionBusy(null);
+        }
+    }
+
+    async function rejectTransfer(transfer: InventoryTransfer) {
+        const reason = window.prompt("Reason for rejecting this transfer:");
+        if (!reason?.trim()) return;
+        setActionBusy(transfer.id);
+        setError("");
+        try {
+            await api.reject(transfer.id, reason.trim());
+            setActionVersion(value => value + 1);
+        } catch (caught) {
+            setError(errorText(caught));
+        } finally {
+            setActionBusy(null);
+        }
+    }
+
     React.useEffect(() => {
         const controller = new AbortController();
         api.list(organizationId, unitId, page, controller.signal)
             .then(value => { if (!controller.signal.aborted) { setResult(value); setError(""); } })
             .catch(caught => { if (!controller.signal.aborted) setError(errorText(caught)); });
         return () => controller.abort();
-    }, [organizationId, unitId, page, refresh]);
+    }, [organizationId, unitId, page, refresh, actionVersion]);
+
     return <section className="mt-8"><h2>Transfer history</h2>{error && <Message type="error" text={error} />}
         {!result && !error && <p role="status">Loading history…</p>}{result?.content.map(transfer => <details key={transfer.id}>
             <summary>Transfer #{transfer.id} · {transfer.sourceUnitName} → {transfer.destinationUnitName} · {transfer.status}</summary>
             <p>{transfer.organizationName} · Destination: {transfer.destinationLocationName} · Purpose: {transfer.purpose}</p>
-            <p>Finalized: {transfer.sentAt.replace("T", " ")} · Operator: {transfer.finalizedByLogin || "Not recorded"}</p>
+            <p>Sent: {transfer.sentAt.replace("T", " ")} · Operator: {transfer.finalizedByLogin || "Not recorded"}</p>
+            {transfer.approvedAt && <p>Accepted: {transfer.approvedAt.replace("T", " ")} · {transfer.approvedByLogin || "Not recorded"}</p>}
+            {transfer.rejectedAt && <p>Rejected: {transfer.rejectedAt.replace("T", " ")} · {transfer.rejectedByLogin || "Not recorded"} · {transfer.rejectionReason}</p>}
+            {transfer.status === "PENDING_ACCEPTANCE" && unitId === transfer.destinationUnitId && <div className={styles.actions}>
+                {can("transfers", "ACCEPT", organizationId, transfer.destinationUnitId) &&
+                    <Button type="button" disabled={actionBusy === transfer.id} onClick={() => void acceptTransfer(transfer)}>Accept transfer</Button>}
+                {can("transfers", "REJECT", organizationId, transfer.destinationUnitId) &&
+                    <Button type="button" severity="secondary" disabled={actionBusy === transfer.id} onClick={() => void rejectTransfer(transfer)}>Reject transfer</Button>}
+            </div>}
             <div className={styles.tableContainer}><table><thead><tr><th>Item</th><th>Route</th><th>Quantity</th></tr></thead><tbody>
                 {transfer.items.map(item => <tr key={item.id}><td>{item.stockCode} · {item.modelName}<br />{item.sku}</td>
                     <td>{item.sourceLocationName} → {item.destinationLocationName}</td><td>{item.quantity} {item.unitOfMeasure}</td></tr>)}
