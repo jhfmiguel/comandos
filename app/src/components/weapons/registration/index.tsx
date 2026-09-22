@@ -12,7 +12,7 @@ import {
 
 import * as yup from "yup";
 
-import { Button as PrimeButton } from "@primereact/ui/button";
+import { Button as PrimeButton } from "components/ui/button";
 
 import {
     Layout,
