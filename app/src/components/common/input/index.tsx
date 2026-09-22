@@ -1,8 +1,8 @@
 import { InputHTMLAttributes } from "react"
 import { FormatUtils } from "@4us-dev/utils"
-import { InputGroup } from "@primereact/ui/inputgroup"
-import { InputText } from "@primereact/ui/inputtext"
-import { Label } from "@primereact/ui/label"
+import { InputGroup } from "components/ui/inputgroup"
+import { InputText } from "components/ui/inputtext"
+import { Label } from "components/ui/label"
 import { formatDate } from "utils/date"
 import { formatReal } from "utils/money"
 

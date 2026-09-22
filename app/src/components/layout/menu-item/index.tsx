@@ -4,10 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
 
-import { ChevronDown } from "@primeicons/react/chevron-down"
-import { ChevronRight } from "@primeicons/react/chevron-right"
-import type { IconProps } from "@primeicons/react/core"
-import { Sidebar } from "@primereact/ui/sidebar"
+import { ChevronDown } from "components/ui/icons"
+import { ChevronRight } from "components/ui/icons"
+import type { IconProps } from "components/ui/icons"
+import { Sidebar } from "components/ui/sidebar"
 
 interface SubMenuItem {
     href?: string

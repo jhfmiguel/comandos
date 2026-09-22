@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import "primeflex/primeflex.css";
-import "primeicons/primeicons.css";
 
 import "components/common/loader/loader.css";
-import PrimeSSRProvider from "../../prime-ssr-provider";
 import { SessionProvider } from "components/auth/session-provider";
 import { PreferencesProvider } from "components/settings/preferences-provider";
 import { ComandosToaster } from "components/common/toast";
@@ -32,10 +30,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
 
-        <PrimeSSRProvider>
-          <ComandosToaster />
+                  <ComandosToaster />
           <PreferencesProvider><SessionProvider>{ children }</SessionProvider></PreferencesProvider>
-        </PrimeSSRProvider>
 
       </body>
     </html>

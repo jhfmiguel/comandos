@@ -14,13 +14,14 @@ import {
     Home,
     Shield,
     SignOut,
-    SlidersV
-} from "@primeicons/react"
-import { History as HistoryIcon } from "@primeicons/react"
-import { Avatar } from "@primereact/ui/avatar"
-import { Menu as PopupMenu } from "@primereact/ui/menu"
-import type { MenuRootOpenChangeEvent } from "@primereact/ui/menu"
-import { Sidebar } from "@primereact/ui/sidebar"
+    SlidersV,
+    InventoryBook
+} from "components/ui/icons"
+import { History as HistoryIcon } from "components/ui/icons"
+import { Avatar } from "components/ui/avatar"
+import { Menu as PopupMenu } from "components/ui/menu"
+import type { MenuRootOpenChangeEvent } from "components/ui/menu"
+import { Sidebar } from "components/ui/sidebar"
 
 import { MenuItem } from "../menu-item"
 import { useSession } from "components/auth/session-provider"
@@ -31,14 +32,7 @@ interface SidebarOpenChangeEvent {
     value?: boolean
 }
 
-const InventoryBookIcon: React.FC<import("@primeicons/react/core").IconProps> = ({
-    className
-}) => (
-    <i
-        className={`pi pi-book ${className ?? ""}`.trim()}
-        aria-hidden="true"
-    />
-)
+const InventoryBookIcon = InventoryBook
 let persistedSidebarOpen = true
 
 export const Menu: React.FC = () => {

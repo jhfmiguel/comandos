@@ -1,6 +1,6 @@
 import { TextareaHTMLAttributes } from 'react'
-import { Label } from '@primereact/ui/label'
-import { Textarea as PrimeTextarea } from '@primereact/ui/textarea'
+import { Label } from 'components/ui/label'
+import { Textarea as PrimeTextarea } from 'components/ui/textarea'
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     

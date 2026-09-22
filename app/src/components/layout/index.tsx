@@ -2,9 +2,9 @@
 
 import { ReactNode } from "react"
 
-import { Sidebar as SidebarIcon } from "@primeicons/react"
-import { Button } from "@primereact/ui/button"
-import { Sidebar } from "@primereact/ui/sidebar"
+import { Sidebar as SidebarIcon } from "components/ui/icons"
+import { Button } from "components/ui/button"
+import { Sidebar } from "components/ui/sidebar"
 
 import { Menu } from "./menu"
 import { TopToolbar } from "./top-toolbar"
