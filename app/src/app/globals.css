@@ -5443,3 +5443,6 @@ html[data-theme="dark"] .comandos-secondary-button {
         border-radius: 0.75rem 0.75rem 0 0;
     }
 }
+
+.comandos-input-small { min-height: 2rem; padding-block: 0.35rem; }
+.comandos-input-large { min-height: 3.25rem; padding-block: 0.75rem; }

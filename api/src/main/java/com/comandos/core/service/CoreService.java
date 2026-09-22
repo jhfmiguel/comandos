@@ -267,6 +267,11 @@ public class CoreService {
                 && !Objects.equals(address.person.id, positiveLong(data.get("personId"), "Person", false)))
             bad("An address cannot be transferred to another person.");
         for (var field : spec.fields()) {
+            boolean supplied = data.containsKey(field.name());
+            if (!supplied) {
+                if (field.required() && id == null) bad(field.label() + " is required.");
+                continue;
+            }
             Object raw = data.get(field.name());
             if (field.type().equals("password")) {
                 if (id != null && (raw == null || "".equals(raw))) continue;
@@ -279,7 +284,6 @@ public class CoreService {
             }
             if (raw instanceof String text) raw = text.trim().isEmpty() ? null : text.trim();
             if (raw == null && field.required()) bad(field.label() + " is required.");
-            if (raw == null && id == null && !field.required()) continue;
             Object value = raw;
             if (raw != null) {
                 switch (field.type()) {

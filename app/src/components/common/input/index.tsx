@@ -27,6 +27,7 @@ export const Input: React.FC<InputProps> = ({
     onChange,
     currency = false,
     onlyNumbers = false,
+    size,
     ...inputProps
 }) => {
     const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +65,7 @@ export const Input: React.FC<InputProps> = ({
     const control = (
         <input
             {...inputProps}
-            className={`comandos-input ${currency ? "comandos-currency-value " : ""}w-full`}
+            className={`comandos-input ${size ? `comandos-input-${size} ` : ""}${currency ? "comandos-currency-value " : ""}w-full`}
             id={id}
             value={inputProps.value ?? ""}
             onChange={onInputChange}
@@ -93,7 +94,7 @@ export const Input: React.FC<InputProps> = ({
 }
 
 export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
-    const { value, onChange, name, id, label, columnClasses, error, ...restProps } = props
+    const { value, onChange, name, id, label, columnClasses, error, size, ...restProps } = props
     const safeValue = typeof value === "object" ? "" : (value ?? "")
     const { locale } = useComandosPreferences()
 
@@ -123,7 +124,7 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
                 <span className="comandos-input-addon" aria-hidden="true">R$</span>
                 <input
                     {...restProps}
-                    className="comandos-input comandos-currency-value w-full"
+                    className={`comandos-input ${size ? `comandos-input-${size} ` : ""}comandos-currency-value w-full`}
                     id={id}
                     name={name}
                     type="text"
