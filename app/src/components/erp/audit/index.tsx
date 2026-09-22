@@ -7,29 +7,29 @@ import axios from "axios";
 import {
     DataTable,
     FilterMatchMode
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
 import type {
     DataTableFilterInstance,
     DataTableFilterMeta,
     DataTablePaginationInstance
-} from "@primereact/ui/datatable";
+} from "components/ui/datatable";
 
-import { Paginator } from "@primereact/ui/paginator";
+import { Paginator } from "components/ui/paginator";
 
 import type {
     PaginatorPagesInstance,
     PaginatorRootChangeEvent
-} from "@primereact/ui/paginator";
+} from "components/ui/paginator";
 
-import { InputText } from "@primereact/ui/inputtext";
-import { Button } from "@primereact/ui/button";
+import { InputText } from "components/ui/inputtext";
+import { Button } from "components/ui/button";
 
-import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
-import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
-import { AngleLeft } from "@primeicons/react/angle-left";
-import { AngleRight } from "@primeicons/react/angle-right";
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
+import { AngleDoubleLeft } from "components/ui/icons";
+import { AngleDoubleRight } from "components/ui/icons";
+import { AngleLeft } from "components/ui/icons";
+import { AngleRight } from "components/ui/icons";
+import { EllipsisH } from "components/ui/icons";
 
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
