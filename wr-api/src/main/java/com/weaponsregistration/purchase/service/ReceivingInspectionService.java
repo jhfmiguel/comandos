@@ -60,6 +60,11 @@ public class ReceivingInspectionService {
         if (receiving.status == ReceivingStatus.CANCELLED) {
             throw new IllegalStateException("Cancelled receiving cannot be inspected.");
         }
+        if (receiving.status == ReceivingStatus.DEFINITIVELY_ACCEPTED
+            || receiving.status == ReceivingStatus.DEFINITIVELY_PARTIALLY_ACCEPTED
+            || receiving.status == ReceivingStatus.REJECTED) {
+            throw new IllegalStateException("Definitive receiving inspection is already closed.");
+        }
         if (!Boolean.TRUE.equals(receiving.physicalChecked)
             || !Boolean.TRUE.equals(receiving.documentsChecked)) {
             throw new IllegalStateException(
@@ -174,9 +179,15 @@ public class ReceivingInspectionService {
         inspection = inspections.save(inspection);
 
         if (anyAccepted && anyRejected) {
-            receiving.status = ReceivingStatus.PARTIALLY_REJECTED;
+            receiving.status = definitive
+                ? ReceivingStatus.DEFINITIVELY_PARTIALLY_ACCEPTED
+                : provisional
+                    ? ReceivingStatus.PROVISIONALLY_PARTIALLY_ACCEPTED
+                    : ReceivingStatus.PARTIALLY_REJECTED;
         } else if (anyRejected) {
-            receiving.status = ReceivingStatus.REJECTED;
+            receiving.status = definitive
+                ? ReceivingStatus.REJECTED
+                : ReceivingStatus.PARTIALLY_REJECTED;
         } else if (definitive) {
             receiving.status = ReceivingStatus.DEFINITIVELY_ACCEPTED;
         } else if (provisional) {

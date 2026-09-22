@@ -41,10 +41,20 @@ export const ReceivingInspectionWorkspace: React.FC = () => {
             setDecisions(Object.fromEntries(value.items.map((item) => [
                 item.id,
                 {
-                    accepted: String(item.receivedQuantity),
-                    rejected: "0",
+                    accepted: String(
+                        Number(item.acceptedQuantity) + Number(item.rejectedQuantity) > 0
+                            ? item.acceptedQuantity
+                            : item.receivedQuantity
+                    ),
+                    rejected: String(
+                        Number(item.acceptedQuantity) + Number(item.rejectedQuantity) > 0
+                            ? item.rejectedQuantity
+                            : 0
+                    ),
                     divergence: item.divergenceDescription || "",
-                    rejectedSerialIds: []
+                    rejectedSerialIds: item.serials
+                        .filter((serial) => serial.accepted === false)
+                        .map((serial) => serial.id)
                 }
             ])))
         } catch {
@@ -121,7 +131,12 @@ export const ReceivingInspectionWorkspace: React.FC = () => {
         }
     }
 
+    const inspectionClosed = receiving
+        ? ["DEFINITIVELY_ACCEPTED", "DEFINITIVELY_PARTIALLY_ACCEPTED", "REJECTED", "CANCELLED"].includes(receiving.status)
+        : false
+
     const valid = receiving
+        && !inspectionClosed
         && receiving.physicalChecked
         && receiving.documentsChecked
         && !receiving.items.some((item) => {
@@ -144,6 +159,7 @@ export const ReceivingInspectionWorkspace: React.FC = () => {
             </div>
 
             {message && <p>{message}</p>}
+            {inspectionClosed && <p>{tr("Definitive receiving inspection is already closed.")}</p>}
 
             <div className="registration-form-grid">
                 <div className="registration-field">

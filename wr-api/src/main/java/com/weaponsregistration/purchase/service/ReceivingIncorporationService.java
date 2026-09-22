@@ -59,8 +59,11 @@ public class ReceivingIncorporationService {
             EquipmentReceiving.class, request.receivingId(), LockModeType.PESSIMISTIC_WRITE
         );
         if (receiving == null) throw new IllegalArgumentException("Receiving not found.");
-        if (receiving.status != ReceivingStatus.DEFINITIVELY_ACCEPTED) {
-            throw new IllegalStateException("Only definitively accepted receiving records can be incorporated.");
+        if (receiving.status != ReceivingStatus.DEFINITIVELY_ACCEPTED
+            && receiving.status != ReceivingStatus.DEFINITIVELY_PARTIALLY_ACCEPTED) {
+            throw new IllegalStateException(
+                "Only definitively accepted quantities can be incorporated."
+            );
         }
 
         EquipmentReceivingItem receivingItem = entityManager.find(

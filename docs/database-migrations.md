@@ -42,3 +42,12 @@ before authorization. Private or gratuitous acquisitions can be authorized
 without forcing a public-procurement flow. Receiving accepts only AUTHORIZED,
 ORDERED, or PARTIALLY_RECEIVED acquisitions; DRAFT and PROCUREMENT_IN_PROGRESS
 records can no longer create stock intake accidentally.
+
+
+## Definitive receiving decisions
+
+Receiving inspection now distinguishes provisional partial acceptance from
+definitive partial acceptance. Accepted quantities from a definitive partial
+decision can be incorporated while rejected quantities remain excluded and keep
+the acquisition quantity pending for replacement delivery. Definitive inspection
+states are terminal and cannot be silently overwritten by a later inspection.
