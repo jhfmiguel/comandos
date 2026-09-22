@@ -2,11 +2,6 @@
 
 import * as React from "react"
 
-import { ChevronLeft, ChevronRight } from "@primeicons/react"
-
-import { Tabs } from "@primereact/ui/tabs"
-import type { TabsRootChangeEvent } from "@primereact/ui/tabs"
-
 import { Layout } from "components/layout"
 import { useComandosPreferences } from "components/settings/preferences-provider"
 import { PurchasePanel } from "components/erp/purchases"
@@ -79,39 +74,57 @@ export function TransactionsWorkspace() {
 
     return (
         <Layout title="Transactions">
-            <Tabs.Root
-                value={activeTab}
-                onValueChange={(event: TabsRootChangeEvent) =>
-                    setActiveTab(event.value as TransactionTab)
-                }
-                selectOnFocus
-            >
-                <Tabs.List>
-                    <Tabs.Prev aria-label={tr("Previous")}>
-                        <ChevronLeft />
-                    </Tabs.Prev>
+            <div className="comandos-tabs">
+                <div
+                    className="comandos-tabs-list"
+                    role="tablist"
+                    aria-label={tr("Transactions")}
+                >
+                    {transactionTabs.map((tab) => (
+                        <button
+                            key={tab.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={activeTab === tab.value}
+                            className={`comandos-tab ${activeTab === tab.value ? "is-active" : ""}`}
+                            onClick={() => setActiveTab(tab.value)}
+                            onKeyDown={(event) => {
+                                const currentIndex = transactionTabs.findIndex(
+                                    (item) => item.value === activeTab
+                                )
 
-                    <Tabs.Content>
-                        {transactionTabs.map((tab) => (
-                            <Tabs.Tab key={tab.value} value={tab.value}>
-                                {tr(tab.label)}
-                            </Tabs.Tab>
-                        ))}
+                                if (event.key === "ArrowLeft") {
+                                    event.preventDefault()
+                                    const nextIndex =
+                                        (currentIndex - 1 + transactionTabs.length) %
+                                        transactionTabs.length
+                                    setActiveTab(transactionTabs[nextIndex].value)
+                                }
 
-                        <Tabs.Indicator />
-                    </Tabs.Content>
+                                if (event.key === "ArrowRight") {
+                                    event.preventDefault()
+                                    const nextIndex =
+                                        (currentIndex + 1) % transactionTabs.length
+                                    setActiveTab(transactionTabs[nextIndex].value)
+                                }
+                            }}
+                        >
+                            {tr(tab.label)}
+                        </button>
+                    ))}
+                </div>
 
-                    <Tabs.Next aria-label={tr("Next")}>
-                        <ChevronRight />
-                    </Tabs.Next>
-                </Tabs.List>
-
-                <Tabs.Panels>
-                    <Tabs.Panel value={activeTab}>
-                        <TransactionPanel value={activeTab} />
-                    </Tabs.Panel>
-                </Tabs.Panels>
-            </Tabs.Root>
+                <div
+                    className="comandos-tab-panel"
+                    role="tabpanel"
+                    aria-label={tr(
+                        transactionTabs.find((tab) => tab.value === activeTab)?.label ??
+                        "Transactions"
+                    )}
+                >
+                    <TransactionPanel value={activeTab} />
+                </div>
+            </div>
         </Layout>
     )
 }
