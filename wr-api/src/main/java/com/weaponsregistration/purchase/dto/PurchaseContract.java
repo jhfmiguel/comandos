@@ -14,6 +14,7 @@ public final class PurchaseContract {
  public record DocumentRequest(AcquisitionDocumentType documentType,String documentNumber,LocalDate issueDate,String issuer,BigDecimal amount,String storageReference,String notes){}
  public record CreateProcurementRequest(String processNumber,String objectDescription,String justification,ProcurementMethod procurementMethod,
   BiddingModality biddingModality,DirectContractingType directContractingType,BigDecimal estimatedValue,String legalBasis,String supplierChoiceReason,String priceJustification){}
+ public record ProcurementStatusRequest(ProcurementStatus status){}
  public record PurchaseItemView(Long id,Long itemModelId,String itemName,BigDecimal quantity,BigDecimal receivedQuantity,BigDecimal unitPrice,BigDecimal discount,BigDecimal total,String conditionDescription){}
  public record DocumentView(Long id,AcquisitionDocumentType documentType,String documentNumber,LocalDate issueDate,String issuer,BigDecimal amount,String storageReference,String notes){}
  public record ProcurementView(Long id,String processNumber,ProcurementMethod procurementMethod,BiddingModality biddingModality,DirectContractingType directContractingType,ProcurementStatus status,BigDecimal estimatedValue,String legalBasis){}

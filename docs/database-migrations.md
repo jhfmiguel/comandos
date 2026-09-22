@@ -32,3 +32,13 @@ integrated validation: legacy databases may not contain
 
 - `V1__stock_location_active.sql`: adds/backfills the active flag for stock
   locations and enforces a non-null default of `true`.
+
+
+## Acquisition lifecycle
+
+Acquisitions now enforce contracting state before receiving. Public onerous
+acquisitions require a procurement process that reaches HOMOLOGATED or CONTRACTED
+before authorization. Private or gratuitous acquisitions can be authorized
+without forcing a public-procurement flow. Receiving accepts only AUTHORIZED,
+ORDERED, or PARTIALLY_RECEIVED acquisitions; DRAFT and PROCUREMENT_IN_PROGRESS
+records can no longer create stock intake accidentally.

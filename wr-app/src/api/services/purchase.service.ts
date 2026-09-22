@@ -23,6 +23,15 @@ export const purchaseService = {
     configureProcurement: async (id: number, request: CreateProcurementRequest) =>
         (await httpClient.put<PurchaseView>(`${root}/${id}/procurement`, request)).data,
 
+    updateProcurementStatus: async (id: number, status: string) =>
+        (await httpClient.put<PurchaseView>(`${root}/${id}/procurement/status`, { status })).data,
+
+    authorize: async (id: number) =>
+        (await httpClient.post<PurchaseView>(`${root}/${id}/authorize`)).data,
+
+    order: async (id: number) =>
+        (await httpClient.post<PurchaseView>(`${root}/${id}/order`)).data,
+
     cancel: async (id: number) =>
         (await httpClient.post<PurchaseView>(`${root}/${id}/cancel`)).data
 };

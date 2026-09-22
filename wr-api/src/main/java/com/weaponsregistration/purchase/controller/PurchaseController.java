@@ -26,6 +26,18 @@ public class PurchaseController {
         return service.configureProcurement(id, request);
     }
 
+    @PutMapping("/{id}/procurement/status")
+    public PurchaseView updateProcurementStatus(@PathVariable Long id,
+        @RequestBody ProcurementStatusRequest request) {
+        return service.updateProcurementStatus(id, request);
+    }
+
+    @PostMapping("/{id}/authorize")
+    public PurchaseView authorize(@PathVariable Long id) { return service.authorize(id); }
+
+    @PostMapping("/{id}/order")
+    public PurchaseView order(@PathVariable Long id) { return service.order(id); }
+
     @PostMapping("/{id}/cancel")
     public PurchaseView cancel(@PathVariable Long id) { return service.cancel(id); }
 }

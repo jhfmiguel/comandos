@@ -19,6 +19,7 @@ import type {
     CreatePurchaseItemRequest,
     DirectContractingType,
     ProcurementMethod,
+    ProcurementStatus,
     PurchaseView
 } from "api/models/erp/purchase";
 import styles from "components/erp/shared/workspace.module.css";
@@ -595,6 +596,28 @@ function ProcurementSection({
     const [priceJustification, setPriceJustification] = React.useState("");
     const [busy, setBusy] = React.useState(false);
     const [error, setError] = React.useState("");
+    const [statusBusy, setStatusBusy] = React.useState(false);
+
+    async function advanceStatus(status: ProcurementStatus) {
+        setStatusBusy(true); setError("");
+        try { onChange(await purchaseService.updateProcurementStatus(purchase.id, status)); }
+        catch (caught) { setError(failure(caught)); }
+        finally { setStatusBusy(false); }
+    }
+
+    async function authorize() {
+        setStatusBusy(true); setError("");
+        try { onChange(await purchaseService.authorize(purchase.id)); }
+        catch (caught) { setError(failure(caught)); }
+        finally { setStatusBusy(false); }
+    }
+
+    async function order() {
+        setStatusBusy(true); setError("");
+        try { onChange(await purchaseService.order(purchase.id)); }
+        catch (caught) { setError(failure(caught)); }
+        finally { setStatusBusy(false); }
+    }
 
     async function save(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -750,6 +773,34 @@ function ProcurementSection({
                     </Button>
                 </div>
             </form>
+            <div className={styles.actions}>
+                {purchase.procurement && !["HOMOLOGATED","CONTRACTED","CANCELLED","FAILED"].includes(purchase.procurement.status) && (
+                    <select aria-label="Next procurement status" disabled={statusBusy}
+                        defaultValue="" onChange={event => {
+                            if (event.target.value) void advanceStatus(event.target.value as ProcurementStatus);
+                            event.currentTarget.value = "";
+                        }}>
+                        <option value="">Advance procurement…</option>
+                        <option value="PLANNING">Planning</option>
+                        <option value="UNDER_REVIEW">Under review</option>
+                        <option value="AUTHORIZED">Authorized</option>
+                        <option value="PUBLISHED">Published</option>
+                        <option value="PROPOSAL_PHASE">Proposal phase</option>
+                        <option value="QUALIFICATION_PHASE">Qualification phase</option>
+                        <option value="JUDGMENT_PHASE">Judgment phase</option>
+                        <option value="APPEAL_PHASE">Appeal phase</option>
+                        <option value="AWARDED">Awarded</option>
+                        <option value="HOMOLOGATED">Homologated</option>
+                        <option value="CONTRACTED">Contracted</option>
+                    </select>
+                )}
+                {!["AUTHORIZED","ORDERED","PARTIALLY_RECEIVED","RECEIVED","CANCELLED"].includes(purchase.status) && (
+                    <Button type="button" disabled={statusBusy} onClick={() => void authorize()}>Authorize acquisition</Button>
+                )}
+                {purchase.status === "AUTHORIZED" && (
+                    <Button type="button" disabled={statusBusy} onClick={() => void order()}>Issue order</Button>
+                )}
+            </div>
         </section>
     );
 }

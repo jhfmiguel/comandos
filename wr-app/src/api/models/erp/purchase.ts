@@ -1,5 +1,6 @@
 export type AcquisitionType = "ONEROUS" | "FREE";
 export type ProcurementMethod = "NOT_REQUIRED" | "BIDDING" | "DIRECT_CONTRACTING";
+export type ProcurementStatus = "DRAFT"|"PLANNING"|"UNDER_REVIEW"|"AUTHORIZED"|"PUBLISHED"|"PROPOSAL_PHASE"|"QUALIFICATION_PHASE"|"JUDGMENT_PHASE"|"APPEAL_PHASE"|"AWARDED"|"HOMOLOGATED"|"CONTRACTED"|"CANCELLED"|"FAILED";
 export type BiddingModality = "PREGAO" | "CONCORRENCIA" | "CONCURSO" | "LEILAO" | "DIALOGO_COMPETITIVO";
 export type DirectContractingType = "DISPENSA" | "INEXIGIBILIDADE";
 export type AcquisitionDocumentType = "PROCUREMENT_PROCESS"|"BIDDING_NOTICE"|"DIRECT_CONTRACTING_ACT"|"CONTRACT"|"BUDGET_COMMITMENT"|"PURCHASE_ORDER"|"INVOICE"|"FREE_ACQUISITION_TERM"|"DONATION_TERM"|"TRANSFER_TERM"|"AUTHORIZATION"|"DELIVERY_DOCUMENT"|"OTHER";
@@ -10,6 +11,6 @@ export interface CreatePurchaseRequest{buyerOrganizationId:number;supplierOrgani
 export interface CreateProcurementRequest{processNumber:string;objectDescription:string;justification?:string;procurementMethod:ProcurementMethod;biddingModality?:BiddingModality;directContractingType?:DirectContractingType;estimatedValue?:number;legalBasis?:string;supplierChoiceReason?:string;priceJustification?:string}
 export interface PurchaseItemView{id:number;itemModelId:number;itemName:string;quantity:number;receivedQuantity:number;unitPrice:number;discount:number;total:number;conditionDescription?:string}
 export interface AcquisitionDocumentView extends AcquisitionDocumentRequest{id:number}
-export interface ProcurementView{id:number;processNumber:string;procurementMethod:ProcurementMethod;biddingModality?:BiddingModality;directContractingType?:DirectContractingType;status:string;estimatedValue:number;legalBasis?:string}
+export interface ProcurementView{id:number;processNumber:string;procurementMethod:ProcurementMethod;biddingModality?:BiddingModality;directContractingType?:DirectContractingType;status:ProcurementStatus;estimatedValue:number;legalBasis?:string}
 export interface PurchaseView{id:number;buyerOrganizationId:number;buyerName:string;publicBuyer:boolean;supplierOrganizationId?:number;supplierName?:string;originPersonId:number;originPersonName:string;originPersonType:string;originPersonTaxId?:string;acquisitionType:AcquisitionType;originDescription?:string;purchaseNumber:string;purchaseDate:string;status:PurchaseStatus;subtotal:number;discount:number;freight:number;taxes:number;otherCosts:number;total:number;paymentConditions?:string;deliveryConditions?:string;warrantyConditions?:string;notes?:string;procurement?:ProcurementView;items:PurchaseItemView[];documents:AcquisitionDocumentView[]}
 export interface ItemModelOption{id:number;name:string;sku?:string;listPrice?:number}

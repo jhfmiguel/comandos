@@ -78,8 +78,14 @@ public class EquipmentReceivingService {
             : purchaseRepository.findById(request.acquisitionId())
                 .orElseThrow(() -> new IllegalArgumentException("Acquisition not found: " + request.acquisitionId()));
 
-        if (acquisition != null && acquisition.status == PurchaseStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled acquisition cannot receive items.");
+        if (acquisition != null && !Set.of(
+            PurchaseStatus.AUTHORIZED,
+            PurchaseStatus.ORDERED,
+            PurchaseStatus.PARTIALLY_RECEIVED
+        ).contains(acquisition.status)) {
+            throw new IllegalStateException(
+                "Acquisition must be authorized before receiving items."
+            );
         }
 
         EquipmentReceiving receiving = new EquipmentReceiving();
