@@ -45,3 +45,75 @@ jobs:
         env:
           NODE_ENV: production
         run: yarn build
+
+  armament-browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: weapons
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d weapons"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: app/yarn.lock
+      - name: Install frontend
+        working-directory: app
+        run: yarn install --frozen-lockfile
+      - name: Install Chromium
+        working-directory: app
+        run: yarn playwright install --with-deps chromium
+      - name: Start demo API
+        working-directory: api
+        run: |
+          chmod +x mvnw
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo -Dspring-boot.run.arguments=--server.port=8180 > /tmp/comandos-api.log 2>&1 &
+      - name: Wait for API
+        run: |
+          for i in {1..120}; do
+            curl -fsS http://localhost:8180/actuator/health && exit 0
+            sleep 2
+          done
+          cat /tmp/comandos-api.log
+          exit 1
+      - name: Build frontend
+        working-directory: app
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8180
+        run: yarn build
+      - name: Start frontend
+        working-directory: app
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8180
+        run: nohup yarn start > /tmp/comandos-app.log 2>&1 &
+      - name: Wait for frontend
+        run: |
+          for i in {1..60}; do
+            curl -fsS http://localhost:3000 && exit 0
+            sleep 2
+          done
+          cat /tmp/comandos-app.log
+          exit 1
+      - name: Browser smoke validation
+        working-directory: app
+        env:
+          COMANDOS_API_URL: http://localhost:8180
+          COMANDOS_APP_URL: http://localhost:3000
+        run: yarn validate:armamento
