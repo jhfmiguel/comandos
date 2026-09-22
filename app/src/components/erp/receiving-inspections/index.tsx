@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Button } from "@primereact/ui/button"
+import { Button } from "components/ui/button"
 import { useComandosPreferences } from "components/settings/preferences-provider"
 import { receivingService } from "api/services/receiving.service"
 import {
