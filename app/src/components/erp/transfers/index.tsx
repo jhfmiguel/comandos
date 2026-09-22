@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import axios from "axios";
-import { Button } from "@primereact/ui/button";
+import { Button } from "components/ui/button";
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
 import { useSession } from "components/auth/session-provider";
