@@ -54,16 +54,12 @@ const hasPrimeInLock = primeTokens.some(token =>
 );
 
 if (directPrime.length || hasPrimeInLock) {
-  if (!migrationMode) {
-    console.error("Prime dependencies remain but no active migration marker exists.");
-    process.exit(1);
-  }
-
-  console.warn("Prime removal migration is still active.");
-  console.warn(`Temporary direct packages: ${directPrime.join(", ")}`);
-  console.warn("No new Prime package is allowed beyond the explicit migration allowlist.");
-} else {
-  console.log("Prime dependencies: none.");
+  console.error("Prime dependencies remain after migration:");
+  for (const name of directPrime) console.error(`- direct: ${name}`);
+  if (hasPrimeInLock) console.error("- Prime package remains in yarn.lock");
+  process.exit(1);
 }
+
+console.log("Prime dependencies: none.");
 
 console.log("Commercial dependency policy: PASS");
