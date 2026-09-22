@@ -279,6 +279,7 @@ public class CoreService {
             }
             if (raw instanceof String text) raw = text.trim().isEmpty() ? null : text.trim();
             if (raw == null && field.required()) bad(field.label() + " is required.");
+            if (raw == null && id == null && !field.required()) continue;
             Object value = raw;
             if (raw != null) {
                 switch (field.type()) {
