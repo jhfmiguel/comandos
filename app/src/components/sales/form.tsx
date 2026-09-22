@@ -5,18 +5,18 @@ import {
     AutoComplete,
     type AutoCompleteCompleteEvent,
     type AutoCompleteValueChangeEvent
-} from "@primereact/ui/autocomplete";
+} from "components/ui/autocomplete";
 
-import { InputText } from "@primereact/ui/inputtext";
-import { Label } from "@primereact/ui/label";
-import { Button } from "@primereact/ui/button";
-import { Dialog } from "@primereact/ui/dialog";
-import { Plus } from "@primeicons/react/plus";
-import { Minus } from "@primeicons/react/minus";
-import { Trash } from "@primeicons/react/trash";
-import { FloatLabel } from "@primereact/ui/floatlabel";
-import { DataTable } from "@primereact/ui/datatable";
-import { Select, type SelectValueChangeEvent } from "@primereact/ui/select";
+import { InputText } from "components/ui/inputtext";
+import { Label } from "components/ui/label";
+import { Button } from "components/ui/button";
+import { Dialog } from "components/ui/dialog";
+import { Plus } from "components/ui/icons";
+import { Minus } from "components/ui/icons/minus";
+import { Trash } from "components/ui/icons";
+import { FloatLabel } from "components/ui/floatlabel";
+import { DataTable } from "components/ui/datatable";
+import { Select, type SelectValueChangeEvent } from "components/ui/select";
 
 import type { Sale, SaleItem } from "api/models/sales";
 import type { User } from "api/models/users";
