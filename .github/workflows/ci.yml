@@ -120,3 +120,44 @@ jobs:
           COMANDOS_API_URL: http://localhost:8180
           COMANDOS_APP_URL: http://localhost:3000
         run: yarn validate:armamento
+
+
+  software-composition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: app/yarn.lock
+      - name: Install frontend with Yarn
+        working-directory: app
+        run: yarn install --frozen-lockfile
+      - name: Generate frontend CycloneDX SBOM
+        run: |
+          mkdir -p artifacts
+          cd app
+          npx --yes @cyclonedx/cyclonedx-npm@6.0.1 --output-format JSON --output-file ../artifacts/frontend-bom.json
+      - name: Generate backend CycloneDX SBOM
+        working-directory: api
+        run: |
+          chmod +x mvnw
+          ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.2:makeBom -Dcyclonedx.outputFormat=json
+          cp target/bom.json ../artifacts/backend-bom.json
+      - name: Audit SBOM licenses
+        run: node scripts/check-sbom-licenses.mjs artifacts/frontend-bom.json artifacts/backend-bom.json
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: comandos-sbom
+          path: |
+            artifacts/frontend-bom.json
+            artifacts/backend-bom.json
+          if-no-files-found: error
+          retention-days: 30
