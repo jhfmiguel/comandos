@@ -23,5 +23,8 @@ public class OrganizationalUnit extends CoreEntity {
     
     @Column(name = "type", nullable = false, length = 255)
     public String type;
+
+    @Column(name = "active", nullable = false)
+    public Boolean active = true;
     
 }

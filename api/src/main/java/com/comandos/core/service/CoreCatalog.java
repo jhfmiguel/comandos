@@ -33,7 +33,8 @@ public final class CoreCatalog {
             new Field("parentUnitId", "Parent unit", "reference", false, "units", List.of()),
             new Field("code", "Code", "text", true, null, List.of()),
             new Field("name", "Name", "text", true, null, List.of()),
-            new Field("type", "Type", "text", true, null, List.of())
+            new Field("type", "Type", "text", true, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
         )),
         new Resource("people", "People", "People", Person.class, List.of(
             new Field("personType", "Person type", "choice", true, null, List.of("INDIVIDUAL", "LEGAL_ENTITY")),
