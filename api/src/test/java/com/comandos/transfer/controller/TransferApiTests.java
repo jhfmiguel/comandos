@@ -41,8 +41,12 @@ class TransferApiTests {
         long transferId = first.body().get("id").asLong();
         assertEquals(setup.destinationLocation(), jdbc.queryForObject(
             "select location_id from erp_asset_item where id=?", Long.class, setup.asset()));
+        assertEquals("TRANSFER_PENDING", jdbc.queryForObject(
+            "select status from erp_asset_item where id=?", String.class, setup.asset()));
         assertEquals("7.5000", decimal("select available from erp_stock_balance where id=?", setup.sourceBalance()));
-        assertEquals("2.5000", decimal("select available from erp_stock_balance where lot_id=? and location_id=?",
+        assertEquals("0.0000", decimal("select available from erp_stock_balance where lot_id=? and location_id=?",
+            setup.lot(), setup.destinationLocation()));
+        assertEquals("2.5000", decimal("select blocked from erp_stock_balance where lot_id=? and location_id=?",
             setup.lot(), setup.destinationLocation()));
         assertEquals("10.0000", decimal("select available_quantity from erp_stock_lot where id=?", setup.lot()));
         assertEquals(2, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='TRANSFER_OUT'", Integer.class));
