@@ -12,6 +12,15 @@ interface SubMenuItem {
     subItems?: Array<SubMenuItem>
 }
 
+function hasActiveSubItem(
+    items: Array<SubMenuItem> | undefined,
+    isCurrentRoute: (href?: string) => boolean
+): boolean {
+    return items?.some((item) =>
+        isCurrentRoute(item.href) || hasActiveSubItem(item.subItems, isCurrentRoute)
+    ) ?? false
+}
+
 interface MenuItemProps {
     menuKey: string
     href?: string
@@ -38,11 +47,9 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
         return [...expected.entries()].every(([key, value]) => searchParams.get(key) === value)
     }, [pathname, searchParams])
 
-    const hasActiveSubItem = React.useCallback((items?: Array<SubMenuItem>): boolean =>
-        items?.some((item) => isCurrentRoute(item.href) || hasActiveSubItem(item.subItems)) ?? false,
-    [isCurrentRoute])
-
-    const isRouteActive = props.href ? isCurrentRoute(props.href) : hasActiveSubItem(props.subItems)
+    const isRouteActive = props.href
+        ? isCurrentRoute(props.href)
+        : hasActiveSubItem(props.subItems, isCurrentRoute)
     const isActive = props.selectedMenu !== null
         ? props.selectedMenu === props.menuKey
         : isRouteActive
@@ -62,7 +69,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
         items.map((item, index) => {
             const itemKey = `${parentKey}-${depth}-${index}-${item.label}`
             const hasChildren = Boolean(item.subItems?.length)
-            const childActive = hasChildren && hasActiveSubItem(item.subItems)
+            const childActive = hasChildren && hasActiveSubItem(item.subItems, isCurrentRoute)
             const itemOpen = openGroups[itemKey] ?? childActive
             const itemActive = item.href ? isCurrentRoute(item.href) : childActive
 

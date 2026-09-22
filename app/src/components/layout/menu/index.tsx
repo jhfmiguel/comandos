@@ -32,7 +32,8 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
     const { session, signOut, can } = useSession()
     const { tr } = useComandosPreferences()
     const pathname = usePathname()
-    const [selectedMenu, setSelectedMenu] = React.useState<string | null>(null)
+    const [selection, setSelection] = React.useState<{ pathname: string; menu: string | null }>({ pathname, menu: null })
+    const selectedMenu = selection.pathname === pathname ? selection.menu : null
     const [mobile, setMobile] = React.useState(false)
     const [userMenuOpen, setUserMenuOpen] = React.useState(false)
     const [signOutError, setSignOutError] = React.useState("")
@@ -49,13 +50,8 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
         return () => media.removeEventListener("change", sync)
     }, [onOpenChange])
 
-    React.useEffect(() => {
-        setSelectedMenu(null)
-        if (mobile) onOpenChange(false)
-    }, [pathname, mobile, onOpenChange])
-
     const handleSelect = (menuKey: string | null) => {
-        setSelectedMenu(menuKey)
+        setSelection({ pathname, menu: menuKey })
         setUserMenuOpen(false)
     }
 
