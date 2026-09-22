@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comandos-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: comandos-api
+  template:
+    metadata:
+      labels:
+        app: comandos-api
+    spec:
+      containers:
+        - name: api
+          image: comandos/api:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: postgresql
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
