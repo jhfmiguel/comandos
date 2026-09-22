@@ -88,3 +88,10 @@ Antes de uma versão comercial:
 - revisar dependências LGPL/MPL/EPL/Apache com obrigações de redistribuição;
 - revisar qualquer dependência não-OSS ou com licença customizada;
 - submeter a versão final a revisão jurídica de software.
+
+
+## Estado da migração
+
+Migração concluída em 22/09/2026. PrimeReact/PrimeUI/PrimeIcons/PrimeUX foram
+removidos do frontend, package.json e yarn.lock. O CI mantém a política de
+bloqueio para impedir reintrodução acidental.

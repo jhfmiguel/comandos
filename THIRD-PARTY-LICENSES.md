@@ -36,3 +36,11 @@ acompanhar uma distribuição final.
 
 PrimeReact 11 / PrimeUI e seus pacotes auxiliares não devem ser reintroduzidos
 sem decisão comercial e jurídica explícita.
+
+
+## Migração Prime concluída
+
+A remoção de PrimeReact 11, PrimeUI, PrimeIcons e PrimeUX foi concluída.
+O frontend não possui esses pacotes em package.json ou yarn.lock. O CI bloqueia
+qualquer reintrodução futura dessas dependências sem nova decisão comercial e
+jurídica explícita.

@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -15,19 +15,6 @@ const primeTokens = [
   "primeicons@"
 ];
 
-const temporaryPrimePackages = new Set([
-  "@primereact/ui",
-  "primereact",
-  "@primeicons/react",
-  "primeicons",
-  "@primeuix/themes"
-]);
-
-let migrationMode = false;
-try {
-  await access(resolve(root, "..", "docs", "prime-removal-migration.md"));
-  migrationMode = true;
-} catch {}
 
 const directPrime = Object.keys({
   ...(packageJson.dependencies ?? {}),
@@ -40,14 +27,6 @@ const directPrime = Object.keys({
   name.startsWith("@primeuix/") ||
   name.startsWith("@primeicons/")
 );
-
-const unexpectedDirectPrime = directPrime.filter(name => !temporaryPrimePackages.has(name));
-
-if (unexpectedDirectPrime.length) {
-  console.error("Unexpected Prime dependency introduced:");
-  for (const name of unexpectedDirectPrime) console.error(`- ${name}`);
-  process.exit(1);
-}
 
 const hasPrimeInLock = primeTokens.some(token =>
   yarnLock.toLowerCase().includes(token.toLowerCase())
