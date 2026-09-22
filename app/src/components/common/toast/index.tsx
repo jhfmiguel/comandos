@@ -63,11 +63,10 @@ function ToastIcon({ severity }: { severity: ComandosToastSeverity }) {
 }
 
 export function ComandosToaster() {
-  const [toasts, setToasts] = React.useState<ToastType[]>([]);
+  const [toasts, setToasts] = React.useState<ToastType[]>(() => items);
 
   React.useEffect(() => {
     listeners.add(setToasts);
-    setToasts(items);
     return () => {
       listeners.delete(setToasts);
     };
