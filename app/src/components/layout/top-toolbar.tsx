@@ -1,6 +1,6 @@
 "use client"
 
-import { Moon, Sun } from "@primeicons/react"
+import { Moon, Sun } from "lucide-react"
 
 import { useComandosPreferences } from "components/settings/preferences-provider"
 

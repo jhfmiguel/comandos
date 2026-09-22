@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Button } from "@primereact/ui/button";
+import { Button } from "components/common/button";
 import { Message } from "components/common/message";
 import { useSession } from "components/auth/session-provider";
 import { httpClient } from "api/http";
