@@ -87,8 +87,12 @@ export const UsersList: React.FC = () => {
     }, [service])
 
     React.useEffect(() => {
-        void load(EMPTY, 0, 10)
+        const initialLoad = window.setTimeout(() => {
+            void load(EMPTY, 0, 10)
+        }, 0)
+
         return () => {
+            window.clearTimeout(initialLoad)
             requestRef.current?.abort()
             if (timerRef.current) clearTimeout(timerRef.current)
         }

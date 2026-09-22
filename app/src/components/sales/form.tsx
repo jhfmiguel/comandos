@@ -56,7 +56,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     const [userOpen, setUserOpen] = React.useState(false)
 
     const [code, setCode] = React.useState("")
-    const [weapon, setWeapon] = React.useState<Weapon | null>(null)
     const [weaponName, setWeaponName] = React.useState("")
     const [quantity, setQuantity] = React.useState("")
     const [itemError, setItemError] = React.useState("")
@@ -140,7 +139,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
         if (codeTimer.current) clearTimeout(codeTimer.current)
 
         setCode(value)
-        setWeapon(null)
         setWeaponName("")
         setFilteredWeapons([])
         setWeaponOpen(false)
@@ -152,7 +150,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
             try {
                 const result = await loadWeapon(encodeURIComponent(value.trim()))
                 if (request === weaponRequest.current) {
-                    setWeapon(result)
                     setWeaponName(result.name ?? "")
                     setFilteredWeapons([result])
                 }
@@ -166,7 +163,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
 
     const searchWeapons = (query: string): void => {
         setWeaponName(query)
-        setWeapon(null)
         setWeaponOpen(Boolean(query.trim()))
         const request = ++weaponRequest.current
 
@@ -200,7 +196,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
     const selectWeapon = (selected: Weapon): void => {
         ++weaponRequest.current
         if (codeTimer.current) clearTimeout(codeTimer.current)
-        setWeapon(selected)
         setWeaponName(selected.name ?? "")
         setCode(selected.id == null ? "" : String(selected.id))
         setFilteredWeapons([])
@@ -270,7 +265,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                 return
             }
 
-            setWeapon(selectedWeapon)
             setWeaponName(selectedWeapon.name)
 
             const items = formik.values.weapons ?? []
@@ -291,13 +285,11 @@ export const SalesForm: React.FC<SalesFormProps> = ({
             ])
 
             setCode("")
-            setWeapon(null)
-            setWeaponName("")
+                setWeaponName("")
             setQuantity("")
             setItemError("")
         } catch {
-            setWeapon(null)
-            setWeaponName("")
+                setWeaponName("")
             setItemError("Unable to load the weapon. Check the code and try again.")
         } finally {
             addingWeapon.current = false
@@ -312,7 +304,6 @@ export const SalesForm: React.FC<SalesFormProps> = ({
 
         formik.resetForm()
         setCode("")
-        setWeapon(null)
         setWeaponName("")
         setQuantity("")
         setItemError("")
@@ -347,6 +338,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                                     key={String(user.id)}
                                     type="button"
                                     role="option"
+                                    aria-selected="false"
                                     className="comandos-autocomplete-option"
                                     onMouseDown={(event) => event.preventDefault()}
                                     onClick={() => selectUser(user)}
@@ -404,6 +396,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                                     key={String(item.id)}
                                     type="button"
                                     role="option"
+                                    aria-selected="false"
                                     className="comandos-autocomplete-option"
                                     onMouseDown={(event) => event.preventDefault()}
                                     onClick={() => selectWeapon(item)}
