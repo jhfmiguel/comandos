@@ -133,8 +133,9 @@ export function RecordWorkspace({
 
                 {error && <Message type="error" text={error} />}
                 {error && (
-                    <Button
+                    <button
                         type="button"
+                        className="comandos-secondary-button"
                         onClick={() => {
                             setError("");
                             setRetry(value => value + 1);
@@ -627,21 +628,20 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
 
     return (
         
-        <Dialog.Root open onOpenChange={(event: { value?: boolean }) => { if (!event.value && !busy) onCancel(); }}>
+        <div className="comandos-dialog-layer">
+            <button
+                type="button"
+                className="comandos-dialog-backdrop"
+                aria-label="Close dialog"
+                disabled={busy}
+                onClick={() => { if (!busy) onCancel(); }}
+            />
+            <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog}`}>
             
-            <Dialog.Portal>
-                
-                <Dialog.Backdrop />
-                
-                <Dialog.Positioner>
-                
-                    <Dialog.Popup className={styles.dialog}>
-                        
-                        <Dialog.Header>
-                            <Dialog.Title>{record ? "Edit" : "New"} · {resource.label}</Dialog.Title>
-                        </Dialog.Header>
-                    
-                        <Dialog.Content>
+                <div className="comandos-native-dialog-header">
+                    <h2>{record ? "Edit" : "New"} · {resource.label}</h2>
+                </div>
+                <div className="comandos-native-dialog-content">
                             
                             <form data-comandos-erp-form="true" 
                                 className={styles.form} 
@@ -762,14 +762,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                 </fieldset>
                                 <div className={styles.actions}>
                                     <button type="button" className="comandos-secondary-button" disabled={busy} onClick={onCancel}>Cancel</button>
-                                    <Button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                    <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
                                 </div>
                             </form>
-                        </Dialog.Content>
-                    </Dialog.Popup>
-                </Dialog.Positioner>
-            </Dialog.Portal>
-        </Dialog.Root>
+                </div>
+            </div>
+        </div>
     );
 }
 

@@ -20,12 +20,13 @@ que áreas legadas ainda não migradas continuem compilando entre os commits.
 - modal e botões da entrada de estoque;
 - formulário de vendas (autocomplete, select, tabela e exclusão);
 - listas de usuários e armas (filtros, paginação, edição inline e exclusão);
-- auditoria (filtros, paginação e detalhes before/after).
+- auditoria (filtros, paginação e detalhes before/after);
+- RecordWorkspace: tabs, tabela, paginação, exclusão e editor genérico.
 
 ## Próximos blocos
 
-1. record-workspace / DataTable / Paginator / Tabs;
-2. demais diálogos/botões residuais;
+1. demais diálogos/botões residuais;
+2. varredura global por imports Prime;
 3. remoção final dos pacotes e do presente arquivo.
 
 Quando não houver nenhum import Prime no frontend, os pacotes serão removidos do
