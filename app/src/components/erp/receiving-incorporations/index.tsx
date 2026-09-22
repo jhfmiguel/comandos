@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import axios from "axios"
-import { Button } from "@primereact/ui/button"
+import { Button } from "components/ui/button"
 import { useComandosPreferences } from "components/settings/preferences-provider"
 import { createErpService } from "api/services/erp.service"
 import { receivingService } from "api/services/receiving.service"
