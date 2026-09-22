@@ -1,1476 +1,176 @@
-"use client";
+"use client"
 
-import React, {
-    useCallback,
-    useEffect,
-    useRef,
-    useState
-} from "react";
+import React from "react"
+import { useRouter } from "next/navigation"
+import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react"
 
-import { useRouter } from "next/navigation";
+import { Layout, Loader } from "components"
+import type { Weapon } from "api/models/weapons"
+import { useWeaponService, type WeaponSearchFilters } from "api/services/weapon.service"
 
-import {
-    DataTable,
-    FilterMatchMode
-} from "@primereact/ui/datatable";
-
-import type {
-    DataTableEditingEvent,
-    DataTableFilterInstance,
-    DataTableFilterMeta,
-    DataTablePaginationInstance,
-    DataTableRowEditEvent
-} from "@primereact/ui/datatable";
-
-import { Paginator } from "@primereact/ui/paginator";
-
-import type {
-    PaginatorPagesInstance,
-    PaginatorRootChangeEvent
-} from "@primereact/ui/paginator";
-
-import { InputText } from "@primereact/ui/inputtext";
-import { Dialog } from "@primereact/ui/dialog";
-import { Button as PrimeButton } from "@primereact/ui/button";
-
-import { AngleDoubleLeft } from "@primeicons/react/angle-double-left";
-import { AngleDoubleRight } from "@primeicons/react/angle-double-right";
-import { AngleLeft } from "@primeicons/react/angle-left";
-import { AngleRight } from "@primeicons/react/angle-right";
-import { Check } from "@primeicons/react/check";
-import { EllipsisH } from "@primeicons/react/ellipsis-h";
-import { Pencil } from "@primeicons/react/pencil";
-import { Plus } from "@primeicons/react/plus";
-import { Times } from "@primeicons/react/times";
-import { Trash } from "@primeicons/react/trash";
-
-import { Layout, Loader } from "components";
-
-import { Weapon } from "api/models/weapons";
-
-import {
-    WeaponSearchFilters,
-    useWeaponService
-} from "api/services/weapon.service";
-
-interface DialogOpenChangeEvent {
-    value?: boolean;
-}
-
-interface DataTableFilterEvent {
-    filters: DataTableFilterMeta;
-}
-
-const INITIAL_FILTERS: DataTableFilterMeta = {
-    sku: {
-        value: null,
-        matchMode: FilterMatchMode.Contains
-    },
-    name: {
-        value: null,
-        matchMode: FilterMatchMode.Contains
-    },
-    price: {
-        value: null,
-        matchMode: FilterMatchMode.Contains
-    },
-    description: {
-        value: null,
-        matchMode: FilterMatchMode.Contains
-    }
-};
-
-const EMPTY_SEARCH_FILTERS: WeaponSearchFilters = {
-    sku: "",
-    name: "",
-    price: "",
-    description: ""
-};
-
-const getFilterValue = (
-    filters: DataTableFilterMeta,
-    field: string
-): string => {
-    const filter = filters[field];
-
-    if (
-        filter === null ||
-        filter === undefined ||
-        typeof filter !== "object"
-    ) {
-        return "";
-    }
-
-    if (!("value" in filter)) {
-        return "";
-    }
-
-    const value = filter.value;
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value);
-};
-
-
-const MAX_PRICE_DIGITS = 15;
-
-const formatCurrencyInput = (
-    value: string | number | null | undefined
-): string => {
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return "";
-    }
-
-    const digits = String(value)
-        .replace(/\D/g, "")
-        .slice(0, MAX_PRICE_DIGITS);
-
-    if (!digits || /^0+$/.test(digits)) {
-        return "";
-    }
-
-    const amount = Number(digits) / 100;
-
-    return new Intl.NumberFormat(
-        "pt-BR",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    ).format(amount);
-};
-
-const parseCurrencyToDecimal = (
-    value: string | number | null | undefined
-): string => {
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return "";
-    }
-
-    const digits = String(value).replace(/\D/g, "");
-
-    if (!digits) {
-        return "";
-    }
-
-    return (Number(digits) / 100).toFixed(2);
-};
-
-const createSearchFilters = (
-    filters: DataTableFilterMeta
-): WeaponSearchFilters => {
-    return {
-        sku: getFilterValue(
-            filters,
-            "sku"
-        ).trim(),
-
-        name: getFilterValue(
-            filters,
-            "name"
-        ).trim(),
-
-        price: parseCurrencyToDecimal(
-            getFilterValue(
-                filters,
-                "price"
-            )
-        ),
-
-        description: getFilterValue(
-            filters,
-            "description"
-        ).trim()
-    };
-};
-
-const formatPrice = (
-    weapon: Weapon
-): string => {
-    if (
-        weapon.price !== undefined &&
-        weapon.price !== null
-    ) {
-        return new Intl.NumberFormat(
-            "pt-BR",
-            {
-                style: "currency",
-                currency: "BRL"
-            }
-        ).format(Number(weapon.price));
-    }
-
-    if (weapon.priceFormatted) {
-        return weapon.priceFormatted;
-    }
-
-    return "R$ 0,00";
-};
+const EMPTY: WeaponSearchFilters = { sku: "", name: "", price: "", description: "" }
 
 export const WeaponsList: React.FC = () => {
-    const router = useRouter();
+    const router = useRouter()
+    const service = useWeaponService()
+    const [loading, setLoading] = React.useState(true)
+    const [weapons, setWeapons] = React.useState<Weapon[]>([])
+    const [filters, setFilters] = React.useState<WeaponSearchFilters>(EMPTY)
+    const [totalRecords, setTotalRecords] = React.useState(0)
+    const [rows, setRows] = React.useState(10)
+    const [page, setPage] = React.useState(0)
+    const [editingId, setEditingId] = React.useState<string | null>(null)
+    const [draft, setDraft] = React.useState<Partial<Weapon>>({})
+    const [deleteId, setDeleteId] = React.useState<string | null>(null)
+    const requestRef = React.useRef<AbortController | null>(null)
+    const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const weaponService = useWeaponService();
+    const load = React.useCallback(async (nextFilters: WeaponSearchFilters, nextPage: number, nextRows: number) => {
+        requestRef.current?.abort()
+        const controller = new AbortController()
+        requestRef.current = controller
+        setLoading(true)
+        try {
+            const data = await service.findWeapon(nextFilters, nextPage, nextRows, controller.signal)
+            if (controller.signal.aborted) return
+            setWeapons([...(data.content ?? [])])
+            setTotalRecords(data.totalElements ?? 0)
+        } finally {
+            if (!controller.signal.aborted) setLoading(false)
+        }
+    }, [service])
 
-    const [loading, setLoading] =
-        useState<boolean>(true);
-
-    const [weapons, setWeapons] =
-        useState<Weapon[]>([]);
-
-    const [totalRecords, setTotalRecords] =
-        useState<number>(0);
-
-    const [rows, setRows] =
-        useState<number>(10);
-
-    const [currentPage, setCurrentPage] =
-        useState<number>(0);
-
-    const [filters, setFilters] =
-        useState<DataTableFilterMeta>(
-            INITIAL_FILTERS
-        );
-
-    const [
-        deleteWeaponId,
-        setDeleteWeaponId
-    ] = useState<string | number | null>(
-        null
-    );
-
-    const [editingKeys, setEditingKeys] =
-        useState<Record<string, boolean>>(
-            {}
-        );
-
-    const draftRef = useRef<
-        Record<string, Partial<Weapon>>
-    >({});
-
-    const filterTimeoutRef = useRef<
-        ReturnType<typeof setTimeout> | null
-    >(null);
-
-    const requestRef = useRef<AbortController | null>(null);
-
-    const loadWeapons = useCallback(
-        (
-            searchFilters: WeaponSearchFilters,
-            pageIndex: number,
-            pageSize: number,
-            signal: AbortSignal
-        ): Promise<void> => {
-            return weaponService.findWeapon(
-                        searchFilters,
-                        pageIndex,
-                        pageSize,
-                        signal
-                    ).then(data => {
-                if (signal.aborted) return;
-
-                const content =
-                    data?.content ?? [];
-
-                setWeapons(
-                    [...content].sort(
-                        (a, b) =>
-                            Number(a.id ?? 0) -
-                            Number(b.id ?? 0)
-                    )
-                );
-
-                setTotalRecords(
-                    data?.totalElements ?? 0
-                );
-            }).catch(error => {
-                if (signal.aborted) return;
-                console.error(
-                    "Failed to fetch weapons:",
-                    error
-                );
-            }).finally(() => {
-                if (!signal.aborted) setLoading(false);
-            });
-        },
-        [weaponService]
-    );
-
-    const fetchWeapons = useCallback((searchFilters: WeaponSearchFilters, pageIndex: number, pageSize: number) => {
-        requestRef.current?.abort();
-        const controller = new AbortController();
-        requestRef.current = controller;
-        setLoading(true);
-        return loadWeapons(searchFilters, pageIndex, pageSize, controller.signal);
-    }, [loadWeapons]);
-
-    useEffect(() => {
-        const controller = new AbortController();
-        requestRef.current = controller;
-        void loadWeapons(
-            EMPTY_SEARCH_FILTERS,
-            0,
-            10,
-            controller.signal
-        );
-
+    React.useEffect(() => {
+        void load(EMPTY, 0, 10)
         return () => {
-            requestRef.current?.abort();
-            if (
-                filterTimeoutRef.current
-            ) {
-                clearTimeout(
-                    filterTimeoutRef.current
-                );
-            }
-        };
+            requestRef.current?.abort()
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [load])
 
-    }, [loadWeapons]);
+    const changeFilter = (field: keyof WeaponSearchFilters, value: string) => {
+        const next = { ...filters, [field]: value }
+        setFilters(next)
+        setPage(0)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(() => void load(next, 0, rows), 400)
+    }
 
-    const handleFilterChange =
-        useCallback(
-            (
-                nextFilters: DataTableFilterMeta
-            ): void => {
-                setFilters(nextFilters);
-                setCurrentPage(0);
+    const startEdit = (weapon: Weapon) => {
+        if (weapon.id == null) return
+        setEditingId(String(weapon.id))
+        setDraft({ ...weapon })
+    }
 
-                if (
-                    filterTimeoutRef.current
-                ) {
-                    clearTimeout(
-                        filterTimeoutRef.current
-                    );
-                }
+    const cancelEdit = () => {
+        setEditingId(null)
+        setDraft({})
+    }
 
-                filterTimeoutRef.current =
-                    setTimeout(() => {
-                        fetchWeapons(
-                            createSearchFilters(
-                                nextFilters
-                            ),
-                            0,
-                            rows
-                        );
-                    }, 400);
-            },
-            [
-                fetchWeapons,
-                rows
-            ]
-        );
+    const saveEdit = async (weapon: Weapon) => {
+        if (weapon.id == null) return
+        setLoading(true)
+        try {
+            await service.updateWeapon({ ...weapon, ...draft, id: String(weapon.id) })
+            cancelEdit()
+            await load(filters, page, rows)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-    const handleTableFilter = (
-        event: DataTableFilterEvent
-    ): void => {
-        handleFilterChange(
-            event.filters
-        );
-    };
+    const confirmDelete = async () => {
+        if (deleteId == null) return
+        setLoading(true)
+        try {
+            await service.deleteWeapon(deleteId)
+            setDeleteId(null)
+            const nextTotal = Math.max(totalRecords - 1, 0)
+            const maxPage = Math.max(Math.ceil(nextTotal / rows) - 1, 0)
+            const nextPage = Math.min(page, maxPage)
+            setPage(nextPage)
+            await load(filters, nextPage, rows)
+        } finally {
+            setLoading(false)
+        }
+    }
 
-    const handleSave = useCallback(
-        async (
-            event: DataTableRowEditEvent
-        ): Promise<void> => {
-            const weaponId =
-                event.data.id as
-                    | string
-                    | number
-                    | undefined;
-
-            if (
-                weaponId === undefined ||
-                weaponId === null
-            ) {
-                return;
-            }
-
-            const rowId =
-                weaponId.toString();
-
-            const patch =
-                draftRef.current[rowId];
-
-            if (
-                patch === undefined ||
-                Object.keys(patch).length === 0
-            ) {
-                delete draftRef.current[rowId];
-
-                return;
-            }
-
-            const updatedWeapon: Weapon = {
-                ...(event.data as Weapon),
-                ...patch,
-                id: weaponId.toString()
-            };
-
-            setLoading(true);
-
-            try {
-                await weaponService.updateWeapon(
-                    updatedWeapon
-                );
-
-                setEditingKeys((current) => {
-                    const next = {
-                        ...current
-                    };
-
-                    delete next[rowId];
-
-                    return next;
-                });
-
-                await fetchWeapons(
-                    createSearchFilters(filters),
-                    currentPage,
-                    rows
-                );
-            } catch (error) {
-                console.error(
-                    "Failed to update weapon:",
-                    error
-                );
-            } finally {
-                delete draftRef.current[rowId];
-
-                setLoading(false);
-            }
-        },
-        [
-            weaponService,
-            fetchWeapons,
-            filters,
-            currentPage,
-            rows
-        ]
-    );
-
-    const handleCancel = useCallback(
-        (
-            event: DataTableRowEditEvent
-        ): void => {
-            const weaponId =
-                event.data.id as
-                    | string
-                    | number
-                    | undefined;
-
-            if (
-                weaponId === undefined ||
-                weaponId === null
-            ) {
-                return;
-            }
-
-            const rowId =
-                weaponId.toString();
-
-            delete draftRef.current[
-                rowId
-            ];
-
-            setEditingKeys(
-                (current) => {
-                    const next = {
-                        ...current
-                    };
-
-                    delete next[rowId];
-
-                    return next;
-                }
-            );
-        },
-        []
-    );
-
-    const handleDelete = useCallback(
-        (
-            id: string | number
-        ): void => {
-            setDeleteWeaponId(id);
-        },
-        []
-    );
-
-    const handleDeleteDialogOpenChange =
-        (
-            event: DialogOpenChangeEvent
-        ): void => {
-            if (
-                event.value === false
-            ) {
-                setDeleteWeaponId(
-                    null
-                );
-            }
-        };
-
-    const confirmDelete = useCallback(
-        async (): Promise<void> => {
-            if (
-                deleteWeaponId === null
-            ) {
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                await weaponService.deleteWeapon(
-                    deleteWeaponId
-                );
-
-                setDeleteWeaponId(
-                    null
-                );
-
-                const nextTotal =
-                    Math.max(
-                        totalRecords - 1,
-                        0
-                    );
-
-                const maxPage =
-                    Math.max(
-                        Math.ceil(
-                            nextTotal /
-                                rows
-                        ) - 1,
-                        0
-                    );
-
-                const nextPage =
-                    Math.min(
-                        currentPage,
-                        maxPage
-                    );
-
-                setCurrentPage(
-                    nextPage
-                );
-
-                await fetchWeapons(
-                    createSearchFilters(
-                        filters
-                    ),
-                    nextPage,
-                    rows
-                );
-            } catch (error) {
-                console.error(
-                    "Failed to delete weapon:",
-                    error
-                );
-            } finally {
-                setLoading(false);
-            }
-        },
-        [
-            weaponService,
-            deleteWeaponId,
-            totalRecords,
-            currentPage,
-            fetchWeapons,
-            filters,
-            rows
-        ]
-    );
+    const totalPages = Math.max(Math.ceil(totalRecords / rows), 1)
 
     return (
         <Layout title="Weapons">
-            <div
-                style={{
-                    position:
-                        "relative",
-                    minHeight:
-                        "100%"
-                }}
-            >
-                {loading && (
-                    <Loader
-                        show={loading}
-                    />
-                )}
-
-                <div
-                    style={{
-                        display:
-                            "flex",
-                        justifyContent:
-                            "flex-end",
-                        marginBottom:
-                            "1rem"
-                    }}
-                >
-                    <PrimeButton
-                        type="button"
-                        className="registration-yellow-button"
-                        onClick={() => {
-                            router.push(
-                                "/registrations/weapons"
-                            );
-                        }}
-                    >
-                        <Plus
-                            size={18}
-                        />
-
-                        <span
-                            style={{
-                                marginLeft:
-                                    "0.5rem"
-                            }}
-                        >
-                            New Weapon
-                        </span>
-                    </PrimeButton>
+            <div className="comandos-list-page">
+                {loading && <Loader show />}
+                <div className="comandos-list-toolbar">
+                    <button type="button" className="registration-yellow-button" onClick={() => router.push("/registrations/weapons")}>
+                        <Plus size={18}/> <span>New Weapon</span>
+                    </button>
                 </div>
 
-                <div className="formgrid grid">
-                    <div
-                        className="col-12"
-                        style={{
-                            width: "100%"
-                        }}
-                    >
-                        <DataTable.Root
-                            data={weapons}
-                            dataKey="id"
-                            lazy
-                            paginator
-                            rows={rows}
-                            totalRecords={
-                                totalRecords
-                            }
-                            first={
-                                currentPage *
-                                rows
-                            }
-                            filters={
-                                filters
-                            }
-                            onFilter={
-                                handleTableFilter
-                            }
-                            editMode="row"
-                            editingKeys={
-                                editingKeys
-                            }
-                            onEditingKeysChange={(
-                                event: DataTableEditingEvent
-                            ) => {
-                                setEditingKeys(
-                                    event.value
-                                );
-                            }}
-                            onRowEditSave={
-                                handleSave
-                            }
-                            onRowEditCancel={
-                                handleCancel
-                            }
-                            style={{
-                                width: "100%"
-                            }}
-                        >
-                            <DataTable.TableContainer
-                                style={{
-                                    width:
-                                        "100%",
-                                    overflowX:
-                                        "auto"
-                                }}
-                            >
-                                <DataTable.Table
-                                    style={{
-                                        width:
-                                            "100%",
-                                        minWidth:
-                                            "900px",
-                                        tableLayout:
-                                            "auto"
-                                    }}
-                                >
-                                    <DataTable.THead>
-                                        <DataTable.THeadRow>
-                                            <DataTable.THeadCell>
-                                                ID
-                                            </DataTable.THeadCell>
+                <div className="comandos-native-table-container">
+                    <table className="comandos-native-table comandos-edit-table">
+                        <thead>
+                            <tr><th>ID</th><th>SKU</th><th>Name</th><th>Price</th><th>Description</th><th>Actions</th></tr>
+                            <tr className="comandos-filter-row">
+                                <th />
+                                <th><input className="comandos-input" value={filters.sku} onChange={e=>changeFilter("sku",e.target.value)} /></th>
+                                <th><input className="comandos-input" value={filters.name} onChange={e=>changeFilter("name",e.target.value)} /></th>
+                                <th><input className="comandos-input" value={filters.price} onChange={e=>changeFilter("price",e.target.value)} /></th>
+                                <th><input className="comandos-input" value={filters.description} onChange={e=>changeFilter("description",e.target.value)} /></th>
+                                <th />
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {weapons.map(weapon => {
+                                const editing = editingId === String(weapon.id)
+                                return <tr key={String(weapon.id)}>
+                                    <td>{weapon.id}</td>
+                                    <td>{editing ? <input className="comandos-input" value={draft.sku ?? ""} onChange={e=>setDraft(v=>({...v,sku:e.target.value}))}/> : weapon.sku}</td>
+                                    <td>{editing ? <input className="comandos-input" value={draft.name ?? ""} onChange={e=>setDraft(v=>({...v,name:e.target.value}))}/> : weapon.name}</td>
+                                    <td>{editing ? <input className="comandos-input" type="number" min="0" step="0.01" value={draft.price ?? ""} onChange={e=>setDraft(v=>({...v,price:e.target.value===""?undefined:Number(e.target.value)}))}/> : (weapon.priceFormatted ?? (weapon.price == null ? "" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(weapon.price)))}</td>
+                                    <td>{editing ? <input className="comandos-input" value={draft.description ?? ""} onChange={e=>setDraft(v=>({...v,description:e.target.value}))}/> : weapon.description}</td>
+                                    <td><div className="comandos-row-actions">
+                                        {editing ? <>
+                                            <button className="comandos-icon-button comandos-icon-button-success" type="button" aria-label="Save changes" onClick={()=>void saveEdit(weapon)}><Check size={19}/></button>
+                                            <button className="comandos-icon-button" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
+                                        </> : <>
+                                            <button className="comandos-icon-button" type="button" aria-label="Edit weapon" onClick={()=>startEdit(weapon)}><Pencil size={19}/></button>
+                                            <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete weapon" onClick={()=>weapon.id!=null&&setDeleteId(String(weapon.id))}><Trash2 size={19}/></button>
+                                        </>}
+                                    </div></td>
+                                </tr>
+                            })}
+                            {!weapons.length && !loading && <tr><td colSpan={6} className="text-center">No records found.</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
 
-                                            <DataTable.THeadCell>
-                                                SKU
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                Name
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                Price
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                Description
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell
-                                                style={{
-                                                    width:
-                                                        "10rem",
-                                                    textAlign:
-                                                        "center"
-                                                }}
-                                            >
-                                                Actions
-                                            </DataTable.THeadCell>
-                                        </DataTable.THeadRow>
-
-                                        <DataTable.THeadRow>
-                                            <DataTable.THeadCell />
-
-                                            <DataTable.THeadCell>
-                                                <DataTable.Filter
-                                                    field="sku"
-                                                    display="row"
-                                                    dataType="text"
-                                                >
-                                                    {({
-                                                        value,
-                                                        onChange
-                                                    }: DataTableFilterInstance) => (
-                                                        <InputText
-                                                            value={(value as string) ?? ""}
-                                                            onChange={(
-                                                                event: React.ChangeEvent<HTMLInputElement>
-                                                            ) => {
-                                                                onChange(
-                                                                    event,
-                                                                    event.target.value
-                                                                );
-                                                            }}
-                                                            placeholder="Search SKU..."
-                                                            size="small"
-                                                            fluid
-                                                        />
-                                                    )}
-                                                </DataTable.Filter>
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                <DataTable.Filter
-                                                    field="name"
-                                                    display="row"
-                                                    dataType="text"
-                                                >
-                                                    {({
-                                                        value,
-                                                        onChange
-                                                    }: DataTableFilterInstance) => (
-                                                        <InputText
-                                                            value={(value as string) ?? ""}
-                                                            onChange={(
-                                                                event: React.ChangeEvent<HTMLInputElement>
-                                                            ) => {
-                                                                onChange(
-                                                                    event,
-                                                                    event.target.value
-                                                                );
-                                                            }}
-                                                            placeholder="Search name..."
-                                                            size="small"
-                                                            fluid
-                                                        />
-                                                    )}
-                                                </DataTable.Filter>
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                <DataTable.Filter
-                                                    field="price"
-                                                    display="row"
-                                                    dataType="text"
-                                                >
-                                                    {({
-                                                        value,
-                                                        onChange
-                                                    }: DataTableFilterInstance) => (
-                                                        <InputText
-                                                            value={formatCurrencyInput(
-                                                                (value as string) ?? ""
-                                                            )}
-                                                            inputMode="numeric"
-                                                            onChange={(
-                                                                event: React.ChangeEvent<HTMLInputElement>
-                                                            ) => {
-                                                                const digits = event.target.value
-                                                                    .replace(/\D/g, "")
-                                                                    .slice(0, MAX_PRICE_DIGITS);
-
-                                                                const maskedValue =
-                                                                    formatCurrencyInput(digits);
-
-                                                                onChange(
-                                                                    event,
-                                                                    maskedValue
-                                                                );
-                                                            }}
-                                                            placeholder="Search price..."
-                                                            size="small"
-                                                            fluid
-                                                        />
-                                                    )}
-                                                </DataTable.Filter>
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell>
-                                                <DataTable.Filter
-                                                    field="description"
-                                                    display="row"
-                                                    dataType="text"
-                                                >
-                                                    {({
-                                                        value,
-                                                        onChange
-                                                    }: DataTableFilterInstance) => (
-                                                        <InputText
-                                                            value={(value as string) ?? ""}
-                                                            onChange={(
-                                                                event: React.ChangeEvent<HTMLInputElement>
-                                                            ) => {
-                                                                onChange(
-                                                                    event,
-                                                                    event.target.value
-                                                                );
-                                                            }}
-                                                            placeholder="Search description..."
-                                                            size="small"
-                                                            fluid
-                                                        />
-                                                    )}
-                                                </DataTable.Filter>
-                                            </DataTable.THeadCell>
-
-                                            <DataTable.THeadCell />
-                                        </DataTable.THeadRow>
-                                    </DataTable.THead>
-
-                                    <DataTable.TBody>
-                                        {({
-                                            item,
-                                            index
-                                        }: {
-                                            item: Weapon;
-                                            index: number;
-                                        }) => {
-                                            const weaponId =
-                                                item.id;
-
-                                            const rowId =
-                                                weaponId?.toString() ??
-                                                "";
-
-                                            const isEditing =
-                                                Boolean(
-                                                    editingKeys[
-                                                        rowId
-                                                    ]
-                                                );
-
-                                            const rowData: Record<
-                                                string,
-                                                unknown
-                                            > = {
-                                                ...item
-                                            };
-
-                                            return (
-                                                <DataTable.Row
-                                                    key={
-                                                        weaponId ??
-                                                        index
-                                                    }
-                                                >
-                                                    <DataTable.RowEditor
-                                                        rowKey={
-                                                            weaponId ??
-                                                            index
-                                                        }
-                                                        rowData={
-                                                            rowData
-                                                        }
-                                                    >
-                                                        <DataTable.Cell>
-                                                            {
-                                                                item.id
-                                                            }
-                                                        </DataTable.Cell>
-
-                                                        <DataTable.Cell>
-                                                            <DataTable.CellEditor
-                                                                field="sku"
-                                                                rowIndex={
-                                                                    index
-                                                                }
-                                                                rowData={
-                                                                    rowData
-                                                                }
-                                                            >
-                                                                <DataTable.CellEditorDisplay>
-                                                                    {item.sku ??
-                                                                        "-"}
-                                                                </DataTable.CellEditorDisplay>
-
-                                                                <DataTable.CellEditorContent>
-                                                                    <InputText
-                                                                        defaultValue={
-                                                                            item.sku ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
-                                                                        ) => {
-                                                                            draftRef.current[
-                                                                                rowId
-                                                                            ] = {
-                                                                                ...draftRef.current[
-                                                                                    rowId
-                                                                                ],
-                                                                                sku:
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                            };
-                                                                        }}
-                                                                        fluid
-                                                                    />
-                                                                </DataTable.CellEditorContent>
-                                                            </DataTable.CellEditor>
-                                                        </DataTable.Cell>
-
-                                                        <DataTable.Cell>
-                                                            <DataTable.CellEditor
-                                                                field="name"
-                                                                rowIndex={
-                                                                    index
-                                                                }
-                                                                rowData={
-                                                                    rowData
-                                                                }
-                                                            >
-                                                                <DataTable.CellEditorDisplay>
-                                                                    {item.name ??
-                                                                        "-"}
-                                                                </DataTable.CellEditorDisplay>
-
-                                                                <DataTable.CellEditorContent>
-                                                                    <InputText
-                                                                        defaultValue={
-                                                                            item.name ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
-                                                                        ) => {
-                                                                            draftRef.current[
-                                                                                rowId
-                                                                            ] = {
-                                                                                ...draftRef.current[
-                                                                                    rowId
-                                                                                ],
-                                                                                name:
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                            };
-                                                                        }}
-                                                                        fluid
-                                                                    />
-                                                                </DataTable.CellEditorContent>
-                                                            </DataTable.CellEditor>
-                                                        </DataTable.Cell>
-
-                                                        <DataTable.Cell>
-                                                            <DataTable.CellEditor
-                                                                field="price"
-                                                                rowIndex={
-                                                                    index
-                                                                }
-                                                                rowData={
-                                                                    rowData
-                                                                }
-                                                            >
-                                                                <DataTable.CellEditorDisplay>
-                                                                    {formatPrice(
-                                                                        item
-                                                                    )}
-                                                                </DataTable.CellEditorDisplay>
-
-                                                                <DataTable.CellEditorContent>
-                                                                    <InputText
-                                                                        defaultValue={formatCurrencyInput(
-                                                                            item.price !== undefined &&
-                                                                                item.price !== null
-                                                                                ? Math.round(
-                                                                                      Number(item.price) *
-                                                                                          100
-                                                                                  ).toString()
-                                                                                : ""
-                                                                        )}
-                                                                        inputMode="numeric"
-                                                                        onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
-                                                                        ) => {
-                                                                            const maskedValue =
-                                                                                formatCurrencyInput(
-                                                                                    event.target.value
-                                                                                );
-
-                                                                            event.target.value =
-                                                                                maskedValue;
-
-                                                                            const parsedValue =
-                                                                                parseCurrencyToDecimal(
-                                                                                    maskedValue
-                                                                                );
-
-                                                                            draftRef.current[
-                                                                                rowId
-                                                                            ] = {
-                                                                                ...draftRef.current[
-                                                                                    rowId
-                                                                                ],
-                                                                                price: parsedValue
-                                                                                    ? Number(
-                                                                                          parsedValue
-                                                                                      )
-                                                                                    : 0
-                                                                            };
-                                                                        }}
-                                                                        fluid
-                                                                    />
-                                                                </DataTable.CellEditorContent>
-                                                            </DataTable.CellEditor>
-                                                        </DataTable.Cell>
-
-                                                        <DataTable.Cell>
-                                                            <DataTable.CellEditor
-                                                                field="description"
-                                                                rowIndex={
-                                                                    index
-                                                                }
-                                                                rowData={
-                                                                    rowData
-                                                                }
-                                                            >
-                                                                <DataTable.CellEditorDisplay>
-                                                                    {item.description ??
-                                                                        "-"}
-                                                                </DataTable.CellEditorDisplay>
-
-                                                                <DataTable.CellEditorContent>
-                                                                    <InputText
-                                                                        defaultValue={
-                                                                            item.description ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            event: React.ChangeEvent<HTMLInputElement>
-                                                                        ) => {
-                                                                            draftRef.current[
-                                                                                rowId
-                                                                            ] = {
-                                                                                ...draftRef.current[
-                                                                                    rowId
-                                                                                ],
-                                                                                description:
-                                                                                    event
-                                                                                        .target
-                                                                                        .value
-                                                                            };
-                                                                        }}
-                                                                        fluid
-                                                                    />
-                                                                </DataTable.CellEditorContent>
-                                                            </DataTable.CellEditor>
-                                                        </DataTable.Cell>
-
-                                                        <DataTable.Cell>
-                                                            <div
-                                                                style={{
-                                                                    display:
-                                                                        "flex",
-                                                                    alignItems:
-                                                                        "center",
-                                                                    justifyContent:
-                                                                        "center",
-                                                                    gap:
-                                                                        "0.5rem"
-                                                                }}
-                                                            >
-                                                                {!isEditing && (
-                                                                    <DataTable.RowEditorInit
-                                                                        as={
-                                                                            PrimeButton
-                                                                        }
-                                                                        variant="text"
-                                                                        severity="secondary"
-                                                                        title="Edit weapon"
-                                                                        aria-label="Edit weapon"
-                                                                    >
-                                                                        <Pencil
-                                                                            size={
-                                                                                20
-                                                                            }
-                                                                        />
-                                                                    </DataTable.RowEditorInit>
-                                                                )}
-
-                                                                {isEditing && (
-                                                                    <>
-                                                                        <DataTable.RowEditorSave
-                                                                            as={
-                                                                                PrimeButton
-                                                                            }
-                                                                            variant="text"
-                                                                            severity="success"
-                                                                            title="Save changes"
-                                                                            aria-label="Save changes"
-                                                                        >
-                                                                            <Check
-                                                                                size={
-                                                                                    20
-                                                                                }
-                                                                            />
-                                                                        </DataTable.RowEditorSave>
-
-                                                                        <DataTable.RowEditorCancel
-                                                                            as={
-                                                                                PrimeButton
-                                                                            }
-                                                                            variant="text"
-                                                                            severity="secondary"
-                                                                            title="Cancel editing"
-                                                                            aria-label="Cancel editing"
-                                                                        >
-                                                                            <Times
-                                                                                size={
-                                                                                    20
-                                                                                }
-                                                                            />
-                                                                        </DataTable.RowEditorCancel>
-                                                                    </>
-                                                                )}
-
-                                                                {!isEditing && (
-                                                                    <PrimeButton
-                                                                        type="button"
-                                                                        variant="text"
-                                                                        severity="danger"
-                                                                        title="Delete weapon"
-                                                                        aria-label="Delete weapon"
-                                                                        onClick={(
-                                                                            event: React.MouseEvent<HTMLButtonElement>
-                                                                        ) => {
-                                                                            event.preventDefault();
-                                                                            event.stopPropagation();
-
-                                                                            if (
-                                                                                weaponId ===
-                                                                                    undefined ||
-                                                                                weaponId ===
-                                                                                    null
-                                                                            ) {
-                                                                                return;
-                                                                            }
-
-                                                                            handleDelete(
-                                                                                weaponId
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <Trash
-                                                                            size={
-                                                                                20
-                                                                            }
-                                                                        />
-                                                                    </PrimeButton>
-                                                                )}
-                                                            </div>
-                                                        </DataTable.Cell>
-                                                    </DataTable.RowEditor>
-                                                </DataTable.Row>
-                                            );
-                                        }}
-                                    </DataTable.TBody>
-                                </DataTable.Table>
-                            </DataTable.TableContainer>
-
-                            <DataTable.Pagination>
-                                {({
-                                    rows: currentRows
-                                }: DataTablePaginationInstance) => (
-                                    <Paginator.Root
-                                        className="comandos-datatable-paginator"
-                                        page={
-                                            currentPage +
-                                            1
-                                        }
-                                        total={
-                                            totalRecords
-                                        }
-                                        itemsPerPage={
-                                            rows
-                                        }
-                                        onPageChange={(
-                                            event: PaginatorRootChangeEvent
-                                        ) => {
-                                            const nextPage =
-                                                event.value -
-                                                1;
-
-                                            const nextRows =
-                                                currentRows ??
-                                                rows;
-
-                                            setCurrentPage(
-                                                nextPage
-                                            );
-
-                                            setRows(
-                                                nextRows
-                                            );
-
-                                            fetchWeapons(
-                                                createSearchFilters(
-                                                    filters
-                                                ),
-                                                nextPage,
-                                                nextRows
-                                            );
-                                        }}
-                                    >
-                                        <Paginator.Content>
-                                            <Paginator.First>
-                                                <AngleDoubleLeft />
-                                            </Paginator.First>
-
-                                            <Paginator.Prev>
-                                                <AngleLeft />
-                                            </Paginator.Prev>
-
-                                            <Paginator.Pages>
-                                                {({
-                                                    paginator
-                                                }: PaginatorPagesInstance) =>
-                                                    paginator?.pages.map(
-                                                        (
-                                                            page,
-                                                            pageIndex
-                                                        ) =>
-                                                            page.type ===
-                                                            "page" ? (
-                                                                <Paginator.Page
-                                                                    key={
-                                                                        pageIndex
-                                                                    }
-                                                                    value={
-                                                                        page.value
-                                                                    }
-                                                                />
-                                                            ) : (
-                                                                <Paginator.Ellipsis
-                                                                    key={
-                                                                        pageIndex
-                                                                    }
-                                                                >
-                                                                    <EllipsisH />
-                                                                </Paginator.Ellipsis>
-                                                            )
-                                                    )
-                                                }
-                                            </Paginator.Pages>
-
-                                            <Paginator.Next>
-                                                <AngleRight />
-                                            </Paginator.Next>
-
-                                            <Paginator.Last>
-                                                <AngleDoubleRight />
-                                            </Paginator.Last>
-                                        </Paginator.Content>
-                                    </Paginator.Root>
-                                )}
-                            </DataTable.Pagination>
-
-                            <div
-                                style={{
-                                    padding:
-                                        "0.5rem",
-                                    textAlign:
-                                        "right",
-                                    borderTop:
-                                        "1px solid #e5e7eb",
-                                    fontSize:
-                                        "0.875rem"
-                                }}
-                            >
-                                Total records:{" "}
-                                {totalRecords}
-                            </div>
-                        </DataTable.Root>
+                <div className="comandos-pagination">
+                    <div className="comandos-pagination-controls">
+                        <button className="comandos-icon-button" type="button" disabled={page===0} onClick={()=>{setPage(page-1);void load(filters,page-1,rows)}}><ChevronLeft size={18}/></button>
+                        <span>Page {page+1} of {totalPages}</span>
+                        <button className="comandos-icon-button" type="button" disabled={page+1>=totalPages} onClick={()=>{setPage(page+1);void load(filters,page+1,rows)}}><ChevronRight size={18}/></button>
+                        <select className="comandos-input comandos-page-size" value={rows} onChange={e=>{const next=Number(e.target.value);setRows(next);setPage(0);void load(filters,0,next)}}>
+                            {[10,20,50,100].map(size=><option key={size} value={size}>{size}</option>)}
+                        </select>
                     </div>
+                    <span>Total records: {totalRecords}</span>
                 </div>
             </div>
 
-            <Dialog.Root
-                open={
-                    deleteWeaponId !==
-                    null
-                }
-                onOpenChange={
-                    handleDeleteDialogOpenChange
-                }
-            >
-                <Dialog.Portal>
-                    <Dialog.Backdrop />
-
-                    <Dialog.Positioner>
-                        <Dialog.Popup
-                            style={{
-                                width:
-                                    "26rem"
-                            }}
-                        >
-                            <Dialog.Header>
-                                <Dialog.Title>
-                                    Delete Weapon
-                                </Dialog.Title>
-                            </Dialog.Header>
-
-                            <Dialog.Content>
-                                <div
-                                    style={{
-                                        display:
-                                            "flex",
-                                        flexDirection:
-                                            "column",
-                                        gap:
-                                            "1rem"
-                                    }}
-                                >
-                                    <p
-                                        style={{
-                                            margin: 0
-                                        }}
-                                    >
-                                        Are you sure you want
-                                        to delete this weapon?
-                                    </p>
-
-                                    <div
-                                        style={{
-                                            display:
-                                                "flex",
-                                            justifyContent:
-                                                "flex-end",
-                                            gap:
-                                                "0.5rem"
-                                        }}
-                                    >
-                                        <PrimeButton
-                                            type="button"
-                                            severity="secondary"
-                                            disabled={
-                                                loading
-                                            }
-                                            onClick={() => {
-                                                setDeleteWeaponId(
-                                                    null
-                                                );
-                                            }}
-                                        >
-                                            Cancel
-                                        </PrimeButton>
-
-                                        <PrimeButton
-                                            type="button"
-                                            severity="danger"
-                                            disabled={
-                                                loading
-                                            }
-                                            onClick={
-                                                confirmDelete
-                                            }
-                                        >
-                                            {loading
-                                                ? "Deleting..."
-                                                : "Delete"}
-                                        </PrimeButton>
-                                    </div>
-                                </div>
-                            </Dialog.Content>
-                        </Dialog.Popup>
-                    </Dialog.Positioner>
-                </Dialog.Portal>
-            </Dialog.Root>
-
-            <style jsx global>{`
-                .registration-yellow-button {
-                    background-color: #ff9900 !important;
-                    border-color: #ff9900 !important;
-                    color: #1f1f1f !important;
-                    font-weight: 600;
-                    transition:
-                        background-color 0.2s ease,
-                        border-color 0.2s ease,
-                        box-shadow 0.2s ease;
-                }
-
-                .registration-yellow-button:hover:not(:disabled) {
-                    background-color: #e68a00 !important;
-                    border-color: #e68a00 !important;
-                    color: #1f1f1f !important;
-                }
-
-                .registration-yellow-button:active:not(:disabled) {
-                    background-color: #cc7a00 !important;
-                    border-color: #cc7a00 !important;
-                    color: #1f1f1f !important;
-                }
-
-                .registration-yellow-button:focus {
-                    background-color: #ff9900 !important;
-                    border-color: #ff9900 !important;
-                    color: #1f1f1f !important;
-                    box-shadow: 0 0 0 0.2rem rgba(255, 153, 0, 0.3) !important;
-                }
-
-                .registration-yellow-button:disabled {
-                    background-color: #ff9900 !important;
-                    border-color: #ff9900 !important;
-                    color: #1f1f1f !important;
-                    opacity: 0.55;
-                    cursor: not-allowed;
-                }
-            `}</style>
+            {deleteId !== null && <div className="comandos-dialog-layer">
+                <button type="button" className="comandos-dialog-backdrop" aria-label="Close dialog" onClick={()=>setDeleteId(null)} />
+                <div role="dialog" aria-modal="true" className="comandos-native-dialog" style={{width:"min(26rem, calc(100vw - 2rem))"}}>
+                    <div className="comandos-native-dialog-header"><h2>Delete Weapon</h2></div>
+                    <div className="comandos-native-dialog-content">
+                        <p>Are you sure you want to delete this weapon?</p>
+                        <div className="comandos-dialog-actions">
+                            <button type="button" className="comandos-secondary-button" disabled={loading} onClick={()=>setDeleteId(null)}>Cancel</button>
+                            <button type="button" className="comandos-red-button comandos-dialog-action-button" disabled={loading} onClick={()=>void confirmDelete()}>{loading?"Deleting...":"Delete"}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>}
         </Layout>
-    );
-};
+    )
+}

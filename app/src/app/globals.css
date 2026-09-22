@@ -5584,3 +5584,23 @@ html[data-theme="dark"] .comandos-autocomplete-popup {
         margin-bottom: 0.9rem;
     }
 }
+
+
+/* Native CRUD table controls */
+.comandos-list-page { position: relative; min-height: 100%; }
+.comandos-list-toolbar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+.comandos-edit-table { min-width: 70rem; }
+.comandos-filter-row th { background: var(--p-content-background, #ffffff); padding: 0.45rem; }
+.comandos-filter-row .comandos-input { width: 100%; min-width: 7rem; }
+.comandos-row-actions { display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.comandos-pagination {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.75rem; border-top: 1px solid var(--p-content-border-color, #dee2e6); font-size: 0.875rem;
+}
+.comandos-pagination-controls { display: flex; align-items: center; gap: 0.5rem; }
+.comandos-page-size { width: auto; min-width: 4.5rem; }
+.comandos-dialog-actions { display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; }
+html[data-theme="dark"] .comandos-filter-row th { background:#171717; }
+@media (max-width: 768px) {
+    .comandos-pagination { align-items:flex-start; flex-direction:column; }
+}
