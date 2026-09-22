@@ -8,11 +8,11 @@
 		<version>4.1.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.weaponsregistration</groupId>
-	<artifactId>wr-api</artifactId>
+	<groupId>com.comandos</groupId>
+	<artifactId>comandos-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>wr-api</name>
-	<description>Weapons Registration API</description>
+	<name>COMANDOS API</name>
+	<description>COMANDOS - Plataforma Modular de Gestão de Segurança Pública e Privada</description>
 	<url/>
 	<licenses>
 		<license/>

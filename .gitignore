@@ -1,17 +1,27 @@
-automation/logs/
-automation/tasks/working/
-automation/tasks/failed/
-
 # COMANDOS - arquivos locais e temporarios
 .backup-*/
-wr-app/.backup-*/
+app/.backup-*/
 *.bak
 *.bak-*
 *.log
-automation/runtime/
-wr-app/lint-*.log
-wr-app/typecheck-*.log
-
-automation/attachments/
-
+app/lint-*.log
+app/typecheck-*.log
 database-backups/
+
+# Java / Maven
+api/target/
+*.class
+
+# Node / Next.js
+app/node_modules/
+app/.next/
+app/out/
+
+# IDE / OS
+.idea/
+.DS_Store
+
+# Segredos locais
+.env
+.env.*
+!.env.example
