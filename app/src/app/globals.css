@@ -5446,3 +5446,141 @@ html[data-theme="dark"] .comandos-secondary-button {
 
 .comandos-input-small { min-height: 2rem; padding-block: 0.35rem; }
 .comandos-input-large { min-height: 3.25rem; padding-block: 0.75rem; }
+
+
+/* Native sales controls replacing Prime while preserving COMANDOS interaction */
+.comandos-native-autocomplete {
+    position: relative;
+}
+
+.comandos-autocomplete-popup {
+    position: absolute;
+    z-index: 10500;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    max-height: 14rem;
+    overflow-y: auto;
+    border: 1px solid var(--p-content-border-color, #dee2e6);
+    border-radius: 0.375rem;
+    background: var(--p-content-background, #ffffff);
+    color: var(--p-content-color, #171717);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.16);
+}
+
+.comandos-autocomplete-option,
+.comandos-autocomplete-empty {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+}
+
+.comandos-autocomplete-option {
+    cursor: pointer;
+}
+
+.comandos-autocomplete-option:hover,
+.comandos-autocomplete-option:focus-visible {
+    background: #ff9900;
+    color: #171717;
+    outline: none;
+}
+
+.comandos-float-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
+
+.comandos-native-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.comandos-native-table {
+    width: 100%;
+    min-width: 78rem;
+    border-collapse: collapse;
+}
+
+.comandos-native-table th,
+.comandos-native-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--p-content-border-color, #dee2e6);
+    vertical-align: middle;
+}
+
+.comandos-native-table th {
+    text-align: center;
+    font-weight: 700;
+    background: var(--p-content-hover-background, rgba(0, 0, 0, 0.035));
+}
+
+.comandos-native-table tbody tr:nth-child(even) {
+    background: var(--p-content-hover-background, rgba(0, 0, 0, 0.025));
+}
+
+.comandos-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.comandos-icon-button:hover:not(:disabled),
+.comandos-icon-button:focus-visible {
+    background: rgba(255, 153, 0, 0.13);
+    color: #ff9900;
+    outline: 1px solid #ff9900;
+}
+
+.comandos-icon-button-success:hover:not(:disabled),
+.comandos-icon-button-success:focus-visible {
+    color: #16a34a;
+}
+
+.comandos-icon-button-danger:hover:not(:disabled),
+.comandos-icon-button-danger:focus-visible {
+    color: #ed2100;
+}
+
+.comandos-icon-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.comandos-dialog-action-button {
+    min-height: 2.5rem;
+    padding: 0.55rem 0.9rem;
+    border: 0;
+    border-radius: 0.375rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+html[data-theme="dark"] .comandos-autocomplete-popup {
+    background: #171717;
+    color: #f3f4f6;
+    border-color: #3f3f46;
+}
+
+@media (max-width: 768px) {
+    .sales-form .formgrid {
+        display: block;
+    }
+
+    .sales-form .field {
+        width: 100% !important;
+        margin-bottom: 0.9rem;
+    }
+}
