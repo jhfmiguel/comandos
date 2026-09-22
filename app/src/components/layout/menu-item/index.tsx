@@ -1,13 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import * as React from "react"
-
-import { ChevronDown } from "@primeicons/react/chevron-down"
-import { ChevronRight } from "@primeicons/react/chevron-right"
-import type { IconProps } from "@primeicons/react/core"
-import { Sidebar } from "@primereact/ui/sidebar"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 interface SubMenuItem {
     href?: string
@@ -19,404 +16,160 @@ interface MenuItemProps {
     menuKey: string
     href?: string
     label: string
-    icon: React.FC<IconProps>
+    icon: LucideIcon
     collapsed?: boolean
     selectedMenu: string | null
     onSelect: (menuKey: string | null) => void
     subItems?: Array<SubMenuItem>
 }
 
-function hasActiveSubItem(
-    items: Array<SubMenuItem> | undefined,
-    isCurrentRoute: (href?: string) => boolean
-): boolean {
-
-    return items?.some((item) =>
-        isCurrentRoute(item.href) ||
-        hasActiveSubItem(item.subItems, isCurrentRoute)
-    ) ?? false
-
-}
-
-export const MenuItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
-
+export const MenuItem: React.FC<MenuItemProps> = (props) => {
     const pathname = usePathname()
+    const searchParams = useSearchParams()
+    const Icon = props.icon
 
-    const isCurrentRoute = (href?: string): boolean => {
-
-        if (!href) {
-            return false
-        }
-
+    const isCurrentRoute = React.useCallback((href?: string): boolean => {
+        if (!href) return false
         const [path, query = ""] = href.split("?")
-
-        const pathMatches = path === "/"
-            ? pathname === path
-            : pathname.startsWith(path)
-
-        if (!pathMatches) {
-            return false
-        }
-
-        if (!query || typeof window === "undefined") {
-            return pathMatches
-        }
-
+        const pathMatches = path === "/" ? pathname === "/" : pathname.startsWith(path)
+        if (!pathMatches) return false
+        if (!query) return true
         const expected = new URLSearchParams(query)
-        const current = new URLSearchParams(window.location.search)
+        return [...expected.entries()].every(([key, value]) => searchParams.get(key) === value)
+    }, [pathname, searchParams])
 
-        return [...expected.entries()].every(
-            ([key, value]) => current.get(key) === value
-        )
+    const hasActiveSubItem = React.useCallback((items?: Array<SubMenuItem>): boolean =>
+        items?.some((item) => isCurrentRoute(item.href) || hasActiveSubItem(item.subItems)) ?? false,
+    [isCurrentRoute])
 
-    }
-
-    const isRouteActive = props.href
-        ? isCurrentRoute(props.href)
-        : hasActiveSubItem(props.subItems, isCurrentRoute)
-
+    const isRouteActive = props.href ? isCurrentRoute(props.href) : hasActiveSubItem(props.subItems)
     const isActive = props.selectedMenu !== null
         ? props.selectedMenu === props.menuKey
         : isRouteActive
-
-    const Icon = props.icon
     const hasSubItems = Boolean(props.subItems?.length)
-
     const submenuOpen = props.selectedMenu === props.menuKey
         || (props.selectedMenu === null && isRouteActive)
+
     const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({})
 
-    
-    const [mobile, setMobile] = React.useState(false)
-    const [collapsedPopupOpen, setCollapsedPopupOpen] = React.useState(false)
-
-    React.useEffect(() => {
-        const media = window.matchMedia("(max-width: 768px)")
-
-        const syncMobile = (): void => {
-            setMobile(media.matches)
-
-            if (!media.matches) {
-                setCollapsedPopupOpen(false)
-            }
-        }
-
-        syncMobile()
-        media.addEventListener("change", syncMobile)
-
-        return () => media.removeEventListener("change", syncMobile)
-    }, [])
-
-    const removeCurrentFocus = (): void => {
-
+    const select = (key: string | null) => {
         const activeElement = document.activeElement
-
-        if (activeElement instanceof HTMLElement) {
-            activeElement.blur()
-        }
-
+        if (activeElement instanceof HTMLElement) activeElement.blur()
+        props.onSelect(key)
     }
 
-    const handleMenuSelection = (): void => {
-
-        removeCurrentFocus()
-        props.onSelect(props.menuKey)
-
-    }
-
-    const handleSubmenuToggle = (): void => {
-
-        removeCurrentFocus()
-
-        const nextMenu = submenuOpen ? null : props.menuKey
-        props.onSelect(nextMenu)
-
-        if (mobile && props.collapsed) {
-            setCollapsedPopupOpen(nextMenu === props.menuKey)
-        } else {
-            setCollapsedPopupOpen(false)
-        }
-
-    }
-
-const renderExpandedItems = (
-        items: Array<SubMenuItem>,
-        depth = 0,
-        parentKey = props.menuKey
-    ): React.ReactNode => {
-
-        return items.map((item, index) => {
-
+    const renderItems = (items: Array<SubMenuItem>, depth = 0, parentKey = props.menuKey): React.ReactNode =>
+        items.map((item, index) => {
             const itemKey = `${parentKey}-${depth}-${index}-${item.label}`
             const hasChildren = Boolean(item.subItems?.length)
-            const childActive = hasChildren
-                ? hasActiveSubItem(item.subItems, isCurrentRoute)
-                : false
-
+            const childActive = hasChildren && hasActiveSubItem(item.subItems)
             const itemOpen = openGroups[itemKey] ?? childActive
-            const itemActive = item.href
-                ? isCurrentRoute(item.href)
-                : childActive
+            const itemActive = item.href ? isCurrentRoute(item.href) : childActive
 
             if (hasChildren) {
-
                 return (
-
-                    <Sidebar.MenuSubItem key={itemKey}>
-
+                    <div className="comandos-sidebar-menu-item" key={itemKey}>
                         <button
                             type="button"
                             aria-expanded={itemOpen}
-                            className={
-                                itemActive
-                                    ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active comandos-sidebar-submenu-group"
-                                    : "comandos-sidebar-menu-button comandos-sidebar-submenu-group"
-                            }
-                            onClick={(event) => {
-
-                                event.stopPropagation()
-                                removeCurrentFocus()
-                                props.onSelect(props.menuKey)
-
-                                setOpenGroups(
-                                    itemOpen
-                                        ? {}
-                                        : { [itemKey]: true }
-                                )
-
+                            className={itemActive
+                                ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active comandos-sidebar-submenu-group"
+                                : "comandos-sidebar-menu-button comandos-sidebar-submenu-group"}
+                            onClick={() => {
+                                select(props.menuKey)
+                                setOpenGroups(itemOpen ? {} : { [itemKey]: true })
                             }}
                         >
-
                             <span>{item.label}</span>
-
-                            {itemOpen
-                                ? <ChevronDown className="ml-auto" />
-                                : <ChevronRight className="ml-auto" />
-                            }
-
+                            {itemOpen ? <ChevronDown className="ml-auto" size={16} /> : <ChevronRight className="ml-auto" size={16} />}
                         </button>
-
                         {itemOpen && (
-
-                            <Sidebar.MenuSub
-                                className="comandos-sidebar-submenu comandos-sidebar-submenu-nested border-l-0!"
-                                style={{ borderLeft: "none" }}
-                            >
-                                {renderExpandedItems(
-                                    item.subItems ?? [],
-                                    depth + 1,
-                                    itemKey
-                                )}
-                            </Sidebar.MenuSub>
-
+                            <div className="comandos-sidebar-submenu comandos-sidebar-submenu-nested">
+                                {renderItems(item.subItems ?? [], depth + 1, itemKey)}
+                            </div>
                         )}
-
-                    </Sidebar.MenuSubItem>
-
-                )
-
-            }
-
-            if (!item.href) {
-                return null
-            }
-
-            return (
-
-                <Sidebar.MenuSubItem key={itemKey}>
-
-                    <Sidebar.MenuSubButton
-                        as={Link}
-                        href={item.href}
-                        isActive={itemActive}
-                        aria-current={itemActive ? "page" : undefined}
-                        className={
-                            itemActive
-                                ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
-                                : "comandos-sidebar-menu-button"
-                        }
-                        onClick={(event) => {
-
-                            event.stopPropagation()
-                            removeCurrentFocus()
-                            props.onSelect(props.menuKey)
-                            setCollapsedPopupOpen(false)
-
-                        }}
-                    >
-
-                        <span>{item.label}</span>
-
-                    </Sidebar.MenuSubButton>
-
-                </Sidebar.MenuSubItem>
-
-            )
-
-        })
-
-    }
-
-    const renderCollapsedItems = (
-        items: Array<SubMenuItem>,
-        depth = 0,
-        parentKey = props.menuKey
-    ): React.ReactNode => {
-
-        return items.map((item, index) => {
-
-            const itemKey = `${parentKey}-popup-${depth}-${index}-${item.label}`
-
-            if (item.subItems?.length) {
-
-                return (
-
-                    <div
-                        key={itemKey}
-                        className="comandos-sidebar-popup-group"
-                    >
-
-                        <div className="comandos-sidebar-popup-group-title">
-                            {item.label}
-                        </div>
-
-                        {renderCollapsedItems(
-                            item.subItems,
-                            depth + 1,
-                            itemKey
-                        )}
-
                     </div>
-
                 )
-
             }
 
-            if (!item.href) {
-                return null
-            }
-
-            const itemActive = isCurrentRoute(item.href)
+            if (!item.href) return null
 
             return (
-
-                <Link
-                    key={itemKey}
-                    href={item.href}
-                    aria-current={itemActive ? "page" : undefined}
-                    className={
-                        itemActive
-                            ? "comandos-sidebar-popup-link comandos-sidebar-popup-link-active"
-                            : "comandos-sidebar-popup-link"
-                    }
-                    onClick={(event) => {
-
-                        event.stopPropagation()
-                        removeCurrentFocus()
-                        props.onSelect(props.menuKey)
-                        setCollapsedPopupOpen(false)
-
-                    }}
-                >
-                    {item.label}
-                </Link>
-
+                <div className="comandos-sidebar-menu-item" key={itemKey}>
+                    <Link
+                        href={item.href}
+                        aria-current={itemActive ? "page" : undefined}
+                        className={itemActive
+                            ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
+                            : "comandos-sidebar-menu-button"}
+                        onClick={() => select(props.menuKey)}
+                    >
+                        <span>{item.label}</span>
+                    </Link>
+                </div>
             )
-
         })
-
-    }
 
     if (hasSubItems) {
-
         return (
-
-            <Sidebar.MenuItem className="comandos-sidebar-menu-item">
-
-                <Sidebar.MenuButton
-                    isActive={isActive}
+            <div className="comandos-sidebar-menu-item">
+                <button
+                    type="button"
                     aria-expanded={submenuOpen}
-                    className={
-                        isActive
-                            ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
-                            : "comandos-sidebar-menu-button"
-                    }
-                    onClick={handleSubmenuToggle}
+                    className={isActive
+                        ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
+                        : "comandos-sidebar-menu-button"}
+                    onClick={() => select(submenuOpen ? null : props.menuKey)}
                 >
-
-                    <Icon />
-
+                    <Icon size={18} />
                     <span>{props.label}</span>
-
                     {!props.collapsed && (
                         submenuOpen
-                            ? <ChevronDown className="ml-auto" />
-                            : <ChevronRight className="ml-auto" />
+                            ? <ChevronDown className="ml-auto" size={16} />
+                            : <ChevronRight className="ml-auto" size={16} />
                     )}
-
-                </Sidebar.MenuButton>
+                </button>
 
                 {!props.collapsed && submenuOpen && (
-
-                    <Sidebar.MenuSub
-                        className="comandos-sidebar-submenu border-l-0!"
-                        style={{ borderLeft: "none" }}
-                    >
-                        {renderExpandedItems(props.subItems ?? [])}
-                    </Sidebar.MenuSub>
-
-                )}
-
-                {props.collapsed && (!mobile || collapsedPopupOpen) && (
-
-                    <div className={`comandos-sidebar-popup ${mobile ? "comandos-sidebar-popup-mobile-click" : ""}`}>
-
-                        <div className="comandos-sidebar-popup-title">
-                            {props.label}
-                        </div>
-
-                        {renderCollapsedItems(props.subItems ?? [])}
-
+                    <div className="comandos-sidebar-submenu">
+                        {renderItems(props.subItems ?? [])}
                     </div>
-
                 )}
 
-            </Sidebar.MenuItem>
-
+                {props.collapsed && submenuOpen && (
+                    <div className="comandos-sidebar-popup">
+                        <div className="comandos-sidebar-popup-title">{props.label}</div>
+                        {props.subItems?.map((item, index) => item.href ? (
+                            <Link
+                                key={`${props.menuKey}-popup-${index}`}
+                                href={item.href}
+                                className={isCurrentRoute(item.href)
+                                    ? "comandos-sidebar-popup-link comandos-sidebar-popup-link-active"
+                                    : "comandos-sidebar-popup-link"}
+                                onClick={() => select(props.menuKey)}
+                            >
+                                {item.label}
+                            </Link>
+                        ) : null)}
+                    </div>
+                )}
+            </div>
         )
-
     }
 
     return (
-
-        <Sidebar.MenuItem>
-
-            <Sidebar.MenuButton
-                as={Link}
+        <div className="comandos-sidebar-menu-item">
+            <Link
                 href={props.href ?? "/"}
-                isActive={isActive}
                 aria-current={isActive ? "page" : undefined}
-                className={
-                    isActive
-                        ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
-                        : "comandos-sidebar-menu-button"
-                }
-                onClick={(event) => {
-
-                    event.stopPropagation()
-                    removeCurrentFocus()
-                    props.onSelect(props.menuKey)
-
-                }}
+                className={isActive
+                    ? "comandos-sidebar-menu-button comandos-sidebar-menu-button-active"
+                    : "comandos-sidebar-menu-button"}
+                onClick={() => select(props.menuKey)}
             >
-
-                <Icon />
+                <Icon size={18} />
                 <span>{props.label}</span>
-
-            </Sidebar.MenuButton>
-
-        </Sidebar.MenuItem>
-
+            </Link>
+        </div>
     )
-
 }

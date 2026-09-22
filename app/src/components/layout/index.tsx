@@ -1,10 +1,7 @@
 "use client"
 
-import { ReactNode } from "react"
-
-import { Sidebar as SidebarIcon } from "@primeicons/react"
-import { Button } from "@primereact/ui/button"
-import { Sidebar } from "@primereact/ui/sidebar"
+import { ReactNode, useState } from "react"
+import { PanelLeft } from "lucide-react"
 
 import { Menu } from "./menu"
 import { TopToolbar } from "./top-toolbar"
@@ -17,75 +14,44 @@ interface LayoutProps {
     message?: Array<Alert>
 }
 
-export const Layout: React.FC<LayoutProps> = ( props: LayoutProps ) => {
+export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
+    const [sidebarOpen, setSidebarOpen] = useState(true)
 
     return (
+        <div className="min-h-screen">
+            <Menu open={sidebarOpen} onOpenChange={setSidebarOpen} />
 
-        <Sidebar.Layout className="min-h-screen">
-
-            <Menu />
-
-            <Sidebar.Main className="comandos-sidebar-main pt-0">
-
+            <main className="comandos-sidebar-main pt-0">
                 <header className="comandos-main-header flex h-12 items-center gap-3 px-4">
-
-                    <Sidebar.Trigger
-                        as={Button}
-                        severity="secondary"
-                        variant="text"
-                        size="small"
-                        iconOnly
+                    <button
+                        type="button"
                         aria-label="Toggle sidebar"
-                    
-                        className="comandos-sidebar-trigger">
-                        <SidebarIcon />
-                    </Sidebar.Trigger>
+                        className="comandos-sidebar-trigger"
+                        onClick={() => setSidebarOpen((open) => !open)}
+                    >
+                        <PanelLeft size={18} />
+                    </button>
 
                     <TopToolbar />
-
                 </header>
 
                 <div className="comandos-main-content flex-1 px-4 pb-4 pt-4">
-
                     <div className="comandos-main-card surface-card border-round shadow-2 overflow-hidden">
-
                         <div className="comandos-main-card-header p-3">
-
-                            <p className="m-0 font-semibold">
-                                { props.title }
-                            </p>
-
+                            <p className="m-0 font-semibold">{props.title}</p>
                         </div>
 
                         <div className="p-4">
-
                             <div className="w-full">
-
-                                { props.message &&
-                                    props.message.map((msg, index) => (
-
-                                        <Message
-                                            key={ index }
-                                            {...msg}
-                                        />
-
-                                    ))
-                                }
-
-                                { props.children }
-
+                                {props.message?.map((msg, index) => (
+                                    <Message key={index} {...msg} />
+                                ))}
+                                {props.children}
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
-            </Sidebar.Main>
-
-        </Sidebar.Layout>
-
+            </main>
+        </div>
     )
-
 }
