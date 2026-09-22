@@ -5276,3 +5276,170 @@ th,
     outline: 2px solid var(--comandos-accent) !important;
     outline-offset: 2px;
 }
+
+/* Native COMANDOS toast and dialog replacements */
+.comandos-toast-region {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 12000;
+    display: grid;
+    gap: 0.75rem;
+    width: min(24rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.comandos-toast {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--p-content-border-color, #dee2e6);
+    border-left: 4px solid #6b7280;
+    border-radius: 0.5rem;
+    background: var(--p-content-background, #ffffff);
+    color: var(--p-content-color, #171717);
+    box-shadow: 0 0.35rem 1.2rem rgba(0, 0, 0, 0.18);
+}
+
+.comandos-toast-success { border-left-color: #22c55e; }
+.comandos-toast-info,
+.comandos-toast-secondary { border-left-color: #3b82f6; }
+.comandos-toast-warn { border-left-color: #f59e0b; }
+.comandos-toast-error { border-left-color: #ef4444; }
+.comandos-toast-contrast { border-left-color: #171717; }
+
+.comandos-toast-icon {
+    display: inline-flex;
+    margin-top: 0.1rem;
+}
+
+.comandos-toast-message {
+    min-width: 0;
+}
+
+.comandos-toast-title {
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.comandos-toast-description {
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.comandos-toast-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.72;
+    padding: 0.1rem;
+    border-radius: 0.25rem;
+}
+
+.comandos-toast-close:hover,
+.comandos-toast-close:focus-visible {
+    opacity: 1;
+    outline: 2px solid #ff9900;
+    outline-offset: 2px;
+}
+
+.comandos-dialog-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.comandos-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(0, 0, 0, 0.56);
+    cursor: default;
+}
+
+.comandos-native-dialog {
+    position: relative;
+    z-index: 1;
+    background: var(--p-content-background, #ffffff);
+    color: var(--p-content-color, #171717);
+    border: 1px solid var(--p-content-border-color, #dee2e6);
+    border-radius: 0.5rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
+}
+
+.comandos-native-dialog-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--p-content-border-color, #dee2e6);
+}
+
+.comandos-native-dialog-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.comandos-native-dialog-content {
+    padding: 1.25rem;
+}
+
+.comandos-secondary-button {
+    border: 1px solid var(--p-content-border-color, #cbd5e1);
+    border-radius: 0.375rem;
+    background: var(--p-content-background, #ffffff);
+    color: var(--p-content-color, #171717);
+    font-weight: 600;
+    padding: 0.6rem 0.9rem;
+    cursor: pointer;
+}
+
+.comandos-secondary-button:hover:not(:disabled),
+.comandos-secondary-button:focus-visible {
+    border-color: #ff9900;
+    box-shadow: 0 0 0 1px #ff9900;
+    outline: none;
+}
+
+.comandos-secondary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+html[data-theme="dark"] .comandos-toast,
+html[data-theme="dark"] .comandos-native-dialog,
+html[data-theme="dark"] .comandos-secondary-button {
+    background: #171717;
+    color: #f3f4f6;
+    border-color: #3f3f46;
+}
+
+@media (max-width: 768px) {
+    .comandos-toast-region {
+        left: 0.75rem;
+        right: 0.75rem;
+        width: auto;
+        top: 0.75rem;
+    }
+
+    .comandos-dialog-layer {
+        padding: 0.5rem;
+        align-items: end;
+    }
+
+    .comandos-native-dialog {
+        width: 100% !important;
+        max-height: calc(100vh - 1rem) !important;
+        border-radius: 0.75rem 0.75rem 0 0;
+    }
+}

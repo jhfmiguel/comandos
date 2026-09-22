@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import axios from "axios";
-import { Button } from "@primereact/ui/button";
-import { Dialog } from "@primereact/ui/dialog";
 import { Message } from "components/common/message";
 import { ReferenceField } from "components/erp/shared/record-workspace";
 import { httpClient } from "api/http";
@@ -88,10 +86,27 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                 ? failure.response.data.detail : "The entry result could not be confirmed. Retry to recover the same entry.");
         } finally { saving.current = false; setBusy(false); }
     }
-    return <Dialog.Root open onOpenChange={(event: { value?: boolean }) => { if (!event.value && !locked) onCancel(); }}>
-        <Dialog.Portal><Dialog.Backdrop /><Dialog.Positioner><Dialog.Popup className={styles.dialog}>
-            <Dialog.Header><Dialog.Title>{assets ? "Register individual assets" : "Receive ammunition boxes"}</Dialog.Title></Dialog.Header>
-            <Dialog.Content><form data-comandos-erp-form="true" className={styles.form} onSubmit={submit}>
+    React.useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !locked) onCancel();
+        };
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
+    }, [locked, onCancel]);
+
+    return <div className="comandos-dialog-layer">
+        <button
+            type="button"
+            className="comandos-dialog-backdrop"
+            aria-label="Close dialog"
+            disabled={locked}
+            onClick={() => { if (!locked) onCancel(); }}
+        />
+        <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog}`}>
+            <div className="comandos-native-dialog-header">
+                <h2>{assets ? "Register individual assets" : "Receive ammunition boxes"}</h2>
+            </div>
+            <div className="comandos-native-dialog-content"><form data-comandos-erp-form="true" className={styles.form} onSubmit={submit}>
                 <p>{assets ? "Choose the common model and location, then enter one asset code / serial number pair per unit."
                     : "Choose the ammunition model and lot. Enter boxes, loose rounds or both. Remove box rows to receive only loose rounds."}</p>
                 {assets && <Message type="info" text="Atomic batch: all rows are saved together. If any row is rejected, no assets are created. Review the pairs before confirming." />}
@@ -119,7 +134,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                     {assets && <details><summary>Paste a list from a spreadsheet</summary>
                         <label htmlFor="asset-pairs-paste">Asset code and serial number (two columns, no header)</label>
                         <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
-                        <Button type="button" onClick={importPairs}>Add pasted rows</Button></details>}
+                        <button type="button" className="registration-yellow-button" onClick={importPairs}>Add pasted rows</button></details>}
                     <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Boxes and rounds"}</caption>
                         <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th>{assets && <th>Validation</th>}</tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
@@ -127,9 +142,9 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                                 aria-label={`${assets ? column === "first" ? "Asset code" : "Serial number" : column === "first" ? "Number of boxes" : "Rounds per box"} ${index + 1}`}
                                 type="text" inputMode={assets ? "text" : "numeric"} maxLength={assets ? 255 : 15}
                                 value={row[column]} onChange={event => update(index, column, event.target.value)} /></td>)}
-                            <td className={styles.actionCell}><Button type="button" severity="secondary" aria-label={`Remove row ${index + 1}`}
-                                onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}>Remove</Button></td>{assets && <td aria-live="polite">{results[index]?.errors.length ? results[index].errors.join(" ") : normalized[index].first === "" || normalized[index].second === "" ? "Asset code and serial number are required." : normalized.some((other, i) => i !== index && (other.first === normalized[index].first || other.second === normalized[index].second)) ? "Duplicate asset code or serial number." : results[index]?.status === "ACCEPTED" ? "Accepted; saved" : results[index]?.status === "VALID" ? "Valid; not saved yet" : ""}</td>}</tr>)}</tbody></table></div>
-                    <Button type="button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>Add row</Button>
+                            <td className={styles.actionCell}><button type="button" className="comandos-secondary-button" aria-label={`Remove row ${index + 1}`}
+                                onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}>Remove</button></td>{assets && <td aria-live="polite">{results[index]?.errors.length ? results[index].errors.join(" ") : normalized[index].first === "" || normalized[index].second === "" ? "Asset code and serial number are required." : normalized.some((other, i) => i !== index && (other.first === normalized[index].first || other.second === normalized[index].second)) ? "Duplicate asset code or serial number." : results[index]?.status === "ACCEPTED" ? "Accepted; saved" : results[index]?.status === "VALID" ? "Valid; not saved yet" : ""}</td>}</tr>)}</tbody></table></div>
+                    <button type="button" className="registration-yellow-button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>Add row</button>
                     {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
                             onChange={event => setLooseUnits(event.target.value)} /></div>}
@@ -137,11 +152,11 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                 <p role="status">{assets ? "Quantity (serial numbers)" : "Total rounds"}: <strong>{total}</strong></p>
                 {duplicate && <Message type="error" text="Each asset code and serial number must be unique in this list." />}
                 {!assets && (!validRows || total.length > 15) && <small>Enter positive whole quantities; the total can contain at most 15 digits.</small>}
-                {reviewed && !pending && <Button type="button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Edit batch</Button>}
-                {completed !== null ? <Button type="button" onClick={() => onSaved(completed)}>Done</Button> : <div className={styles.actions}><Button type="button" severity="secondary" disabled={locked} onClick={onCancel}>Cancel</Button>
-                    <Button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
-                        {busy ? "Processing..." : pending ? "Retry entry" : assets ? reviewed ? "Confirm registration" : "Register assets" : "Receive boxes"}</Button></div>}
-            </form></Dialog.Content>
-        </Dialog.Popup></Dialog.Positioner></Dialog.Portal>
-    </Dialog.Root>;
+                {reviewed && !pending && <button type="button" className="comandos-secondary-button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Edit batch</button>}
+                {completed !== null ? <button type="button" className="registration-yellow-button" onClick={() => onSaved(completed)}>Done</button> : <div className={styles.actions}><button type="button" className="comandos-secondary-button" disabled={locked} onClick={onCancel}>Cancel</button>
+                    <button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
+                        {busy ? "Processing..." : pending ? "Retry entry" : assets ? reviewed ? "Confirm registration" : "Register assets" : "Receive boxes"}</button></div>}
+            </form></div>
+        </div>
+    </div>;
 }

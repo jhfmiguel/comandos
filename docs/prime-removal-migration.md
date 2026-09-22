@@ -15,18 +15,18 @@ que áreas legadas ainda não migradas continuem compilando entre os commits.
 - Input;
 - InputMoney;
 - Textarea;
-- configurações de tema/paleta.
+- configurações de tema/paleta;
+- toast/notificações;
+- modal e botões da entrada de estoque.
 
 ## Próximos blocos
 
-1. toast/notificações;
-2. diálogos e botões simples;
-3. sales form;
-4. stock intake;
-5. tabelas de usuários e armas;
-6. audit;
-7. record-workspace / DataTable / Paginator / Tabs;
-8. remoção final dos pacotes e do presente arquivo.
+1. sales form;
+2. tabelas de usuários e armas;
+3. audit;
+4. record-workspace / DataTable / Paginator / Tabs;
+5. demais diálogos/botões residuais;
+6. remoção final dos pacotes e do presente arquivo.
 
 Quando não houver nenhum import Prime no frontend, os pacotes serão removidos do
 package.json e yarn.lock e este marcador será excluído.
