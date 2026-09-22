@@ -5,7 +5,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 
-import { Button as PrimeButton } from "@primereact/ui/button";
+import { Button as PrimeButton } from "components/ui/button";
 
 import { User } from "api/models/users";
 
