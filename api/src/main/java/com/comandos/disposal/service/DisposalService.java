@@ -159,6 +159,7 @@ public class DisposalService {
     }
 
     private void scope(StockLocation location, DisposalProcess process) {
+        if (!Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
         access.requireScope("disposals", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
         access.requireScope("disposals", "APPROVE", location.organization.id, location.unit == null ? null : location.unit.id);
         if (!location.organization.id.equals(process.organization.id) || process.unit != null
@@ -174,6 +175,7 @@ public class DisposalService {
     private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
         if (unitId == null) return null; OrganizationalUnit unit = em.find(OrganizationalUnit.class, unitId);
         if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
+        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
         return unit;
     }
 

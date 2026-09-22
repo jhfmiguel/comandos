@@ -92,7 +92,7 @@ public class CustodyService {
             if (!recipientUnit.organization.id.equals(organization.id)) bad("The receiving unit must belong to the selected organization.");
         }
         access.requireEntity("core/people", "READ", authorizer);
-        if (!organization.active || recipient != null && !recipient.active || !authorizer.active) bad("Organization, recipient and authorizer must be active.");
+        if (!organization.active || unit != null && !Boolean.TRUE.equals(unit.active) || recipient != null && !recipient.active || !authorizer.active) bad("Organization, unit, recipient and authorizer must be active.");
         var deliveredAt = LocalDateTime.now();
         var dueAt = parseDueAt(request.dueAt(), deliveredAt);
         var custody = new Custody();
@@ -364,6 +364,7 @@ public class CustodyService {
         if (unitId == null) return null;
         var unit = em.find(OrganizationalUnit.class, unitId);
         if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
+        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
         return unit;
     }
     private void validateIssue(IssueRequest request) {

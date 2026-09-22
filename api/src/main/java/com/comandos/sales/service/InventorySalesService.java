@@ -297,6 +297,7 @@ public class InventorySalesService {
         if (unitId == null) return null;
         var unit = em.find(OrganizationalUnit.class, unitId);
         if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
+        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
         return unit;
     }
     private void validateLocation(StockLocation location, long organizationId, Long unitId) {

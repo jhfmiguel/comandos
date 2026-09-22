@@ -99,6 +99,7 @@ public class TransferService {
         OrganizationalUnit destinationUnit = selectedUnit(organization.id, request.destinationUnitId());
         if (sourceUnit.id.equals(destinationUnit.id)) bad("Source and destination units must be different.");
         StockLocation destinationLocation = locked(StockLocation.class, request.destinationLocationId());
+        if (!Boolean.TRUE.equals(destinationLocation.active)) bad("Destination location must be active.");
         if (!destinationLocation.organization.id.equals(organization.id) || destinationLocation.unit == null
                 || !destinationLocation.unit.id.equals(destinationUnit.id)) {
             bad("Destination location must belong to the selected destination unit.");
@@ -424,6 +425,7 @@ public class TransferService {
         if (unit == null || !unit.organization.id.equals(organizationId)) {
             bad("Select a unit in the selected organization.");
         }
+        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
         return unit;
     }
 
