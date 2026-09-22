@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;import java.math.*;i
          }
          var approval = request("POST", "inventory-counts/" + id + "/approve", null);
          assertEquals(409, approval.status(), approval.raw());
-         assertEquals(sold ? "SOLD" : "AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, s.asset()));
+         assertEquals(sold ? "SOLD" : "TRANSFER_PENDING", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, s.asset()));
          assertEquals(expectedLocation, jdbc.queryForObject("select location_id from erp_asset_item where id=?", Long.class, s.asset()));
          assertEquals("10.0000", decimal("select available from erp_stock_balance where id=?", s.balance()));
          assertEquals(0, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='INVENTORY_ADJUSTMENT' and location_id=?", Integer.class, s.location()));
