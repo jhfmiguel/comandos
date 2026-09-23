@@ -10,6 +10,7 @@ import com.comandos.inventory.model.StockBalance;
 import com.comandos.inventory.model.StockLocation;
 import com.comandos.inventory.model.StockLot;
 import com.comandos.inventory.model.StockMovement;
+import com.comandos.inventory.model.StockMovementNature;
 import com.comandos.security.service.AccessPolicy;
 import com.comandos.transfer.dto.TransferContract.AcceptRequest;
 import com.comandos.transfer.dto.TransferContract.FinalizeRequest;
@@ -245,8 +246,8 @@ public class TransferService {
         notExpired(asset.validUntil);
         if (line.quantity().compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
         StockLocation source = asset.location;
-        StockMovement out = movement(asset, null, source, "TRANSFER_OUT", BigDecimal.ONE.negate(), transfer.sentAt);
-        StockMovement in = movement(asset, null, destination, "TRANSFER_IN", BigDecimal.ONE, transfer.sentAt);
+        StockMovement out = movement(asset, null, source, StockMovementNature.TRANSFER_OUT.name(), BigDecimal.ONE.negate(), transfer.sentAt);
+        StockMovement in = movement(asset, null, destination, StockMovementNature.TRANSFER_IN.name(), BigDecimal.ONE, transfer.sentAt);
         InventoryTransferItem item = item(transfer, asset.model, source, destination, asset.assetCode, line.quantity(), out, in);
         item.asset = asset;
         em.persist(item);
@@ -270,8 +271,8 @@ public class TransferService {
         BigDecimal destinationBlockedBefore = destinationBalance.blocked;
         sourceBalance.available = sourceBefore.subtract(line.quantity());
         destinationBalance.blocked = destinationBlockedBefore.add(line.quantity());
-        StockMovement out = movement(null, lot, sourceBalance.location, "TRANSFER_OUT", line.quantity().negate(), transfer.sentAt);
-        StockMovement in = movement(null, lot, destination, "TRANSFER_IN", line.quantity(), transfer.sentAt);
+        StockMovement out = movement(null, lot, sourceBalance.location, StockMovementNature.TRANSFER_OUT.name(), line.quantity().negate(), transfer.sentAt);
+        StockMovement in = movement(null, lot, destination, StockMovementNature.TRANSFER_IN.name(), line.quantity(), transfer.sentAt);
         InventoryTransferItem item = item(transfer, lot.model, sourceBalance.location, destination, lot.lotNumber,
             line.quantity(), out, in);
         item.lot = lot;
@@ -324,8 +325,8 @@ public class TransferService {
                 if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
-                movement(asset, null, item.destinationLocation, "TRANSFER_REJECT_OUT", BigDecimal.ONE.negate(), now);
-                movement(asset, null, item.sourceLocation, "TRANSFER_REJECT_RETURN", BigDecimal.ONE, now);
+                movement(asset, null, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), BigDecimal.ONE.negate(), now);
+                movement(asset, null, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), BigDecimal.ONE, now);
                 asset.location = item.sourceLocation;
                 asset.status = AssetStatus.AVAILABLE.name();
             } else {
@@ -336,8 +337,8 @@ public class TransferService {
                 }
                 destination.blocked = destination.blocked.subtract(item.quantity);
                 source.available = source.available.add(item.quantity);
-                movement(null, item.lot, item.destinationLocation, "TRANSFER_REJECT_OUT", item.quantity.negate(), now);
-                movement(null, item.lot, item.sourceLocation, "TRANSFER_REJECT_RETURN", item.quantity, now);
+                movement(null, item.lot, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), item.quantity.negate(), now);
+                movement(null, item.lot, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), item.quantity, now);
             }
         }
     }
