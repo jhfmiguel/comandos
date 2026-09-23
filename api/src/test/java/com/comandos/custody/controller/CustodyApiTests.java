@@ -14,7 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:custody-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:custody-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "logging.level.root=WARN", "debug=false"
 })
 class CustodyApiTests {
@@ -164,7 +164,7 @@ class CustodyApiTests {
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_ISSUE' and location_id = ?", Long.class, s.location()));
         assertEquals("CUSTODIED", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.first()));
         var retry = request("POST", "custodies", data); assertEquals(custody, retry.body().get("id").asLong());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'custodies' and record_id = ? and action = 'ISSUE'", Long.class, custody));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'custodies' and record_id = ? and action = 'ISSUE'", Long.class, custody));
         long firstItem = issued.body().get("items").get(0).get("id").asLong();
         long secondItem = issued.body().get("items").get(1).get("id").asLong();
         var firstReturn = Map.of("requestId", unique(), "itemIds", List.of(firstItem));
@@ -177,7 +177,7 @@ class CustodyApiTests {
         assertEquals("RETURNED", completed.body().get("status").asText()); assertFalse(completed.body().get("completedAt").isNull());
         assertEquals(2, completed.body().get("returns").size());
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_RETURN' and location_id = ?", Long.class, s.location()));
-        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'custodies' and record_id = ? and action = 'RETURN'", Long.class, custody));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'custodies' and record_id = ? and action = 'RETURN'", Long.class, custody));
         com.comandos.audit.controller.AuditTraceAssertions.trace(port,"custodies",custody,"assetId="+s.first()+"&unitId="+s.unit(),"ISSUE","RETURN","RETURN");
     }
 
