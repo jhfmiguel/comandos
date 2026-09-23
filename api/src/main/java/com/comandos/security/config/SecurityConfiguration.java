@@ -1,5 +1,6 @@
 package com.comandos.security.config;
 
+import com.comandos.core.config.PlatformProperties;
 import com.comandos.security.service.AccountService;
 import com.comandos.security.service.AccessPolicy;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -7,7 +8,6 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
