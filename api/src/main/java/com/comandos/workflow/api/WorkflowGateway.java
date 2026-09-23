@@ -1,5 +1,7 @@
 package com.comandos.workflow.api;
 
+import com.comandos.core.api.PlatformPage;
+
 public interface WorkflowGateway {
 
     WorkflowView request(WorkflowRequest request);
@@ -16,7 +18,7 @@ public interface WorkflowGateway {
 
     WorkflowView get(long id);
 
-    WorkflowPage<WorkflowView> list(
+    PlatformPage<WorkflowView> list(
         long organizationId,
         Long unitId,
         String status,

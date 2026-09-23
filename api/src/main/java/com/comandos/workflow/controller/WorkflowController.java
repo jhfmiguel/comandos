@@ -1,8 +1,8 @@
 package com.comandos.workflow.controller;
-import com.comandos.workflow.api.*;import com.comandos.workflow.service.WorkflowService;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;
+import com.comandos.workflow.api.*;import com.comandos.core.api.PlatformPage;import com.comandos.workflow.service.WorkflowService;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;
 @RestController@RequestMapping("/api/erp/workflows")public class WorkflowController{private final WorkflowService s;public WorkflowController(WorkflowService s){this.s=s;}
  @PostMapping@ResponseStatus(HttpStatus.CREATED)public WorkflowView request(@RequestBody WorkflowRequest r){return s.request(r);}@GetMapping("/{id}")public WorkflowView get(@PathVariable long id){return s.get(id);}
- @GetMapping public WorkflowPage<WorkflowView>list(@RequestParam long organizationId,@RequestParam(required=false)Long unitId,@RequestParam(required=false)String status,@RequestParam(defaultValue="0")int page){return s.list(organizationId,unitId,status,page);}
+ @GetMapping public PlatformPage<WorkflowView>list(@RequestParam long organizationId,@RequestParam(required=false)Long unitId,@RequestParam(required=false)String status,@RequestParam(defaultValue="0")int page){return s.list(organizationId,unitId,status,page);}
  @PostMapping("/{id}/analyze")public WorkflowView analyze(@PathVariable long id,@RequestBody(required=false)WorkflowTransition r){return s.analyze(id,r);}@PostMapping("/{id}/authorize")public WorkflowView authorize(@PathVariable long id,@RequestBody(required=false)WorkflowTransition r){return s.authorize(id,r);}
  @PostMapping("/{id}/execute")public WorkflowView execute(@PathVariable long id,@RequestBody(required=false)WorkflowTransition r){return s.execute(id,r);}@PostMapping("/{id}/conclude")public WorkflowView conclude(@PathVariable long id,@RequestBody(required=false)WorkflowTransition r){return s.conclude(id,r);}
  @PostMapping("/{id}/cancel")public WorkflowView cancel(@PathVariable long id,@RequestBody(required=false)WorkflowTransition r){return s.cancel(id,r);}
