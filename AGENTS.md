@@ -26,6 +26,35 @@ Do not add speculative complexity without a concrete use case, but avoid domain 
 - Do not expand Platform Core preventively. Add to it only when a real cross-domain need exists.
 - Armament and future vertical modules must preserve explicit boundaries.
 
+
+## Layered product architecture
+COMANDOS follows three explicit layers:
+
+1. Platform Core: technical, domain-neutral infrastructure.
+2. Enterprise Core: reusable business capabilities shared with other personal commercial products.
+3. Vertical Domains: security-specific business domains.
+
+### Platform Core
+Examples: security, identity, authorization, organizations, audit, workflow, documents, notifications, messaging, observability, HTTP/error handling, shared UI infrastructure.
+
+### Enterprise Core
+Examples: people/HR foundations, customers, suppliers, catalog/items, purchasing, sales, inventory foundations, warehouses, contracts, finance foundations, cost centers, assets, maintenance foundations, reporting foundations.
+
+Enterprise Core must not know about armament, escort, intelligence, operations, agriculture, livestock, manufacturing, or other vertical concepts.
+
+### COMANDOS vertical domains
+Examples: armament, ammunition consumption, custody, escort, intelligence, security operations, incidents, crisis management, transport/fleet for security operations, tactical assets, and future public/private security capabilities.
+
+Dependency direction:
+
+Platform Core
+    ↑
+Enterprise Core
+    ↑
+COMANDOS Vertical Domains
+
+Never reverse this dependency direction.
+
 ## Engineering rules
 - Never silently remove existing behavior during refactoring.
 - Critical business rules require automated tests.
