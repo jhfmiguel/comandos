@@ -20,7 +20,7 @@ class PlatformPropertiesTests {
 
         var properties = new Binder(source)
             .bind("platform", Bindable.of(PlatformProperties.class))
-            .orElseThrow();
+            .orElseThrow(() -> new IllegalStateException("Platform properties were not bound."));
 
         assertEquals("https://example.test", properties.getAllowedOrigin());
         assertTrue(properties.getSecurity().isRequireLogin());
