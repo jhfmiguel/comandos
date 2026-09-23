@@ -22,7 +22,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:lifecycle-workflow-report-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:lifecycle-workflow-report-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "logging.level.root=WARN", "debug=false"
 })
 class LifecycleWorkflowReportApiTests {
