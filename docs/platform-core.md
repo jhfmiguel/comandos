@@ -157,3 +157,16 @@ Ao final da requisição, o filtro registra método, caminho, status e duração
 sempre remove o identificador do MDC, inclusive quando a cadeia HTTP termina com
 exceção. Isso evita vazamento de contexto entre requisições executadas pela mesma
 thread.
+
+
+## Error boundary reutilizável
+
+O frontend mantém o fallback genérico em `platform/error-boundary.tsx`.
+O arquivo `app/error.tsx` apenas integra esse componente ao App Router do Next.js.
+
+O fallback não depende de Armamento nem de branding específico do COMANDOS.
+Ele apresenta uma mensagem genérica, expõe o `digest` quando disponível e oferece
+uma ação de nova tentativa por meio de `reset()`.
+
+Aplicações que reutilizarem o Platform Core podem manter a mesma estratégia sem
+duplicar tratamento de erro global.
