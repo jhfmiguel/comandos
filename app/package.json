@@ -9,7 +9,8 @@
     "lint": "eslint",
     "i18n:audit": "node scripts/audit-i18n.mjs",
     "validate:armamento": "node scripts/validate-armamento-layout.mjs",
-    "licenses:audit": "node scripts/check-commercial-dependencies.mjs"
+    "licenses:audit": "node scripts/check-commercial-dependencies.mjs",
+    "platform:audit": "node scripts/check-platform-boundaries.mjs"
   },
   "dependencies": {
     "@4us-dev/utils": "^0.0.15",
