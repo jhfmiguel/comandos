@@ -74,4 +74,33 @@ class RequestCorrelationFilterTests {
             assertNull(MDC.get(RequestCorrelationFilter.MDC_KEY));
         }
     }
+
+    @Test
+    void clearsCorrelationContextWhenRequestFails() {
+        var filter = new RequestCorrelationFilter(ids);
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+
+        var failure = assertThrows(
+            IllegalStateException.class,
+            () -> filter.doFilter(
+                request,
+                response,
+                (req, res) -> {
+                    assertEquals(
+                        GENERATED.toString(),
+                        MDC.get(RequestCorrelationFilter.MDC_KEY)
+                    );
+                    throw new IllegalStateException("boom");
+                }
+            )
+        );
+
+        assertEquals("boom", failure.getMessage());
+        assertEquals(
+            GENERATED.toString(),
+            response.getHeader(RequestCorrelationFilter.HEADER)
+        );
+        assertNull(MDC.get(RequestCorrelationFilter.MDC_KEY));
+    }
 }
