@@ -106,3 +106,13 @@ substituídos por variáveis `NEXT_PUBLIC_PRODUCT_*`.
 
 Assim, um novo produto pode reutilizar o mesmo shell sem renomear componentes ou
 alterar código do core.
+
+
+## Eventos de plataforma
+
+Novos módulos backend devem publicar eventos por
+`com.comandos.messaging.api.PlatformEventPublisher`.
+
+O contrato público não expõe `ApplicationEventPublisher` do Spring. Isso permite
+trocar a implementação interna por outbox, Kafka ou outro barramento sem alterar
+os módulos consumidores.
