@@ -184,3 +184,24 @@ A API pública de preferências expõe nomes neutros para novos módulos:
 Os nomes antigos `useComandosPreferences` e tipos `Comandos*` permanecem
 disponíveis temporariamente como aliases de compatibilidade para evitar regressões
 durante a migração dos módulos existentes.
+
+
+## Estado da extração lógica
+
+A camada reutilizável está estabilizada como fronteira lógica dentro do monorepo:
+
+- contratos públicos backend definidos;
+- autenticação, autorização, identidade, organização e auditoria desacopladas;
+- eventos, workflow, documentos, notificações e métricas com APIs públicas;
+- configuração de plataforma centralizada;
+- frontend com API pública em `platform/`;
+- preferências e identidade de produto parametrizadas;
+- tratamento de erro, correlação e logging reutilizáveis;
+- auditoria automática das fronteiras no CI.
+
+A criação de um pacote ou repositório físico separado fica deliberadamente
+postergada. Essa etapa só deve acontecer quando houver necessidade concreta de
+consumo externo, evitando interromper a evolução dos domínios de negócio.
+
+Com a fronteira lógica estabilizada, o desenvolvimento pode voltar aos módulos
+verticais, começando por Armamento, sem ampliar o Platform Core além do necessário.
