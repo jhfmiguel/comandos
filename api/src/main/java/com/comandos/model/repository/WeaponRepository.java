@@ -8,151 +8,22 @@ import org.springframework.data.repository.query.Param;
 
 import com.comandos.model.Weapon;
 
-public interface WeaponRepository
-    extends JpaRepository<Weapon, Long> {
+public interface WeaponRepository extends JpaRepository<Weapon, Long> {
 
-    @Query(
-        value = """
-            SELECT w.*
-            FROM weapon w
-            WHERE
-                UPPER(
-                    COALESCE(
-                        w.sku,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :sku,
-                        '%'
-                    )
-                )
-
-                AND UPPER(
-                    COALESCE(
-                        w.name,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :name,
-                        '%'
-                    )
-                )
-
-                AND REPLACE(
-                    COALESCE(
-                        CAST(
-                            w.price AS TEXT
-                        ),
-                        ''
-                    ),
-                    '.',
-                    ','
-                ) LIKE CONCAT(
-                    '%',
-                    REPLACE(
-                        :price,
-                        '.',
-                        ','
-                    ),
-                    '%'
-                )
-
-                AND UPPER(
-                    COALESCE(
-                        w.description,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :description,
-                        '%'
-                    )
-                )
-
-            ORDER BY w.id ASC
-            """,
-        countQuery = """
-            SELECT COUNT(*)
-            FROM weapon w
-            WHERE
-                UPPER(
-                    COALESCE(
-                        w.sku,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :sku,
-                        '%'
-                    )
-                )
-
-                AND UPPER(
-                    COALESCE(
-                        w.name,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :name,
-                        '%'
-                    )
-                )
-
-                AND REPLACE(
-                    COALESCE(
-                        CAST(
-                            w.price AS TEXT
-                        ),
-                        ''
-                    ),
-                    '.',
-                    ','
-                ) LIKE CONCAT(
-                    '%',
-                    REPLACE(
-                        :price,
-                        '.',
-                        ','
-                    ),
-                    '%'
-                )
-
-                AND UPPER(
-                    COALESCE(
-                        w.description,
-                        ''
-                    )
-                ) LIKE UPPER(
-                    CONCAT(
-                        '%',
-                        :description,
-                        '%'
-                    )
-                )
-            """,
-        nativeQuery = true
-    )
+    @Query("""
+        select w
+        from Weapon w
+        where upper(coalesce(w.sku, '')) like upper(concat('%', concat(:sku, '%')))
+          and upper(coalesce(w.name, '')) like upper(concat('%', concat(:name, '%')))
+          and replace(coalesce(cast(w.price as string), ''), '.', ',') like concat('%', concat(replace(:price, '.', ','), '%'))
+          and upper(coalesce(w.description, '')) like upper(concat('%', concat(:description, '%')))
+        order by w.id asc
+        """)
     Page<Weapon> search(
-        @Param("sku")
-        String sku,
-
-        @Param("name")
-        String name,
-
-        @Param("price")
-        String price,
-
-        @Param("description")
-        String description,
-
+        @Param("sku") String sku,
+        @Param("name") String name,
+        @Param("price") String price,
+        @Param("description") String description,
         Pageable pageable
     );
 }
