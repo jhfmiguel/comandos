@@ -10,7 +10,7 @@ public class TacticalEquipmentSpecification extends CoreEntity {
     @OneToOne(optional = false) @JoinColumn(name = "model_id", nullable = false) public ItemModel model;
     @Column(name = "equipment_type", nullable = false, length = 100) public String equipmentType;
     @Column(length = 100) public String material;
-    @Column(length = 50) public String size;
+    @Column(name = "size_label", length = 50) public String size;
     @Column(name = "weight_grams", precision = 19, scale = 4) public BigDecimal weightGrams;
     @Column(name = "operational_notes", length = 500) public String operationalNotes;
 }
