@@ -3,6 +3,15 @@
 ## Product
 COMANDOS is a modular ERP/platform for public and private security management.
 
+
+## Product vision
+COMANDOS is not an armament system. It is a broad, long-term management platform for public and private security, designed to cover the widest practical set of operational, administrative, logistical, intelligence, compliance, asset, personnel, planning, reporting, integration, and command-and-control capabilities found in the market.
+
+Armament is only the first major vertical domain. Architecture and implementation decisions must preserve room for current and future domains such as transport/fleet, escort, intelligence, operations, incidents, crisis management, personnel, shifts, facilities, custody/movements, procurement, contracts, suppliers, training, documents/processes, risk/compliance, analytics, integrations, and other security-management capabilities.
+
+Do not optimize the architecture only for the current Armament module.
+Do not add speculative complexity without a concrete use case, but avoid domain choices that would prevent future expansion.
+
 ## Source of truth
 - The `main` branch is the official integration branch.
 - GitHub is the canonical project history.
