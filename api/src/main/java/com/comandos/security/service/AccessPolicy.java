@@ -1,9 +1,9 @@
 package com.comandos.security.service;
 
+import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
 import jakarta.persistence.EntityManager;
 import java.util.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
