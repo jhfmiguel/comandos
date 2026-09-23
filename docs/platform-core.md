@@ -67,7 +67,7 @@ import {
     Button,
     httpClient,
     useSession,
-    useComandosPreferences
+    usePlatformPreferences
 } from "platform"
 ```
 
@@ -170,3 +170,17 @@ uma ação de nova tentativa por meio de `reset()`.
 
 Aplicações que reutilizarem o Platform Core podem manter a mesma estratégia sem
 duplicar tratamento de erro global.
+
+
+## Preferências reutilizáveis
+
+A API pública de preferências expõe nomes neutros para novos módulos:
+
+- `usePlatformPreferences`
+- `PlatformLocale`
+- `PlatformTheme`
+- `PlatformPalette`
+
+Os nomes antigos `useComandosPreferences` e tipos `Comandos*` permanecem
+disponíveis temporariamente como aliases de compatibilidade para evitar regressões
+durante a migração dos módulos existentes.
