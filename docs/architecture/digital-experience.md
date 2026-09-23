@@ -185,3 +185,58 @@ Capacidades comerciais internas devem ser granularizadas, por exemplo:
 O módulo deve possuir identidade, versionamento e ciclo de implantação próprios, embora reutilize Platform Core e Enterprise Core.
 
 A contratação do módulo Digital Experience não deve conceder acesso administrativo ao ERP. O portal consome apenas APIs e casos de uso explicitamente autorizados.
+
+
+## Campaigns e marketing
+
+A Digital Experience deve incluir uma plataforma própria de campanhas e automação de marketing, licenciável separadamente ou em conjunto com WEBSITE/ECOMMERCE.
+
+Capacidades previstas:
+
+- campanhas institucionais e comerciais;
+- banners, vitrines, destaques e pop-ups;
+- landing pages;
+- segmentação por público, perfil, origem, comportamento e contexto;
+- audiências salvas e dinâmicas;
+- cupons e promoções;
+- regras de preço promocional;
+- kits, combos e cross-sell/up-sell;
+- campanhas por período, canal e região;
+- newsletter;
+- e-mail transacional e de campanha;
+- notificações web/push;
+- SMS/WhatsApp por adaptadores externos;
+- jornadas e automações;
+- gatilhos por evento;
+- abandono de carrinho;
+- recuperação de cliente;
+- campanhas de aniversário e relacionamento;
+- remarketing por integrações;
+- programas de fidelidade;
+- indicação/referral;
+- listas de desejos e favoritos;
+- pesquisa de satisfação;
+- formulários e captação de leads;
+- consentimento e preferências de comunicação;
+- A/B testing;
+- experimentos;
+- atribuição de campanha;
+- UTM e tracking;
+- pixels/conversões por adaptadores;
+- funil;
+- metas;
+- conversões;
+- CAC, LTV, ROAS e métricas correlatas;
+- dashboards;
+- agenda/calendário editorial e promocional;
+- aprovação de conteúdo e campanha;
+- versionamento;
+- auditoria;
+- orçamento de campanha;
+- limites de frequência;
+- exclusões e listas de bloqueio;
+- personalização de conteúdo;
+- recomendações;
+- campanhas vinculadas a catálogo, categoria, produto, serviço ou evento.
+
+A plataforma deve permitir canais próprios e integrações externas sem acoplamento ao fornecedor. Toda integração com e-mail, SMS, WhatsApp, meios de pagamento, redes sociais ou mídia paga deve ser implementada por adaptadores substituíveis.
