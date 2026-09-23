@@ -99,6 +99,31 @@ class TransferApiTests {
             Integer.class, transferId));
     }
     @Test
+    void acceptanceReleasesAssetAndLotAtDestination() throws Exception {
+        Setup setup = setup();
+        Result created = request("POST", "transfers", payload(setup));
+        long transferId = created.body().get("id").asLong();
+
+        Result accepted = request(
+            "POST",
+            "transfers/" + transferId + "/accept",
+            Map.of("requestId", unique())
+        );
+        assertEquals(200, accepted.status(), accepted.raw());
+
+        assertEquals(setup.destinationLocation(), jdbc.queryForObject(
+            "select location_id from erp_asset_item where id=?", Long.class, setup.asset()));
+        assertEquals("AVAILABLE", jdbc.queryForObject(
+            "select status from erp_asset_item where id=?", String.class, setup.asset()));
+        assertEquals("2.5000", decimal(
+            "select available from erp_stock_balance where lot_id=? and location_id=?",
+            setup.lot(), setup.destinationLocation()));
+        assertEquals("0.0000", decimal(
+            "select blocked from erp_stock_balance where lot_id=? and location_id=?",
+            setup.lot(), setup.destinationLocation()));
+    }
+
+    @Test
     void destinationRejectsPendingTransferAndRestoresSourceStock() throws Exception {
         Setup setup = setup();
         Result created = request("POST", "transfers", payload(setup));
