@@ -206,13 +206,10 @@ const applyCustomPaletteVariables = (hex: string) => {
 }
 
 const defaults: PreferenceSnapshot = {
-    locale: "pt-BR",
-    theme: "dark",
-    palette: "orange",
-    customColor: productDefinition.defaultAccent,
     locale: productDefinition.defaultLocale,
     theme: productDefinition.defaultTheme,
-    palette: "custom"
+    palette: "custom",
+    customColor: productDefinition.defaultAccent
 }
 
 const listeners = new Set<() => void>()
