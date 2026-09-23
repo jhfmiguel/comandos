@@ -623,6 +623,22 @@ class InventoryApiTests {
     }
 
     @Test
+    void movementHistoryRejectsInvalidReferenceFilters() throws Exception {
+        assertEquals(
+            400,
+            request("GET", "inventory/movements?assetId=0", null).status()
+        );
+        assertEquals(
+            400,
+            request("GET", "inventory/movements?lotId=0", null).status()
+        );
+        assertEquals(
+            400,
+            request("GET", "inventory/movements?locationId=invalid", null).status()
+        );
+    }
+
+    @Test
     void wrongTrackingModeAndInvalidQuantitiesLeaveNoStockBehind() throws Exception {
         var serialized = setup(false);
         assertEquals(400, request("POST", "inventory/lots", lotData(serialized)).status());
