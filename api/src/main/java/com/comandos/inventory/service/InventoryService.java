@@ -61,6 +61,18 @@ public class InventoryService {
             parameters.put("assetId", integer(assetId, false));
         }
 
+        String lotId = requestParams.get("lotId");
+        if ("movements".equals(resource) && lotId != null) {
+            clauses.add("e.lot.id = :lotId");
+            parameters.put("lotId", integer(lotId, false));
+        }
+
+        String locationId = requestParams.get("locationId");
+        if ("movements".equals(resource) && locationId != null) {
+            clauses.add("e.location.id = :locationId");
+            parameters.put("locationId", integer(locationId, false));
+        }
+
         // The persisted model -> category -> family relationship also covers legacy models
         // without an optional armament type or classification.
         String modelFamily = requestParams.get("filter.modelFamily");
