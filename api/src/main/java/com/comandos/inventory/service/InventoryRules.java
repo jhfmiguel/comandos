@@ -1,6 +1,8 @@
 package com.comandos.inventory.service;
 
 import com.comandos.core.model.*;
+import com.comandos.enterprise.catalog.CatalogTrackingPolicy;
+import com.comandos.enterprise.catalog.UnitOfMeasureCode;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.*;
@@ -46,6 +48,11 @@ public class InventoryRules {
                 bad("A used classification cannot be deactivated or moved to another type. Reassign its references first.");
         }
         if (entity instanceof ItemModel model) {
+            try {
+                model.unitOfMeasure = new UnitOfMeasureCode(model.unitOfMeasure).value();
+            } catch (IllegalArgumentException ex) {
+                bad(ex.getMessage());
+            }
             if (model.armamentType != null && (!model.armamentType.active
                     || !Objects.equals(model.armamentType.category.id, model.category.id)))
                 bad("Select an active armament type belonging to the model category.");
@@ -54,7 +61,11 @@ public class InventoryRules {
                 bad("Select an active classification belonging to the model armament type.");
         }
         if (entity instanceof ItemCategory category) {
-            if (category.serialized && category.consumable) bad("Consumables must be quantity controlled, not individually serialized.");
+            try {
+                new CatalogTrackingPolicy(category.serialized, category.lotControlled, category.consumable);
+            } catch (IllegalArgumentException ex) {
+                bad(ex.getMessage());
+            }
             Set<Long> visited = new HashSet<>();
             if (category.id != null) visited.add(category.id);
             for (var parent = category.parentCategory; parent != null; parent = parent.parentCategory) {
