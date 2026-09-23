@@ -468,6 +468,44 @@ class InventoryApiTests {
     }
 
     @Test
+    void assetCatalogExposesAllOperationalStatuses() throws Exception {
+        var catalog = request("GET", "inventory/catalog", null);
+        assertEquals(200, catalog.status());
+
+        JsonNode statusField = null;
+        for (var resource : catalog.body()) {
+            if (!resource.get("key").asText().equals("assets")) continue;
+            for (var field : resource.get("fields")) {
+                if (field.get("name").asText().equals("status")) {
+                    statusField = field;
+                    break;
+                }
+            }
+        }
+
+        assertNotNull(statusField);
+        assertEquals(
+            List.of(
+                "DRAFT",
+                "AVAILABLE",
+                "BLOCKED",
+                "CUSTODIED",
+                "IN_MAINTENANCE",
+                "TRANSFER_PENDING",
+                "MISSING",
+                "RESTRICTED",
+                "SOLD",
+                "DONATED",
+                "DISPOSED"
+            ),
+            json.convertValue(
+                statusField.get("choices"),
+                json.getTypeFactory().constructCollectionType(List.class, String.class)
+            )
+        );
+    }
+
+    @Test
     void catalogAndSearchCoverEveryResourceAndStockHistoryIsReadOnly() throws Exception {
         var catalog = request("GET", "inventory/catalog", null);
         assertEquals(200, catalog.status());
