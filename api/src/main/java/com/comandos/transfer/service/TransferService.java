@@ -383,7 +383,7 @@ public class TransferService {
         movement.lot = lot;
         movement.location = location;
         movement.nature = nature;
-        movement.referenceType = "TRANSFER";
+        movement.referenceType = StockMovementReferenceType.TRANSFER.name();
         movement.referenceId = transferId;
         movement.quantity = quantity;
         movement.movedAt = movedAt;
