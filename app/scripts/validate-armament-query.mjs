@@ -35,6 +35,22 @@ try {
             return paged([]);
         });
         await page.goto(`${origin}/queries/weapons?assetCode=ARM-12&serialNumber=SER-12&modelId=Alfa&status=CUSTODIED&unit=Alfa&locationId=Reserva&page=1`);
+        const statusOptions = await page.locator('#query-status option').evaluateAll(options =>
+            options.map(option => option.value).filter(Boolean)
+        );
+        assert.deepEqual(statusOptions, [
+            'DRAFT',
+            'AVAILABLE',
+            'BLOCKED',
+            'CUSTODIED',
+            'IN_MAINTENANCE',
+            'TRANSFER_PENDING',
+            'MISSING',
+            'RESTRICTED',
+            'SOLD',
+            'DONATED',
+            'DISPOSED'
+        ]);
         if (scenario === 'error' || scenario === 'forbidden') {
             await page.getByText(scenario === 'error' ? 'Não foi possível consultar os dados. Tente novamente.' : 'Sem autorização para consultar estes dados.').waitFor();
             if (scenario === 'error') { fail = false; await page.getByRole('button', { name: 'Tentar novamente' }).click(); await page.getByRole('button', { name: 'Ver detalhe' }).waitFor(); }
