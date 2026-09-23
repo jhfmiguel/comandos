@@ -94,7 +94,7 @@ public class AmmunitionConsumptionService {
             BigDecimal oldBalance = balance.available; BigDecimal oldLot = lot.availableQuantity;
             balance.available = oldBalance.subtract(used); lot.availableQuantity = oldLot.subtract(used);
             var movement = new StockMovement(); movement.lot = lot; movement.location = balance.location;
-            movement.nature = StockMovementNature.CONSUMPTION_DEFLAGRATION.name(); movement.quantity = used.negate(); movement.movedAt = now; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
+            movement.nature = StockMovementNature.CONSUMPTION_DEFLAGRATION.name(); movement.referenceType = "AMMUNITION_CONSUMPTION"; movement.referenceId = consumption.id; movement.quantity = used.negate(); movement.movedAt = now; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
             var item = new AmmunitionConsumptionItem(); item.consumption = consumption; item.lot = lot; item.balance = balance;
             item.location = balance.location; item.movement = movement; item.modelName = lot.model.name; item.sku = lot.model.sku;
             item.lotNumber = lot.lotNumber; item.locationName = balance.location.name; item.unitOfMeasure = lot.model.unitOfMeasure;
