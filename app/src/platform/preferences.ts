@@ -1,10 +1,14 @@
 export {
     PreferencesProvider,
-    useComandosPreferences
+    useComandosPreferences,
+    useComandosPreferences as usePlatformPreferences
 } from "components/settings/preferences-provider"
 
 export type {
     ComandosLocale,
+    ComandosLocale as PlatformLocale,
     ComandosPalette,
-    ComandosTheme
+    ComandosPalette as PlatformPalette,
+    ComandosTheme,
+    ComandosTheme as PlatformTheme
 } from "components/settings/preferences-provider"
