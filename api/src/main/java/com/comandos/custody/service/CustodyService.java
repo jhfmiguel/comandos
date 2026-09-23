@@ -192,11 +192,11 @@ public class CustodyService {
                 if (!AssetStatus.CUSTODIED.name().equals(asset.status)) conflict("Asset " + item.assetCode + " is no longer marked as custodied.");
                 nextStatus = condition.blocksAvailability || asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())
                     ? AssetStatus.BLOCKED.name() : AssetStatus.AVAILABLE.name();
-                movement = movement(asset, StockMovementNature.CUSTODY_RETURN.name(), BigDecimal.ONE, returnedAt, "CUSTODY_RETURN", returned.id);
+                movement = movement(asset, StockMovementNature.CUSTODY_RETURN.name(), BigDecimal.ONE, returnedAt, StockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
                 asset.status = nextStatus;
                 if (Set.of("GOOD", "NEEDS_INSPECTION", "DAMAGED").contains(condition.code)) asset.condition = condition.code;
             } else {
-                movement = movement(balance, StockMovementNature.CUSTODY_RETURN.name(), item.quantity, returnedAt, "CUSTODY_RETURN", returned.id);
+                movement = movement(balance, StockMovementNature.CUSTODY_RETURN.name(), item.quantity, returnedAt, StockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
                 if (condition.blocksAvailability) balance.blocked = balance.blocked.add(item.quantity);
                 else balance.available = balance.available.add(item.quantity);
                 balance.lot.availableQuantity = balance.lot.availableQuantity.add(item.quantity);
@@ -309,7 +309,7 @@ public class CustodyService {
 
     private void createAssetItem(Custody custody, AssetItem asset, EquipmentSet set, String role, LocalDateTime at) {
         var item = new CustodyItem(); item.custody = custody; item.asset = asset; item.equipmentSet = set;
-        item.location = asset.location; item.issueMovement = movement(asset, StockMovementNature.CUSTODY_ISSUE.name(), BigDecimal.ONE.negate(), at, "CUSTODY", custody.id);
+        item.location = asset.location; item.issueMovement = movement(asset, StockMovementNature.CUSTODY_ISSUE.name(), BigDecimal.ONE.negate(), at, StockMovementReferenceType.CUSTODY.name(), custody.id);
         item.modelName = asset.model.name; item.assetCode = asset.assetCode; item.serialNumber = asset.serialNumber;
         item.locationName = asset.location.name; item.equipmentSetCode = set == null ? null : set.code;
         item.equipmentSetName = set == null ? null : set.name; item.componentRole = role; item.quantity = BigDecimal.ONE; em.persist(item);
@@ -318,7 +318,7 @@ public class CustodyService {
     private void createBalanceItem(Custody custody, StockBalance balance, EquipmentSet set, String role,
             BigDecimal quantity, LocalDateTime at) {
         var item = new CustodyItem(); item.custody = custody; item.balance = balance; item.equipmentSet = set;
-        item.location = balance.location; item.issueMovement = movement(balance, StockMovementNature.CUSTODY_ISSUE.name(), quantity.negate(), at, "CUSTODY", custody.id);
+        item.location = balance.location; item.issueMovement = movement(balance, StockMovementNature.CUSTODY_ISSUE.name(), quantity.negate(), at, StockMovementReferenceType.CUSTODY.name(), custody.id);
         item.modelName = balance.lot.model.name; item.assetCode = balance.lot.lotNumber; item.locationName = balance.location.name;
         item.equipmentSetCode = set.code; item.equipmentSetName = set.name; item.componentRole = role;
         item.quantity = quantity; em.persist(item);
