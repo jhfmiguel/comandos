@@ -441,7 +441,21 @@ const toggleTheme = React.useCallback(() => {
     }, [])
 
     const t = React.useCallback(
-        (key: TranslationKey) => uiTranslations[locale][key],
+        (key: TranslationKey) => {
+            if (key === "settingsTitle") {
+                return locale === "pt-BR"
+                    ? `Configurações do ${productDefinition.shortName}`
+                    : `${productDefinition.shortName} settings`
+            }
+
+            if (key === "quickNavigation") {
+                return locale === "pt-BR"
+                    ? `Navegação rápida do ${productDefinition.shortName}`
+                    : `${productDefinition.shortName} quick navigation`
+            }
+
+            return uiTranslations[locale][key]
+        },
         [locale]
     )
 
