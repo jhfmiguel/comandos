@@ -16,3 +16,6 @@ export {
 
 export { Pagination } from "./components/pagination"
 export { ConfirmDialog } from "./components/confirm-dialog"
+export { FormField } from "./components/form-field"
+export { DataTable } from "./components/data-table"
+export type { DataTableColumn } from "./components/data-table"
