@@ -13,3 +13,6 @@ export {
     ComandosToaster,
     notify
 } from "components/common"
+
+export { Pagination } from "./components/pagination"
+export { ConfirmDialog } from "./components/confirm-dialog"
