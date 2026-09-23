@@ -126,3 +126,10 @@ concorrência otimista.
 
 Novos módulos devem reutilizar esse contrato em vez de criar formatos de erro
 incompatíveis.
+
+
+## Dados e erros no frontend
+
+`platform/data.ts` contém contratos genéricos para paginação, estado assíncrono
+e extração de mensagens de erro HTTP. Novos módulos devem reutilizar esses
+contratos em vez de repetir tipos e parsers de erro.
