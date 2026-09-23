@@ -21,9 +21,19 @@ public class AccessPolicy {
     public record Scope(String organizationPath, String unitPath) {}
 
     public AccessPolicy(EntityManager em, PlatformProperties properties) {
-        boolean requireLogin = properties.getSecurity().isRequireLogin();
-        boolean enabled = properties.getSecurity().isEnforcePermissions();
-        if (enabled && !requireLogin) throw new IllegalStateException("Permission enforcement requires login enforcement.");
+        this(
+            em,
+            properties.getSecurity().isEnforcePermissions(),
+            properties.getSecurity().isRequireLogin()
+        );
+    }
+
+    AccessPolicy(EntityManager em, boolean enabled, boolean requireLogin) {
+        if (enabled && !requireLogin) {
+            throw new IllegalStateException(
+                "Permission enforcement requires login enforcement."
+            );
+        }
         this.em = em;
         this.enabled = enabled;
     }
