@@ -11,6 +11,6 @@ public class BallisticProtectionSpecification extends CoreEntity {
     @Column(name = "protection_level", nullable = false, length = 100) public String protectionLevel;
     @Column(nullable = false, length = 100) public String material;
     @Column(nullable = false, length = 150) public String certification;
-    @Column(nullable = false, length = 50) public String size;
+    @Column(name = "size_label", nullable = false, length = 50) public String size;
     @Column(name = "service_life_months", nullable = false) public Integer serviceLifeMonths;
 }
