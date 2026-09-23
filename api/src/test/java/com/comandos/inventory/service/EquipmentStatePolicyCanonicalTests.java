@@ -29,7 +29,9 @@ class EquipmentStatePolicyCanonicalTests {
     @Test
     void terminalStatesAreExplicit() {
         assertTrue(policy.isTerminal(asset(AssetStatus.SOLD)));
+        assertTrue(policy.isTerminal(asset(AssetStatus.DONATED)));
         assertTrue(policy.isTerminal(asset(AssetStatus.DISPOSED)));
+        assertFalse(policy.isTerminal(asset(AssetStatus.DRAFT)));
         assertFalse(policy.isTerminal(asset(AssetStatus.BLOCKED)));
     }
 
