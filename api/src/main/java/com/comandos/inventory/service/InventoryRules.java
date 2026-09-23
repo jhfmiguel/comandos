@@ -172,16 +172,16 @@ public class InventoryRules {
             validateScope(expiration.organization, expiration.unit, expiration.asset, expiration.lot);
             if ("VALID".equals(expiration.status) && expiration.expirationDate.isBefore(LocalDate.now()))
                 bad("A past expiration cannot remain valid.");
-            if ("EXPIRED".equals(expiration.status) && expiration.asset != null && "AVAILABLE".equals(expiration.asset.status))
-                expiration.asset.status = "BLOCKED";
+            if ("EXPIRED".equals(expiration.status) && expiration.asset != null && AssetStatus.AVAILABLE.name().equals(expiration.asset.status))
+                expiration.asset.status = AssetStatus.BLOCKED.name();
         }
         if (entity instanceof CertificationRecord certification) {
             requireOne(certification.asset, certification.lot, "Certification");
             validateScope(certification.organization, certification.unit, certification.asset, certification.lot);
             if ("ACTIVE".equals(certification.status) && certification.validUntil.isBefore(LocalDate.now()))
                 bad("An expired certification cannot remain active.");
-            if ("EXPIRED".equals(certification.status) && certification.asset != null && "AVAILABLE".equals(certification.asset.status))
-                certification.asset.status = "BLOCKED";
+            if ("EXPIRED".equals(certification.status) && certification.asset != null && AssetStatus.AVAILABLE.name().equals(certification.asset.status))
+                certification.asset.status = AssetStatus.BLOCKED.name();
         }
         if (entity instanceof Recall recall && recall.unit != null
                 && !recall.unit.organization.id.equals(recall.organization.id)) bad("Recall unit must belong to its organization.");
@@ -190,7 +190,7 @@ public class InventoryRules {
             if (!Set.of("OPEN", "IN_PROGRESS").contains(item.recall.status))
                 bad("Items can only be added to an open or in-progress recall.");
             validateScope(item.recall.organization, item.recall.unit, item.asset, item.lot);
-            if (item.asset != null && "AVAILABLE".equals(item.asset.status)) item.asset.status = "BLOCKED";
+            if (item.asset != null && AssetStatus.AVAILABLE.name().equals(item.asset.status)) item.asset.status = AssetStatus.BLOCKED.name();
         }
         if (entity instanceof ReservationStatusType status) {
             status.code = status.code.trim().toUpperCase(Locale.ROOT);
@@ -279,16 +279,16 @@ public class InventoryRules {
         if (entity instanceof AssetItem asset) {
             if (workflowStatus(asset.status) || workflowStatus(previous.get("status")))
                 bad("Disposed assets cannot be changed through registration. Use the corresponding workflow.");
-            if (asset.id != null && !"BLOCKED".equals(asset.status)
+            if (asset.id != null && !AssetStatus.BLOCKED.name().equals(asset.status)
                     && count("select count(i) from ReservationItem i where i.asset.id = :id and i.reservation.status.code = 'ACTIVE'", asset.id) > 0)
                 bad("An actively reserved asset must remain blocked.");
-            if (asset.id != null && "AVAILABLE".equals(asset.status)
+            if (asset.id != null && AssetStatus.AVAILABLE.name().equals(asset.status)
                     && count("select count(i) from InventoryCountItem i where i.asset.id = :id and i.inventoryCount.status.code = 'APPROVED' and i.result.code = 'SHORTAGE'", asset.id) > 0)
                 bad("An asset reported missing by an approved inventory count must remain blocked.");
             if (asset.model.category.consumable || asset.model.category.lotControlled && !asset.model.category.serialized)
                 bad("This model must be registered as a stock lot.");
             if (asset.model.category.serialized && asset.serialNumber == null) bad("Serial number is required for this category.");
-            if ("AVAILABLE".equals(asset.status)) {
+            if (AssetStatus.AVAILABLE.name().equals(asset.status)) {
                 if (asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())) bad("Expired assets cannot be available.");
                 requireModelValues(asset.model);
                 for (var binding : requiredBindings(asset.model.category.id, true)) {
@@ -320,7 +320,7 @@ public class InventoryRules {
             bad("Category characteristics cannot be removed while models use the category.");
         if (entity instanceof ModelCharacteristicValue value && binding(value.model.category.id, value.characteristic.id).requiredValue && modelUsage(value.model.id) > 0)
             bad("Required model characteristics cannot be removed while stock exists.");
-        if (entity instanceof ItemCharacteristicValue value && "AVAILABLE".equals(value.asset.status)
+        if (entity instanceof ItemCharacteristicValue value && AssetStatus.AVAILABLE.name().equals(value.asset.status)
                 && binding(value.asset.model.category.id, value.characteristic.id).requiredValue)
             bad("Required characteristics cannot be removed from an available asset.");
         if (entity instanceof ExpirationRecord || entity instanceof CertificationRecord || entity instanceof Recall || entity instanceof RecallItem)
