@@ -22,8 +22,8 @@ import org.springframework.web.cors.*;
 public class SecurityConfiguration {
     @Bean
     SecurityFilterChain apiSecurity(HttpSecurity http, AccountService accounts, AccessPolicy access,
-            @Value("${erp.security.require-login:false}") boolean requireLogin,
-            @Value("${erp.allowed-origin:http://localhost:3000}") String allowedOrigin) throws Exception {
+            @Value("${platform.security.require-login:false}") boolean requireLogin,
+            @Value("${platform.allowed-origin:http://localhost:3000}") String allowedOrigin) throws Exception {
         var provider = new DaoAuthenticationProvider(accounts);
         provider.setPasswordEncoder(new BCryptPasswordEncoder(12));
         var cors = new CorsConfiguration();
