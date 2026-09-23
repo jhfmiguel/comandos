@@ -34,6 +34,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         FilterChain chain
     ) throws ServletException, IOException {
         String requestId = resolve(request.getHeader(HEADER));
+        long startedAt = System.nanoTime();
 
         request.setAttribute(ATTRIBUTE, requestId);
         response.setHeader(HEADER, requestId);
@@ -42,6 +43,14 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         try {
             chain.doFilter(request, response);
         } finally {
+            long durationMs = (System.nanoTime() - startedAt) / 1_000_000;
+            log.atInfo()
+                .addKeyValue("requestId", requestId)
+                .addKeyValue("method", request.getMethod())
+                .addKeyValue("path", request.getRequestURI())
+                .addKeyValue("status", response.getStatus())
+                .addKeyValue("durationMs", durationMs)
+                .log("HTTP request completed");
             MDC.remove(MDC_KEY);
         }
     }
