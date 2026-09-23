@@ -96,3 +96,13 @@ ou qualquer módulo vertical de produto.
 
 A extração física para pacote separado só deve acontecer após as dependências
 internas estarem isoladas e testadas.
+
+
+## Definição de produto
+
+A identidade do produto é configurada em `platform/product.ts`. Nome, descrição,
+ícone, idioma, tema, cor padrão e namespace de armazenamento podem ser
+substituídos por variáveis `NEXT_PUBLIC_PRODUCT_*`.
+
+Assim, um novo produto pode reutilizar o mesmo shell sem renomear componentes ou
+alterar código do core.

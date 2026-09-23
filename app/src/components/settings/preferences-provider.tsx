@@ -6,6 +6,10 @@ import {
     type ComandosLocale,
     translateText
 } from "./i18n-catalog"
+import {
+    productDefinition,
+    productStorageKey
+} from "platform/product"
 
 export type { ComandosLocale } from "./i18n-catalog"
 
@@ -205,7 +209,11 @@ const defaults: PreferenceSnapshot = {
     locale: "pt-BR",
     theme: "dark",
     palette: "orange",
-    customColor: "#ff9900",}
+    customColor: productDefinition.defaultAccent,
+    locale: productDefinition.defaultLocale,
+    theme: productDefinition.defaultTheme,
+    palette: "custom"
+}
 
 const listeners = new Set<() => void>()
 let cachedSnapshot: PreferenceSnapshot | null = null
@@ -214,10 +222,10 @@ let cachedKey = ""
 const readClientSnapshot = (): PreferenceSnapshot => {
     if (typeof window === "undefined") return defaults
 
-    const locale = window.localStorage.getItem("comandos-locale")
-    const theme = window.localStorage.getItem("comandos-theme")
-    const palette = window.localStorage.getItem("comandos-palette")
-    const customColor = window.localStorage.getItem("comandos-custom-color")
+    const locale = window.localStorage.getItem(productStorageKey("locale"))
+    const theme = window.localStorage.getItem(productStorageKey("theme"))
+    const palette = window.localStorage.getItem(productStorageKey("palette"))
+    const customColor = window.localStorage.getItem(productStorageKey("custom-color"))
 
     return {
         customColor: normalizeHexColor(customColor),
@@ -410,27 +418,27 @@ export function PreferencesProvider({
     }, [tr])
 
     const setLocale = React.useCallback((value: ComandosLocale) => {
-        store("comandos-locale", value)
+        store(productStorageKey("locale"), value)
     }, [])
 
     const setTheme = React.useCallback((value: ComandosTheme) => {
-        store("comandos-theme", value)
+        store(productStorageKey("theme"), value)
     }, [])
 
     const setPalette = React.useCallback((value: ComandosPalette) => {
-        store("comandos-palette", value)
+        store(productStorageKey("palette"), value)
     }, [])
 
         const setCustomColor = React.useCallback((value: string) => {
         const normalized = normalizeHexColor(value)
-        window.localStorage.setItem("comandos-custom-color", normalized)
-        window.localStorage.setItem("comandos-palette", "custom")
+        window.localStorage.setItem(productStorageKey("custom-color"), normalized)
+        window.localStorage.setItem(productStorageKey("palette"), "custom")
         applyCustomPaletteVariables(normalized)
         notify()
     }, [])
 const toggleTheme = React.useCallback(() => {
         store(
-            "comandos-theme",
+            productStorageKey("theme"),
             getSnapshot().theme === "dark" ? "light" : "dark"
         )
     }, [])

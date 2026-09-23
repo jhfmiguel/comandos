@@ -5,15 +5,16 @@ import "components/common/loader/loader.css";
 import { SessionProvider } from "components/auth/session-provider";
 import { PreferencesProvider } from "components/settings/preferences-provider";
 import { ComandosToaster } from "components/common/toast";
+import { productDefinition } from "platform/product";
 
 export const metadata: Metadata = {
-  title: "Comandos",
+  title: productDefinition.name,
   icons: {
-    icon: "/comandos-logo-v4.png",
-    shortcut: "/comandos-logo-v4.png",
-    apple: "/comandos-logo-v4.png"
+    icon: productDefinition.iconPath,
+    shortcut: productDefinition.iconPath,
+    apple: productDefinition.iconPath
   },
-  description: "COMANDOS - Plataforma de Gestão para Segurança Pública e Privada"
+  description: `${productDefinition.name} - ${productDefinition.description}`
 };
 
 export default function RootLayout({
