@@ -1,21 +1,21 @@
-name: comandos
+name: faria-miguel
 
 services:
-  postgres:
-    image: ${POSTGRES_IMAGE:-postgres:17-alpine}
+  oracle:
+    image: ${ORACLE_IMAGE:-container-registry.oracle.com/database/free:latest}
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-weapons}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      ORACLE_PWD: ${ORACLE_SYS_PASSWORD:-OracleDev1}
     ports:
-      - "5432:5432"
+      - "1521:1521"
     volumes:
-      - comandos-postgres:/var/lib/postgresql/data
+      - faria-oracle:/opt/oracle/oradata
+      - ./oracle/init:/opt/oracle/scripts/startup
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-weapons}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "echo 'select 1 from dual;' | sqlplus -s system/${ORACLE_SYS_PASSWORD:-OracleDev1}@//localhost:1521/FREEPDB1 >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
 
   redis:
     image: ${REDIS_IMAGE:-redis:8-alpine}
@@ -41,4 +41,4 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
 volumes:
-  comandos-postgres:
+  faria-oracle:
