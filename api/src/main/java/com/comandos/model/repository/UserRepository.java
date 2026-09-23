@@ -10,16 +10,29 @@ import com.comandos.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Query("""
-        select u
-        from User u
-        where upper(coalesce(u.name, '')) like upper(concat('%', concat(:name, '%')))
-          and function('regexp_replace', coalesce(u.cpf, ''), '[^0-9]', '') like concat('%', concat(:cpf, '%'))
-          and coalesce(function('to_char', u.birth, 'DD/MM/YYYY'), '') like concat('%', concat(:birth, '%'))
-          and upper(coalesce(u.address, '')) like upper(concat('%', concat(:address, '%')))
-          and upper(coalesce(u.email, '')) like upper(concat('%', concat(:email, '%')))
-          and function('regexp_replace', coalesce(u.phone, ''), '[^0-9]', '') like concat('%', concat(:phone, '%'))
-        """)
+    @Query(
+        value = """
+            SELECT u.*
+            FROM "user" u
+            WHERE UPPER(COALESCE(u.name, '')) LIKE UPPER('%' || :name || '%')
+              AND REGEXP_REPLACE(COALESCE(u.cpf, ''), '[^0-9]', '') LIKE '%' || :cpf || '%'
+              AND COALESCE(TO_CHAR(u.birth, 'DD/MM/YYYY'), '') LIKE '%' || :birth || '%'
+              AND UPPER(COALESCE(u.address, '')) LIKE UPPER('%' || :address || '%')
+              AND UPPER(COALESCE(u.email, '')) LIKE UPPER('%' || :email || '%')
+              AND REGEXP_REPLACE(COALESCE(u.phone, ''), '[^0-9]', '') LIKE '%' || :phone || '%'
+            """,
+        countQuery = """
+            SELECT COUNT(*)
+            FROM "user" u
+            WHERE UPPER(COALESCE(u.name, '')) LIKE UPPER('%' || :name || '%')
+              AND REGEXP_REPLACE(COALESCE(u.cpf, ''), '[^0-9]', '') LIKE '%' || :cpf || '%'
+              AND COALESCE(TO_CHAR(u.birth, 'DD/MM/YYYY'), '') LIKE '%' || :birth || '%'
+              AND UPPER(COALESCE(u.address, '')) LIKE UPPER('%' || :address || '%')
+              AND UPPER(COALESCE(u.email, '')) LIKE UPPER('%' || :email || '%')
+              AND REGEXP_REPLACE(COALESCE(u.phone, ''), '[^0-9]', '') LIKE '%' || :phone || '%'
+            """,
+        nativeQuery = true
+    )
     Page<User> search(
         @Param("name") String name,
         @Param("cpf") String cpf,
