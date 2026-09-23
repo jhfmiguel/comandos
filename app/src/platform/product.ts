@@ -6,7 +6,8 @@ export interface ProductDefinition {
     defaultLocale: "pt-BR" | "en-US"
     defaultTheme: "dark" | "light"
     defaultAccent: string
-    iconPath: string
+    logoPath: string
+    faviconPath: string
     storageNamespace: string
     loginPath: string
 }
@@ -32,9 +33,19 @@ export const productDefinition: ProductDefinition = {
         process.env.NEXT_PUBLIC_PRODUCT_ACCENT,
         "#ff9900"
     ),
-    iconPath: value(
-        process.env.NEXT_PUBLIC_PRODUCT_ICON,
-        "/comandos-logo-v4.png"
+    logoPath: value(
+        process.env.NEXT_PUBLIC_BRAND_LOGO,
+        value(
+            process.env.NEXT_PUBLIC_PRODUCT_LOGO,
+            "/comandos-logo-v4.png"
+        )
+    ),
+    faviconPath: value(
+        process.env.NEXT_PUBLIC_BRAND_FAVICON,
+        value(
+            process.env.NEXT_PUBLIC_PRODUCT_FAVICON,
+            "/comandos-logo-v4.png"
+        )
     ),
     storageNamespace: value(
         process.env.NEXT_PUBLIC_PRODUCT_STORAGE_NAMESPACE,
