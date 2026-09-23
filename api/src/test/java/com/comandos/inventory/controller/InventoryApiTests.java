@@ -13,7 +13,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:inventory-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:inventory-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "logging.level.root=WARN", "debug=false"
 })
 class InventoryApiTests {
@@ -68,7 +68,7 @@ class InventoryApiTests {
         data.put("version", saved.get("version").asLong()); data.put("manufacturingCountryCode", "DE");
         var edited = request("PUT", path, data);
         assertEquals(200, edited.status(), edited.raw());
-        var audit = jdbc.queryForMap("select before_json, after_json from erp_audit_record where resource='inventory/brands' and record_id=? and action='UPDATE'", id);
+        var audit = jdbc.queryForMap("select before_json, after_json from erp_audit_record where resource_name='inventory/brands' and record_id=? and action='UPDATE'", id);
         assertEquals("BR", json.readTree(audit.get("before_json").toString()).get("manufacturingCountryCode").asText());
         assertEquals("DE", json.readTree(audit.get("after_json").toString()).get("manufacturingCountryCode").asText());
         data.put("version", edited.body().get("version").asLong()); data.remove("manufacturingCountryCode");
@@ -233,7 +233,7 @@ class InventoryApiTests {
         classificationData.put("active", true); classificationData.put("name", "Updated classification");
         var edited = request("PUT", "inventory/armament-classifications/" + classificationId, classificationData);
         assertEquals(200, edited.status(), edited.raw());
-        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/armament-classifications' and record_id=?", Long.class, classificationId));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name='inventory/armament-classifications' and record_id=?", Long.class, classificationId));
         assertEquals(classificationId, request("GET", "inventory/armament-classifications?search=" + classificationData.get("code"), null).body().get("content").get(0).get("id").asLong());
         model.put("version", legacy.body().get("version").asLong());
         model.put("categoryId", create("inventory/categories", categoryData(false)).get("id").asLong());
@@ -308,9 +308,9 @@ class InventoryApiTests {
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_asset_item where model_id=?", Long.class, s.model()));
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where asset_id=?", Long.class, id));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_lot where model_id=?", Long.class, s.model()));
-        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/assets' and record_id=?", Long.class, id));
-        var before = json.readTree(jdbc.queryForObject("select before_json from erp_audit_record where resource='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
-        var after = json.readTree(jdbc.queryForObject("select after_json from erp_audit_record where resource='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name='inventory/assets' and record_id=?", Long.class, id));
+        var before = json.readTree(jdbc.queryForObject("select before_json from erp_audit_record where resource_name='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
+        var after = json.readTree(jdbc.queryForObject("select after_json from erp_audit_record where resource_name='inventory/assets' and record_id=? and action='UPDATE'", String.class, id));
         assertEquals("NEW", before.get("condition").asText()); assertEquals("GOOD", after.get("condition").asText());
     }
 
@@ -772,7 +772,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + firearmModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + firearmModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "2500", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/firearm-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/firearm-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/firearm-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_firearm_specification where id = ?", Long.class, specification.get("id").asLong()));
     }
@@ -801,7 +801,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + ammunitionModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + ammunitionModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "2", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/ammunition-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/ammunition-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/ammunition-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -833,7 +833,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + grenadeModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + grenadeModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "100", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/grenade-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/grenade-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/grenade-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -864,7 +864,7 @@ class InventoryApiTests {
         data.put("version", 0); data.put("volumeMl", "60");
         var updated = request("PUT", "inventory/spray-specifications/" + specification.get("id").asLong(), data);
         assertEquals(200, updated.status(), updated.raw()); assertEquals("60", updated.body().get("volumeMl").asText());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/spray-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/spray-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/spray-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -892,7 +892,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + ballisticModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + ballisticModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "1500", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/ballistic-protection-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/ballistic-protection-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/ballistic-protection-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -922,7 +922,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + deviceModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + deviceModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "3000", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/electrical-device-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/electrical-device-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/electrical-device-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -953,7 +953,7 @@ class InventoryApiTests {
         var model = request("GET", "inventory/models/" + opticalModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + opticalModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "5000", "version", 0)).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/optical-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/optical-specifications' and record_id = ? and action = 'CREATE'", Long.class, specification.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/optical-specifications/" + specification.get("id").asLong() + "?version=" + updated.body().get("version").asLong(), null).status());
     }
 
@@ -995,7 +995,7 @@ class InventoryApiTests {
         update.put("externalSystem", "NATIONAL_REGISTRY");
         jdbc.update("update erp_asset_item set status = 'SOLD' where id = ?", firearm);
         assertEquals(400, request("PUT", "inventory/regulatory-controls/" + control.get("id").asLong(), update).status());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'inventory/regulatory-controls' and record_id = ? and action = 'CREATE'", Long.class, control.get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'inventory/regulatory-controls' and record_id = ? and action = 'CREATE'", Long.class, control.get("id").asLong()));
         assertEquals(204, request("DELETE", "inventory/regulatory-controls/" + second.get("id").asLong() + "?version=" + second.get("version").asLong(), null).status());
     }
 }
