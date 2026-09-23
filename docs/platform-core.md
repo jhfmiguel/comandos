@@ -116,3 +116,13 @@ Novos módulos backend devem publicar eventos por
 O contrato público não expõe `ApplicationEventPublisher` do Spring. Isso permite
 trocar a implementação interna por outbox, Kafka ou outro barramento sem alterar
 os módulos consumidores.
+
+
+## Erros HTTP
+
+`com.comandos.core.web.ApiProblems` fornece a construção padronizada de
+`ProblemDetail` para validação, não encontrado, conflito de integridade e
+concorrência otimista.
+
+Novos módulos devem reutilizar esse contrato em vez de criar formatos de erro
+incompatíveis.
