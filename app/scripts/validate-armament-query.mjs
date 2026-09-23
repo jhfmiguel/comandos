@@ -72,6 +72,14 @@ try {
                 await page.getByText('Página 2 · 21 registros').waitFor();
                 await page.getByRole('navigation', { name: 'Paginação' }).first().getByRole('button', { name: 'Próxima' }).click();
                 await page.getByText('Página 3 · 21 registros').waitFor();
+                const pagedUrl = new URL(page.url());
+                assert.equal(pagedUrl.searchParams.get('page'), '2');
+                assert.equal(pagedUrl.searchParams.get('assetCode'), 'ARM-12');
+                assert.equal(pagedUrl.searchParams.get('serialNumber'), 'SER-12');
+                assert.equal(pagedUrl.searchParams.get('modelId'), 'Alfa');
+                assert.equal(pagedUrl.searchParams.get('status'), 'CUSTODIED');
+                assert.equal(pagedUrl.searchParams.get('unit'), 'Alfa');
+                assert.equal(pagedUrl.searchParams.get('locationId'), 'Reserva');
                 await page.goBack();
                 await page.getByRole('heading', { name: 'Armamento ARM-12' }).waitFor();
                 await page.getByLabel('Patrimônio', { exact: true }).fill('ARM-13');
@@ -85,6 +93,10 @@ try {
                 await page.getByText('Página 1 · 21 registros').waitFor();
                 assert.equal(new URL(page.url()).search, '');
                 assert.equal(await page.getByLabel('Patrimônio', { exact: true }).inputValue(), '');
+
+                await page.goto(`${origin}/queries/weapons?assetCode=ARM-12&page=invalid`);
+                await page.waitForURL(url => url.searchParams.get('assetCode') === 'ARM-12' && !url.searchParams.has('page'));
+                assert.equal(await page.getByLabel('Patrimônio', { exact: true }).inputValue(), 'ARM-12');
             } else {
                 assert.equal(await page.getByText('Sem permissão para consultar esta seção.').count(), 3);
                 assert(!requests.some(url => /by-asset|movements|\/audit$/.test(url.pathname)));
