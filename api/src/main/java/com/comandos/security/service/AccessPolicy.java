@@ -20,8 +20,8 @@ public class AccessPolicy {
     public record AccessView(boolean enforced, List<Grant> grants) {}
     public record Scope(String organizationPath, String unitPath) {}
 
-    public AccessPolicy(EntityManager em, @Value("${erp.security.enforce-permissions:false}") boolean enabled,
-            @Value("${erp.security.require-login:false}") boolean requireLogin) {
+    public AccessPolicy(EntityManager em, @Value("${platform.security.enforce-permissions:false}") boolean enabled,
+            @Value("${platform.security.require-login:false}") boolean requireLogin) {
         if (enabled && !requireLogin) throw new IllegalStateException("Permission enforcement requires login enforcement.");
         this.em = em;
         this.enabled = enabled;
