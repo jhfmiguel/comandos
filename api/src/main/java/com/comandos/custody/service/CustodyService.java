@@ -116,8 +116,8 @@ public class CustodyService {
             validateAsset(asset, organization.id, request.unitId(), false);
             createAssetItem(custody, asset, null, null, deliveredAt);
             stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                "before", Map.of("status", asset.status), "after", Map.of("status", "CUSTODIED")));
-            asset.status = "CUSTODIED";
+                "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
+            asset.status = AssetStatus.CUSTODIED.name();
         }
         Set<Long> selectedAssets = new HashSet<>(values(request.assetIds()));
         int expanded = selectedAssets.size();
@@ -135,8 +135,8 @@ public class CustodyService {
                     var asset = locked(AssetItem.class, component.asset.id); validateAsset(asset, organization.id, request.unitId(), true);
                     createAssetItem(custody, asset, set, component.role, deliveredAt);
                     stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                        "before", Map.of("status", asset.status), "after", Map.of("status", "CUSTODIED")));
-                    asset.status = "CUSTODIED";
+                        "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
+                    asset.status = AssetStatus.CUSTODIED.name();
                 } else {
                     var balance = locked(StockBalance.class, component.balance.id);
                     validateBalance(balance, component.quantity, organization.id, request.unitId());
@@ -189,9 +189,9 @@ public class CustodyService {
             String nextStatus = null;
             StockMovement movement;
             if (asset != null) {
-                if (!"CUSTODIED".equals(asset.status)) conflict("Asset " + item.assetCode + " is no longer marked as custodied.");
+                if (!AssetStatus.CUSTODIED.name().equals(asset.status)) conflict("Asset " + item.assetCode + " is no longer marked as custodied.");
                 nextStatus = condition.blocksAvailability || asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())
-                    ? "BLOCKED" : "AVAILABLE";
+                    ? AssetStatus.BLOCKED.name() : AssetStatus.AVAILABLE.name();
                 movement = movement(asset, "CUSTODY_RETURN", BigDecimal.ONE, returnedAt);
                 asset.status = nextStatus;
                 if (Set.of("GOOD", "NEEDS_INSPECTION", "DAMAGED").contains(condition.code)) asset.condition = condition.code;
@@ -207,7 +207,7 @@ public class CustodyService {
             returnItem.inspectedById = actor.id(); returnItem.inspectedByLogin = actor.login(); em.persist(returnItem);
             item.returnedAt = returnedAt;
             if (asset != null) stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                "before", Map.of("status", "CUSTODIED"), "after", Map.of("status", nextStatus)));
+                "before", Map.of("status", AssetStatus.CUSTODIED.name()), "after", Map.of("status", nextStatus)));
             else stockChanges.add(Map.of("resource", "inventory/balances", "recordId", balance.id,
                 "quantity", item.quantity.toPlainString()));
         }
@@ -283,7 +283,7 @@ public class CustodyService {
         access.requireScope("custodies", "CREATE", asset.location.organization.id, asset.location.unit == null ? null : asset.location.unit.id);
         if (!asset.location.organization.id.equals(organizationId) || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unit.id)))
             bad("Every asset must belong to the selected organization and unit.");
-        if (!"AVAILABLE".equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
+        if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
         if (asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())) bad("Expired assets cannot be issued in custody.");
         if (!equipmentSetIssue && countActiveSets(asset.id) > 0)
             conflict("Asset " + asset.assetCode + " belongs to an active equipment set and must be issued with that set.");
@@ -337,7 +337,7 @@ public class CustodyService {
         var components = em.createQuery("select c from EquipmentSetComponent c where c.equipmentSet.id = :set", EquipmentSetComponent.class)
             .setParameter("set", set.id).getResultList();
         return !components.isEmpty() && components.stream().allMatch(c -> c.asset != null
-            ? "AVAILABLE".equals(c.asset.status) && (c.asset.validUntil == null || !c.asset.validUntil.isBefore(LocalDate.now()))
+            ? AssetStatus.AVAILABLE.name().equals(c.asset.status) && (c.asset.validUntil == null || !c.asset.validUntil.isBefore(LocalDate.now()))
             : c.balance.available.compareTo(c.quantity) >= 0
                 && (c.balance.lot.validUntil == null || !c.balance.lot.validUntil.isBefore(LocalDate.now())));
     }
