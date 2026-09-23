@@ -2,14 +2,14 @@ package com.comandos.audit.service;
 
 import com.comandos.audit.model.AuditRecord;
 import com.comandos.audit.model.AuditReference;
+import com.comandos.audit.api.AuditRecorder;
 import com.comandos.inventory.model.StockLocation;
-import com.comandos.security.service.AccountPrincipal;
+import com.comandos.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,24 +19,35 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional(readOnly = true)
-public class AuditService {
+public class AuditService implements AuditRecorder {
     private final EntityManager em;
     private final AccessPolicy access;
+    private final CurrentActorProvider actors;
     private final JsonMapper json = JsonMapper.builder().findAndAddModules().build();
     private static final Set<String> SECRETS = Set.of("password", "passwordhash", "token", "csrftoken", "requestfingerprint", "authorization");
-    public AuditService(EntityManager em, AccessPolicy access) { this.em = em; this.access = access; }
+    public AuditService(
+        EntityManager em,
+        AccessPolicy access,
+        CurrentActorProvider actors
+    ) {
+        this.em = em;
+        this.access = access;
+        this.actors = actors;
+    }
     public record Actor(Long id, String login, String type) {}
     public record Summary(long id, Instant occurredAt, Long actorId, String actorLogin, String actorType, String resource, long recordId, String action) {}
     public record Detail(Summary event, JsonNode before, JsonNode after) {}
     public record Page(List<Summary> content, long totalElements, int page, int size) {}
 
     public Actor actor() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal principal)
-            return new Actor(principal.accountId, principal.getUsername(), "ACCOUNT");
-        return new Actor(null, null, "UNAUTHENTICATED");
+        var current = actors.current();
+
+        return current.authenticated()
+            ? new Actor(current.accountId(), current.login(), "ACCOUNT")
+            : new Actor(null, null, "UNAUTHENTICATED");
     }
 
+    @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void record(String resource, long recordId, String action, Object before, Object after) {
         var actor = actor();

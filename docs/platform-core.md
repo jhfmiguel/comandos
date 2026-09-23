@@ -133,3 +133,13 @@ incompatíveis.
 `platform/data.ts` contém contratos genéricos para paginação, estado assíncrono
 e extração de mensagens de erro HTTP. Novos módulos devem reutilizar esses
 contratos em vez de repetir tipos e parsers de erro.
+
+
+## Auditoria reutilizável
+
+Novos módulos devem depender de
+`com.comandos.audit.api.AuditRecorder` em vez de `AuditService`.
+
+A auditoria obtém o operador através de
+`com.comandos.security.api.CurrentActorProvider`, evitando acoplamento direto
+ao Spring Security.
