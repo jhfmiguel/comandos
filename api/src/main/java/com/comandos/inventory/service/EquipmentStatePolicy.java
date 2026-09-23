@@ -17,6 +17,7 @@ public class EquipmentStatePolicy {
         "TRANSFER", Set.of(AssetStatus.AVAILABLE),
         "MAINTENANCE", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
         "SALE", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
+        "DONATION", Set.of(AssetStatus.AVAILABLE),
         "DISPOSAL", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED),
         "INSPECTION", Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED),
         "OCCURRENCE", Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED)
