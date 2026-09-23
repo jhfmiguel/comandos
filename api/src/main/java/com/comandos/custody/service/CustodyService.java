@@ -330,7 +330,7 @@ public class CustodyService {
     }
     private StockMovement movement(StockBalance balance, String nature, BigDecimal quantity, LocalDateTime at, String referenceType, Long referenceId) {
         var movement = new StockMovement(); movement.lot = balance.lot; movement.location = balance.location;
-        movement.nature = nature; movement.quantity = quantity; movement.movedAt = at; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement); return movement;
+        movement.nature = nature; movement.referenceType = referenceType; movement.referenceId = referenceId; movement.quantity = quantity; movement.movedAt = at; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement); return movement;
     }
 
     private boolean setCurrentlyAvailable(EquipmentSet set) {
