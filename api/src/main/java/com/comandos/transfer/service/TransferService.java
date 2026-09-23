@@ -246,8 +246,8 @@ public class TransferService {
         notExpired(asset.validUntil);
         if (line.quantity().compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
         StockLocation source = asset.location;
-        StockMovement out = movement(asset, null, source, StockMovementNature.TRANSFER_OUT.name(), BigDecimal.ONE.negate(), transfer.sentAt);
-        StockMovement in = movement(asset, null, destination, StockMovementNature.TRANSFER_IN.name(), BigDecimal.ONE, transfer.sentAt);
+        StockMovement out = movement(asset, null, source, StockMovementNature.TRANSFER_OUT.name(), BigDecimal.ONE.negate(), transfer.sentAt, transfer.id);
+        StockMovement in = movement(asset, null, destination, StockMovementNature.TRANSFER_IN.name(), BigDecimal.ONE, transfer.sentAt, transfer.id);
         InventoryTransferItem item = item(transfer, asset.model, source, destination, asset.assetCode, line.quantity(), out, in);
         item.asset = asset;
         em.persist(item);
@@ -271,8 +271,8 @@ public class TransferService {
         BigDecimal destinationBlockedBefore = destinationBalance.blocked;
         sourceBalance.available = sourceBefore.subtract(line.quantity());
         destinationBalance.blocked = destinationBlockedBefore.add(line.quantity());
-        StockMovement out = movement(null, lot, sourceBalance.location, StockMovementNature.TRANSFER_OUT.name(), line.quantity().negate(), transfer.sentAt);
-        StockMovement in = movement(null, lot, destination, StockMovementNature.TRANSFER_IN.name(), line.quantity(), transfer.sentAt);
+        StockMovement out = movement(null, lot, sourceBalance.location, StockMovementNature.TRANSFER_OUT.name(), line.quantity().negate(), transfer.sentAt, transfer.id);
+        StockMovement in = movement(null, lot, destination, StockMovementNature.TRANSFER_IN.name(), line.quantity(), transfer.sentAt, transfer.id);
         InventoryTransferItem item = item(transfer, lot.model, sourceBalance.location, destination, lot.lotNumber,
             line.quantity(), out, in);
         item.lot = lot;
@@ -325,8 +325,8 @@ public class TransferService {
                 if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
-                movement(asset, null, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), BigDecimal.ONE.negate(), now);
-                movement(asset, null, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), BigDecimal.ONE, now);
+                movement(asset, null, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), BigDecimal.ONE.negate(), now, transfer.id);
+                movement(asset, null, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), BigDecimal.ONE, now, transfer.id);
                 asset.location = item.sourceLocation;
                 asset.status = AssetStatus.AVAILABLE.name();
             } else {
@@ -337,8 +337,8 @@ public class TransferService {
                 }
                 destination.blocked = destination.blocked.subtract(item.quantity);
                 source.available = source.available.add(item.quantity);
-                movement(null, item.lot, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), item.quantity.negate(), now);
-                movement(null, item.lot, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), item.quantity, now);
+                movement(null, item.lot, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), item.quantity.negate(), now, transfer.id);
+                movement(null, item.lot, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), item.quantity, now, transfer.id);
             }
         }
     }
@@ -377,12 +377,14 @@ public class TransferService {
     }
 
     private StockMovement movement(AssetItem asset, StockLot lot, StockLocation location, String nature,
-            BigDecimal quantity, LocalDateTime movedAt) {
+            BigDecimal quantity, LocalDateTime movedAt, Long transferId) {
         StockMovement movement = new StockMovement();
         movement.asset = asset;
         movement.lot = lot;
         movement.location = location;
         movement.nature = nature;
+        movement.referenceType = "TRANSFER";
+        movement.referenceId = transferId;
         movement.quantity = quantity;
         movement.movedAt = movedAt;
         movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
