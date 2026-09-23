@@ -140,6 +140,41 @@ class TransferApiTests {
     }
 
     @Test
+    void rejectionIsIdempotentAndCannotBeAcceptedAfterward() throws Exception {
+        Setup setup = setup();
+        Result created = request("POST", "transfers", payload(setup));
+        long transferId = created.body().get("id").asLong();
+        Map<String, Object> rejection = Map.of(
+            "requestId", unique(),
+            "reason", "Operational incompatibility"
+        );
+
+        Result first = request("POST", "transfers/" + transferId + "/reject", rejection);
+        assertEquals(200, first.status(), first.raw());
+
+        Result repeated = request("POST", "transfers/" + transferId + "/reject", rejection);
+        assertEquals(200, repeated.status(), repeated.raw());
+        assertEquals("REJECTED", repeated.body().get("status").asText());
+
+        assertEquals(1, jdbc.queryForObject(
+            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='REJECT'",
+            Integer.class, transferId));
+        assertEquals(2, jdbc.queryForObject(
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT'",
+            Integer.class));
+        assertEquals(2, jdbc.queryForObject(
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN'",
+            Integer.class));
+
+        Result acceptAfterReject = request(
+            "POST",
+            "transfers/" + transferId + "/accept",
+            Map.of("requestId", unique())
+        );
+        assertEquals(409, acceptAfterReject.status(), acceptAfterReject.raw());
+    }
+
+    @Test
     void invalidSecondItemRollsBackTheWholeTransfer() throws Exception {
         Setup setup = setup();
         Map<String, Object> payload = new HashMap<>(payload(setup));
