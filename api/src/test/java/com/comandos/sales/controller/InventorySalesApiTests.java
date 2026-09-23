@@ -15,7 +15,7 @@ import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:sales-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:sales-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "logging.level.root=WARN", "debug=false"
 })
 class InventorySalesApiTests {
@@ -102,7 +102,7 @@ class InventorySalesApiTests {
         var response = request("POST", "sales", mixed(s));
         assertEquals(200, response.status(), response.raw());
         assertEquals("38.5800", response.body().get("total").asText());
-        var auditJson = jdbc.queryForObject("select after_json from erp_audit_record where resource = 'sales' and record_id = ?", String.class, response.body().get("id").asLong());
+        var auditJson = jdbc.queryForObject("select after_json from erp_audit_record where resource_name = 'sales' and record_id = ?", String.class, response.body().get("id").asLong());
         var audit = json.readTree(auditJson);
         assertEquals(3, audit.get("stockChanges").size());
         assertEquals("SOLD", audit.get("stockChanges").get(0).get("after").get("status").asText());
@@ -184,7 +184,7 @@ class InventorySalesApiTests {
         var retry = request("POST", "sales", data);
         assertEquals(200, retry.status(), retry.raw());
         assertEquals(first.body().get("id").asLong(), retry.body().get("id").asLong());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'sales' and record_id = ?", Long.class, first.body().get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'sales' and record_id = ?", Long.class, first.body().get("id").asLong()));
         data.put("paymentMethod", "CASH");
         assertEquals(409, request("POST", "sales", data).status());
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_sale where organization_id = ?", Long.class, s.organization()));
