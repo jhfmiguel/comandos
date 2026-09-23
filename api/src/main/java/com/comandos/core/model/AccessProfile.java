@@ -10,7 +10,7 @@ public class AccessProfile extends CoreEntity {
 	@Column(name = "name", nullable = false, length = 255)
     public String name;
     
-	@Column(name = "level", nullable = false, length = 255)
+	@Column(name = "profile_level", nullable = false, length = 255)
     public String level;
 	
 }
