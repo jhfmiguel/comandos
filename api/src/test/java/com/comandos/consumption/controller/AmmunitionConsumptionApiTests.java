@@ -13,7 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:ammunition-consumption-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "logging.level.root=WARN"
+    "spring.datasource.url=jdbc:h2:mem:ammunition-consumption-tests;MODE=Oracle;DB_CLOSE_DELAY=-1", "logging.level.root=WARN"
 })
 class AmmunitionConsumptionApiTests {
     @LocalServerPort int port; @Autowired JdbcTemplate jdbc;
