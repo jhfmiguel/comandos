@@ -144,3 +144,44 @@ Toda dependência deve:
 ## Branding
 
 A Digital Experience utiliza o mesmo contrato de branding da plataforma: identidade padrão do produto com possibilidade de sobrescrita por licença/cliente, sem alterar componentes.
+
+
+## Modelo comercial e modularidade
+
+A Digital Experience Platform é um módulo comercial independente e opcional.
+
+Ela não faz parte obrigatoriamente da licença-base do ERP e pode ser contratada, implantada e precificada separadamente.
+
+Combinações comerciais possíveis:
+
+- ERP sem portal/site;
+- site institucional;
+- site + blog/CMS;
+- site + portal autenticado;
+- site + comércio eletrônico;
+- site + comércio eletrônico + chat/atendimento;
+- ERP + portal;
+- ERP + site;
+- ERP + comércio eletrônico;
+- ERP + pacote completo de Digital Experience.
+
+A arquitetura deve permitir habilitar ou desabilitar capacidades por licença, sem alterar o código-fonte do cliente.
+
+Capacidades comerciais internas devem ser granularizadas, por exemplo:
+
+- WEBSITE;
+- CMS;
+- BLOG;
+- CUSTOMER_PORTAL;
+- EMPLOYEE_PORTAL;
+- ECOMMERCE;
+- CHAT;
+- SUPPORT;
+- KNOWLEDGE_BASE;
+- MARKETING;
+- ANALYTICS;
+- SEO_ADVANCED.
+
+O módulo deve possuir identidade, versionamento e ciclo de implantação próprios, embora reutilize Platform Core e Enterprise Core.
+
+A contratação do módulo Digital Experience não deve conceder acesso administrativo ao ERP. O portal consome apenas APIs e casos de uso explicitamente autorizados.
