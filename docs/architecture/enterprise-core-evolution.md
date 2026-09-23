@@ -65,3 +65,26 @@ COMANDOS / Armamento
 Os campos genéricos de produto, categoria e marca ficam definidos na camada empresarial. Relações e regras próprias de Armamento permanecem no domínio vertical.
 
 Nesta fase a reutilização é lógica dentro do COMANDOS. A extração física para biblioteca compartilhada continua condicionada ao segundo consumidor real (TRATOR ou TUBARÃO).
+
+
+## Catálogo empresarial — identidade, unidade e rastreabilidade
+
+A camada de catálogo comum agora também define fundamentos que não dependem de nenhuma vertical:
+
+- normalização de identidade de catálogo;
+- código de unidade de medida;
+- modo de rastreabilidade;
+- política de rastreabilidade.
+
+As regras específicas continuam fora do Enterprise Core. O COMANDOS apenas consome a política comum e acrescenta suas exigências de Armamento.
+
+Exemplos:
+
+```text
+CatalogTrackingPolicy
+  serialized=true  -> SERIAL
+  lotControlled=true -> LOT
+  nenhum controle -> NONE
+```
+
+Combinações contraditórias são rejeitadas na camada comum, enquanto regras como calibre, proteção balística, registro regulatório e situação operacional continuam exclusivas do domínio Armamento.
