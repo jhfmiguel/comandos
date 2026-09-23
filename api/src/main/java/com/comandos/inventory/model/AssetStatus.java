@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public enum AssetStatus {
+    DRAFT,
     AVAILABLE,
     CUSTODIED,
     IN_MAINTENANCE,
@@ -12,6 +13,7 @@ public enum AssetStatus {
     MISSING,
     RESTRICTED,
     SOLD,
+    DONATED,
     DISPOSED;
 
     public static AssetStatus parse(String value) {
@@ -22,6 +24,6 @@ public enum AssetStatus {
     }
 
     public static Set<String> terminalCodes() {
-        return Set.of(SOLD.name(), DISPOSED.name());
+        return Set.of(SOLD.name(), DONATED.name(), DISPOSED.name());
     }
 }
