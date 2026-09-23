@@ -11,10 +11,10 @@ public class PersonCredential extends CoreEntity {
     @JoinColumn(name = "person_id", nullable = false)
     public Person person;
     
-	@Column(name = "type", nullable = false, length = 255)
+	@Column(name = "credential_type", nullable = false, length = 255)
     public String type;
     
-	@Column(name = "number", nullable = false, length = 255)
+	@Column(name = "credential_number", nullable = false, length = 255)
     public String number;
    
 	@Column(name = "valid_until", nullable = false)
