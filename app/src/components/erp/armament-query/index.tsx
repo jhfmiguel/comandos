@@ -114,14 +114,22 @@ function Query() {
     const pathname = usePathname();
     const { session } = useSession();
     const query = params.toString();
-    const pageValue = Number(params.get("page") || 0);
-    const page = Number.isInteger(pageValue) && pageValue >= 0 && pageValue <= 100000 ? pageValue : 0;
+    const rawPage = params.get("page");
+    const pageValue = Number(rawPage || 0);
+    const validPage = Number.isInteger(pageValue) && pageValue >= 0 && pageValue <= 100000;
+    const page = validPage ? pageValue : 0;
     const selected = params.get("asset");
     const assetId = selected && /^\d+$/.test(selected) && Number.isSafeInteger(Number(selected)) && Number(selected) > 0 ? Number(selected) : null;
     const accessKey = JSON.stringify(session?.access);
     const allowed = (resource: string) => !!session && (!session.access?.enforced || session.access.grants.some(grant =>
         (grant.resource === resource || grant.resource === "*") && (grant.action === "READ" || grant.action === "*")));
     const navigate = (next: URLSearchParams) => router.push(`${pathname}?${next}`, { scroll: false });
+    React.useEffect(() => {
+        if (rawPage === null || validPage) return;
+        const next = new URLSearchParams(query);
+        next.delete("page");
+        router.replace(next.toString() ? `${pathname}?${next}` : pathname, { scroll: false });
+    }, [pathname, query, rawPage, router, validPage]);
     const load = React.useCallback((signal: AbortSignal) => {
         const filters = Object.fromEntries([...fields.map(([key]) => key), "status"].map(key => [key, new URLSearchParams(query).get(key) || ""]));
         return inventory.list("assets", "", page, signal, undefined, filters);
