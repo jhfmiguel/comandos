@@ -121,11 +121,11 @@ public class DisposalService {
         DisposalItem item = new DisposalItem(); item.process = process; item.quantity = line.quantity();
         if (line.assetId() != null) {
             AssetItem asset = locked(AssetItem.class, line.assetId()); scope(asset.location, process);
-            if (!"AVAILABLE".equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
+            if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
             if (line.quantity().compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
             item.asset = asset; item.model = asset.model; item.location = asset.location; item.stockCode = asset.assetCode;
-            changes.add(Map.of("resource", "inventory/assets", "recordId", asset.id, "before", asset.status, "after", "DISPOSED"));
-            asset.status = "DISPOSED";
+            changes.add(Map.of("resource", "inventory/assets", "recordId", asset.id, "before", asset.status, "after", AssetStatus.DISPOSED.name()));
+            asset.status = AssetStatus.DISPOSED.name();
         } else {
             StockBalance balance = locked(StockBalance.class, line.balanceId()); scope(balance.location, process);
             if (balance.reserved.signum() > 0) conflict("Release active reservations before disposing this stock balance.");
