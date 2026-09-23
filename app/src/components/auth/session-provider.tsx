@@ -9,6 +9,7 @@ import {
     isGranted,
     type PlatformSession
 } from "platform/auth-model";
+import { productDefinition } from "platform/product";
 
 interface SessionContextValue {
     session: PlatformSession | null;
@@ -33,7 +34,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = React.useState<PlatformSession | null>(null);
     const [error, setError] = React.useState("");
     const pathname = usePathname();
-    const isBot = pathname === "/bot";
     const router = useRouter();
     const refresh = React.useCallback(async () => {
         try {
@@ -45,7 +45,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
     React.useEffect(() => {
-        if (isBot) return;
         const controller = new AbortController();
         httpClient.get<PlatformSession>("/api/auth/session", { signal: controller.signal }).then(response => {
             if (!controller.signal.aborted) { setSession(response.data); setError(""); }
@@ -63,18 +62,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             window.removeEventListener("access-changed", accessChanged);
             window.removeEventListener("focus", accessChanged);
         };
-    }, [refresh, isBot]);
+    }, [refresh]);
     React.useEffect(() => {
-        if (!isBot && session?.requireLogin && !session.user && pathname !== "/login") {
-            router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
+        if (
+            session?.requireLogin
+            && !session.user
+            && pathname !== productDefinition.loginPath
+        ) {
+            router.replace(
+                `${productDefinition.loginPath}?returnTo=${encodeURIComponent(pathname)}`
+            );
         }
-    }, [session, pathname, router, isBot]);
+    }, [session, pathname, router]);
     async function signOut() {
         await httpClient.post("/api/auth/logout");
         await refresh();
-        router.replace("/login");
+        router.replace(productDefinition.loginPath);
     }
-    const canDisplay = isBot || pathname === "/login" || session && (!session.requireLogin || session.user);
+    const canDisplay =
+        pathname === productDefinition.loginPath
+        || session && (!session.requireLogin || session.user);
     const can = (
         resource: string,
         action: string,
@@ -88,7 +95,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
     return <SessionContext.Provider value={{ session, refresh, signOut, can }}>
         {canDisplay ? <>
-            {!isBot && pathname !== "/login" && !session?.requireLogin && <Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." />}
+            {pathname !== productDefinition.loginPath && !session?.requireLogin && <Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." />}
             {children}
         </> : <main className="max-w-lg mx-auto p-6">
             {error ? <><Message type="error" text={error} /><Button onClick={() => { setError(""); void refresh(); }}>Retry</Button></> : <p role="status">Checking session…</p>}

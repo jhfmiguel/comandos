@@ -8,6 +8,7 @@ export interface ProductDefinition {
     defaultAccent: string
     iconPath: string
     storageNamespace: string
+    loginPath: string
 }
 
 const value = (
@@ -38,6 +39,10 @@ export const productDefinition: ProductDefinition = {
     storageNamespace: value(
         process.env.NEXT_PUBLIC_PRODUCT_STORAGE_NAMESPACE,
         "comandos"
+    ),
+    loginPath: value(
+        process.env.NEXT_PUBLIC_PRODUCT_LOGIN_PATH,
+        "/login"
     )
 }
 
