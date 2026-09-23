@@ -17,6 +17,14 @@ class EquipmentStatePolicyCanonicalTests {
         assertDoesNotThrow(() -> policy.require(asset, "custody"));
         assertDoesNotThrow(() -> policy.require(asset, "transfer"));
         assertDoesNotThrow(() -> policy.require(asset, "maintenance"));
+        assertDoesNotThrow(() -> policy.require(asset, "donation"));
+    }
+
+    @Test
+    void rejectsDonationOutsideAvailableState() {
+        assertThrows(ResponseStatusException.class, () -> policy.require(asset(AssetStatus.BLOCKED), "donation"));
+        assertThrows(ResponseStatusException.class, () -> policy.require(asset(AssetStatus.CUSTODIED), "donation"));
+        assertThrows(ResponseStatusException.class, () -> policy.require(asset(AssetStatus.DONATED), "donation"));
     }
 
     @Test
