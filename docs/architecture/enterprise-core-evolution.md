@@ -41,3 +41,27 @@ A extração física só deve ocorrer quando:
 Nunca copiar e evoluir independentemente o mesmo módulo empresarial em três repositórios por longo período.
 
 Se uma capacidade é realmente comum, ela deve convergir para uma única fonte compartilhada.
+
+
+## Primeiro consumidor concreto — COMANDOS / Armamento
+
+O catálogo de Armamento passa a funcionar como primeiro consumidor concreto das classes de catálogo do Enterprise Core.
+
+A separação adotada é:
+
+```text
+Enterprise Core
+  CatalogItemBase
+  CatalogCategoryBase
+  BrandBase
+        ↑
+COMANDOS / Armamento
+  ItemModel
+  ItemCategory
+  Brand
+  + classificações e especificações verticais
+```
+
+Os campos genéricos de produto, categoria e marca ficam definidos na camada empresarial. Relações e regras próprias de Armamento permanecem no domínio vertical.
+
+Nesta fase a reutilização é lógica dentro do COMANDOS. A extração física para biblioteca compartilhada continua condicionada ao segundo consumidor real (TRATOR ou TUBARÃO).
