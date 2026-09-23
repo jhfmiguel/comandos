@@ -436,7 +436,7 @@ public class InventoryRules {
     }
     private long count(String query, long id) { return em.createQuery(query, Long.class).setParameter("id", id).getSingleResult(); }
     private static boolean workflowStatus(Object status) {
-        return "SOLD".equals(status) || "CUSTODIED".equals(status) || "IN_MAINTENANCE".equals(status) || "DONATED".equals(status) || "DISPOSED".equals(status);
+        return status != null && AssetStatus.workflowManagedCodes().contains(status.toString());
     }
     private static void registry(String code, Integer order) {
         if (code == null || !code.trim().toUpperCase(Locale.ROOT).matches("[A-Z][A-Z0-9_]{1,49}")) bad("Code must use 2 to 50 uppercase letters, numbers or underscores.");
