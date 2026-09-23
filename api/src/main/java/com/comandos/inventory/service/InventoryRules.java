@@ -162,8 +162,8 @@ public class InventoryRules {
         if (entity instanceof RegulatoryControl control) {
             if (!"FIREARM".equals(control.asset.model.category.family))
                 bad("Regulatory controls require an individual asset in the FIREARM family.");
-            if ("SOLD".equals(control.asset.status) || "DONATED".equals(control.asset.status) || "DISPOSED".equals(control.asset.status))
-                bad("A regulatory registration cannot be created or changed for a disposed asset.");
+            if (AssetStatus.terminalCodes().contains(control.asset.status))
+                bad("A regulatory registration cannot be created or changed for a terminal asset.");
             if ("ACTIVE".equals(control.status) && control.validUntil != null && control.validUntil.isBefore(LocalDate.now()))
                 bad("An expired regulatory registration cannot remain active.");
         }
