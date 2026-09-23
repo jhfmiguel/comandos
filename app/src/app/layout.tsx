@@ -10,9 +10,9 @@ import { productDefinition } from "platform/product";
 export const metadata: Metadata = {
   title: productDefinition.name,
   icons: {
-    icon: productDefinition.iconPath,
-    shortcut: productDefinition.iconPath,
-    apple: productDefinition.iconPath
+    icon: productDefinition.faviconPath,
+    shortcut: productDefinition.faviconPath,
+    apple: productDefinition.faviconPath
   },
   description: `${productDefinition.name} - ${productDefinition.description}`
 };
