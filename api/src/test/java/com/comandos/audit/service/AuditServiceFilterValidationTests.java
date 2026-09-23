@@ -1,6 +1,7 @@
 package com.comandos.audit.service;
 
 import com.comandos.security.api.CurrentActorProvider;
+import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
