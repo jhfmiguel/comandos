@@ -200,6 +200,46 @@ class TransferApiTests {
     }
 
     @Test
+    void rejectedTransferRemainsTraceableFromBothUnits() throws Exception {
+        Setup setup = setup();
+        Result created = request("POST", "transfers", payload(setup));
+        long transferId = created.body().get("id").asLong();
+
+        Result rejected = request(
+            "POST",
+            "transfers/" + transferId + "/reject",
+            Map.of("requestId", unique(), "reason", "Traceability validation")
+        );
+        assertEquals(200, rejected.status(), rejected.raw());
+
+        for (long unitId : List.of(setup.sourceUnit(), setup.destinationUnit())) {
+            Result events = request(
+                "GET",
+                "audit?resource=transfers&action=REJECT&assetId=" + setup.asset()
+                    + "&lotId=" + setup.lot()
+                    + "&organizationId=" + setup.organization()
+                    + "&unitId=" + unitId,
+                null
+            );
+
+            assertEquals(200, events.status(), events.raw());
+            assertEquals(1, events.body().get("totalElements").asInt());
+
+            long auditId = events.body().get("content").get(0).get("id").asLong();
+            Result detail = request("GET", "audit/" + auditId, null);
+            assertEquals(200, detail.status(), detail.raw());
+            assertEquals(
+                transferId,
+                detail.body().get("after").get("transfer").get("id").asLong()
+            );
+            assertEquals(
+                "REJECTED",
+                detail.body().get("after").get("transfer").get("status").asText()
+            );
+        }
+    }
+
+    @Test
     void invalidSecondItemRollsBackTheWholeTransfer() throws Exception {
         Setup setup = setup();
         Map<String, Object> payload = new HashMap<>(payload(setup));
