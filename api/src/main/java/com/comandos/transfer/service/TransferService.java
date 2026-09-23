@@ -11,6 +11,7 @@ import com.comandos.inventory.model.StockLocation;
 import com.comandos.inventory.model.StockLot;
 import com.comandos.inventory.model.StockMovement;
 import com.comandos.inventory.model.StockMovementNature;
+import com.comandos.inventory.model.StockMovementReferenceType;
 import com.comandos.security.service.AccessPolicy;
 import com.comandos.transfer.dto.TransferContract.AcceptRequest;
 import com.comandos.transfer.dto.TransferContract.FinalizeRequest;
