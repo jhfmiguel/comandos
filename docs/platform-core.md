@@ -143,3 +143,17 @@ Novos módulos devem depender de
 A auditoria obtém o operador através de
 `com.comandos.security.api.CurrentActorProvider`, evitando acoplamento direto
 ao Spring Security.
+
+
+## Correlação e logging HTTP
+
+`RequestCorrelationFilter` mantém um identificador por requisição no header
+`X-Request-Id`, no atributo `platform.requestId` e no MDC de logging.
+
+Um identificador recebido do cliente só é reutilizado quando possui formato
+seguro. Caso contrário, o Platform Core gera um novo valor por `IdGenerator`.
+
+Ao final da requisição, o filtro registra método, caminho, status e duração e
+sempre remove o identificador do MDC, inclusive quando a cadeia HTTP termina com
+exceção. Isso evita vazamento de contexto entre requisições executadas pela mesma
+thread.
