@@ -23,7 +23,7 @@ public class StockLot extends CoreEntity {
     public BigDecimal initialQuantity = BigDecimal.ZERO;
     @Column(name = "available_quantity", nullable = false, precision = 19, scale = 4)
     public BigDecimal availableQuantity = BigDecimal.ZERO;
-    @Column(columnDefinition = "text") public String openingPackaging;
+    @Lob @Column public String openingPackaging;
     @Column(name = "valid_until", nullable = true)
     public LocalDate validUntil;
     @Column(name = "condition", nullable = false, length = 100)
