@@ -19,7 +19,19 @@ const fields = [
     ["modelId", "Modelo (nome, código ou ID)"], ["unit", "Unidade (nome ou código)"],
     ["locationId", "Localização (nome, código ou ID)"]
 ] as const;
-const statuses = ["DRAFT", "AVAILABLE", "BLOCKED", "CUSTODIED", "IN_MAINTENANCE", "SOLD", "DONATED", "DISPOSED"];
+const statuses = [
+    "DRAFT",
+    "AVAILABLE",
+    "BLOCKED",
+    "CUSTODIED",
+    "IN_MAINTENANCE",
+    "TRANSFER_PENDING",
+    "MISSING",
+    "RESTRICTED",
+    "SOLD",
+    "DONATED",
+    "DISPOSED"
+];
 const value = (record: ErpRecord, field: string) => record.referenceLabels[field] || String(record[field] ?? "—");
 
 function errorText(error: unknown) {
