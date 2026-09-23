@@ -156,7 +156,7 @@ public class InventorySalesService {
             movement.lot = item.lot;
             movement.location = item.location;
             movement.nature = StockMovementNature.SALE.name();
-            movement.referenceType = "SALE";
+            movement.referenceType = StockMovementReferenceType.SALE.name();
             movement.referenceId = sale.id;
             movement.quantity = item.quantity.negate();
             movement.movedAt = sale.finalizedAt;
@@ -237,7 +237,7 @@ public class InventorySalesService {
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items()) {
             var sold = byId.get(line.saleItemId()); var item = new SaleReturnItem(); item.saleReturn=operation;item.saleItem=sold;item.quantity=line.quantity();item.refundAmount=sold.unitPrice.multiply(line.quantity()).setScale(4,RoundingMode.HALF_UP);operation.refundAmount=operation.refundAmount.add(item.refundAmount);
-            var movement=new StockMovement();movement.asset=sold.asset;movement.lot=sold.lot;movement.location=sold.location;movement.nature=request.cancellation()?StockMovementNature.SALE_CANCELLATION.name():StockMovementNature.SALE_RETURN.name();movement.referenceType="SALE_RETURN";movement.referenceId=operation.id;movement.quantity=line.quantity();movement.movedAt=operation.returnedAt;movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);item.movement=movement;
+            var movement=new StockMovement();movement.asset=sold.asset;movement.lot=sold.lot;movement.location=sold.location;movement.nature=request.cancellation()?StockMovementNature.SALE_CANCELLATION.name():StockMovementNature.SALE_RETURN.name();movement.referenceType=StockMovementReferenceType.SALE_RETURN.name();movement.referenceId=operation.id;movement.quantity=line.quantity();movement.movedAt=operation.returnedAt;movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);item.movement=movement;
             if(sold.asset!=null){var asset=locked(AssetItem.class,sold.asset.id);if(!AssetStatus.SOLD.name().equals(asset.status))conflict("The sold asset cannot be returned in its current state.");asset.status=canRestore(asset)?AssetStatus.AVAILABLE.name():AssetStatus.BLOCKED.name();changes.add(Map.of("assetId",asset.id,"after",asset.status));}
             else{var balance=em.createQuery("select b from StockBalance b where b.lot.id=:lot and b.location.id=:location",StockBalance.class).setParameter("lot",sold.lot.id).setParameter("location",sold.location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultStream().findFirst().orElseGet(()->{var b=new StockBalance();b.lot=sold.lot;b.location=sold.location;em.persist(b);return b;});var lot=locked(StockLot.class,sold.lot.id);balance.available=balance.available.add(line.quantity());lot.availableQuantity=lot.availableQuantity.add(line.quantity());changes.add(Map.of("balanceId",balance.id,"quantity",decimal(line.quantity())));}
             em.persist(item);
