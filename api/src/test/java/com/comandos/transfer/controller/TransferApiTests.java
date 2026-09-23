@@ -99,6 +99,47 @@ class TransferApiTests {
             Integer.class, transferId));
     }
     @Test
+    void destinationRejectsPendingTransferAndRestoresSourceStock() throws Exception {
+        Setup setup = setup();
+        Result created = request("POST", "transfers", payload(setup));
+        assertEquals(200, created.status(), created.raw());
+
+        long transferId = created.body().get("id").asLong();
+        Map<String, Object> rejection = Map.of(
+            "requestId", unique(),
+            "reason", "Destination cannot receive this stock"
+        );
+
+        Result rejected = request("POST", "transfers/" + transferId + "/reject", rejection);
+        assertEquals(200, rejected.status(), rejected.raw());
+        assertEquals("REJECTED", rejected.body().get("status").asText());
+        assertEquals("Destination cannot receive this stock", rejected.body().get("rejectionReason").asText());
+
+        assertEquals(setup.sourceLocation(), jdbc.queryForObject(
+            "select location_id from erp_asset_item where id=?", Long.class, setup.asset()));
+        assertEquals("AVAILABLE", jdbc.queryForObject(
+            "select status from erp_asset_item where id=?", String.class, setup.asset()));
+        assertEquals("10.0000", decimal(
+            "select available from erp_stock_balance where id=?", setup.sourceBalance()));
+        assertEquals("0.0000", decimal(
+            "select available from erp_stock_balance where lot_id=? and location_id=?",
+            setup.lot(), setup.destinationLocation()));
+        assertEquals("0.0000", decimal(
+            "select blocked from erp_stock_balance where lot_id=? and location_id=?",
+            setup.lot(), setup.destinationLocation()));
+
+        assertEquals(2, jdbc.queryForObject(
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT'",
+            Integer.class));
+        assertEquals(2, jdbc.queryForObject(
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN'",
+            Integer.class));
+        assertEquals(1, jdbc.queryForObject(
+            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='REJECT'",
+            Integer.class, transferId));
+    }
+
+    @Test
     void invalidSecondItemRollsBackTheWholeTransfer() throws Exception {
         Setup setup = setup();
         Map<String, Object> payload = new HashMap<>(payload(setup));
