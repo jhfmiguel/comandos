@@ -1,5 +1,7 @@
 package com.comandos.workflow.api;
 
+import com.comandos.core.api.PlatformPage;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
@@ -70,7 +72,7 @@ class WorkflowApiContractsTests {
 
     @Test
     void pageKeepsPaginationMetadata() {
-        var page = new WorkflowPage<>(
+        var page = new PlatformPage<>(
             List.of("one", "two"),
             12,
             1,
