@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:audit-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "logging.level.root=WARN", "debug=false"
+    "spring.datasource.url=jdbc:h2:mem:audit-tests;MODE=Oracle;DB_CLOSE_DELAY=-1", "logging.level.root=WARN", "debug=false"
 })
 class AuditApiTests {
     @LocalServerPort int port;
