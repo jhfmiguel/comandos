@@ -292,7 +292,7 @@ public final class InventoryCatalog {
             new Field("assetCode", "Asset code", "text", true, null, List.of(), false, true),
             new Field("serialNumber", "Serial number", "text", false, null, List.of(), false, true),
             new Field("internalCode", "Internal code", "text", false, null, List.of(), false, true),
-            new Field("condition", "Condition", "choice", true, null, List.of("NEW", "GOOD", "NEEDS_INSPECTION", "DAMAGED"), false, false),
+            new Field("condition", "Condition", "choice", true, null, java.util.Arrays.stream(AssetCondition.values()).map(Enum::name).toList(), false, false),
             new Field("status", "Availability", "choice", true, null, List.of("DRAFT", "AVAILABLE", "BLOCKED", "CUSTODIED", "IN_MAINTENANCE", "TRANSFER_PENDING", "MISSING", "RESTRICTED", "SOLD", "DONATED", "DISPOSED"), false, false),
             new Field("validUntil", "Valid until", "date", false, null, List.of(), false, false),
             new Field("currentValue", "Current value", "decimal", true, null, List.of(), false, false)
