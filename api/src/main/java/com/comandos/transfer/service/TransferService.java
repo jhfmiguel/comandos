@@ -4,6 +4,7 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.inventory.model.AssetItem;
+import com.comandos.inventory.model.AssetStatus;
 import com.comandos.inventory.model.ItemCategory;
 import com.comandos.inventory.model.StockBalance;
 import com.comandos.inventory.model.StockLocation;
@@ -240,7 +241,7 @@ public class TransferService {
             List<Map<String, Object>> changes) {
         AssetItem asset = locked(AssetItem.class, line.assetId());
         requireSource(asset.location, transfer);
-        if (!"AVAILABLE".equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
+        if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
         notExpired(asset.validUntil);
         if (line.quantity().compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
         StockLocation source = asset.location;
@@ -251,7 +252,7 @@ public class TransferService {
         em.persist(item);
         changes.add(change("inventory/assets", asset.id, source.name, destination.name));
         asset.location = destination;
-        asset.status = "TRANSFER_PENDING";
+        asset.status = AssetStatus.TRANSFER_PENDING.name();
     }
 
     private void moveLot(InventoryTransfer transfer, LineRequest line, StockLocation destination,
@@ -297,10 +298,10 @@ public class TransferService {
         for (var item : items) {
             if (item.asset != null) {
                 var asset = locked(AssetItem.class, item.asset.id);
-                if (!"TRANSFER_PENDING".equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
-                asset.status = "AVAILABLE";
+                asset.status = AssetStatus.AVAILABLE.name();
             } else {
                 var destination = locked(StockBalance.class, item.destinationBalance.id);
                 if (destination.blocked.compareTo(item.quantity) < 0) {
@@ -320,13 +321,13 @@ public class TransferService {
         for (var item : items) {
             if (item.asset != null) {
                 var asset = locked(AssetItem.class, item.asset.id);
-                if (!"TRANSFER_PENDING".equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
                 movement(asset, null, item.destinationLocation, "TRANSFER_REJECT_OUT", BigDecimal.ONE.negate(), now);
                 movement(asset, null, item.sourceLocation, "TRANSFER_REJECT_RETURN", BigDecimal.ONE, now);
                 asset.location = item.sourceLocation;
-                asset.status = "AVAILABLE";
+                asset.status = AssetStatus.AVAILABLE.name();
             } else {
                 var source = locked(StockBalance.class, item.sourceBalance.id);
                 var destination = locked(StockBalance.class, item.destinationBalance.id);
