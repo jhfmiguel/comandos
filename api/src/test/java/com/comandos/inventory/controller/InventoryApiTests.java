@@ -581,6 +581,48 @@ class InventoryApiTests {
     }
 
     @Test
+    void movementHistoryFiltersByAssetLotAndLocation() throws Exception {
+        var serialized = setup(false);
+        var asset = create("inventory/assets", assetData(serialized));
+        long assetId = asset.get("id").asLong();
+
+        var lotSetup = setup(true);
+        var lot = create("inventory/lots", lotData(lotSetup));
+        long lotId = lot.get("id").asLong();
+
+        var byAsset = request("GET", "inventory/movements?assetId=" + assetId, null);
+        assertEquals(200, byAsset.status(), byAsset.raw());
+        assertEquals(1, byAsset.body().get("totalElements").asInt());
+        assertEquals(assetId, byAsset.body().get("content").get(0).get("assetId").asLong());
+
+        var byLot = request("GET", "inventory/movements?lotId=" + lotId, null);
+        assertEquals(200, byLot.status(), byLot.raw());
+        assertEquals(1, byLot.body().get("totalElements").asInt());
+        assertEquals(lotId, byLot.body().get("content").get(0).get("lotId").asLong());
+
+        var byLocation = request(
+            "GET",
+            "inventory/movements?locationId=" + lotSetup.location(),
+            null
+        );
+        assertEquals(200, byLocation.status(), byLocation.raw());
+        assertEquals(1, byLocation.body().get("totalElements").asInt());
+        assertEquals(
+            lotSetup.location(),
+            byLocation.body().get("content").get(0).get("locationId").asLong()
+        );
+
+        var mismatched = request(
+            "GET",
+            "inventory/movements?lotId=" + lotId
+                + "&locationId=" + serialized.location(),
+            null
+        );
+        assertEquals(200, mismatched.status(), mismatched.raw());
+        assertEquals(0, mismatched.body().get("totalElements").asInt());
+    }
+
+    @Test
     void wrongTrackingModeAndInvalidQuantitiesLeaveNoStockBehind() throws Exception {
         var serialized = setup(false);
         assertEquals(400, request("POST", "inventory/lots", lotData(serialized)).status());
