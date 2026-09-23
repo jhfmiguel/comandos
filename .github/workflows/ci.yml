@@ -40,6 +40,9 @@ jobs:
       - name: License policy
         working-directory: app
         run: yarn licenses:audit
+      - name: Platform boundary audit
+        working-directory: app
+        run: yarn platform:audit
       - name: Lint
         working-directory: app
         run: yarn lint
