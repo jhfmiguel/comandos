@@ -2,7 +2,7 @@ package com.comandos.inventory.service;
 
 import com.comandos.inventory.model.AssetItem;
 import com.comandos.inventory.model.AssetStatus;
-import java.util.Locale;
+import com.comandos.inventory.model.EquipmentOperation;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -12,22 +12,27 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 public class EquipmentStatePolicy {
 
-    private static final Map<String, Set<AssetStatus>> ALLOWED = Map.of(
-        "CUSTODY", Set.of(AssetStatus.AVAILABLE),
-        "TRANSFER", Set.of(AssetStatus.AVAILABLE),
-        "MAINTENANCE", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
-        "SALE", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
-        "DONATION", Set.of(AssetStatus.AVAILABLE),
-        "DISPOSAL", Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED),
-        "INSPECTION", Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED),
-        "OCCURRENCE", Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED)
+    private static final Map<EquipmentOperation, Set<AssetStatus>> ALLOWED = Map.of(
+        EquipmentOperation.CUSTODY, Set.of(AssetStatus.AVAILABLE),
+        EquipmentOperation.TRANSFER, Set.of(AssetStatus.AVAILABLE),
+        EquipmentOperation.MAINTENANCE, Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
+        EquipmentOperation.SALE, Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED),
+        EquipmentOperation.DONATION, Set.of(AssetStatus.AVAILABLE),
+        EquipmentOperation.DISPOSAL, Set.of(AssetStatus.AVAILABLE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED),
+        EquipmentOperation.INSPECTION, Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED),
+        EquipmentOperation.OCCURRENCE, Set.of(AssetStatus.AVAILABLE, AssetStatus.CUSTODIED, AssetStatus.IN_MAINTENANCE, AssetStatus.BLOCKED, AssetStatus.MISSING, AssetStatus.RESTRICTED)
     );
 
     public void require(AssetItem asset, String operation) {
         if (asset == null) bad("Asset is required.");
-        String normalizedOperation = operation == null ? "" : operation.trim().toUpperCase(Locale.ROOT);
+        EquipmentOperation normalizedOperation;
+        try {
+            normalizedOperation = EquipmentOperation.parse(operation);
+        } catch (IllegalArgumentException exception) {
+            bad("Unsupported equipment operation.");
+            return;
+        }
         Set<AssetStatus> states = ALLOWED.get(normalizedOperation);
-        if (states == null) bad("Unsupported equipment operation.");
 
         AssetStatus current;
         try {
