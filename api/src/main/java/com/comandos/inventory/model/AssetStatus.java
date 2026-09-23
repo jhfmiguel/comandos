@@ -26,4 +26,17 @@ public enum AssetStatus {
     public static Set<String> terminalCodes() {
         return Set.of(SOLD.name(), DONATED.name(), DISPOSED.name());
     }
+
+    public static Set<String> workflowManagedCodes() {
+        return Set.of(
+            CUSTODIED.name(),
+            IN_MAINTENANCE.name(),
+            TRANSFER_PENDING.name(),
+            MISSING.name(),
+            RESTRICTED.name(),
+            SOLD.name(),
+            DONATED.name(),
+            DISPOSED.name()
+        );
+    }
 }
