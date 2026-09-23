@@ -1,27 +1,22 @@
 package com.comandos.workflow.api;
 
-import com.comandos.workflow.dto.WorkflowContract.Page;
-import com.comandos.workflow.dto.WorkflowContract.Request;
-import com.comandos.workflow.dto.WorkflowContract.Transition;
-import com.comandos.workflow.dto.WorkflowContract.View;
-
 public interface WorkflowGateway {
 
-    View request(Request request);
+    WorkflowView request(WorkflowRequest request);
 
-    View analyze(long id, Transition transition);
+    WorkflowView analyze(long id, WorkflowTransition transition);
 
-    View authorize(long id, Transition transition);
+    WorkflowView authorize(long id, WorkflowTransition transition);
 
-    View execute(long id, Transition transition);
+    WorkflowView execute(long id, WorkflowTransition transition);
 
-    View conclude(long id, Transition transition);
+    WorkflowView conclude(long id, WorkflowTransition transition);
 
-    View cancel(long id, Transition transition);
+    WorkflowView cancel(long id, WorkflowTransition transition);
 
-    View get(long id);
+    WorkflowView get(long id);
 
-    Page<View> list(
+    WorkflowPage<WorkflowView> list(
         long organizationId,
         Long unitId,
         String status,
