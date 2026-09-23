@@ -79,6 +79,12 @@ try {
                 await page.getByText('Página 1 · 21 registros').waitFor();
                 assert.equal(new URL(page.url()).searchParams.get('page'), null);
                 assert.equal(new URL(page.url()).searchParams.get('asset'), null);
+                assert.equal(new URL(page.url()).searchParams.get('assetCode'), 'ARM-13');
+
+                await page.getByRole('button', { name: 'Limpar filtros', exact: true }).click();
+                await page.getByText('Página 1 · 21 registros').waitFor();
+                assert.equal(new URL(page.url()).search, '');
+                assert.equal(await page.getByLabel('Patrimônio', { exact: true }).inputValue(), '');
             } else {
                 assert.equal(await page.getByText('Sem permissão para consultar esta seção.').count(), 3);
                 assert(!requests.some(url => /by-asset|movements|\/audit$/.test(url.pathname)));
