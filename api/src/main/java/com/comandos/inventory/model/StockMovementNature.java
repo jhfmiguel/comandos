@@ -15,7 +15,10 @@ public enum StockMovementNature {
     MAINTENANCE_ISSUE,
     MAINTENANCE_RETURN,
     INVENTORY_ADJUSTMENT,
-    CONSUMPTION_DEFLAGRATION;
+    CONSUMPTION_DEFLAGRATION,
+    SALE,
+    SALE_RETURN,
+    SALE_CANCELLATION;
 
     public static StockMovementNature parse(String value) {
         if (value == null || value.isBlank()) {
