@@ -4,6 +4,7 @@ import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
 import jakarta.persistence.EntityManager;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class AccessPolicy {
     public record AccessView(boolean enforced, List<Grant> grants) {}
     public record Scope(String organizationPath, String unitPath) {}
 
+    @Autowired
     public AccessPolicy(EntityManager em, PlatformProperties properties) {
         this(
             em,
