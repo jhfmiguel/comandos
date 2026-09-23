@@ -444,7 +444,7 @@ public class InventoryService {
 
     private void createOpening(CoreEntity entity) {
         StockMovement movement = new StockMovement();
-        movement.nature = "OPENING";
+        movement.nature = StockMovementNature.OPENING.name();
         movement.movedAt = LocalDateTime.now();
         if (entity instanceof StockLot lot) {
             StockBalance balance = new StockBalance();
