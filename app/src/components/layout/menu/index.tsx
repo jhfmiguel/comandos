@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { productDefinition } from "platform/product"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
@@ -79,7 +80,7 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                             >
                                 <div className="comandos-sidebar-logo">
                                     <Image
-                                        src="/comandos-logo-v4.png"
+                                        src={productDefinition.logoPath}
                                         alt="Comandos"
                                         width={1240}
                                         height={1240}
