@@ -7324,25 +7324,27 @@ form[data-comandos-erp-form="true"] .comandos-composed-select > .comandos-compos
     z-index: 12 !important;
     display: block !important;
     left: .78rem !important;
-    top: .42rem !important;
+    top: 50% !important;
     width: auto !important;
-    max-width: calc(100% - 3rem) !important;
+    max-width: calc(100% - 1.56rem) !important;
     min-height: 0 !important;
     margin: 0 !important;
-    margin-top: 0 !important;
-    margin-right: 0 !important;
-    margin-bottom: 0 !important;
-    margin-left: 0 !important;
     padding: 0 !important;
     color: var(--comandos-text-muted, #737373) !important;
-    font-size: .72rem !important;
-    font-weight: 600 !important;
+    font-size: .84rem !important;
+    font-weight: 500 !important;
     line-height: 1 !important;
     white-space: nowrap !important;
     text-overflow: ellipsis !important;
     overflow: hidden !important;
     pointer-events: none !important;
-    transform: none !important;
+    transform: translateY(-50%) !important;
+    transform-origin: left top !important;
+    transition:
+        top .16s ease,
+        transform .16s ease,
+        color .16s ease,
+        font-size .16s ease !important;
 }
 
 form[data-comandos-erp-form="true"] .comandos-composed-select > .comandos-composed-select-trigger,
@@ -7354,12 +7356,17 @@ form[data-comandos-erp-form="true"] .comandos-composed-select > .comandos-compos
 }
 
 form[data-comandos-erp-form="true"] .comandos-composed-select:focus-within > .comandos-composed-select-label,
-.comandos-composed-select:focus-within > .comandos-composed-select-label {
+form[data-comandos-erp-form="true"] .comandos-composed-select[data-active="true"] > .comandos-composed-select-label,
+form[data-comandos-erp-form="true"] .comandos-composed-select[data-filled="true"] > .comandos-composed-select-label,
+.comandos-composed-select:focus-within > .comandos-composed-select-label,
+.comandos-composed-select[data-active="true"] > .comandos-composed-select-label,
+.comandos-composed-select[data-filled="true"] > .comandos-composed-select-label {
     top: .42rem !important;
     margin: 0 !important;
     transform: none !important;
     color: var(--comandos-accent, #ff9900) !important;
     font-size: .72rem !important;
+    font-weight: 600 !important;
 }
 
 
