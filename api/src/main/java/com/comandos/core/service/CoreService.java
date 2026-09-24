@@ -725,6 +725,19 @@ public class CoreService {
                 );
             }
         }
+        if (entity instanceof OrganizationalUnitType unitType) {
+            long links = em.createQuery(
+                    "select count(u) from OrganizationalUnit u where u.unitType.id = :id",
+                    Long.class)
+                .setParameter("id", unitType.id)
+                .getSingleResult();
+            if (links > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Organizational unit type is in use and cannot be deleted."
+                );
+            }
+        }
         if (entity instanceof PersonContactType contactType) {
             long addressLinks = em.createQuery(
                     "select count(a) from PersonAddress a where a.contactType.id = :id",
@@ -839,6 +852,22 @@ public class CoreService {
                 throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Person type code is already registered."
+                );
+            }
+        }
+        if (entity instanceof OrganizationalUnitType unitType) {
+            unitType.code = unitType.code.toUpperCase(Locale.ROOT);
+            long duplicates = em.createQuery(
+                    "select count(t) from OrganizationalUnitType t where t.code = :code and t.id <> :id",
+                    Long.class)
+                .setParameter("code", unitType.code)
+                .setParameter("id", unitType.id == null ? -1L : unitType.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT)
+                .getSingleResult();
+            if (duplicates > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Organizational unit type code is already registered."
                 );
             }
         }
