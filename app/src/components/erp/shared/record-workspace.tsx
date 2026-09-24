@@ -699,17 +699,6 @@ const equipmentModelFamilies: Record<string, string> = {
     "optical-specifications": "OPTICAL",
 };
 
-const selectReferenceResources = new Set([
-    "equipment-set-components",
-    "assets",
-    "lots"
-]);
-
-function usesSelectReference(resourceKey: string, fieldName: string): boolean {
-    if (resourceKey === "locations" && ["organizationId", "unitId"].includes(fieldName)) return true;
-    return selectReferenceResources.has(resourceKey);
-}
-
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
     resource: ErpResource; 
@@ -915,29 +904,34 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         country: "Brasil",
                                                         complement: manuallyEditedAddressFields.current.has("complement")
                                                             ? current.complement : current.complement || address.complement || "" }))} />
-                                            ) : field.type === "reference" && usesSelectReference(resource.key, field.name) ? (
+                                            ) : field.type === "reference" ? (
                                                 <ReferenceSelectField
-                                                    key={field.name === "unitId" ? `${field.name}:${String(values.organizationId ?? "")}` : field.name}
+                                                    key={
+                                                        field.name === "unitId"
+                                                            ? `${field.name}:${String(values.organizationId ?? "")}`
+                                                            : field.name
+                                                    }
                                                     service={service}
                                                     field={field}
                                                     value={values[field.name]}
                                                     selectedLabel={record?.referenceLabels[field.name]}
                                                     organizationId={values.organizationId}
+                                                    excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}
                                                     modelFamily={
-                                                        resource.key === "lots" && field.name === "modelId"
-                                                            ? "AMMUNITION"
+                                                        field.name === "modelId"
+                                                            ? resource.key === "lots"
+                                                                ? "AMMUNITION"
+                                                                : equipmentModelFamilies[resource.key]
                                                             : undefined
                                                     }
-                                                    onChange={value => change(field, value)}
-                                                />
-                                            ) : field.type === "reference" ? (
-                                                <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
-                                                    modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
-                                                    organizationId={values.organizationId} excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}
                                                     optionFilter={option => {
                                                         if (option.active === false) return false;
-                                                        if (resource.key === "models" && field.name === "armamentTypeId") return String(option.categoryId) === String(values.categoryId);
-                                                        if (resource.key === "models" && field.name === "armamentClassificationId") return String(option.typeId) === String(values.armamentTypeId);
+                                                        if (resource.key === "models" && field.name === "armamentTypeId") {
+                                                            return String(option.categoryId) === String(values.categoryId);
+                                                        }
+                                                        if (resource.key === "models" && field.name === "armamentClassificationId") {
+                                                            return String(option.typeId) === String(values.armamentTypeId);
+                                                        }
                                                         return true;
                                                     }}
                                                     onChange={value => change(field, value)}
@@ -945,7 +939,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         if (resource.key === "people" && field.name === "personTypeRefId") {
                                                             setPersonTypeCode(String(option?.code ?? ""));
                                                         }
-                                                    }} />
+                                                    }}
+                                                />
                                             ) : field.type === "boolean" ? (
                                                 <input id={`core-${field.name}`} type="checkbox" checked={Boolean(values[field.name])} onChange={event => change(field, event.target.checked)} />
                                             ) : field.type === "choice" ? (
@@ -1043,18 +1038,22 @@ export function ReferenceSelectField({
     value,
     selectedLabel,
     organizationId,
+    excludedId,
     modelFamily,
     optionFilter,
-    onChange
+    onChange,
+    onSelectOption
 }: {
     service: ErpService;
     field: ErpField;
     value: ErpValue;
     selectedLabel?: string;
     organizationId: ErpValue;
+    excludedId?: number;
     modelFamily?: string;
     optionFilter?: (record: ErpRecord) => boolean;
     onChange: (value: ErpValue) => void;
+    onSelectOption?: (option: ErpRecord | null) => void;
 }) {
     const isUnit = ["units", "core/units"].includes(field.reference ?? "");
     const organizationMissing = isUnit && !organizationId;
@@ -1095,7 +1094,6 @@ export function ReferenceSelectField({
                 .filter(option =>
                     option.active !== false
                     && (!modelFamily || option.modelFamily === modelFamily)
-                    && (!optionFilter || optionFilter(option))
                     && (
                         !isUnit
                         || !organizationId
@@ -1129,15 +1127,18 @@ export function ReferenceSelectField({
         organizationMissing,
         service,
         modelFamily,
-        optionFilter,
         requestKey
     ]);
 
     const current = String(value ?? "");
     const requestCurrent = resultState.key === requestKey;
-    const options = organizationMissing || !requestCurrent
+    const options = (organizationMissing || !requestCurrent
         ? []
-        : resultState.options;
+        : resultState.options
+    ).filter(option =>
+        option.id !== excludedId
+        && (!optionFilter || optionFilter(option))
+    );
     const loading = Boolean(field.reference)
         && !organizationMissing
         && !requestCurrent;
@@ -1162,7 +1163,13 @@ export function ReferenceSelectField({
                         setUnitAttempted(true);
                         return;
                     }
-                    onChange(event.target.value ? Number(event.target.value) : null);
+                    const nextId = event.target.value ? Number(event.target.value) : null;
+                    onChange(nextId);
+                    onSelectOption?.(
+                        nextId == null
+                            ? null
+                            : options.find(option => Number(option.id) === nextId) ?? null
+                    );
                 }}
             >
                 <option value="">
