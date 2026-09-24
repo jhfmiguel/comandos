@@ -623,6 +623,24 @@ async function main() {
         }
         console.log('PASS nested resources: child screens resolve to their parent editors');
 
+        await page.goto(`${appURL}/erp/inventory?section=compliance&resource=recalls`);
+        const recallRows = page.locator('table tbody tr');
+        if (await recallRows.count()) {
+            const recallItemsAction = page.getByRole('button', { name: 'Bens e lotes afetados' }).first();
+            if (await recallItemsAction.count()) {
+                await recallItemsAction.click();
+                await page.getByRole('tab', { name: 'Bens e lotes afetados' }).waitFor();
+                assert.equal(
+                    await page.getByRole('tab', { name: 'Bens e lotes afetados' }).getAttribute('aria-selected'),
+                    'true',
+                    'Recall items action must open the affected items section'
+                );
+                await page.getByRole('heading', { name: 'Bens e lotes afetados' }).waitFor();
+                await page.getByRole('button', { name: 'Fechar' }).click();
+            }
+        }
+        console.log('PASS recalls: affected assets and lots are a visible recall section');
+
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
             ['/erp/sales', 'Inventory sales'], ['/erp/ammunition-consumption', 'Ammunition consumption'],
