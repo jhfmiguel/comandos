@@ -16,9 +16,9 @@ import axios from "axios";
 
 import {
     Plus,
-    Pencil,
-    Trash2
+    Pencil
 } from "lucide-react";
+import { Trash } from "@primeicons/react";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
@@ -587,7 +587,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                     disabled={!allowed("DELETE")}
                                                     onClick={() => setDeleting(record)}
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash size={18} />
                                                 </button>
                                             </div>
                                         </td>
