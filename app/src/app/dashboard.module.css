@@ -1,5 +1,5 @@
 .dashboard {
-    --accent: #ff9900;
+    --accent: var(--comandos-accent, #ff9900);
     --surface: var(--comandos-surface, var(--p-content-background, #ffffff));
     --border: var(--comandos-border, color-mix(in srgb, currentColor 11%, transparent));
     --muted: var(--comandos-text-muted, color-mix(in srgb, currentColor 56%, transparent));
