@@ -1612,7 +1612,7 @@
 }
 
 .assetImportDetails {
-    margin-bottom: 1.1rem;
+    margin-bottom: 1.75rem;
 }
 
 .assetImportDetails > summary {
@@ -1620,10 +1620,10 @@
 }
 
 .pastedRowsButton {
-    margin-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
 }
 
 .intakeQuantityTotal {
-    margin-top: 1.2rem !important;
+    margin-top: 1.75rem !important;
 }
 
