@@ -19,9 +19,9 @@ import {
     CircleHelp,
     Plus,
     Pencil,
-    ListChecks
+    ListChecks,
+    Trash2
 } from "lucide-react";
-import { Trash } from "@primeicons/react";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
@@ -684,7 +684,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                     disabled={!allowed("DELETE")}
                                                     onClick={() => setDeleting(record)}
                                                 >
-                                                    <Trash size={18} />
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </td>
@@ -1641,7 +1641,7 @@ function RecallItemsEditor({
                                                 disabled={busy || !recallEditable}
                                                 onClick={() => void deleteItem(item)}
                                             >
-                                                <Trash />
+                                                <Trash2 />
                                             </button>
                                         </div>
                                     </td>
