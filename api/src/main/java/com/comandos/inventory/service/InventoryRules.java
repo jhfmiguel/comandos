@@ -508,8 +508,6 @@ public class InventoryRules {
         }
         if (!expectedType.equals(parameter.parameterType))
             bad(label + " belongs to an invalid parameter type.");
-        if (!Boolean.TRUE.equals(parameter.active))
-            bad("Select an active " + label.toLowerCase(Locale.ROOT) + ".");
         return parameter.name;
     }
 
