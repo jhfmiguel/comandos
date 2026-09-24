@@ -925,3 +925,75 @@
     color: inherit !important;
     fill: none !important;
 }
+
+/* REFERENCE DATA PARAMETER FORM LAYOUT V1
+ * Keep the common text fields in two balanced columns.
+ * Put display order where Active used to be and align boolean flags horizontally.
+ */
+.fields[data-comandos-resource="custody-return-condition-types"],
+.fields[data-comandos-resource="sale-return-reason-types"],
+.fields[data-comandos-resource="inventory-count-status-types"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="code"],
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="code"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="code"] {
+    grid-column: 1 / 4;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="name"],
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="name"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="name"] {
+    grid-column: 4 / 7;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="description"],
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="description"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="description"] {
+    grid-column: 1 / 4;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="displayOrder"],
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="displayOrder"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="displayOrder"] {
+    grid-column: 4 / 7;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="active"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="active"] {
+    grid-column: 1 / 3;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="blocksAvailability"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="terminal"] {
+    grid-column: 3 / 5;
+}
+
+.fields[data-comandos-resource="custody-return-condition-types"] .field[data-comandos-field-name="systemProtected"],
+.fields[data-comandos-resource="inventory-count-status-types"] .field[data-comandos-field-name="systemProtected"] {
+    grid-column: 5 / 7;
+}
+
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="active"] {
+    grid-column: 1 / 4;
+}
+
+.fields[data-comandos-resource="sale-return-reason-types"] .field[data-comandos-field-name="systemProtected"] {
+    grid-column: 4 / 7;
+}
+
+@media (max-width: 700px) {
+    .fields[data-comandos-resource="custody-return-condition-types"],
+    .fields[data-comandos-resource="sale-return-reason-types"],
+    .fields[data-comandos-resource="inventory-count-status-types"] {
+        grid-template-columns: 1fr;
+    }
+
+    .fields[data-comandos-resource="custody-return-condition-types"] .field,
+    .fields[data-comandos-resource="sale-return-reason-types"] .field,
+    .fields[data-comandos-resource="inventory-count-status-types"] .field {
+        grid-column: 1 / -1 !important;
+    }
+}
+
