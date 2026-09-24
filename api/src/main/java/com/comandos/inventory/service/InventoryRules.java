@@ -115,7 +115,7 @@ public class InventoryRules {
             }
         }
         if (entity instanceof FirearmSpecification specification) {
-            specification.caliber = parameterName(specification.caliberRef, "CALIBER", "Caliber", true);
+            specification.caliber = parameterName(specification.caliberRef, "CALIBER", "Caliber", true, specification.caliber);
             if (!"FIREARM".equals(specification.model.category.family))
                 bad("Firearm specifications require a model in the FIREARM family.");
             if (specification.capacity == null || specification.capacity <= 0)
@@ -124,20 +124,20 @@ public class InventoryRules {
                 bad("Barrel length must be greater than zero.");
         }
         if (entity instanceof AmmunitionSpecification specification) {
-            specification.caliber = parameterName(specification.caliberRef, "CALIBER", "Caliber", true);
-            specification.ammunitionType = parameterName(specification.ammunitionTypeRef, "AMMUNITION_TYPE", "Ammunition type", true);
-            specification.projectileType = parameterName(specification.projectileTypeRef, "PROJECTILE_TYPE", "Projectile type", true);
-            specification.caseType = parameterName(specification.caseTypeRef, "CASE_TYPE", "Case type", true);
-            specification.primerType = parameterName(specification.primerTypeRef, "PRIMER_TYPE", "Primer type", true);
+            specification.caliber = parameterName(specification.caliberRef, "CALIBER", "Caliber", true, specification.caliber);
+            specification.ammunitionType = parameterName(specification.ammunitionTypeRef, "AMMUNITION_TYPE", "Ammunition type", true, specification.ammunitionType);
+            specification.projectileType = parameterName(specification.projectileTypeRef, "PROJECTILE_TYPE", "Projectile type", true, specification.projectileType);
+            specification.caseType = parameterName(specification.caseTypeRef, "CASE_TYPE", "Case type", true, specification.caseType);
+            specification.primerType = parameterName(specification.primerTypeRef, "PRIMER_TYPE", "Primer type", true, specification.primerType);
             if (!"AMMUNITION".equals(specification.model.category.family))
                 bad("Ammunition specifications require a model in the AMMUNITION family.");
             if (!Set.of("LETHAL", "LESS_LETHAL").contains(specification.lethalityClassification))
                 bad("Lethality classification must be LETHAL or LESS_LETHAL.");
         }
         if (entity instanceof GrenadeSpecification specification) {
-            specification.grenadeType = parameterName(specification.grenadeTypeRef, "GRENADE_TYPE", "Grenade type", true);
-            specification.agent = parameterName(specification.agentRef, "AGENT", "Agent", true);
-            specification.composition = parameterName(specification.compositionRef, "COMPOSITION", "Composition", true);
+            specification.grenadeType = parameterName(specification.grenadeTypeRef, "GRENADE_TYPE", "Grenade type", true, specification.grenadeType);
+            specification.agent = parameterName(specification.agentRef, "AGENT", "Agent", true, specification.agent);
+            specification.composition = parameterName(specification.compositionRef, "COMPOSITION", "Composition", true, specification.composition);
             if (!"GRENADE".equals(specification.model.category.family))
                 bad("Grenade specifications require a model in the GRENADE family.");
             if (specification.delaySeconds == null || specification.delaySeconds <= 0)
@@ -148,8 +148,8 @@ public class InventoryRules {
                 bad("Shelf life must be greater than zero.");
         }
         if (entity instanceof SpraySpecification specification) {
-            specification.agent = parameterName(specification.agentRef, "AGENT", "Agent", true);
-            specification.composition = parameterName(specification.compositionRef, "COMPOSITION", "Composition", true);
+            specification.agent = parameterName(specification.agentRef, "AGENT", "Agent", true, specification.agent);
+            specification.composition = parameterName(specification.compositionRef, "COMPOSITION", "Composition", true, specification.composition);
             if (!"SPRAY".equals(specification.model.category.family))
                 bad("Spray specifications require a model in the SPRAY family.");
             if (specification.concentration == null || specification.concentration.signum() <= 0
@@ -163,17 +163,17 @@ public class InventoryRules {
                 bad("Shelf life must be greater than zero.");
         }
         if (entity instanceof BallisticProtectionSpecification specification) {
-            specification.protectionType = parameterName(specification.protectionTypeRef, "PROTECTION_TYPE", "Protection type", true);
-            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", true);
-            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true);
-            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", true);
+            specification.protectionType = parameterName(specification.protectionTypeRef, "PROTECTION_TYPE", "Protection type", true, specification.protectionType);
+            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", true, specification.protectionLevel);
+            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true, specification.material);
+            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", true, specification.size);
             if (!"BALLISTIC_PROTECTION".equals(specification.model.category.family))
                 bad("Ballistic protection specifications require a model in the BALLISTIC_PROTECTION family.");
             if (specification.serviceLifeMonths == null || specification.serviceLifeMonths <= 0)
                 bad("Service life must be greater than zero.");
         }
         if (entity instanceof ElectricalDeviceSpecification specification) {
-            specification.cartridgeType = parameterName(specification.cartridgeTypeRef, "CARTRIDGE_TYPE", "Cartridge type", true);
+            specification.cartridgeType = parameterName(specification.cartridgeTypeRef, "CARTRIDGE_TYPE", "Cartridge type", true, specification.cartridgeType);
             if (!"ELECTRICAL_DEVICE".equals(specification.model.category.family))
                 bad("Electrical device specifications require a model in the ELECTRICAL_DEVICE family.");
             if (specification.voltage == null || specification.voltage.signum() <= 0)
@@ -182,7 +182,7 @@ public class InventoryRules {
                 bad("Cycles must be greater than zero.");
         }
         if (entity instanceof OpticalSpecification specification) {
-            specification.opticalType = parameterName(specification.opticalTypeRef, "OPTICAL_TYPE", "Optical type", true);
+            specification.opticalType = parameterName(specification.opticalTypeRef, "OPTICAL_TYPE", "Optical type", true, specification.opticalType);
             if (!"OPTICAL".equals(specification.model.category.family))
                 bad("Optical specifications require a model in the OPTICAL family.");
             if (specification.minimumMagnification == null || specification.minimumMagnification.signum() <= 0)
@@ -194,17 +194,17 @@ public class InventoryRules {
             positiveOptional(specification.objectiveDiameterMm, "Objective diameter");
         }
         if (entity instanceof HelmetSpecification specification) {
-            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", true);
-            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true);
-            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", true);
+            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", true, specification.protectionLevel);
+            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true, specification.material);
+            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", true, specification.size);
             if (!"HELMET".equals(specification.model.category.family))
                 bad("Helmet specifications require a model in the HELMET family.");
             positiveOptional(specification.weightGrams, "Helmet weight");
         }
         if (entity instanceof ShieldSpecification specification) {
-            specification.shieldType = parameterName(specification.shieldTypeRef, "SHIELD_TYPE", "Shield type", true);
-            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", false);
-            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true);
+            specification.shieldType = parameterName(specification.shieldTypeRef, "SHIELD_TYPE", "Shield type", true, specification.shieldType);
+            specification.protectionLevel = parameterName(specification.protectionLevelRef, "PROTECTION_LEVEL", "Protection level", false, specification.protectionLevel);
+            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true, specification.material);
             if (!"SHIELD".equals(specification.model.category.family))
                 bad("Shield specifications require a model in the SHIELD family.");
             positiveOptional(specification.heightMm, "Shield height");
@@ -212,21 +212,21 @@ public class InventoryRules {
             positiveOptional(specification.weightGrams, "Shield weight");
         }
         if (entity instanceof RestraintSpecification specification) {
-            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true);
-            specification.lockingMechanism = parameterName(specification.lockingMechanismRef, "LOCKING_MECHANISM", "Locking mechanism", false);
+            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", true, specification.material);
+            specification.lockingMechanism = parameterName(specification.lockingMechanismRef, "LOCKING_MECHANISM", "Locking mechanism", false, specification.lockingMechanism);
             if (!"RESTRAINT".equals(specification.model.category.family))
                 bad("Restraint specifications require a model in the RESTRAINT family.");
         }
         if (entity instanceof AccessoryComponentSpecification specification) {
-            specification.componentType = parameterName(specification.componentTypeRef, "COMPONENT_TYPE", "Component type", true);
-            specification.compatibleWith = parameterName(specification.compatibilityRef, "COMPATIBILITY", "Compatibility", false);
-            specification.mountingInterface = parameterName(specification.interfaceRef, "INTERFACE", "Interface", false);
+            specification.componentType = parameterName(specification.componentTypeRef, "COMPONENT_TYPE", "Component type", true, specification.componentType);
+            specification.compatibleWith = parameterName(specification.compatibilityRef, "COMPATIBILITY", "Compatibility", false, specification.compatibleWith);
+            specification.mountingInterface = parameterName(specification.interfaceRef, "INTERFACE", "Interface", false, specification.mountingInterface);
             if (!"ACCESSORY_COMPONENT".equals(specification.model.category.family))
                 bad("Accessory/component specifications require a model in the ACCESSORY_COMPONENT family.");
         }
         if (entity instanceof TacticalEquipmentSpecification specification) {
-            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", false);
-            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", false);
+            specification.material = parameterName(specification.materialRef, "MATERIAL", "Material", false, specification.material);
+            specification.size = parameterName(specification.sizeRef, "SIZE", "Size", false, specification.size);
             if (!"TACTICAL_EQUIPMENT".equals(specification.model.category.family))
                 bad("Tactical equipment specifications require a model in the TACTICAL_EQUIPMENT family.");
             positiveOptional(specification.weightGrams, "Tactical equipment weight");
@@ -501,10 +501,17 @@ public class InventoryRules {
     private static void requireOne(Object asset, Object lot, String label) {
         if ((asset == null) == (lot == null)) bad(label + " requires exactly one individual asset or stock lot.");
     }
-    private String parameterName(ArmamentParameter parameter, String expectedType, String label, boolean required) {
+    private String parameterName(
+            ArmamentParameter parameter,
+            String expectedType,
+            String label,
+            boolean required,
+            String legacyValue) {
         if (parameter == null) {
-            if (required) bad(label + " is required.");
-            return null;
+            String normalizedLegacy = legacyValue == null ? null : legacyValue.trim();
+            if (required && (normalizedLegacy == null || normalizedLegacy.isBlank()))
+                bad(label + " is required.");
+            return normalizedLegacy == null || normalizedLegacy.isBlank() ? null : normalizedLegacy;
         }
         if (!expectedType.equals(parameter.parameterType))
             bad(label + " belongs to an invalid parameter type.");
