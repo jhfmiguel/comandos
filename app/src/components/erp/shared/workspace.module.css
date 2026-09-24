@@ -98,3 +98,72 @@
 .referenceHint {
     border-top: 1px solid var(--p-content-border-color, #ddd);
 }
+
+
+/* Person editor: multiple addresses, phones and e-mails */
+.personDialog {
+    width: min(72rem, calc(100vw - 2rem));
+}
+
+.contactSections {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0 0 1.5rem;
+}
+
+.contactSection {
+    display: grid;
+    gap: .85rem;
+    padding: 1rem;
+    border: 1px solid var(--p-content-border-color, #ddd);
+    border-radius: .5rem;
+    background: var(--p-content-background, transparent);
+}
+
+.contactHeader,
+.contactCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.contactHeader h3 {
+    margin: 0 0 .2rem;
+    font-size: 1rem;
+}
+
+.contactHeader small {
+    color: var(--p-text-muted-color, #737373);
+}
+
+.contactCard {
+    display: grid;
+    gap: .85rem;
+    padding: 1rem;
+    border: 1px solid var(--p-content-border-color, #ddd);
+    border-radius: .5rem;
+    background: var(--p-content-hover-background, rgba(0, 0, 0, .025));
+}
+
+.contactGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 700px) {
+    .personDialog {
+        width: 100%;
+    }
+
+    .contactHeader,
+    .contactCardHeader {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .contactGrid {
+        grid-template-columns: 1fr;
+    }
+}
