@@ -1,6 +1,8 @@
 package com.comandos.demo;
 
+import com.comandos.core.model.EconomicActivity;
 import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationNature;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
 import com.comandos.core.model.PersonRole;
@@ -48,12 +50,14 @@ public class DemoDataSeeder implements ApplicationRunner {
             "Secretaria de Segurança Pública - Ambiente de Demonstração",
             "SSP-DEMO",
             "Segurança Pública",
+            "Administração pública em geral",
             true
         );
         Organization supplier = organization(
             "Fornecedor Bélico Demonstrativo Ltda.",
             "FBD",
             "Fornecedor",
+            "Comércio especializado de equipamentos",
             false
         );
 
@@ -146,11 +150,32 @@ public class DemoDataSeeder implements ApplicationRunner {
         entityManager.flush();
     }
 
-    private Organization organization(String name, String acronym, String nature, boolean publicOrganization) {
+    private Organization organization(
+            String name,
+            String acronym,
+            String natureName,
+            String economicActivityDescription,
+            boolean publicOrganization) {
+
+        OrganizationNature nature = new OrganizationNature();
+        nature.code = acronym + "-NATURE";
+        nature.name = natureName;
+        nature.description = "Natureza institucional do ambiente de demonstração";
+        nature.active = true;
+        entityManager.persist(nature);
+
+        EconomicActivity economicActivity = new EconomicActivity();
+        economicActivity.code = acronym + "-ACTIVITY";
+        economicActivity.description = economicActivityDescription;
+        economicActivity.active = true;
+        entityManager.persist(economicActivity);
+
         Organization value = new Organization();
         value.name = name;
         value.acronym = acronym;
         value.nature = nature;
+        value.legacyNature = natureName;
+        value.economicActivity = economicActivity;
         value.publicOrganization = publicOrganization;
         value.active = true;
         entityManager.persist(value);
