@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
+import { Trash } from "@primeicons/react";
 import { ComandosSelectField } from "components/common/select-field";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import { createErpService } from "api/services/erp.service";
@@ -464,13 +465,13 @@ export function PersonContactsEditor({
                                         <td className={styles.contactActionCell}>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                                className="comandos-icon-button comandos-icon-button-danger"
                                                 data-comandos-contact-delete="true"
                                                 data-severity="danger"
                                                 aria-label={`Remover endereço ${index + 1}`}
                                                 onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash />
                                             </button>
                                         </td>
                                     </tr>
@@ -584,13 +585,13 @@ export function PersonContactsEditor({
                                     <td className={styles.contactActionCell}>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
                                             data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover telefone ${index + 1}`}
                                             onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash />
                                         </button>
                                     </td>
                                 </tr>
@@ -671,13 +672,13 @@ export function PersonContactsEditor({
                                     <td className={styles.contactActionCell}>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
                                             data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover e-mail ${index + 1}`}
                                             onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash />
                                         </button>
                                     </td>
                                 </tr>
