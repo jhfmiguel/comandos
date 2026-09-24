@@ -119,9 +119,15 @@ public final class CoreCatalog {
             new Field("password", "Password", "password", true, null, List.of()),
             new Field("blocked", "Blocked", "boolean", true, null, List.of())
         )),
+        new Resource("profile-levels", "Access profile levels", "Access", AccessProfileLevel.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
         new Resource("profiles", "Access profiles", "Access", AccessProfile.class, List.of(
             new Field("name", "Name", "text", true, null, List.of()),
-            new Field("level", "Level", "text", true, null, List.of())
+            new Field("levelTypeId", "Level", "reference", true, "profile-levels", List.of())
         )),
         new Resource("permissions", "Permissions", "Access", Permission.class, List.of(
             new Field("resource", "Resource", "text", true, null, List.of()),
