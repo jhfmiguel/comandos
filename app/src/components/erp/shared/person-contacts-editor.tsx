@@ -5,10 +5,14 @@ import { ChevronDown, Plus } from "lucide-react";
 import { Trash } from "@primeicons/react";
 import { ComandosSelectField } from "components/common/select-field";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
+import { createErpService } from "api/services/erp.service";
+import type { ErpRecord } from "api/models/erp";
 import styles from "./workspace.module.css";
 
+const core = createErpService("core");
+
 export type AddressDraft = {
-    type: string;
+    contactTypeId: string;
     foreignAddress: boolean;
     country: string;
     postalCode: string;
@@ -22,7 +26,7 @@ export type AddressDraft = {
 };
 
 export type PhoneDraft = {
-    type: string;
+    contactTypeId: string;
     countryCode: string;
     number: string;
     whatsapp: boolean;
@@ -30,13 +34,13 @@ export type PhoneDraft = {
 };
 
 export type EmailDraft = {
-    type: string;
+    contactTypeId: string;
     email: string;
     primaryEmail: boolean;
 };
 
 const newAddress = (primary: boolean): AddressDraft => ({
-    type: "",
+    contactTypeId: "",
     foreignAddress: false,
     country: "Brasil",
     postalCode: "",
@@ -50,7 +54,7 @@ const newAddress = (primary: boolean): AddressDraft => ({
 });
 
 const newPhone = (primary: boolean): PhoneDraft => ({
-    type: "",
+    contactTypeId: "",
     countryCode: "+55",
     number: "",
     whatsapp: false,
@@ -58,7 +62,7 @@ const newPhone = (primary: boolean): PhoneDraft => ({
 });
 
 const newEmail = (primary: boolean): EmailDraft => ({
-    type: "",
+    contactTypeId: "",
     email: "",
     primaryEmail: primary
 });
@@ -159,6 +163,34 @@ export function PersonContactsEditor({
     setEmails: React.Dispatch<React.SetStateAction<EmailDraft[]>>;
 }) {
     const [activePanel, setActivePanel] = React.useState<ContactPanelKey | null>("addresses");
+    const [contactTypes, setContactTypes] = React.useState<ErpRecord[]>([]);
+    const [contactTypesError, setContactTypesError] = React.useState("");
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+
+        core.list("contact-types", "", 0, controller.signal, undefined, {}, 100)
+            .then(result => {
+                if (controller.signal.aborted) return;
+                setContactTypes(
+                    result.content
+                        .filter(option => option.active !== false)
+                        .sort((left, right) =>
+                            String(left.name ?? left.label ?? "")
+                                .localeCompare(String(right.name ?? right.label ?? ""), "pt-BR")
+                        )
+                );
+                setContactTypesError("");
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) {
+                    setContactTypes([]);
+                    setContactTypesError("Não foi possível carregar os tipos de contato.");
+                }
+            });
+
+        return () => controller.abort();
+    }, []);
 
     React.useEffect(() => {
         const frame = requestAnimationFrame(() => {
@@ -170,6 +202,14 @@ export function PersonContactsEditor({
     const togglePanel = (value: ContactPanelKey) => {
         setActivePanel(current => current === value ? null : value);
     };
+
+    const contactTypeOptions = (field: "addressEnabled" | "phoneEnabled" | "emailEnabled") =>
+        contactTypes
+            .filter(option => option[field] === true)
+            .map(option => ({
+                value: String(option.id),
+                label: String(option.name ?? option.label ?? option.code ?? option.id)
+            }));
 
     const updateAddress = (index: number, patch: Partial<AddressDraft>) => {
         setAddresses(current => current.map((item, itemIndex) => {
@@ -200,6 +240,9 @@ export function PersonContactsEditor({
 
     return (
         <div className={styles.contactAccordion}>
+            {contactTypesError && (
+                <small className={styles.contactTypeError}>{contactTypesError}</small>
+            )}
             <ContactAccordionPanel
                 value="addresses"
                 title="Endereços"
@@ -246,14 +289,9 @@ export function PersonContactsEditor({
                                                 id={`person-address-type-${index}`}
                                                 label="Tipo"
                                                 required
-                                                value={address.type}
-                                                options={[
-                                                    { value: "RESIDENTIAL", label: "Residencial" },
-                                                    { value: "BUSINESS", label: "Comercial" },
-                                                    { value: "MAILING", label: "Correspondência" },
-                                                    { value: "OTHER", label: "Outro" }
-                                                ]}
-                                                onChange={value => updateAddress(index, { type: value })}
+                                                value={address.contactTypeId}
+                                                options={contactTypeOptions("addressEnabled")}
+                                                onChange={value => updateAddress(index, { contactTypeId: value })}
                                             />
                                         </td>
                                         <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
@@ -422,15 +460,9 @@ export function PersonContactsEditor({
                                             id={`person-phone-type-${index}`}
                                             label="Tipo"
                                             required
-                                            value={phone.type}
-                                            options={[
-                                                { value: "MOBILE", label: "Celular" },
-                                                { value: "WHATSAPP", label: "WhatsApp" },
-                                                { value: "HOME", label: "Residencial" },
-                                                { value: "WORK", label: "Comercial" },
-                                                { value: "OTHER", label: "Outro" }
-                                            ]}
-                                            onChange={value => updatePhone(index, { type: value })}
+                                            value={phone.contactTypeId}
+                                            options={contactTypeOptions("phoneEnabled")}
+                                            onChange={value => updatePhone(index, { contactTypeId: value })}
                                         />
                                     </td>
                                     <td>
@@ -543,13 +575,9 @@ export function PersonContactsEditor({
                                             id={`person-email-type-${index}`}
                                             label="Tipo"
                                             required
-                                            value={email.type}
-                                            options={[
-                                                { value: "PERSONAL", label: "Pessoal" },
-                                                { value: "WORK", label: "Profissional" },
-                                                { value: "OTHER", label: "Outro" }
-                                            ]}
-                                            onChange={value => updateEmail(index, { type: value })}
+                                            value={email.contactTypeId}
+                                            options={contactTypeOptions("emailEnabled")}
+                                            onChange={value => updateEmail(index, { contactTypeId: value })}
                                         />
                                     </td>
                                     <td>
