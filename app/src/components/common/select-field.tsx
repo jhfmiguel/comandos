@@ -44,6 +44,7 @@ export function ComandosSelectField({
     onSearchChange?: (value: string) => void;
 }) {
     const [open, setOpen] = React.useState(false);
+    const [hasUserTyped, setHasUserTyped] = React.useState(false);
 
     const effectiveOptions = React.useMemo(
         () => required
@@ -55,12 +56,14 @@ export function ComandosSelectField({
         [options, placeholder, required]
     );
 
+    const visibleOptions = hasUserTyped ? effectiveOptions : [];
+
     const items = React.useMemo(
-        () => Combobox.createItems(effectiveOptions, {
+        () => Combobox.createItems(visibleOptions, {
             getValue: option => option.value,
             getLabel: option => option.label
         }),
-        [effectiveOptions]
+        [visibleOptions]
     );
 
     const selected = value || null;
@@ -81,12 +84,13 @@ export function ComandosSelectField({
                 onValueChange={next => {
                     onChange(typeof next === "string" ? next : "");
                 }}
-                onInputValueChange={(next, details) => {
-                    if (details.reason !== "item-press") {
-                        onSearchChange?.(String(next ?? ""));
+                onOpenChange={nextOpen => {
+                    setOpen(nextOpen);
+                    if (!nextOpen) {
+                        setHasUserTyped(false);
+                        onSearchChange?.("");
                     }
                 }}
-                onOpenChange={setOpen}
                 filter={onSearchChange ? null : undefined}
                 required={required}
                 name={name}
@@ -101,10 +105,18 @@ export function ComandosSelectField({
                         aria-invalid={invalid || undefined}
                         aria-describedby={describedBy}
                         autoComplete="off"
+                        onChange={event => {
+                            const next = event.currentTarget.value;
+                            const typed = next.trim().length > 0;
+                            setHasUserTyped(typed);
+                            setOpen(typed);
+                            onSearchChange?.(next);
+                        }}
                         onBlur={onBlur}
                     />
                 </Combobox.InputGroup>
 
+                {hasUserTyped && (
                 <Combobox.Portal>
                     <Combobox.Positioner
                         className={styles.positioner}
@@ -115,7 +127,7 @@ export function ComandosSelectField({
                                 Nenhuma opção encontrada.
                             </Combobox.Empty>
                             <Combobox.List className={styles.list}>
-                                {effectiveOptions.map(option => (
+                                {visibleOptions.map(option => (
                                     <Combobox.Item
                                         key={option.value || "__empty__"}
                                         value={option.value}
@@ -129,6 +141,7 @@ export function ComandosSelectField({
                         </Combobox.Popup>
                     </Combobox.Positioner>
                 </Combobox.Portal>
+                )}
             </Combobox.Root>
 
             <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
