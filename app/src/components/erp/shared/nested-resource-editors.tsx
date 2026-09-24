@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus } from "lucide-react";
-import { Trash } from "@primeicons/react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Message } from "components/common/message";
 import { ComandosSelectField, type ComandosSelectOption } from "components/common/select-field";
@@ -322,7 +321,7 @@ export function EquipmentSetComponentsEditor({
                                                 disabled={busy || !editable}
                                                 onClick={() => void remove(item)}
                                             >
-                                                <Trash />
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </td>
@@ -553,7 +552,7 @@ export function CategoryCharacteristicsEditor({
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash />
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 </td>
@@ -837,7 +836,7 @@ export function CharacteristicValuesEditor({
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash />
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 </td>
@@ -1119,7 +1118,7 @@ export function ModelSpecificationEditor({
                         disabled={busy}
                         onClick={() => void remove()}
                     >
-                        <Trash />
+                        <Trash2 size={18} />
                     </button>
                 )}
             </div>
