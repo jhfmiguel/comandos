@@ -254,7 +254,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                             <button type="button" className="registration-yellow-button" onClick={importPairs}>Adicionar linhas coladas</button>
                         </div>
                     </details>}
-                    <div className={styles.tableContainer}><table>
+                    <div className={styles.tableContainer}><table data-comandos-table-standardize="off">
                         <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th></tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
                             {(["first", "second"] as const).map(column => <td key={column}><input required
@@ -274,7 +274,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                             </td>
                         </tr>)}</tbody></table></div>
                     <button type="button" className={`registration-yellow-button ${styles.addBatchRowButton}`} disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>{assets ? "Add another asset" : "Add another box line"}</button>
-                    {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
+                    {!assets && <div className={`${styles.field} ${styles.looseUnitsField}`}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
                             onChange={event => setLooseUnits(event.target.value)} /></div>}
                 </fieldset>
