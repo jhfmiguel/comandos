@@ -1603,3 +1603,7 @@
     cursor: not-allowed;
 }
 
+.addBatchRowButton {
+    margin-top: .8rem !important;
+}
+
