@@ -523,6 +523,18 @@ public class CoreService {
         if (entity instanceof Person person) {
             if (person.birthDate != null && person.birthDate.isAfter(LocalDate.now())) bad("Birth date cannot be in the future.");
             if ("LEGAL_ENTITY".equals(person.personType) && person.birthDate != null) bad("Legal entities cannot have a birth date.");
+
+            if (person.taxId != null && !person.taxId.isBlank()) {
+                String digits = person.taxId.replaceAll("\\D", "");
+                int expectedLength = "LEGAL_ENTITY".equals(person.personType) ? 14 : 11;
+                String documentName = "LEGAL_ENTITY".equals(person.personType) ? "CNPJ" : "CPF";
+
+                if (digits.length() != expectedLength) {
+                    bad(documentName + " inválido. Informe " + expectedLength + " dígitos.");
+                }
+
+                person.taxId = digits;
+            }
         }
         if (entity instanceof SystemUser user) user.login = user.login.toLowerCase(Locale.ROOT);
         if (entity instanceof OrganizationalUnit unit) {
