@@ -32,8 +32,9 @@ export const parseLocaleDecimal = (
 ): number => {
     if (value === null || value === undefined || value === "") return 0
     if (typeof value === "number") return value
+    const cleaned = value.replace(/[^0-9,.-]/g, "")
     const normalized = locale === "pt-BR"
-        ? value.replace(/\./g, "").replace(",", ".")
-        : value.replace(/,/g, "")
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned.replace(/,/g, "")
     return Number(normalized) || 0
 }
