@@ -197,7 +197,7 @@ export function RecordWorkspace({
         ? activeTab
         : initialTabResource;
     const hasWorkspaceContent =
-        catalog.length > 0 || workspaceTabs.some(tab => Boolean(tab.definition));
+        catalog.length > 0 || workspaceTabs.length > 0;
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
     const [tabScrollState, setTabScrollState] = React.useState({
         overflow: false,
@@ -392,25 +392,33 @@ export function RecordWorkspace({
                                 </div>
                                 {workspaceTabs.map((tab) => {
                                     if (resolvedActiveTab !== tab.resource) return null;
-                                    const tabResource = catalog.find(
+                                    const catalogTabResource = catalog.find(
                                         (item) =>
                                             item.key === tab.resource ||
                                             normalizeResourceName(item.label) === tab.resource
-                                    ) ?? tab.definition;
+                                    );
+                                    const missingExpectedResource =
+                                        catalogLoaded && !catalogTabResource && Boolean(tab.definition);
                                     return (
                                         <div key={tab.resource} role="tabpanel" className="comandos-tab-panel">
                                             {tab.content ?? (
-                                                tabResource ? (
+                                                !catalogLoaded ? (
+                                                    <p role="status">{tr("Loading records…")}</p>
+                                                ) : catalogTabResource ? (
                                                     <ResourcePanel
-                                                        key={tabResource.key}
-                                                        resource={tabResource}
+                                                        key={catalogTabResource.key}
+                                                        resource={catalogTabResource}
                                                         service={service}
                                                     />
                                                 ) : (
                                                     <div className={styles.missingTabResource}>
                                                         <Message
-                                                            type="info"
-                                                            text={tr("This registration is not available in the API catalog yet. Refresh the registrations after restarting the API.")}
+                                                            type={missingExpectedResource ? "warning" : "info"}
+                                                            text={tr(
+                                                                missingExpectedResource
+                                                                    ? "This registration exists in the current project, but the running API does not expose it yet. Update and restart the API, then refresh the registrations."
+                                                                    : "This registration is not available in the API catalog yet. Refresh the registrations after restarting the API."
+                                                            )}
                                                         />
                                                         <button
                                                             type="button"
