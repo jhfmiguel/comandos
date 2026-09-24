@@ -137,7 +137,24 @@ class AuthorizationApiTests {
         });
     }
     private Organization organization() {
-        var org = new Organization(); org.name = UUID.randomUUID().toString(); org.nature = "Company"; return persist(org);
+        var nature = new OrganizationNature();
+        nature.code = "N-" + UUID.randomUUID();
+        nature.name = "Company";
+        nature.active = true;
+        persist(nature);
+
+        var activity = new EconomicActivity();
+        activity.code = "A-" + UUID.randomUUID();
+        activity.description = "Test economic activity";
+        activity.active = true;
+        persist(activity);
+
+        var org = new Organization();
+        org.name = UUID.randomUUID().toString();
+        org.nature = nature;
+        org.legacyNature = nature.name;
+        org.economicActivity = activity;
+        return persist(org);
     }
     private StockLocation location(Organization org, OrganizationalUnit unit) {
         var location = new StockLocation(); location.organization = org; location.unit = unit; location.name = UUID.randomUUID().toString();
