@@ -11,6 +11,7 @@ import com.comandos.core.model.PersonEmail;
 import com.comandos.core.model.PersonPhone;
 import com.comandos.core.model.PersonRole;
 import com.comandos.core.model.PersonRoleAssignment;
+import com.comandos.core.model.PersonType;
 import com.comandos.inventory.model.AmmunitionSpecification;
 import com.comandos.inventory.model.ArmamentParameter;
 import com.comandos.inventory.model.AssetItem;
@@ -271,7 +272,13 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private Person person(String type, String name, String taxId, String email) {
         Person value = new Person();
-        value.personType = type;
+        value.personTypeRef = entityManager.createQuery(
+                "select t from PersonType t where t.code = :code",
+                PersonType.class)
+            .setParameter("code", type)
+            .setMaxResults(1)
+            .getSingleResult();
+        value.personType = value.personTypeRef.code;
         value.fullName = name;
         value.taxId = taxId;
         value.email = email;
