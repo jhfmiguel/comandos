@@ -10,6 +10,7 @@ import { receivingService } from "api/services/receiving.service"
 import { receivingIncorporationService, type ReceivingIncorporationView } from "api/services/receiving-incorporation.service"
 import type { ReceivingView } from "api/models/erp/receiving"
 import type { ErpRecord } from "api/models/erp"
+import { formatBRLValue, maskBRLInput, parseBRLValue } from "utils/money"
 
 const inventory = createErpService("inventory")
 const conditions = ["NEW", "GOOD", "NEEDS_INSPECTION", "DAMAGED"]
@@ -80,7 +81,7 @@ export const ReceivingIncorporationWorkspace: React.FC = () => {
                 assetCode: assetCode.trim() || undefined,
                 lotNumber: lotNumber.trim() || undefined,
                 quantity: quantity ? Number(quantity) : undefined,
-                incorporationValue: incorporationValue ? Number(incorporationValue) : undefined,
+                incorporationValue: incorporationValue ? parseBRLValue(incorporationValue) : undefined,
                 initialCondition,
                 incorporatedBy: responsible.trim() || undefined,
                 notes: notes.trim() || undefined
@@ -107,7 +108,7 @@ export const ReceivingIncorporationWorkspace: React.FC = () => {
                 <div className="registration-field"><label>{tr("Asset code / patrimony")}</label><input className="registration-input" value={assetCode} onChange={e => setAssetCode(e.target.value)} placeholder={tr("Leave blank to generate automatically")}/></div>
                 <div className="registration-field"><label>{tr("Lot number")}</label><input className="registration-input" value={lotNumber} onChange={e => setLotNumber(e.target.value)} placeholder={selectedItem?.lotNumber ?? ""}/></div>
                 <div className="registration-field"><label>{tr("Quantity")}</label><input className="registration-input" type="number" min="0.0001" step="0.0001" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder={String(remaining)}/></div>
-                <div className="registration-field"><label>{tr("Incorporation value")}</label><input className="registration-input" type="number" min="0" step="0.0001" value={incorporationValue} onChange={e => setIncorporationValue(e.target.value)} placeholder={tr("Acquisition unit value when blank")}/></div>
+                <div className="registration-field"><label>{tr("Incorporation value")}</label><input className="registration-input" type="text" inputMode="numeric" value={incorporationValue} onChange={e => setIncorporationValue(maskBRLInput(e.target.value))} placeholder="R$ 0,00"/></div>
                 <div className="registration-field"><ComandosSelectField id="incorporation-condition" label={tr("Initial condition")} value={initialCondition} options={conditions.map(value=>({value,label:tr(value)}))} onChange={setInitialCondition} /></div>
                 <div className="registration-field comandos-grid-full"><label>{tr("Responsible person")}</label><input className="registration-input" value={responsible} onChange={e => setResponsible(e.target.value)}/></div>
                 <div className="registration-field comandos-grid-full"><label>{tr("Notes")}</label><textarea className="registration-input" rows={4} value={notes} onChange={e => setNotes(e.target.value)}/></div>
@@ -115,7 +116,7 @@ export const ReceivingIncorporationWorkspace: React.FC = () => {
 
             <div className="comandos-responsive-actions"><Button className="registration-yellow-button" onClick={save} disabled={busy || !receiving || !itemId || !locationId || remaining <= 0}>{busy ? tr("Saving...") : tr("Incorporate")}</Button></div>
 
-            <div style={{overflowX:"auto",marginTop:"1.5rem"}}><table style={{width:"100%",minWidth:"900px"}}><thead><tr><th>{tr("Item")}</th><th>{tr("Serial")}</th><th>{tr("Patrimony")}</th><th>{tr("Lot")}</th><th>{tr("Quantity")}</th><th>{tr("Value")}</th><th>{tr("Condition")}</th><th>{tr("Inventory record")}</th></tr></thead><tbody>{history.length ? history.map(row => <tr key={row.id}><td>#{row.receivingItemId}</td><td>{row.serialNumber ?? "—"}</td><td>{row.assetCode ?? "—"}</td><td>{row.lotNumber ?? "—"}</td><td>{row.quantity}</td><td>{row.incorporationValue}</td><td>{tr(row.initialCondition)}</td><td>{row.inventoryResource} #{row.inventoryRecordId}</td></tr>) : <tr><td colSpan={8}>{tr("No incorporations registered.")}</td></tr>}</tbody></table></div>
+            <div style={{overflowX:"auto",marginTop:"1.5rem"}}><table style={{width:"100%",minWidth:"900px"}}><thead><tr><th>{tr("Item")}</th><th>{tr("Serial")}</th><th>{tr("Patrimony")}</th><th>{tr("Lot")}</th><th>{tr("Quantity")}</th><th>{tr("Value")}</th><th>{tr("Condition")}</th><th>{tr("Inventory record")}</th></tr></thead><tbody>{history.length ? history.map(row => <tr key={row.id}><td>#{row.receivingItemId}</td><td>{row.serialNumber ?? "—"}</td><td>{row.assetCode ?? "—"}</td><td>{row.lotNumber ?? "—"}</td><td>{row.quantity}</td><td>{formatBRLValue(row.incorporationValue)}</td><td>{tr(row.initialCondition)}</td><td>{row.inventoryResource} #{row.inventoryRecordId}</td></tr>) : <tr><td colSpan={8}>{tr("No incorporations registered.")}</td></tr>}</tbody></table></div>
         </section>
     )
 }
