@@ -48,11 +48,11 @@ export function ComandosSelectField({
 
     if (disabled) {
         return (
-            <div className={[styles.root, className ?? ""].filter(Boolean).join(" ")} data-active={active ? "true" : "false"} data-invalid={invalid ? "true" : "false"}>
+            <div className={[styles.root, "comandos-composed-select", className ?? ""].filter(Boolean).join(" ")} data-active={active ? "true" : "false"} data-invalid={invalid ? "true" : "false"}>
                 <button
                     id={id}
                     type="button"
-                    className={styles.trigger}
+                    className={`${styles.trigger} comandos-composed-select-trigger`}
                     aria-disabled="true"
                     aria-describedby={describedBy}
                     onPointerDown={event => {
@@ -69,7 +69,7 @@ export function ComandosSelectField({
                         <ChevronDown />
                     </span>
                 </button>
-                <label htmlFor={id} className={styles.label}>
+                <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
                     {label}{required ? " *" : ""}
                 </label>
             </div>
@@ -83,7 +83,7 @@ export function ComandosSelectField({
 
     return (
         <div
-            className={[styles.root, className ?? ""].filter(Boolean).join(" ")}
+            className={[styles.root, "comandos-composed-select", className ?? ""].filter(Boolean).join(" ")}
             data-active={active ? "true" : "false"}
             data-filled={filled ? "true" : "false"}
             data-invalid={invalid ? "true" : "false"}
@@ -98,7 +98,7 @@ export function ComandosSelectField({
             >
                 <Select.Trigger
                     id={id}
-                    className={styles.trigger}
+                    className={`${styles.trigger} comandos-composed-select-trigger`}
                     aria-invalid={invalid || undefined}
                     aria-describedby={describedBy}
                     onBlur={onBlur}
@@ -145,7 +145,7 @@ export function ComandosSelectField({
                 </Select.Portal>
             </Select.Root>
 
-            <label htmlFor={id} className={styles.label}>
+            <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
                 {label}{required ? " *" : ""}
             </label>
         </div>
