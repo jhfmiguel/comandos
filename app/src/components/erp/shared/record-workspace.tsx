@@ -160,12 +160,6 @@ export function RecordWorkspace({
         : initialTabResource;
     const hasWorkspaceContent =
         catalog.length > 0 || workspaceTabs.some(tab => Boolean(tab.definition));
-    const tabsDragRef = React.useRef({
-        active: false,
-        moved: false,
-        startX: 0,
-        scrollLeft: 0
-    });
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
     const [tabScrollState, setTabScrollState] = React.useState({
         overflow: false,
@@ -316,39 +310,6 @@ export function RecordWorkspace({
                                             element.scrollLeft += delta;
                                             syncTabScroll(element);
                                         }}
-                                        onPointerDown={event => {
-                                            if (event.pointerType !== "mouse" || event.button !== 0) return;
-                                            const element = event.currentTarget;
-                                            tabsDragRef.current = {
-                                                active: true,
-                                                moved: false,
-                                                startX: event.clientX,
-                                                scrollLeft: element.scrollLeft
-                                            };
-                                            element.setPointerCapture(event.pointerId);
-                                            element.classList.add("is-dragging");
-                                        }}
-                                        onPointerMove={event => {
-                                            if (!tabsDragRef.current.active || event.pointerType !== "mouse") return;
-                                            const distance = event.clientX - tabsDragRef.current.startX;
-                                            if (Math.abs(distance) > 3) tabsDragRef.current.moved = true;
-                                            event.currentTarget.scrollLeft = tabsDragRef.current.scrollLeft - distance;
-                                            syncTabScroll(event.currentTarget);
-                                        }}
-                                        onPointerUp={event => {
-                                            if (!tabsDragRef.current.active) return;
-                                            tabsDragRef.current.active = false;
-                                            event.currentTarget.classList.remove("is-dragging");
-                                            syncTabScroll(event.currentTarget);
-                                            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                                                event.currentTarget.releasePointerCapture(event.pointerId);
-                                            }
-                                        }}
-                                        onPointerCancel={event => {
-                                            tabsDragRef.current.active = false;
-                                            event.currentTarget.classList.remove("is-dragging");
-                                            syncTabScroll(event.currentTarget);
-                                        }}
                                     >
                                     {workspaceTabs.map((tab) => {
                                         const tabResource = catalog.find(
@@ -364,10 +325,6 @@ export function RecordWorkspace({
                                                 aria-selected={resolvedActiveTab === tab.resource}
                                                 className={`comandos-tab ${resolvedActiveTab === tab.resource ? "is-active" : ""}`}
                                                 onClick={event => {
-                                                    if (tabsDragRef.current.moved) {
-                                                        tabsDragRef.current.moved = false;
-                                                        return;
-                                                    }
                                                     setActiveTab(tab.resource);
                                                     event.currentTarget.scrollIntoView({
                                                         behavior: "smooth",
