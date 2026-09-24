@@ -11,4 +11,5 @@ public class ElectricalDeviceSpecification extends CoreEntity {
     @Column(nullable = false, precision = 19, scale = 4) public BigDecimal voltage;
     @Column(nullable = false) public Integer cycles;
     @Column(name = "cartridge_type", nullable = false, length = 100) public String cartridgeType;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "cartridge_type_id") public ArmamentParameter cartridgeTypeRef;
 }
