@@ -209,7 +209,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
+                <div className={`comandos-native-table-container ${styles.contactTableScroll} ${styles.addressTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.addressTable}`}>
                         <thead>
                             <tr>
