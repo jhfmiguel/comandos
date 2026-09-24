@@ -23,6 +23,7 @@ import { Trash } from "@primeicons/react";
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
 import { Message } from "components/common/message";
+import { ComandosSelectField } from "components/common/select-field";
 import { Pagination } from "platform/components/pagination";
 import { useSession } from "components/auth/session-provider";
 import { useComandosPreferences } from "components/settings/preferences-provider";
@@ -883,7 +884,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 || (["person-addresses", "person-phones", "person-emails"].includes(resource.key)
                                                     && field.name === "personId")
                                             ))}>
-                                            <label htmlFor={`core-${field.name}`}>{fieldLabel}{required ? " *" : ""}</label>
+                                            {field.type !== "reference" && field.type !== "choice" && (
+                                                <label htmlFor={`core-${field.name}`}>{fieldLabel}{required ? " *" : ""}</label>
+                                            )}
                                             {resource.key === "models" && field.name === "manufacturerCode" && (
                                                 <small>{tr("Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.")}</small>
                                             )}
@@ -913,6 +916,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                     }
                                                     service={service}
                                                     field={field}
+                                                    label={fieldLabel}
+                                                    required={required}
                                                     value={values[field.name]}
                                                     selectedLabel={record?.referenceLabels[field.name]}
                                                     organizationId={values.organizationId}
@@ -944,10 +949,17 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                             ) : field.type === "boolean" ? (
                                                 <input id={`core-${field.name}`} type="checkbox" checked={Boolean(values[field.name])} onChange={event => change(field, event.target.checked)} />
                                             ) : field.type === "choice" ? (
-                                                <select id={`core-${field.name}`} required={required} value={String(values[field.name] ?? "")} onChange={event => change(field, event.target.value)}>
-                                                    <option value=""></option>
-                                                    {field.choices.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
-                                                </select>
+                                                <ComandosSelectField
+                                                    id={`core-${field.name}`}
+                                                    label={fieldLabel}
+                                                    required={required}
+                                                    value={String(values[field.name] ?? "")}
+                                                    options={field.choices.map(value => ({
+                                                        value,
+                                                        label: value.replaceAll("_", " ")
+                                                    }))}
+                                                    onChange={value => change(field, value)}
+                                                />
                                             ) : personTaxId ? (
                                                 <input
                                                     id={`core-${field.name}`}
@@ -1035,6 +1047,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
 export function ReferenceSelectField({
     service,
     field,
+    label,
+    required,
     value,
     selectedLabel,
     organizationId,
@@ -1046,6 +1060,8 @@ export function ReferenceSelectField({
 }: {
     service: ErpService;
     field: ErpField;
+    label?: string;
+    required?: boolean;
     value: ErpValue;
     selectedLabel?: string;
     organizationId: ErpValue;
@@ -1147,23 +1163,19 @@ export function ReferenceSelectField({
 
     return (
         <div className={styles.referenceSelect}>
-            <select
+            <ComandosSelectField
                 id={`core-${field.name}`}
-                required={field.required}
+                label={label ?? field.label}
+                required={required ?? field.required}
                 value={current}
-                aria-disabled={organizationMissing || undefined}
-                onFocus={() => {
-                    if (organizationMissing) setUnitAttempted(true);
-                }}
-                onPointerDown={() => {
-                    if (organizationMissing) setUnitAttempted(true);
-                }}
-                onChange={event => {
-                    if (organizationMissing) {
-                        setUnitAttempted(true);
-                        return;
-                    }
-                    const nextId = event.target.value ? Number(event.target.value) : null;
+                options={options.map(option => ({
+                    value: String(option.id ?? ""),
+                    label: String(option.label ?? "")
+                }))}
+                disabled={organizationMissing}
+                onDisabledAttempt={() => setUnitAttempted(true)}
+                onChange={nextValue => {
+                    const nextId = nextValue ? Number(nextValue) : null;
                     onChange(nextId);
                     onSelectOption?.(
                         nextId == null
@@ -1171,23 +1183,7 @@ export function ReferenceSelectField({
                             : options.find(option => Number(option.id) === nextId) ?? null
                     );
                 }}
-            >
-                <option value="">
-                    {loading
-                        ? "Carregando..."
-                        : organizationMissing
-                            ? ""
-                            : "Selecione"}
-                </option>
-                {!currentKnown && current && selectedLabel && (
-                    <option value={current}>{selectedLabel}</option>
-                )}
-                {options.map(option => (
-                    <option key={option.id} value={String(option.id ?? "")}>
-                        {option.label}
-                    </option>
-                ))}
-            </select>
+            />
 
             {unitAttempted && organizationMissing && (
                 <small className={styles.referenceNotice}>
