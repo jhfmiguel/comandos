@@ -6538,3 +6538,21 @@ html[data-theme] body .taskboard-add-button:disabled {
     opacity: .5;
     cursor: not-allowed;
 }
+
+
+/* COMANDOS DIALOG HEADER MATCH CARD V1 */
+html[data-theme] .comandos-native-dialog-header {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb), 0.12),
+            transparent 44%
+        ),
+        var(--comandos-surface-2) !important;
+    border-color: var(--comandos-border) !important;
+    color: var(--comandos-text) !important;
+}
+
+html[data-theme] .comandos-native-dialog-header h2 {
+    color: var(--comandos-text) !important;
+}
