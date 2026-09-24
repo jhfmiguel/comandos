@@ -173,12 +173,59 @@
     width: 100% !important;
 }
 
-.phoneTable {
-    min-width: 52rem;
+.phoneTable,
+.emailTable {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
 }
 
-.emailTable {
-    min-width: 40rem;
+.phoneTable th:nth-child(1),
+.phoneTable td:nth-child(1) {
+    width: 22%;
+}
+
+.phoneTable th:nth-child(2),
+.phoneTable td:nth-child(2) {
+    width: 14%;
+}
+
+.phoneTable th:nth-child(3),
+.phoneTable td:nth-child(3) {
+    width: 28%;
+}
+
+.phoneTable th:nth-child(4),
+.phoneTable td:nth-child(4),
+.phoneTable th:nth-child(5),
+.phoneTable td:nth-child(5),
+.phoneTable th:nth-child(6),
+.phoneTable td:nth-child(6) {
+    width: 12%;
+}
+
+.emailTable th:nth-child(1),
+.emailTable td:nth-child(1) {
+    width: 26%;
+}
+
+.emailTable th:nth-child(2),
+.emailTable td:nth-child(2) {
+    width: 50%;
+}
+
+.emailTable th:nth-child(3),
+.emailTable td:nth-child(3),
+.emailTable th:nth-child(4),
+.emailTable td:nth-child(4) {
+    width: 12%;
+}
+
+@media (min-width: 701px) {
+    .phoneTableScroll,
+    .emailTableScroll {
+        overflow-x: hidden !important;
+    }
 }
 
 .contactTable th {
@@ -219,6 +266,13 @@
     width: 1.1rem;
     height: 1.1rem;
     accent-color: var(--accent);
+}
+
+.contactActionCell :global(.comandos-icon-button-danger) {
+    color: #ef4444 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .contactEmpty {
