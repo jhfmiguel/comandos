@@ -917,6 +917,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                             ? current.complement : current.complement || address.complement || "" }))} />
                                             ) : field.type === "reference" && usesSelectReference(resource.key, field.name) ? (
                                                 <ReferenceSelectField
+                                                    key={field.name === "unitId" ? `${field.name}:${String(values.organizationId ?? "")}` : field.name}
                                                     service={service}
                                                     field={field}
                                                     value={values[field.name]}
