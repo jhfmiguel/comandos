@@ -6837,3 +6837,16 @@ html[data-theme] body .comandos-tabs-scroll-button:focus-visible {
         position: static;
     }
 }
+
+
+/* Table buttons never switch to the selected palette on hover. */
+.comandos-native-table td .comandos-action-button:hover:not(:disabled),
+.comandos-native-table td .registration-yellow-button:hover:not(:disabled),
+.comandos-native-table td .comandos-secondary-button:hover:not(:disabled),
+.comandos-native-table td .comandos-red-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 14%, transparent) !important;
+    border-color: color-mix(in srgb, var(--button-color) 82%, #000 18%) !important;
+    color: color-mix(in srgb, var(--button-color) 82%, #000 18%) !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
