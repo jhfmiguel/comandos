@@ -172,6 +172,9 @@ export function PersonContactsEditor({
     const [activePanel, setActivePanel] = React.useState<ContactPanelKey | null>("addresses");
     const [contactTypes, setContactTypes] = React.useState<ErpRecord[]>([]);
     const [contactTypesError, setContactTypesError] = React.useState("");
+    const [countryOptions, setCountryOptions] = React.useState<Array<{ value: string; label: string }>>([]);
+    const [countriesLoading, setCountriesLoading] = React.useState(false);
+    const [countriesError, setCountriesError] = React.useState("");
 
     React.useEffect(() => {
         const controller = new AbortController();
@@ -198,6 +201,47 @@ export function PersonContactsEditor({
 
         return () => controller.abort();
     }, []);
+
+
+    React.useEffect(() => {
+        if (!addresses.some(address => address.foreignAddress) || countryOptions.length > 0 || countriesLoading) {
+            return;
+        }
+
+        const controller = new AbortController();
+        setCountriesLoading(true);
+
+        fetch("/api/countries", {
+            signal: controller.signal,
+            headers: { Accept: "application/json" }
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => null) as { message?: string } | null;
+                    throw new Error(payload?.message || "Não foi possível carregar os países.");
+                }
+
+                return response.json() as Promise<Array<{ value: string; label: string }>>;
+            })
+            .then(options => {
+                if (controller.signal.aborted) return;
+                setCountryOptions(options);
+                setCountriesError("");
+            })
+            .catch(error => {
+                if (!controller.signal.aborted) {
+                    setCountryOptions([]);
+                    setCountriesError(error instanceof Error ? error.message : "Não foi possível carregar os países.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setCountriesLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, [addresses, countryOptions.length, countriesLoading]);
 
     React.useEffect(() => {
         const frame = requestAnimationFrame(() => {
@@ -249,6 +293,9 @@ export function PersonContactsEditor({
         <div className={styles.contactAccordion}>
             {contactTypesError && (
                 <small className={styles.contactTypeError}>{contactTypesError}</small>
+            )}
+            {countriesError && addresses.some(address => address.foreignAddress) && (
+                <small className={styles.contactTypeError}>{countriesError}</small>
             )}
             <ContactAccordionPanel
                 value="addresses"
@@ -315,13 +362,24 @@ export function PersonContactsEditor({
                                             />
                                         </td>
                                         <td>
-                                            <input
-                                                aria-label={`País do endereço ${index + 1}`}
-                                                required={address.foreignAddress}
-                                                value={address.country}
-                                                readOnly={!address.foreignAddress}
-                                                onChange={event => updateAddress(index, { country: event.target.value })}
-                                            />
+                                            {address.foreignAddress ? (
+                                                <ComandosSelectField
+                                                    id={`person-address-country-${index}`}
+                                                    label="País"
+                                                    required
+                                                    value={address.country}
+                                                    options={countryOptions}
+                                                    placeholder={countriesLoading ? "Carregando países..." : "Selecione o país"}
+                                                    disabled={countriesLoading && countryOptions.length === 0}
+                                                    onChange={value => updateAddress(index, { country: value })}
+                                                />
+                                            ) : (
+                                                <input
+                                                    aria-label={`País do endereço ${index + 1}`}
+                                                    value={address.country}
+                                                    readOnly
+                                                />
+                                            )}
                                         </td>
                                         <td className={styles.addressPostalCell}>
                                             {address.foreignAddress ? (
