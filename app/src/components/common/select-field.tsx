@@ -54,7 +54,6 @@ export function ComandosSelectField({
                     type="button"
                     className={styles.trigger}
                     aria-disabled="true"
-                    aria-invalid={invalid || undefined}
                     aria-describedby={describedBy}
                     onPointerDown={event => {
                         event.preventDefault();
