@@ -65,12 +65,12 @@ const sectionTabs: Record<
     ],
     people: [
         {
-            resource: "person-types",
-            label: "Person types"
-        },
-        {
             resource: "people",
             label: "People"
+        },
+        {
+            resource: "person-types",
+            label: "Person types"
         },
         {
             resource: "roles",
