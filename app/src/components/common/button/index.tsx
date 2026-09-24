@@ -8,9 +8,9 @@ import {
     RefreshCw,
     RotateCcw,
     Search,
-    X,
-    Trash2
+    X
 } from "lucide-react"
+import { Trash } from "@primeicons/react"
 
 type ComandosButtonSeverity = "primary" | "secondary" | "success" | "info" | "warn" | "help" | "danger" | "contrast"
 type ComandosButtonVariant = "text" | "outlined" | "link" | "contained"
@@ -66,7 +66,7 @@ const tableActionIcon: Record<TableAction, React.ElementType> = {
     add: Plus,
     analyze: Search,
     cancel: X,
-    delete: Trash2,
+    delete: Trash,
     edit: Pencil,
     execute: Play,
     refresh: RefreshCw,
@@ -108,7 +108,6 @@ export const Button: React.FC<ButtonProps> = ({
                 variantClass,
                 `comandos-button-${severity}`,
                 iconOnly ? "comandos-button-icon-only" : "",
-                tableAction === "delete" ? "comandos-trash-button" : "",
                 fluid ? "w-full" : "",
                 columnClasses ?? "",
                 className ?? ""
