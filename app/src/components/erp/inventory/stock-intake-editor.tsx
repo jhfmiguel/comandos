@@ -116,7 +116,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                 {completed !== null && <Message type="success" text={`${completed} individual assets registered successfully.`} />}
                 {pending && !busy && <Message type="warn" text="Retry this entry to confirm its result without registering the stock twice." />}
                 <fieldset className={styles.fields} disabled={locked}>
-                    {fields.map(field => <div className={styles.field} key={field.name}>
+                    {fields.map(field => <div className={styles.field} data-comandos-field="true" key={field.name}>
                         <label htmlFor={`core-${field.name}`}>{field.label}{field.required ? " *" : ""}</label>
                         {field.type === "reference" ? <ReferenceSelectField
                             service={service}
