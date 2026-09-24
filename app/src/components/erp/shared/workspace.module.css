@@ -1627,3 +1627,21 @@
     margin-top: 1.75rem !important;
 }
 
+
+
+/* TABLE DELETE ACTION — LOCAL LOCK V1
+ * Keep the original trash icon untouched and prevent any palette hover fill.
+ */
+.actionCell > :global(button.comandos-icon-button-danger),
+.actionCell > :global(button.comandos-icon-button-danger:hover:not(:disabled)),
+.actionCell > :global(button.comandos-icon-button-danger:focus-visible),
+.actionCell > :global(button.comandos-icon-button-danger:active:not(:disabled)) {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    color: #ef4444 !important;
+}
