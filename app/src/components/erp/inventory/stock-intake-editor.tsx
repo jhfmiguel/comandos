@@ -254,7 +254,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                             <button type="button" className="registration-yellow-button" onClick={importPairs}>Adicionar linhas coladas</button>
                         </div>
                     </details>}
-                    <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Opening packaging"}</caption>
+                    <div className={styles.tableContainer}><table>{assets && <caption>Asset code / serial number pairs</caption>}
                         <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th></tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
                             {(["first", "second"] as const).map(column => <td key={column}><input required
