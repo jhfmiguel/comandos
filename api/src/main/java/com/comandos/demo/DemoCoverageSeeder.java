@@ -13,6 +13,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -35,6 +36,9 @@ public class DemoCoverageSeeder implements ApplicationRunner {
     private final EntityManager entityManager;
     private final TransactionTemplate transactions;
     private final AtomicLong sequence = new AtomicLong(1000);
+
+    @Value("${comandos.demo.require-full-coverage:false}")
+    private boolean requireFullCoverage;
 
     public DemoCoverageSeeder(EntityManager entityManager, PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
@@ -71,11 +75,12 @@ public class DemoCoverageSeeder implements ApplicationRunner {
             log.info("Demo coverage seeder populated every mapped application entity table.");
         } else {
             var missing = pending.stream().map(Class::getSimpleName).sorted().toList();
-            log.warn(
-                "Demo coverage seeder could not auto-populate {} mapped tables: {}",
-                pending.size(),
-                missing
-            );
+            String message = "Demo coverage seeder could not auto-populate "
+                + pending.size() + " mapped tables: " + missing;
+            if (requireFullCoverage) {
+                throw new IllegalStateException(message);
+            }
+            log.warn(message);
         }
     }
 
@@ -211,39 +216,135 @@ public class DemoCoverageSeeder implements ApplicationRunner {
             || field.isAnnotationPresent(OneToOne.class);
     }
 
+    private String didacticStatus(String owner) {
+        return switch (owner) {
+            case "Custody" -> "ACTIVE";
+            case "AmmunitionConsumption", "Donation", "DisposalProcess", "InventorySale" -> "FINALIZED";
+            case "InventoryTransfer" -> "SENT";
+            case "WorkOrder" -> "OPEN";
+            case "ApprovalWorkflow" -> "AUTHORIZED";
+            case "ExceptionOccurrence" -> "OPEN";
+            default -> "ACTIVE";
+        };
+    }
+
+    private String didacticType(String owner, String fieldName) {
+        if (owner.equals("AmmunitionConsumption")) return "TRAINING";
+        if (owner.equals("InventoryTransfer")) return "INTERNAL";
+        if (owner.equals("Custody")) return "INDIVIDUAL";
+        if (owner.equals("ExceptionOccurrence")) return "DIVERGENCE";
+        if (owner.equals("MaintenancePlan")) return "PREVENTIVE";
+        if (owner.equals("WorkOrder")) return "PREVENTIVE";
+        if (fieldName.contains("actor")) return "USER";
+        return "DEMO";
+    }
+
     private Object syntheticValue(Field field, Class<?> owner) {
         Class<?> type = field.getType();
         long n = sequence.incrementAndGet();
         String name = field.getName().toLowerCase(Locale.ROOT);
 
         if (type == String.class) {
+            String ownerName = owner.getSimpleName();
             String value;
-            if (name.contains("email")) {
-                value = "demo" + n + "@example.local";
+
+            if (name.equals("requestid") || name.equals("completionrequestid")) {
+                value = UUID.nameUUIDFromBytes((ownerName + "-" + n).getBytes()).toString();
+            } else if (name.contains("fingerprint")) {
+                value = String.format("%064x", n);
+            } else if (name.contains("email")) {
+                value = "teste." + ownerName.toLowerCase(Locale.ROOT) + n + "@comandos.local";
             } else if (name.equals("taxid") || name.contains("tax_id")) {
-                value = String.format("%011d", n % 100_000_000_000L);
+                value = String.format("%011d", 90000000000L + (n % 9999999999L));
             } else if (name.contains("json")) {
-                value = "{}";
+                value = "{\"exemplo\":\"Dado didático do COMANDOS\"}";
             } else if (name.contains("url")) {
-                value = "https://example.local/demo/" + n;
+                value = "https://example.local/comandos/demo/" + ownerName.toLowerCase(Locale.ROOT) + "/" + n;
             } else if (name.contains("countrycode")) {
                 value = "BR";
-            } else if (name.contains("state")) {
+            } else if (name.equals("state") || name.endsWith("statecode")) {
                 value = "GO";
+            } else if (name.equals("country")) {
+                value = "Brasil";
+            } else if (name.contains("postalcode") || name.contains("zipcode")) {
+                value = "74000-000";
+            } else if (name.contains("city")) {
+                value = "Goiânia";
+            } else if (name.contains("district")) {
+                value = "Setor Central";
+            } else if (name.contains("street") || name.contains("address")) {
+                value = "Avenida Goiás, 1000";
+            } else if (name.contains("phone") || name.contains("number") && ownerName.contains("Phone")) {
+                value = "(62) 99999-0000";
+            } else if (name.equals("fullname") || name.equals("recipientname") || name.equals("responsiblename")) {
+                value = "Carlos Henrique Souza - teste";
+            } else if (name.equals("authorizername")) {
+                value = "Mariana Alves Ferreira - teste";
+            } else if (name.equals("buyername")) {
+                value = "Comprador Institucional - teste";
+            } else if (name.equals("donorname")) {
+                value = "Órgão Doador - teste";
+            } else if (name.equals("doneename")) {
+                value = "Órgão Donatário - teste";
+            } else if (name.equals("organizationname")) {
+                value = "Secretaria de Segurança Pública - Ambiente de Teste";
+            } else if (name.equals("unitname") || name.endsWith("unitname")) {
+                value = "Armamento Central";
+            } else if (name.equals("locationname") || name.endsWith("locationname")) {
+                value = "Cofre Central";
+            } else if (name.equals("modelname")) {
+                value = "Beretta APX A1 Full Size";
+            } else if (name.equals("assetcode") || name.equals("stockcode")) {
+                value = "PAT-DEMO-" + n;
+            } else if (name.equals("serialnumber")) {
+                value = "SER-DEMO-" + n;
+            } else if (name.equals("sku")) {
+                value = "SKU-DEMO-" + n;
+            } else if (name.equals("lotnumber")) {
+                value = "LOTE-CBC-2026-" + n;
+            } else if (name.contains("processnumber")) {
+                value = "PROC-DEMO-2026-" + n;
+            } else if (name.contains("documentnumber")) {
+                value = "DOC-DEMO-" + n;
+            } else if (name.contains("invoicenumber")) {
+                value = "NF-DEMO-" + n;
+            } else if (name.contains("documentreference") || name.contains("storagereference")) {
+                value = "SEI-DEMO-" + n;
+            } else if (name.equals("purpose")) {
+                value = "Treinamento operacional e validação didática do fluxo";
+            } else if (name.contains("justification")) {
+                value = "Necessidade fictícia criada para demonstrar o fluxo completo do COMANDOS.";
+            } else if (name.contains("reason")) {
+                value = "Exemplo didático para treinamento e homologação.";
+            } else if (name.contains("notes") || name.contains("description") || name.contains("observation")) {
+                value = "Registro fictício e didático para demonstrar esta etapa do sistema.";
+            } else if (name.contains("checklist")) {
+                value = "Numeração; integridade; funcionamento; acessórios; condição geral";
+            } else if (name.contains("result")) {
+                value = "CONFORME";
+            } else if (name.contains("method")) {
+                value = "Fragmentação controlada - demonstração";
+            } else if (name.contains("certificate")) {
+                value = "CERT-DEMO-" + n;
             } else if (name.contains("status")) {
-                value = "ACTIVE";
+                value = didacticStatus(ownerName);
             } else if (name.contains("action")) {
                 value = "CREATE";
             } else if (name.contains("scope")) {
                 value = "SYSTEM";
             } else if (name.contains("type")) {
-                value = "DEMO";
-            } else if (name.contains("login")) {
-                value = "demo-" + n;
+                value = didacticType(ownerName, name);
+            } else if (name.contains("login") || name.contains("operator") || name.contains("inspector")
+                    || name.contains("gunsmith") || name.contains("receivedby") || name.contains("incorporatedby")) {
+                value = "usuario.teste";
             } else if (name.contains("password")) {
-                value = "{noop}demo";
+                value = "{noop}Teste@123";
+            } else if (name.equals("code")) {
+                value = ownerName.toUpperCase(Locale.ROOT) + "_DEMO_" + n;
+            } else if (name.equals("name") || name.equals("title")) {
+                value = "Exemplo didático - " + ownerName;
             } else {
-                value = "Demo " + owner.getSimpleName() + " " + field.getName() + " " + n;
+                value = "Exemplo didático " + ownerName + " - " + field.getName() + " " + n;
             }
 
             Column column = field.getAnnotation(Column.class);
