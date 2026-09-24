@@ -317,6 +317,9 @@ public class CoreService {
             }
             write(entity, field.property(), value);
         }
+        if (entity instanceof OrganizationalUnit unit && unit.unitType != null) {
+            unit.type = unit.unitType.name;
+        }
         access.requireEntity("core/" + resource, action, entity);
         validate(entity);
         if (id == null) em.persist(entity);
@@ -685,6 +688,15 @@ public class CoreService {
                 result.put(field.name(), null);
                 if (organization.legacyNature != null && !organization.legacyNature.isBlank()) {
                     labels.put(field.name(), organization.legacyNature);
+                }
+            } else if (
+                entity instanceof OrganizationalUnit unit
+                && "typeId".equals(field.name())
+                && unit.unitType == null
+            ) {
+                result.put(field.name(), null);
+                if (unit.type != null && !unit.type.isBlank()) {
+                    labels.put(field.name(), unit.type);
                 }
             } else result.put(field.name(), value);
         }
