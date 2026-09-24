@@ -257,11 +257,11 @@
 .contactAccordionPanel {
     min-width: 0;
     overflow: hidden;
-    border: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
+    border: 0;
     border-radius: .5rem;
     background: var(--comandos-surface, var(--p-content-background, #fff));
     color: var(--comandos-text, var(--p-content-color, inherit));
-    box-shadow: 0 .25rem .8rem color-mix(in srgb, var(--comandos-shadow, rgba(0, 0, 0, .12)) 72%, transparent);
+    box-shadow: none;
 }
 
 .contactAccordionHeading {
@@ -307,8 +307,8 @@
 }
 
 .contactAccordionTrigger:focus-visible {
-    outline: 2px solid var(--comandos-accent, #ff9900);
-    outline-offset: -2px;
+    outline: 0;
+    box-shadow: none;
 }
 
 .contactAccordionPanel[data-open="true"] .contactAccordionTrigger {
@@ -332,7 +332,7 @@
 }
 
 .contactAccordionContent {
-    border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
+    border-top: 0;
     background: var(--comandos-surface, var(--p-content-background, #fff));
     color: var(--comandos-text, var(--p-content-color, inherit));
 }
