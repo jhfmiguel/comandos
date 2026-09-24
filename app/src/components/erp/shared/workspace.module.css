@@ -44,3 +44,57 @@
 .shellSingle {
     grid-template-columns: minmax(0, 1fr);
 }
+
+
+.referenceCombobox {
+    position: relative;
+}
+
+.referenceCombobox > input {
+    width: 100%;
+}
+
+.referenceOptions {
+    position: absolute;
+    z-index: 12000;
+    top: calc(100% + .25rem);
+    left: 0;
+    right: 0;
+    max-height: 16rem;
+    overflow-y: auto;
+    border: 1px solid var(--p-content-border-color, #d6d6d6);
+    border-radius: 6px;
+    background: var(--p-content-background, #fff);
+    color: var(--p-content-color, inherit);
+    box-shadow: 0 .55rem 1.5rem rgba(0, 0, 0, .18);
+}
+
+.referenceOption,
+.referenceOptionActive {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: .6rem .75rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.referenceOption:hover,
+.referenceOptionActive {
+    background: #ff990022;
+    color: var(--accent);
+}
+
+.referenceStatus,
+.referenceHint {
+    padding: .7rem .75rem;
+    color: var(--p-text-muted-color, #737373);
+    font-size: .825rem;
+}
+
+.referenceHint {
+    border-top: 1px solid var(--p-content-border-color, #ddd);
+}
