@@ -382,6 +382,7 @@ export const translationPairs: TranslationPair[] = [
     // Core / shared workspace
     ["Manage organizations, people, their roles, and system account assignments.", "Gerencie organizações, pessoas, seus papéis e vínculos com contas do sistema."],
     ["Register single asset", "Cadastrar bem individual"],
+    ["Register assets", "Cadastrar bens"],
     ["Receive ammunition boxes", "Receber caixas de munição"],
     ["Calculated by inventory operations.", "Calculado pelas operações de inventário."],
     ["Fixed after registration.", "Fixo após o cadastro."],
