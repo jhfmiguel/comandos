@@ -1095,6 +1095,7 @@ export function ReferenceSelectField({
     const searchable = ["natureId", "economicActivityId"].includes(field.name);
     const [referenceSearch, setReferenceSearch] = React.useState("");
 
+    const shouldSearch = !searchable || referenceSearch.trim().length > 0;
     const requestKey = JSON.stringify([
         field.reference ?? "",
         organizationId ?? "",
@@ -1103,7 +1104,7 @@ export function ReferenceSelectField({
     ]);
 
     React.useEffect(() => {
-        if (!field.reference || organizationMissing) return;
+        if (!field.reference || organizationMissing || !shouldSearch) return;
 
         const controller = new AbortController();
 
@@ -1157,12 +1158,13 @@ export function ReferenceSelectField({
         modelFamily,
         searchable,
         referenceSearch,
+        shouldSearch,
         requestKey
     ]);
 
     const current = String(value ?? "");
     const requestCurrent = resultState.key === requestKey;
-    const options = (organizationMissing || !requestCurrent
+    const options = (organizationMissing || !shouldSearch || !requestCurrent
         ? []
         : resultState.options
     ).filter(option =>
@@ -1170,6 +1172,7 @@ export function ReferenceSelectField({
         && (!optionFilter || optionFilter(option))
     );
     const loading = Boolean(field.reference)
+        && shouldSearch
         && !organizationMissing
         && !requestCurrent;
     const error = requestCurrent ? resultState.error : "";
