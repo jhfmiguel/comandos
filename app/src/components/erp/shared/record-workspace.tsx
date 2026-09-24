@@ -580,6 +580,62 @@ const equipmentModelFamilies: Record<string, string> = {
     "optical-specifications": "OPTICAL",
 };
 
+type PersonAddressDraft = {
+    type: string;
+    foreignAddress: boolean;
+    country: string;
+    postalCode: string;
+    street: string;
+    number: string;
+    complement: string;
+    district: string;
+    city: string;
+    state: string;
+    primaryAddress: boolean;
+};
+
+type PersonPhoneDraft = {
+    type: string;
+    countryCode: string;
+    number: string;
+    whatsapp: boolean;
+    primaryPhone: boolean;
+};
+
+type PersonEmailDraft = {
+    type: string;
+    email: string;
+    primaryEmail: boolean;
+};
+
+const newAddressDraft = (primary: boolean): PersonAddressDraft => ({
+    type: "RESIDENTIAL",
+    foreignAddress: false,
+    country: "Brasil",
+    postalCode: "",
+    street: "",
+    number: "",
+    complement: "",
+    district: "",
+    city: "",
+    state: "",
+    primaryAddress: primary
+});
+
+const newPhoneDraft = (primary: boolean): PersonPhoneDraft => ({
+    type: "MOBILE",
+    countryCode: "+55",
+    number: "",
+    whatsapp: false,
+    primaryPhone: primary
+});
+
+const newEmailDraft = (primary: boolean): PersonEmailDraft => ({
+    type: "PERSONAL",
+    email: "",
+    primaryEmail: primary
+});
+
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
     resource: ErpResource; 
@@ -602,12 +658,25 @@ function RecordEditor({ resource, service, record, onCancel, onSaved }: {
         }).format(Number(digits) / 100);
     };
 
-const [values, setValues] = React.useState<Record<string, ErpValue>>
-        (() => Object.fromEntries(resource.fields.map(field => 
-        [field.name, field.type === "password" ? "" 
-            : record?.[field.name] 
-            ?? (field.type === "boolean" ? field.name === "active" : "")])) as Record<string, ErpValue>);
-    
+const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
+        const initial = Object.fromEntries(resource.fields.map(field =>
+            [field.name, field.type === "password" ? ""
+                : record?.[field.name]
+                ?? (field.type === "boolean" ? field.name === "active" : "")]
+        )) as Record<string, ErpValue>;
+
+        if (resource.key === "person-addresses" && !record) {
+            initial.country = "Brasil";
+            initial.foreignAddress = false;
+        }
+
+        return initial;
+    });
+
+    const isNewPerson = resource.key === "people" && !record;
+    const [personAddresses, setPersonAddresses] = React.useState<PersonAddressDraft[]>([]);
+    const [personPhones, setPersonPhones] = React.useState<PersonPhoneDraft[]>([]);
+    const [personEmails, setPersonEmails] = React.useState<PersonEmailDraft[]>([]);
     const [busy, setBusy] = React.useState(false);
     const saving = React.useRef(false);
     const manuallyEditedAddressFields = React.useRef(new Set<string>());
@@ -618,12 +687,19 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
             if (field.name === "postalCode") manuallyEditedAddressFields.current.clear();
             else manuallyEditedAddressFields.current.add(field.name);
         }
-        setValues(current => ({ ...current, [field.name]: value,
-        ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
-        ...(resource.key === "models" && field.name === "armamentTypeId" ? { armamentClassificationId: "" } : {}),
-        ...(field.name === "organizationId" ? { ...(resource.fields.some(f => f.name === "unitId") ? { unitId: "" } : {}), 
-        ...(resource.fields.some(f => f.name === "parentUnitId") ? { parentUnitId: "" } : {}) } : {})
-    }));
+        setValues(current => ({
+            ...current,
+            [field.name]: value,
+            ...(resource.key === "person-addresses" && field.name === "foreignAddress"
+                ? { country: value ? "" : "Brasil" }
+                : {}),
+            ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
+            ...(resource.key === "models" && field.name === "armamentTypeId" ? { armamentClassificationId: "" } : {}),
+            ...(field.name === "organizationId" ? {
+                ...(resource.fields.some(f => f.name === "unitId") ? { unitId: "" } : {}),
+                ...(resource.fields.some(f => f.name === "parentUnitId") ? { parentUnitId: "" } : {})
+            } : {})
+        }));
     };
 
     return (
@@ -671,7 +747,20 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                                     return [field.name, value];
                                                 })
                                         );
-                                        await service.save(resource.key, { ...payload, ...(record ? { version: record.version } : {}) }, record?.id);
+                                        if (isNewPerson) {
+                                            await service.savePersonWithContacts({
+                                                person: payload,
+                                                addresses: personAddresses as unknown as Array<Record<string, ErpValue>>,
+                                                phones: personPhones as unknown as Array<Record<string, ErpValue>>,
+                                                emails: personEmails as unknown as Array<Record<string, ErpValue>>
+                                            });
+                                        } else {
+                                            await service.save(
+                                                resource.key,
+                                                { ...payload, ...(record ? { version: record.version } : {}) },
+                                                record?.id
+                                            );
+                                        }
                                         onSaved();
                                     } catch (error) { setError(errorMessage(error)); }
                                     finally { saving.current = false; setBusy(false); }
@@ -684,7 +773,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                 </p>}
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
-                                        const required = field.required && !(record && field.type === "password");
+                                        const required = (
+                                            field.required
+                                            || (resource.key === "person-addresses"
+                                                && field.name === "postalCode"
+                                                && !Boolean(values.foreignAddress))
+                                            || (resource.key === "person-addresses"
+                                                && field.name === "country"
+                                                && Boolean(values.foreignAddress))
+                                        ) && !(record && field.type === "password");
                                         return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (field.createOnly || resource.key === "person-addresses" && field.name === "personId"))}>
                                             <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
                                             {resource.key === "models" && field.name === "manufacturerCode" && (
@@ -694,11 +791,17 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
                                             {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}
                                             {resource.key === "user-profiles" && field.name === "unitId" && <small>Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.</small>}
-                                            {resource.key === "person-addresses" && field.name === "postalCode" ? (
-                                                <PostalCodeField value={String(values.postalCode ?? "")}
+                                            {resource.key === "person-addresses"
+                                            && field.name === "postalCode"
+                                            && !Boolean(values.foreignAddress) ? (
+                                                <PostalCodeField
+                                                    id="core-postalCode"
+                                                    value={String(values.postalCode ?? "")}
+                                                    required={required}
                                                     onChange={value => change(field, value)}
                                                     onResolved={address => setValues(current => ({ ...current,
                                                         ...Object.fromEntries(Object.entries(address).filter(([key]) => !manuallyEditedAddressFields.current.has(key))),
+                                                        country: "Brasil",
                                                         complement: manuallyEditedAddressFields.current.has("complement")
                                                             ? current.complement : current.complement || address.complement || "" }))} />
                                             ) : field.type === "reference" ? (
@@ -760,6 +863,18 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                         </fieldset>;
                                     })}
                                 </fieldset>
+
+                                {isNewPerson && (
+                                    <PersonContactsEditor
+                                        addresses={personAddresses}
+                                        setAddresses={setPersonAddresses}
+                                        phones={personPhones}
+                                        setPhones={setPersonPhones}
+                                        emails={personEmails}
+                                        setEmails={setPersonEmails}
+                                    />
+                                )}
+
                                 <div className={styles.actions}>
                                     <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
                                     <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
