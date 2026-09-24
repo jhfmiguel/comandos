@@ -243,19 +243,46 @@ export function RecordWorkspace({
 
                         {!!workspaceTabs.length ? (
                             <div className="comandos-tabs">
-                                <div className="comandos-tabs-list" role="tablist" aria-label={tr(title)}>
-                                    {workspaceTabs.map((tab) => (
-                                        <button
-                                            key={tab.resource}
-                                            type="button"
-                                            role="tab"
-                                            aria-selected={resolvedActiveTab === tab.resource}
-                                            className={`comandos-tab ${resolvedActiveTab === tab.resource ? "is-active" : ""}`}
-                                            onClick={() => setActiveTab(tab.resource)}
-                                        >
-                                            {tr(tab.label)}
-                                        </button>
-                                    ))}
+                                <div
+                                    className="comandos-tabs-list"
+                                    role="tablist"
+                                    aria-label={tr(title)}
+                                    onWheel={event => {
+                                        const element = event.currentTarget;
+                                        if (
+                                            element.scrollWidth > element.clientWidth
+                                            && Math.abs(event.deltaY) > Math.abs(event.deltaX)
+                                        ) {
+                                            event.preventDefault();
+                                            element.scrollLeft += event.deltaY;
+                                        }
+                                    }}
+                                >
+                                    {workspaceTabs.map((tab) => {
+                                        const tabResource = catalog.find(
+                                            (item) =>
+                                                item.key === tab.resource ||
+                                                normalizeResourceName(item.label) === tab.resource
+                                        );
+                                        return (
+                                            <button
+                                                key={tab.resource}
+                                                type="button"
+                                                role="tab"
+                                                aria-selected={resolvedActiveTab === tab.resource}
+                                                className={`comandos-tab ${resolvedActiveTab === tab.resource ? "is-active" : ""}`}
+                                                onClick={() => {
+                                                    setActiveTab(tab.resource);
+                                                    if (!tab.content && !tabResource) {
+                                                        setError("");
+                                                        setRetry(value => value + 1);
+                                                    }
+                                                }}
+                                            >
+                                                {tr(tab.label)}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 {workspaceTabs.map((tab) => {
                                     if (resolvedActiveTab !== tab.resource) return null;
@@ -267,8 +294,29 @@ export function RecordWorkspace({
                                     return (
                                         <div key={tab.resource} role="tabpanel" className="comandos-tab-panel">
                                             {tab.content ?? (
-                                                tabResource && (
-                                                    <ResourcePanel resource={tabResource} service={service} />
+                                                tabResource ? (
+                                                    <ResourcePanel
+                                                        key={tabResource.key}
+                                                        resource={tabResource}
+                                                        service={service}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.missingTabResource}>
+                                                        <Message
+                                                            type="info"
+                                                            text={tr("This registration is not available in the API catalog yet. Refresh the registrations after restarting the API.")}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="comandos-secondary-button"
+                                                            onClick={() => {
+                                                                setError("");
+                                                                setRetry(value => value + 1);
+                                                            }}
+                                                        >
+                                                            {tr("Refresh registrations")}
+                                                        </button>
+                                                    </div>
                                                 )
                                             )}
                                         </div>
