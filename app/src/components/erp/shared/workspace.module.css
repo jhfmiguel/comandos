@@ -247,29 +247,39 @@
 }
 
 
-/* Accordion de contatos: visual neutro, no padrão do anexo de referência. */
+/* Accordion de contatos: padrão neutro do vídeo de referência.
+ * Não usa a cor de destaque da paleta em borda, título ou chevron.
+ */
 .contactAccordion {
     display: grid;
     gap: 0;
     margin: 0 0 1.5rem;
     overflow: hidden;
-    border: 1px solid var(--comandos-border, var(--p-content-border-color, #d1d5db));
-    border-radius: .5rem;
-    background: var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
+    border: 1px solid color-mix(
+        in srgb,
+        var(--comandos-text, #e5e7eb) 16%,
+        transparent
+    ) !important;
+    border-radius: .35rem;
+    background: var(--comandos-surface-2, var(--p-content-hover-background, #111827));
 }
 
 .contactAccordionPanel {
     min-width: 0;
     overflow: hidden;
-    border: 0;
-    border-radius: 0;
-    background: var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--comandos-surface-2, var(--p-content-hover-background, #111827));
     color: var(--comandos-text, var(--p-content-color, inherit));
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 .contactAccordionPanel + .contactAccordionPanel {
-    border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #d1d5db));
+    border-top: 1px solid color-mix(
+        in srgb,
+        var(--comandos-text, #e5e7eb) 14%,
+        transparent
+    ) !important;
 }
 
 .contactAccordionHeading {
@@ -282,32 +292,34 @@
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
-    min-height: 3.25rem;
-    padding: .9rem 1rem;
+    min-height: 3rem;
+    padding: .82rem 1rem;
     border: 0 !important;
     border-radius: 0 !important;
     outline: 0 !important;
-    background: var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc)) !important;
-    color: var(--comandos-text, var(--p-content-color, inherit)) !important;
+    background: var(--comandos-surface-2, var(--p-content-hover-background, #111827)) !important;
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #94a3b8)) !important;
     box-shadow: none !important;
     font: inherit;
     font-weight: 600;
     text-align: left !important;
     cursor: pointer;
-    transition: background-color .2s ease, color .2s ease;
+    transition: background-color .18s ease, color .18s ease;
 }
 
 .contactAccordionTrigger > span {
     flex: 1 1 auto;
+    color: inherit !important;
     text-align: left;
 }
 
 .contactAccordionTrigger:hover {
     background: color-mix(
         in srgb,
-        var(--comandos-surface-2, #f8fafc) 92%,
-        var(--comandos-text, #111827) 8%
+        var(--comandos-surface-2, #111827) 94%,
+        var(--comandos-text, #e5e7eb) 6%
     ) !important;
+    color: var(--comandos-text, var(--p-content-color, #e5e7eb)) !important;
 }
 
 .contactAccordionTrigger:focus,
@@ -318,19 +330,19 @@
 }
 
 .contactAccordionPanel[data-open="true"] .contactAccordionTrigger {
-    background: var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc)) !important;
-    color: var(--comandos-text, var(--p-content-color, inherit)) !important;
+    background: var(--comandos-surface-2, var(--p-content-hover-background, #111827)) !important;
+    color: var(--comandos-text, var(--p-content-color, #e5e7eb)) !important;
 }
 
 .contactAccordionChevron {
     flex: 0 0 auto;
-    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
-    transition: transform .2s ease, color .2s ease;
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #94a3b8)) !important;
+    transition: transform .18s ease, color .18s ease;
 }
 
 .contactAccordionTrigger:hover .contactAccordionChevron,
 .contactAccordionPanel[data-open="true"] .contactAccordionChevron {
-    color: var(--comandos-text, var(--p-content-color, inherit));
+    color: var(--comandos-text, var(--p-content-color, #e5e7eb)) !important;
 }
 
 .contactAccordionPanel[data-open="true"] .contactAccordionChevron {
@@ -338,8 +350,12 @@
 }
 
 .contactAccordionContent {
-    border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #d1d5db));
-    background: var(--comandos-surface, var(--p-content-background, #fff));
+    border-top: 1px solid color-mix(
+        in srgb,
+        var(--comandos-text, #e5e7eb) 14%,
+        transparent
+    ) !important;
+    background: var(--comandos-surface, var(--p-content-background, #0f172a));
     color: var(--comandos-text, var(--p-content-color, inherit));
 }
 
@@ -348,7 +364,7 @@
     gap: .85rem;
     min-width: 0;
     padding: 1rem;
-    background: var(--comandos-surface, var(--p-content-background, #fff));
+    background: var(--comandos-surface, var(--p-content-background, #0f172a));
 }
 
 .contactHeader {
