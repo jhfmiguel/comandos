@@ -1,6 +1,7 @@
 package com.comandos.organization.service;
 
 import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationNature;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,13 @@ class JpaOrganizationDirectoryOrganizationTests {
     void mapsOrganizationToReusableView() {
         var organization = new Organization();
         organization.id = 10L;
-        organization.nature = "ORGANIZATION";
+        var nature = new OrganizationNature();
+        nature.id = 2L;
+        nature.code = "PUBLIC_AGENCY";
+        nature.name = "Public agency";
+        nature.active = true;
+        organization.nature = nature;
+        organization.legacyNature = "Public agency";
         organization.name = "Example Organization";
         organization.acronym = "EX";
         organization.taxId = "12345678000199";
@@ -38,6 +45,7 @@ class JpaOrganizationDirectoryOrganizationTests {
             .orElseThrow();
 
         assertEquals(10L, view.id());
+        assertEquals("Public agency", view.nature());
         assertEquals("Example Organization", view.name());
         assertEquals("EX", view.acronym());
         assertEquals(true, view.publicOrganization());
