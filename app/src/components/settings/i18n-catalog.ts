@@ -1179,4 +1179,6 @@ export const hasTranslation = (text: string): boolean => {
         replaceDynamic(trimmed, "pt-BR") !== null ||
         replaceDynamic(trimmed, "en-US") !== null
     )
-}
+}    ["Previous tabs", "Abas anteriores"],
+    ["Next tabs", "Próximas abas"],
+
