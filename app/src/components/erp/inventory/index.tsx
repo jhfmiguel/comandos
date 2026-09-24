@@ -81,8 +81,7 @@ const sectionTabs = {
     compliance: [
         { resource: "expiration-controls", label: "Expiration controls" },
         { resource: "certifications", label: "Certifications" },
-        { resource: "recalls", label: "Recalls" },
-        { resource: "recall-items", label: "Recall items" }
+        { resource: "recalls", label: "Recalls" }
     ],
     inventory: [
         { resource: "stock-locations", label: "Stock locations" },
