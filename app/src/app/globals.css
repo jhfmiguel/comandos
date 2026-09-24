@@ -7744,3 +7744,50 @@ html body table td button.comandos-icon-button:active:not(:disabled) {
     box-shadow: none !important;
     text-shadow: none !important;
 }
+
+
+/* GLOBAL TRASH BUTTON STANDARD V12
+ * Trash actions are always outline-only red icons.
+ * No filled tile, border, glow or palette background in any interaction state.
+ */
+html body button.comandos-icon-button-danger,
+html body .comandos-action-button[data-comandos-table-action="delete"],
+html body button[data-comandos-contact-delete="true"],
+html body button.comandos-icon-button-danger:hover:not(:disabled),
+html body button.comandos-icon-button-danger:focus-visible,
+html body button.comandos-icon-button-danger:active:not(:disabled),
+html body .comandos-action-button[data-comandos-table-action="delete"]:hover:not(:disabled),
+html body .comandos-action-button[data-comandos-table-action="delete"]:focus-visible,
+html body .comandos-action-button[data-comandos-table-action="delete"]:active:not(:disabled),
+html body button[data-comandos-contact-delete="true"]:hover:not(:disabled),
+html body button[data-comandos-contact-delete="true"]:focus-visible,
+html body button[data-comandos-contact-delete="true"]:active:not(:disabled) {
+    --comandos-table-action-color: #ef4444 !important;
+    color: #ef4444 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
+html body button.comandos-icon-button-danger svg,
+html body button.comandos-icon-button-danger svg *,
+html body .comandos-action-button[data-comandos-table-action="delete"] svg,
+html body .comandos-action-button[data-comandos-table-action="delete"] svg *,
+html body button[data-comandos-contact-delete="true"] svg,
+html body button[data-comandos-contact-delete="true"] svg * {
+    color: #ef4444 !important;
+    stroke: #ef4444 !important;
+    fill: none !important;
+}
+
+html body .comandos-action-button[data-comandos-table-action="delete"] .comandos-table-action-icon {
+    color: #ef4444 !important;
+}
