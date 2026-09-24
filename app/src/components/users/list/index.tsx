@@ -147,8 +147,6 @@ export const UsersList: React.FC = () => {
         }
     }
 
-    const totalPages = Math.max(Math.ceil(totalRecords / rows), 1)
-
     return (
         <Layout title="Users">
             <div className="comandos-list-page">
