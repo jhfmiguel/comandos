@@ -1358,3 +1358,45 @@
     margin: 0 auto !important;
 }
 
+/* ASSET BATCH FILE IMPORT V1 */
+.assetImportBlock {
+    display: grid;
+    gap: .7rem;
+    padding: .8rem 0 .4rem;
+}
+
+.assetImportBlock > small {
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
+    font-size: .78rem;
+}
+
+.assetFileImport {
+    display: grid;
+    gap: .4rem;
+    color: var(--comandos-text, inherit);
+    font-size: .84rem;
+    font-weight: 600;
+}
+
+.assetFileImport input[type="file"] {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: .38rem .5rem;
+    border: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
+    border-radius: .4rem;
+    background: var(--comandos-surface-2, var(--p-content-hover-background, transparent));
+    color: var(--comandos-text-muted, var(--p-text-muted-color, inherit));
+}
+
+.assetFileImport input[type="file"]::file-selector-button {
+    margin-right: .7rem;
+    padding: .45rem .7rem;
+    border: 1px solid var(--comandos-accent, #ff9900);
+    border-radius: .35rem;
+    background: color-mix(in srgb, var(--comandos-accent, #ff9900) 7%, transparent);
+    color: var(--comandos-accent, #ff9900);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
