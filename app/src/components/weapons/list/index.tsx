@@ -117,10 +117,10 @@ export const WeaponsList: React.FC = () => {
                             <tr><th>ID</th><th>SKU</th><th>Name</th><th>Price</th><th>Description</th><th>Actions</th></tr>
                             <tr className="comandos-filter-row">
                                 <th />
-                                <th><input className="comandos-input" value={filters.sku} onChange={e=>changeFilter("sku",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.name} onChange={e=>changeFilter("name",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.price} onChange={e=>changeFilter("price",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.description} onChange={e=>changeFilter("description",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar SKU..." value={filters.sku} onChange={e=>changeFilter("sku",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar nome..." value={filters.name} onChange={e=>changeFilter("name",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar preço..." value={filters.price} onChange={e=>changeFilter("price",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar descrição..." value={filters.description} onChange={e=>changeFilter("description",e.target.value)} /></th>
                                 <th />
                             </tr>
                         </thead>
