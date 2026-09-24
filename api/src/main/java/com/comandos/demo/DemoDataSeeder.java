@@ -47,13 +47,6 @@ public class DemoDataSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        Long organizations = entityManager
-            .createQuery("select count(o) from Organization o", Long.class)
-            .getSingleResult();
-        if (organizations > 0) {
-            return;
-        }
-
         Organization comandos = organization(
             "Secretaria de Segurança Pública - Ambiente de Demonstração",
             "SSP-DEMO",
@@ -228,18 +221,50 @@ public class DemoDataSeeder implements ApplicationRunner {
             String economicActivityDescription,
             boolean publicOrganization) {
 
-        OrganizationNature nature = new OrganizationNature();
-        nature.code = acronym + "-NATURE";
-        nature.name = natureName;
-        nature.description = "Natureza institucional do ambiente de demonstração";
-        nature.active = true;
-        entityManager.persist(nature);
+        var existing = entityManager.createQuery(
+                "select o from Organization o where o.acronym = :acronym",
+                Organization.class)
+            .setParameter("acronym", acronym)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
 
-        EconomicActivity economicActivity = new EconomicActivity();
-        economicActivity.code = acronym + "-ACTIVITY";
-        economicActivity.description = economicActivityDescription;
-        economicActivity.active = true;
-        entityManager.persist(economicActivity);
+        String natureCode = acronym + "-NATURE";
+        OrganizationNature nature = entityManager.createQuery(
+                "select n from OrganizationNature n where n.code = :code",
+                OrganizationNature.class)
+            .setParameter("code", natureCode)
+            .setMaxResults(1)
+            .getResultList()
+            .stream()
+            .findFirst()
+            .orElseGet(() -> {
+                OrganizationNature created = new OrganizationNature();
+                created.code = natureCode;
+                created.name = natureName;
+                created.description = "Natureza institucional do ambiente de demonstração";
+                created.active = true;
+                entityManager.persist(created);
+                return created;
+            });
+
+        String activityCode = acronym + "-ACTIVITY";
+        EconomicActivity economicActivity = entityManager.createQuery(
+                "select a from EconomicActivity a where a.code = :code",
+                EconomicActivity.class)
+            .setParameter("code", activityCode)
+            .setMaxResults(1)
+            .getResultList()
+            .stream()
+            .findFirst()
+            .orElseGet(() -> {
+                EconomicActivity created = new EconomicActivity();
+                created.code = activityCode;
+                created.description = economicActivityDescription;
+                created.active = true;
+                entityManager.persist(created);
+                return created;
+            });
 
         Organization value = new Organization();
         value.name = name;
@@ -254,6 +279,15 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private OrganizationalUnit unit(Organization organization, OrganizationalUnit parent, String code, String name, String type) {
+        var existing = entityManager.createQuery(
+                "select u from OrganizationalUnit u where u.organization = :organization and u.code = :code",
+                OrganizationalUnit.class)
+            .setParameter("organization", organization)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         OrganizationalUnit value = new OrganizationalUnit();
         value.organization = organization;
         value.parentUnit = parent;
@@ -271,6 +305,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private Person person(String type, String name, String taxId, String email) {
+        var existing = entityManager.createQuery(
+                "select p from Person p where p.taxId = :taxId",
+                Person.class)
+            .setParameter("taxId", taxId)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         Person value = new Person();
         value.personTypeRef = entityManager.createQuery(
                 "select t from PersonType t where t.code = :code",
@@ -289,6 +331,16 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private void address(Person person, String type, String postalCode, String street, String number,
                          String district, String city, String state, String country, boolean foreign, boolean primary) {
+        Long existing = entityManager.createQuery(
+                "select count(a) from PersonAddress a where a.person = :person and a.type = :type and a.street = :street and a.number = :number",
+                Long.class)
+            .setParameter("person", person)
+            .setParameter("type", type)
+            .setParameter("street", street)
+            .setParameter("number", number)
+            .getSingleResult();
+        if (existing > 0) return;
+
         PersonAddress value = new PersonAddress();
         value.person = person;
         value.type = type;
@@ -305,6 +357,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private void phone(Person person, String type, String countryCode, String number, boolean whatsapp, boolean primary) {
+        Long existing = entityManager.createQuery(
+                "select count(p) from PersonPhone p where p.person = :person and p.number = :number",
+                Long.class)
+            .setParameter("person", person)
+            .setParameter("number", number)
+            .getSingleResult();
+        if (existing > 0) return;
+
         PersonPhone value = new PersonPhone();
         value.person = person;
         value.type = type;
@@ -316,6 +376,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private void email(Person person, String type, String email, boolean primary) {
+        Long existing = entityManager.createQuery(
+                "select count(e) from PersonEmail e where e.person = :person and e.email = :email",
+                Long.class)
+            .setParameter("person", person)
+            .setParameter("email", email)
+            .getSingleResult();
+        if (existing > 0) return;
+
         PersonEmail value = new PersonEmail();
         value.person = person;
         value.type = type;
