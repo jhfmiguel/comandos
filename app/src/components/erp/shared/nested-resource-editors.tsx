@@ -6,7 +6,7 @@ import { Trash } from "@primeicons/react";
 
 import { Message } from "components/common/message";
 import { ComandosSelectField, type ComandosSelectOption } from "components/common/select-field";
-import type { ErpRecord, ErpValue } from "api/models/erp";
+import type { ErpField, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "./workspace.module.css";
 
@@ -853,3 +853,282 @@ export function CharacteristicValuesEditor({
         </section>
     );
 }
+
+const specificationByFamily: Record<string, string> = {
+    FIREARM: "firearm-specifications",
+    AMMUNITION: "ammunition-specifications",
+    GRENADE: "grenade-specifications",
+    SPRAY: "spray-specifications",
+    BALLISTIC_PROTECTION: "ballistic-protection-specifications",
+    ELECTRICAL_DEVICE: "electrical-device-specifications",
+    OPTICAL: "optical-specifications",
+    HELMET: "helmet-specifications",
+    SHIELD: "shield-specifications",
+    RESTRAINT: "restraint-specifications",
+    ACCESSORY_COMPONENT: "accessory-component-specifications",
+    TACTICAL_EQUIPMENT: "tactical-equipment-specifications"
+};
+
+function SpecificationField({
+    field,
+    value,
+    service,
+    onChange
+}: {
+    field: ErpField;
+    value: ErpValue;
+    service: ErpService;
+    onChange: (value: ErpValue) => void;
+}) {
+    const referenceOptions = useResourceOptions(service, field.reference ?? "");
+
+    if (field.type === "reference") {
+        return (
+            <ComandosSelectField
+                id={"model-spec-" + field.name}
+                label={field.label}
+                value={String(value ?? "")}
+                options={toOptions(referenceOptions.options)}
+                required={field.required}
+                onChange={next => onChange(next ? Number(next) : null)}
+            />
+        );
+    }
+
+    if (field.type === "choice") {
+        return (
+            <ComandosSelectField
+                id={"model-spec-" + field.name}
+                label={field.label}
+                value={String(value ?? "")}
+                options={field.choices.map(choice => ({ value: choice, label: choice.replaceAll("_", " ") }))}
+                required={field.required}
+                onChange={onChange}
+            />
+        );
+    }
+
+    if (field.type === "boolean") {
+        return (
+            <label className={styles.nestedBooleanField}>
+                <span>{field.label}</span>
+                <input
+                    type="checkbox"
+                    checked={Boolean(value)}
+                    onChange={event => onChange(event.target.checked)}
+                />
+            </label>
+        );
+    }
+
+    return (
+        <div className={styles.field}>
+            <label htmlFor={"model-spec-" + field.name}>
+                {field.label}{field.required ? " *" : ""}
+            </label>
+            <input
+                id={"model-spec-" + field.name}
+                type={field.type === "integer" || field.type === "decimal" ? "number" : "text"}
+                step={field.type === "integer" ? "1" : field.type === "decimal" ? "0.0001" : undefined}
+                value={String(value ?? "")}
+                required={field.required}
+                maxLength={field.type === "text" ? 500 : undefined}
+                onChange={event => onChange(event.target.value)}
+            />
+        </div>
+    );
+}
+
+export function ModelSpecificationEditor({
+    model,
+    service
+}: {
+    model: ErpRecord;
+    service: ErpService;
+}) {
+    const [resource, setResource] = React.useState<ErpResource | null>(null);
+    const [specification, setSpecification] = React.useState<ErpRecord | null>(null);
+    const [values, setValues] = React.useState<Record<string, ErpValue>>({});
+    const [loading, setLoading] = React.useState(true);
+    const [busy, setBusy] = React.useState(false);
+    const [error, setError] = React.useState("");
+    const [revision, setRevision] = React.useState(0);
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+
+        const load = async () => {
+            setLoading(true);
+            setError("");
+
+            const categories = await service.list(
+                "categories",
+                "",
+                0,
+                controller.signal,
+                undefined,
+                { id: String(model.categoryId ?? "") },
+                100
+            );
+            const family = String(categories.content[0]?.family ?? "");
+            const resourceKey = specificationByFamily[family];
+
+            if (!resourceKey) {
+                if (!controller.signal.aborted) {
+                    setResource(null);
+                    setSpecification(null);
+                    setValues({});
+                }
+                return;
+            }
+
+            const [catalog, existing] = await Promise.all([
+                service.catalog(controller.signal),
+                service.list(
+                    resourceKey,
+                    "",
+                    0,
+                    controller.signal,
+                    undefined,
+                    { modelId: String(model.id) },
+                    100
+                )
+            ]);
+
+            if (controller.signal.aborted) return;
+
+            const definition = catalog.find(item => item.key === resourceKey) ?? null;
+            const current = existing.content[0] ?? null;
+            setResource(definition);
+            setSpecification(current);
+
+            if (definition) {
+                setValues(Object.fromEntries(
+                    definition.fields
+                        .filter(field => field.name !== "modelId")
+                        .map(field => [
+                            field.name,
+                            current?.[field.name]
+                                ?? (field.type === "boolean" ? false : "")
+                        ])
+                ) as Record<string, ErpValue>);
+            }
+        };
+
+        load().catch(error => {
+            if (!controller.signal.aborted) setError(errorMessage(error));
+        }).finally(() => {
+            if (!controller.signal.aborted) setLoading(false);
+        });
+
+        return () => controller.abort();
+    }, [model.categoryId, model.id, revision, service]);
+
+    if (loading) {
+        return (
+            <section className={styles.nestedCollectionSection}>
+                <p role="status">Carregando especificação técnica...</p>
+            </section>
+        );
+    }
+
+    if (!resource) {
+        return (
+            <section className={styles.nestedCollectionSection}>
+                <div className={styles.contactHeader}>
+                    <div>
+                        <h3>Especificação técnica do modelo</h3>
+                        <small>Esta família de equipamento não possui uma ficha técnica específica adicional.</small>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    const editableFields = resource.fields.filter(field => field.name !== "modelId" && !field.readOnly);
+
+    const save = async () => {
+        if (busy) return;
+        setBusy(true);
+        setError("");
+
+        try {
+            const payload: Record<string, ErpValue> = {
+                modelId: model.id,
+                ...values,
+                ...(specification ? { version: specification.version } : {})
+            };
+            await service.save(resource.key, payload, specification?.id);
+            setRevision(value => value + 1);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const remove = async () => {
+        if (!specification || busy) return;
+        setBusy(true);
+        setError("");
+
+        try {
+            await service.remove(resource.key, specification);
+            setRevision(value => value + 1);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <section className={styles.nestedCollectionSection}>
+            <div className={styles.contactHeader}>
+                <div>
+                    <h3>Especificação técnica do modelo</h3>
+                    <small>{resource.label}. O tipo de ficha é definido automaticamente pela família da categoria.</small>
+                </div>
+                {specification && (
+                    <button
+                        type="button"
+                        className="comandos-icon-button comandos-icon-button-danger"
+                        data-comandos-table-action="delete"
+                        aria-label="Remover especificação técnica"
+                        title="Remover especificação"
+                        disabled={busy}
+                        onClick={() => void remove()}
+                    >
+                        <Trash />
+                    </button>
+                )}
+            </div>
+
+            {error && <Message type="error" text={error} onClose={() => setError("")} />}
+
+            <div className={styles.modelSpecificationGrid}>
+                {editableFields.map(field => (
+                    <SpecificationField
+                        key={field.name}
+                        field={field}
+                        value={values[field.name] ?? ""}
+                        service={service}
+                        onChange={value => setValues(current => ({ ...current, [field.name]: value }))}
+                    />
+                ))}
+            </div>
+
+            <div className={styles.nestedCollectionActions}>
+                <button
+                    type="button"
+                    className="registration-yellow-button"
+                    disabled={busy}
+                    onClick={() => void save()}
+                >
+                    {busy ? "Salvando..." : specification ? "Salvar especificação" : "Cadastrar especificação"}
+                </button>
+            </div>
+        </section>
+    );
+}
+
