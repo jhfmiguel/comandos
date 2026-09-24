@@ -21,7 +21,11 @@ export function ComandosSelectField({
     disabled = false,
     placeholder = "",
     name,
-    onDisabledAttempt
+    onDisabledAttempt,
+    onBlur,
+    invalid = false,
+    describedBy,
+    className
 }: {
     id: string;
     label: string;
@@ -33,6 +37,10 @@ export function ComandosSelectField({
     placeholder?: string;
     name?: string;
     onDisabledAttempt?: () => void;
+    onBlur?: () => void;
+    invalid?: boolean;
+    describedBy?: string;
+    className?: string;
 }) {
     const [open, setOpen] = React.useState(false);
     const filled = value !== "";
@@ -40,12 +48,14 @@ export function ComandosSelectField({
 
     if (disabled) {
         return (
-            <div className={styles.root} data-active={active ? "true" : "false"}>
+            <div className={[styles.root, className ?? ""].filter(Boolean).join(" ")} data-active={active ? "true" : "false"} data-invalid={invalid ? "true" : "false"}>
                 <button
                     id={id}
                     type="button"
                     className={styles.trigger}
                     aria-disabled="true"
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={describedBy}
                     onPointerDown={event => {
                         event.preventDefault();
                         onDisabledAttempt?.();
@@ -74,9 +84,10 @@ export function ComandosSelectField({
 
     return (
         <div
-            className={styles.root}
+            className={[styles.root, className ?? ""].filter(Boolean).join(" ")}
             data-active={active ? "true" : "false"}
             data-filled={filled ? "true" : "false"}
+            data-invalid={invalid ? "true" : "false"}
         >
             <Select.Root
                 value={value || null}
@@ -86,7 +97,13 @@ export function ComandosSelectField({
                 required={required}
                 name={name}
             >
-                <Select.Trigger id={id} className={styles.trigger}>
+                <Select.Trigger
+                    id={id}
+                    className={styles.trigger}
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={describedBy}
+                    onBlur={onBlur}
+                >
                     <Select.Value className={styles.value} placeholder={placeholder} />
                     <Select.Icon className={styles.indicator}>
                         <ChevronDown />
