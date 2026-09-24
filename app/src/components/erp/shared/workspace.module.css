@@ -229,9 +229,11 @@
 .contactAccordionPanel {
     min-width: 0;
     overflow: hidden;
-    border: 1px solid var(--p-content-border-color, #ddd);
+    border: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
     border-radius: .5rem;
-    background: var(--p-content-background, #fff);
+    background: var(--comandos-surface, var(--p-content-background, #fff));
+    color: var(--comandos-text, var(--p-content-color, inherit));
+    box-shadow: 0 .25rem .8rem color-mix(in srgb, var(--comandos-shadow, rgba(0, 0, 0, .12)) 72%, transparent);
 }
 
 .contactAccordionHeading {
@@ -247,8 +249,15 @@
     min-height: 3.25rem;
     padding: .9rem 1rem;
     border: 0;
-    background: var(--p-content-background, #fff);
-    color: var(--p-content-color, inherit);
+    border-radius: 0;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb, 255, 153, 0), .12),
+            transparent 44%
+        ),
+        var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
+    color: var(--comandos-text, var(--p-content-color, inherit));
     font: inherit;
     font-weight: 600;
     text-align: left;
@@ -260,21 +269,34 @@
 }
 
 .contactAccordionTrigger:hover {
-    background: var(--p-content-hover-background, #f3f3f3);
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb, 255, 153, 0), .19),
+            transparent 48%
+        ),
+        var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
 }
 
 .contactAccordionTrigger:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--comandos-accent, #ff9900);
     outline-offset: -2px;
 }
 
 .contactAccordionPanel[data-open="true"] .contactAccordionTrigger {
-    background: color-mix(in srgb, var(--accent) 8%, var(--p-content-background, #fff));
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb, 255, 153, 0), .16),
+            transparent 48%
+        ),
+        var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
 }
 
 .contactAccordionChevron {
     flex: 0 0 auto;
-    transition: transform .2s ease;
+    color: var(--comandos-accent, #ff9900);
+    transition: transform .2s ease, color .2s ease;
 }
 
 .contactAccordionPanel[data-open="true"] .contactAccordionChevron {
@@ -282,7 +304,9 @@
 }
 
 .contactAccordionContent {
-    border-top: 1px solid var(--p-content-border-color, #ddd);
+    border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
+    background: var(--comandos-surface, var(--p-content-background, #fff));
+    color: var(--comandos-text, var(--p-content-color, inherit));
 }
 
 .contactAccordionContentInner {
@@ -290,20 +314,61 @@
     gap: .85rem;
     min-width: 0;
     padding: 1rem;
+    background: var(--comandos-surface, var(--p-content-background, #fff));
+}
+
+.contactHeader {
+    background: transparent;
+}
+
+.contactHeader small {
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
+}
+
+.contactHeader :global(.registration-yellow-button) {
+    flex: 0 0 auto;
 }
 
 .contactTableScroll {
     overflow-x: auto;
     overflow-y: hidden;
+    border-color: var(--comandos-border, var(--p-content-border-color, #ddd)) !important;
+    background: var(--comandos-surface, var(--p-content-background, #fff)) !important;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color .2s ease;
 }
 
+.contactTable th {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb, 255, 153, 0), .08),
+            transparent 52%
+        ),
+        var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc)) !important;
+    color: var(--comandos-text, inherit);
+    border-color: var(--comandos-border, var(--p-content-border-color, #ddd));
+}
+
+.contactTable td {
+    background: var(--comandos-surface, var(--p-content-background, #fff));
+    color: var(--comandos-text, inherit);
+    border-color: var(--comandos-border-soft, var(--p-content-border-color, #ddd));
+}
+
+.contactTable tbody tr:hover td {
+    background: color-mix(
+        in srgb,
+        var(--comandos-accent, #ff9900) 6%,
+        var(--comandos-surface, #fff)
+    );
+}
+
 .contactTableScroll:hover,
 .contactTableScroll:focus-within {
     scrollbar-color:
-        color-mix(in srgb, var(--accent) 78%, transparent)
+        color-mix(in srgb, var(--comandos-accent, #ff9900) 78%, transparent)
         transparent;
 }
 
@@ -324,9 +389,10 @@
 
 .contactTableScroll:hover::-webkit-scrollbar-thumb,
 .contactTableScroll:focus-within::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--accent) 78%, transparent);
+    background: color-mix(in srgb, var(--comandos-accent, #ff9900) 78%, transparent);
 }
 
 .contactTableScroll::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
+    background: var(--comandos-accent, #ff9900);
 }
+
