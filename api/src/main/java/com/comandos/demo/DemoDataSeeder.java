@@ -14,6 +14,8 @@ import com.comandos.core.model.PersonRoleAssignment;
 import com.comandos.core.model.PersonType;
 import com.comandos.inventory.model.AmmunitionSpecification;
 import com.comandos.inventory.model.ArmamentParameter;
+import com.comandos.inventory.model.ArmamentType;
+import com.comandos.inventory.model.ArmamentClassification;
 import com.comandos.inventory.model.AssetItem;
 import com.comandos.inventory.model.BallisticProtectionSpecification;
 import com.comandos.inventory.model.Brand;
@@ -140,13 +142,49 @@ public class DemoDataSeeder implements ApplicationRunner {
         ItemCategory ammunition = category("Munições", "AMMUNITION", false, true, true);
         ItemCategory ballistic = category("Proteção balística", "BALLISTIC_PROTECTION", true, false, false);
 
-        Brand beretta = brand("Beretta", "Fabbrica d'Armi Pietro Beretta S.p.A.", "IT");
-        Brand cbc = brand("CBC", "Companhia Brasileira de Cartuchos", "BR");
-        Brand demoArmor = brand("Armor Demo", "Fabricante Demonstrativo", "BR");
+        ArmamentType pistol = armamentType("PISTOL", "Pistola", "Arma de fogo curta empunhada com uma mão", firearms);
+        ArmamentClassification semiAutomaticPistol = armamentClassification(
+            "PISTOL_SEMIAUTOMATIC", "Semiautomática", "Pistola com funcionamento semiautomático", pistol
+        );
+        ArmamentType rifle = armamentType("RIFLE", "Fuzil", "Arma longa raiada de emprego operacional", firearms);
+        ArmamentClassification selectiveRifle = armamentClassification(
+            "RIFLE_SELECTIVE", "Seletivo", "Fuzil com regimes de tiro selecionáveis", rifle
+        );
+        ArmamentType shotgun = armamentType("SHOTGUN", "Espingarda", "Arma longa de alma lisa", firearms);
+        ArmamentClassification pumpAction = armamentClassification(
+            "SHOTGUN_PUMP", "Pump action", "Espingarda de repetição por ação de bomba", shotgun
+        );
+        ArmamentType pistolAmmo = armamentType("PISTOL_AMMO", "Munição para pistola", "Cartucho para arma curta", ammunition);
+        ArmamentClassification fmjClassification = armamentClassification(
+            "PISTOL_AMMO_FMJ", "FMJ", "Projétil totalmente encamisado", pistolAmmo
+        );
+        ArmamentType ballisticVest = armamentType("BALLISTIC_VEST", "Colete balístico", "Proteção balística corporal", ballistic);
+        ArmamentClassification iiiaClassification = armamentClassification(
+            "BALLISTIC_VEST_IIIA", "Nível III-A", "Colete balístico de nível III-A", ballisticVest
+        );
 
-        ItemModel apx = model(firearms, beretta, "APX", "EA", "BER-APX-9", "Pistola semiautomática 9 mm", "6500.00");
-        ItemModel ammo9 = model(ammunition, cbc, "9 mm FMJ", "UN", "CBC-9-FMJ", "Munição 9 mm de treinamento", "4.50");
-        ItemModel vest = model(ballistic, demoArmor, "Colete Nível III-A", "EA", "VEST-III-A-M", "Colete balístico demonstrativo", "3200.00");
+        Brand beretta = brand("Beretta", "Fabbrica d'Armi Pietro Beretta S.p.A.", "IT");
+        Brand glock = brand("Glock", "GLOCK Ges.m.b.H.", "AT");
+        Brand taurus = brand("Taurus", "Taurus Armas S.A.", "BR");
+        Brand imbel = brand("IMBEL", "Indústria de Material Bélico do Brasil", "BR");
+        Brand cbc = brand("CBC", "Companhia Brasileira de Cartuchos", "BR");
+        Brand pointBlank = brand("Point Blank", "Point Blank Enterprises, Inc.", "US");
+
+        ItemModel apx = model(firearms, beretta, "APX A1 Full Size", "EA", "BER-APX-A1-FS-9", "Pistola Beretta APX A1 Full Size 9x19 mm", "6500.00");
+        ItemModel glock17 = model(firearms, glock, "G17 Gen5", "EA", "GLOCK-G17-GEN5-9", "Pistola Glock G17 Gen5 9x19 mm", "6800.00");
+        ItemModel taurusG3 = model(firearms, taurus, "G3 Tactical", "EA", "TAURUS-G3-TACTICAL-9", "Pistola Taurus G3 Tactical 9x19 mm", "5200.00");
+        ItemModel ia2 = model(firearms, imbel, "Fuzil de Assalto IMBEL 5,56 IA2", "EA", "IMBEL-IA2-556", "Fuzil IMBEL IA2 calibre 5,56 x 45 mm", "12000.00");
+        ItemModel military30 = model(firearms, cbc, "Pump Military 3.0 Cal. 12", "EA", "CBC-MILITARY-30-12", "Espingarda CBC Pump Military 3.0 calibre 12", "6500.00");
+        ItemModel ammo9 = model(ammunition, cbc, "CBC 9 mm Luger FMJ", "UN", "CBC-9-LUGER-FMJ", "Munição CBC 9 mm Luger com projétil FMJ", "4.50");
+        ItemModel vest = model(ballistic, pointBlank, "Alpha Elite Black", "EA", "POINTBLANK-ALPHA-ELITE-BLACK", "Colete balístico Point Blank Alpha Elite Black", "8500.00");
+
+        classifyModel(apx, pistol, semiAutomaticPistol);
+        classifyModel(glock17, pistol, semiAutomaticPistol);
+        classifyModel(taurusG3, pistol, semiAutomaticPistol);
+        classifyModel(ia2, rifle, selectiveRifle);
+        classifyModel(military30, shotgun, pumpAction);
+        classifyModel(ammo9, pistolAmmo, fmjClassification);
+        classifyModel(vest, ballisticVest, iiiaClassification);
 
         firearmSpecification(apx, caliber9);
         ammunitionSpecification(ammo9, caliber9, ammunitionType, projectileType, caseType, primerType);
@@ -154,11 +192,13 @@ public class DemoDataSeeder implements ApplicationRunner {
 
         asset(apx, centralVault, "PAT-DEMO-0001", "APX-DEMO-0001", "ARM-0001", "GOOD", "AVAILABLE", "6500.00");
         asset(apx, centralVault, "PAT-DEMO-0002", "APX-DEMO-0002", "ARM-0002", "GOOD", "AVAILABLE", "6500.00");
-        asset(apx, operationalVault, "PAT-DEMO-0003", "APX-DEMO-0003", "ARM-0003", "GOOD", "AVAILABLE", "6500.00");
-        asset(apx, operationalVault, "PAT-DEMO-0004", "APX-DEMO-0004", "ARM-0004", "GOOD", "BLOCKED", "6500.00");
-        asset(vest, operationalVault, "PAT-DEMO-0101", "VEST-DEMO-0101", "COL-0101", "GOOD", "AVAILABLE", "3200.00");
-        asset(vest, trainingStore, "PAT-DEMO-0102", "VEST-DEMO-0102", "COL-0102", "GOOD", "AVAILABLE", "3200.00");
-        asset(vest, centralVault, "PAT-DEMO-0103", "VEST-DEMO-0103", "COL-0103", "GOOD", "BLOCKED", "3200.00");
+        asset(glock17, operationalVault, "PAT-DEMO-0003", "G17-DEMO-0003", "ARM-0003", "GOOD", "AVAILABLE", "6800.00");
+        asset(taurusG3, operationalVault, "PAT-DEMO-0004", "G3-DEMO-0004", "ARM-0004", "GOOD", "BLOCKED", "5200.00");
+        asset(ia2, centralVault, "PAT-DEMO-0005", "IA2-DEMO-0005", "ARM-0005", "GOOD", "AVAILABLE", "12000.00");
+        asset(military30, trainingStore, "PAT-DEMO-0006", "CBC12-DEMO-0006", "ARM-0006", "GOOD", "AVAILABLE", "6500.00");
+        asset(vest, operationalVault, "PAT-DEMO-0101", "PB-DEMO-0101", "COL-0101", "GOOD", "AVAILABLE", "8500.00");
+        asset(vest, trainingStore, "PAT-DEMO-0102", "PB-DEMO-0102", "COL-0102", "GOOD", "AVAILABLE", "8500.00");
+        asset(vest, centralVault, "PAT-DEMO-0103", "PB-DEMO-0103", "COL-0103", "GOOD", "BLOCKED", "8500.00");
 
         StockLot lot = lot(ammo9, centralVault, "CBC-DEMO-2026-001", "5000.0000", LocalDate.of(2031, 9, 30));
         balance(lot, centralVault, "5000.0000");
@@ -448,6 +488,50 @@ public class DemoDataSeeder implements ApplicationRunner {
         value.consumable = consumable;
         entityManager.persist(value);
         return value;
+    }
+
+    private ArmamentType armamentType(String code, String name, String description, ItemCategory category) {
+        var existing = entityManager.createQuery(
+                "select t from ArmamentType t where t.code = :code",
+                ArmamentType.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
+        ArmamentType value = new ArmamentType();
+        value.code = code;
+        value.name = name;
+        value.description = description;
+        value.category = category;
+        value.active = true;
+        entityManager.persist(value);
+        return value;
+    }
+
+    private ArmamentClassification armamentClassification(
+            String code, String name, String description, ArmamentType type) {
+        var existing = entityManager.createQuery(
+                "select c from ArmamentClassification c where c.code = :code",
+                ArmamentClassification.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
+        ArmamentClassification value = new ArmamentClassification();
+        value.code = code;
+        value.name = name;
+        value.description = description;
+        value.type = type;
+        value.active = true;
+        entityManager.persist(value);
+        return value;
+    }
+
+    private void classifyModel(ItemModel model, ArmamentType type, ArmamentClassification classification) {
+        model.armamentType = type;
+        model.armamentClassification = classification;
     }
 
     private Brand brand(String name, String manufacturer, String country) {
