@@ -7502,3 +7502,42 @@ html[data-theme][data-palette] body .comandos-pagination-nav:disabled {
     color: color-mix(in srgb, var(--comandos-accent, #ff9900) 35%, transparent) !important;
     opacity: .45 !important;
 }
+
+/* CONTACT DELETE ICON — FINAL RED OVERRIDE
+ * Contact accordions always show only the red PrimeIcons trash glyph.
+ */
+html[data-theme] body button[data-comandos-contact-delete="true"] {
+    --comandos-table-action-color: #ef4444 !important;
+    color: #ef4444 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+html[data-theme] body button[data-comandos-contact-delete="true"] svg,
+html[data-theme] body button[data-comandos-contact-delete="true"] svg * {
+    color: #ef4444 !important;
+    stroke: #ef4444 !important;
+    fill: none !important;
+}
+
+html[data-theme] body button[data-comandos-contact-delete="true"]:hover:not(:disabled),
+html[data-theme] body button[data-comandos-contact-delete="true"]:focus-visible,
+html[data-theme] body button[data-comandos-contact-delete="true"]:active:not(:disabled) {
+    color: #ef4444 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
