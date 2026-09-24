@@ -178,7 +178,34 @@ async function main() {
             /Contact types|Tipos de contato/i
         );
         await page.getByText(browserContactTypeName, { exact: false }).waitFor();
-        console.log('PASS contact types: one shared parameter catalog is available for addresses, phones and e-mails');
+        assert.equal(
+            (await get(`core/contact-types/${contactTypeId}`)).name,
+            browserContactTypeName
+        );
+
+        await page.getByRole('tab', { name: /People|Pessoas/i }).click();
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+
+        await page.getByRole('button', { name: /Adicionar endereço|Add address/i }).click();
+        await page.locator('#person-address-type-0').click();
+        await page.getByText(browserContactTypeName, { exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+
+        await page.getByRole('button', { name: /Telefones|Phones/i }).click();
+        await page.getByRole('button', { name: /Adicionar telefone|Add phone/i }).click();
+        await page.locator('#person-phone-type-0').click();
+        await page.getByText(browserContactTypeName, { exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+
+        await page.getByRole('button', { name: /E-mails/i }).click();
+        await page.getByRole('button', { name: /Adicionar e-mail|Add e-mail/i }).click();
+        await page.locator('#person-email-type-0').click();
+        await page.getByText(browserContactTypeName, { exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+        console.log('PASS contact types: one shared parameter feeds address, phone and e-mail selectors');
 
         await page.goto(`${appURL}/erp/core?section=institutional&resource=organizations`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
