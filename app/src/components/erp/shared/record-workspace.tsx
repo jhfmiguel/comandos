@@ -699,7 +699,11 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                     setNotice({ type: "success", text: "Record saved successfully." });
                     refresh();
 
-                    if (resource.key === "recalls" && !editor.record && savedRecord) {
+                    if (
+                        ["recalls", "equipment-sets", "categories", "models", "assets"].includes(resource.key)
+                        && !editor.record
+                        && savedRecord
+                    ) {
                         setEditor({ record: savedRecord });
                         return;
                     }
@@ -810,6 +814,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
         if (resource.key === "person-emails" && !record) {
             initial.contactTypeId = "";
         }
+        if (resource.key === "equipment-sets" && !record) {
+            initial.active = false;
+        }
 
         return initial;
     });
@@ -868,7 +875,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             <div
                 role="dialog"
                 aria-modal="true"
-                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""} ${resource.key === "recalls" ? styles.recallDialog : ""}`}
+                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""} ${["recalls", "equipment-sets", "categories", "models", "assets"].includes(resource.key) ? styles.nestedEditorDialog : ""}`}
             >
             
                 <div className="comandos-native-dialog-header">
@@ -1156,6 +1163,57 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     <Message
                                         type="info"
                                         text="Salve o recall para adicionar os bens e lotes afetados. O formulário continuará aberto após o primeiro salvamento."
+                                    />
+                                )}
+
+                                {resource.key === "equipment-sets" && record && (
+                                    <EquipmentSetComponentsEditor
+                                        equipmentSet={record}
+                                        service={service}
+                                    />
+                                )}
+
+                                {resource.key === "equipment-sets" && !record && (
+                                    <Message
+                                        type="info"
+                                        text="Salve primeiro o conjunto. Depois adicione os componentes e, quando estiver completo, marque-o como ativo."
+                                    />
+                                )}
+
+                                {resource.key === "categories" && record && (
+                                    <CategoryCharacteristicsEditor
+                                        category={record}
+                                        service={service}
+                                    />
+                                )}
+
+                                {resource.key === "categories" && !record && (
+                                    <Message
+                                        type="info"
+                                        text="Salve a categoria para definir as características técnicas aplicáveis."
+                                    />
+                                )}
+
+                                {resource.key === "models" && record && (
+                                    <CharacteristicValuesEditor
+                                        owner={record}
+                                        ownerType="model"
+                                        service={service}
+                                    />
+                                )}
+
+                                {resource.key === "models" && !record && (
+                                    <Message
+                                        type="info"
+                                        text="Salve o modelo para preencher os valores das características definidas na categoria."
+                                    />
+                                )}
+
+                                {resource.key === "assets" && record && (
+                                    <CharacteristicValuesEditor
+                                        owner={record}
+                                        ownerType="asset"
+                                        service={service}
                                     />
                                 )}
 
