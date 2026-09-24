@@ -575,14 +575,16 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
             <div className={styles.toolbar}>
                 
                 <h1 id="resource-title">{tr(resource.label)}</h1>
-                {allowed("CREATE") && 
-                <button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
-                    <Plus size={16} />
-                    <span>{tr(resource.key === "assets" ? "Register assets" : "New record")}</span>
-                </button>
-                }
-                {resource.key === "lots" && allowed("CREATE") && <button type="button" className="registration-yellow-button"
-                    onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</button>}
+                <div className={styles.toolbarActions}>
+                    {allowed("CREATE") && 
+                    <button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
+                        <Plus size={16} />
+                        <span>{tr(resource.key === "assets" ? "Register assets" : "New record")}</span>
+                    </button>
+                    }
+                    {resource.key === "lots" && allowed("CREATE") && <button type="button" className="registration-yellow-button"
+                        onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</button>}
+                </div>
             </div>
             
             {notice && 
