@@ -13,6 +13,7 @@ class OrganizationViewTests {
         var organization = new OrganizationView(
             10L,
             "Public agency",
+            "Public administration",
             "Example Organization",
             "EX",
             "12345678000199",
@@ -21,13 +22,14 @@ class OrganizationViewTests {
         );
 
         assertEquals(10L, organization.id());
+        assertEquals("Public administration", organization.economicActivity());
         assertEquals("Example Organization", organization.name());
         assertEquals("EX", organization.acronym());
         assertTrue(organization.publicOrganization());
         assertTrue(organization.active());
 
         var inactive = new OrganizationView(
-            11L, "Private company", "Inactive", null, null, false, false
+            11L, "Private company", null, "Inactive", null, null, false, false
         );
         assertFalse(inactive.publicOrganization());
         assertFalse(inactive.active());
