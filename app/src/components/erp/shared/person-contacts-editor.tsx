@@ -159,6 +159,13 @@ export function PersonContactsEditor({
 }) {
     const [activePanel, setActivePanel] = React.useState<ContactPanelKey | null>("addresses");
 
+    React.useEffect(() => {
+        const frame = requestAnimationFrame(() => {
+            document.dispatchEvent(new Event("comandos:float-label-refresh"));
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [addresses, phones, emails]);
+
     const togglePanel = (value: ContactPanelKey) => {
         setActivePanel(current => current === value ? null : value);
     };
@@ -246,7 +253,8 @@ export function PersonContactsEditor({
                                                 <option value="OTHER">Outro</option>
                                             </select>
                                         </td>
-                                        <td className={styles.contactBooleanCell}>
+                                        <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
+                                            <span className={styles.contactBooleanLabel}>Exterior</span>
                                             <input
                                                 aria-label={`Endereço ${index + 1} no exterior`}
                                                 type="checkbox"
@@ -338,7 +346,8 @@ export function PersonContactsEditor({
                                                 onChange={event => updateAddress(index, { state: event.target.value })}
                                             />
                                         </td>
-                                        <td className={styles.contactBooleanCell}>
+                                        <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
+                                            <span className={styles.contactBooleanLabel}>Principal</span>
                                             <input
                                                 aria-label={`Endereço ${index + 1} principal`}
                                                 type="radio"
