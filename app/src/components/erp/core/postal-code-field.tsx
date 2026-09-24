@@ -11,10 +11,11 @@ function maskPostalCode(value: string): string {
         : digits;
 }
 
-export function PostalCodeField({ id = "core-postalCode", value, required = true, onChange, onResolved }: {
+export function PostalCodeField({ id = "core-postalCode", value, required = true, compact = false, onChange, onResolved }: {
     id?: string;
     value: string;
     required?: boolean;
+    compact?: boolean;
     onChange: (value: string) => void;
     onResolved: (address: Record<string, string>) => void;
 }) {
@@ -57,7 +58,11 @@ export function PostalCodeField({ id = "core-postalCode", value, required = true
                 setStatus("Aguardando consulta de CEP…");
                 onChange(maskPostalCode(event.target.value));
             }} />
-        <small role="status" aria-live="polite">{status || "Informe o CEP para consultar. Todos os campos podem ser corrigidos manualmente."}</small>
-        <button type="button" className="comandos-secondary-button" onClick={() => { setEdited(true); setRetry(current => current + 1); }}>Consultar novamente</button>
+        {!compact && (
+            <>
+                <small role="status" aria-live="polite">{status || "Informe o CEP para consultar. Todos os campos podem ser corrigidos manualmente."}</small>
+                <button type="button" className="comandos-secondary-button" onClick={() => { setEdited(true); setRetry(current => current + 1); }}>Consultar novamente</button>
+            </>
+        )}
     </>;
 }
