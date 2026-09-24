@@ -145,6 +145,8 @@ const positionLabel = (control: FloatControl, host: HTMLElement): void => {
 };
 
 const updateState = (control: FloatControl): void => {
+    if (!control.matches(CONTROL_SELECTOR)) return;
+
     const host = chooseHost(control);
     if (!host) return;
 
@@ -155,6 +157,8 @@ const updateState = (control: FloatControl): void => {
 };
 
 const enhanceControl = (control: FloatControl): void => {
+    if (!control.matches(CONTROL_SELECTOR)) return;
+
     const isReferenceCombobox =
         control instanceof HTMLInputElement
         && control.type === "search"
@@ -251,9 +255,12 @@ export function FloatLabelEnhancer() {
         const syncFromEvent = (event: Event) => {
             const target = event.target;
             if (
-                target instanceof HTMLInputElement
-                || target instanceof HTMLSelectElement
-                || target instanceof HTMLTextAreaElement
+                (
+                    target instanceof HTMLInputElement
+                    || target instanceof HTMLSelectElement
+                    || target instanceof HTMLTextAreaElement
+                )
+                && target.matches(CONTROL_SELECTOR)
             ) {
                 enhanceControl(target);
                 updateState(target);
