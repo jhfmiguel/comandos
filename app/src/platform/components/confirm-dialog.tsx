@@ -67,7 +67,7 @@ export function ConfirmDialog({
                     <div className="comandos-dialog-actions">
                         <button
                             type="button"
-                            className="comandos-secondary-button"
+                            className="registration-yellow-button"
                             disabled={busy}
                             onClick={onCancel}
                         >
