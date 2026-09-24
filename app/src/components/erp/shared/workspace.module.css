@@ -1528,3 +1528,22 @@
     }
 }
 
+.modelSpecificationGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+    align-items: end;
+}
+
+@media (max-width: 900px) {
+    .modelSpecificationGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .modelSpecificationGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
