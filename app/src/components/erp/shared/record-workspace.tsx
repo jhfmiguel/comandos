@@ -901,6 +901,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
                                         const personTaxId = resource.key === "people" && field.name === "taxId";
+                                        const organizationTaxId = resource.key === "organizations" && field.name === "taxId";
                                         const personType = personTypeCode;
                                         const fieldLabel = personTaxId
                                             ? personType === "INDIVIDUAL"
@@ -926,7 +927,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 resource.key === "organizations" && field.name === "taxId" ? styles.organizationTaxField : "",
                                                 resource.key === "organizations" && field.name === "publicOrganization" ? styles.organizationPublicField : "",
                                                 resource.key === "organizations" && field.name === "active" ? styles.organizationActiveField : "",
-                                                resource.key === "profiles" && field.name === "levelTypeId" ? styles.fieldWithHint : ""
+                                                resource.key === "profiles" && field.name === "levelTypeId" ? styles.fieldWithHint : "",
+                                                resource.key === "permissions" && ["resourceTypeId", "actionTypeId"].includes(field.name) ? styles.fieldWithHint : "",
+                                                resource.key === "user-profiles" && field.name === "unitId" ? styles.fieldWithHint : ""
                                             ].filter(Boolean).join(" ")}
                                             disabled={field.readOnly || Boolean(record && (
                                                 field.createOnly
@@ -942,9 +945,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                             {resource.key === "profiles" && field.name === "levelTypeId" && (
                                                 <FieldHint text={tr("Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.")} />
                                             )}
-                                            {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
-                                            {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}
-                                            {resource.key === "user-profiles" && field.name === "unitId" && <small>Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.</small>}
+                                            {resource.key === "permissions" && field.name === "resourceTypeId" && (
+                                                <FieldHint text={tr("Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.")} />
+                                            )}
+                                            {resource.key === "permissions" && field.name === "actionTypeId" && (
+                                                <FieldHint text={tr("Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.")} />
+                                            )}
+                                            {resource.key === "user-profiles" && field.name === "unitId" && (
+                                                <FieldHint text={tr("Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.")} />
+                                            )}
                                             {resource.key === "person-addresses"
                                             && field.name === "postalCode"
                                             && !Boolean(values.foreignAddress) ? (
@@ -1010,6 +1019,18 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         label: value.replaceAll("_", " ")
                                                     }))}
                                                     onChange={value => change(field, value)}
+                                                />
+                                            ) : organizationTaxId ? (
+                                                <input
+                                                    id={`core-${field.name}`}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="off"
+                                                    placeholder="00.000.000/0000-00"
+                                                    maxLength={18}
+                                                    required={required}
+                                                    value={maskCnpj(String(values[field.name] ?? ""))}
+                                                    onChange={event => change(field, maskCnpj(event.target.value))}
                                                 />
                                             ) : personTaxId ? (
                                                 <input
