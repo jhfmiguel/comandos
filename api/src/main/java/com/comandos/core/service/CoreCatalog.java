@@ -20,8 +20,14 @@ public final class CoreCatalog {
                            Class<? extends CoreEntity> entity, List<Field> fields) {}
 
     public static final List<Resource> RESOURCES = List.of(
+        new Resource("organization-natures", "Organization natures", "Institutional", OrganizationNature.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
         new Resource("organizations", "Organizations", "Institutional", Organization.class, List.of(
-            new Field("nature", "Nature", "text", true, null, List.of()),
+            new Field("natureId", "Nature", "reference", true, "organization-natures", List.of()),
             new Field("name", "Name", "text", true, null, List.of()),
             new Field("acronym", "Acronym", "text", false, null, List.of()),
             new Field("taxId", "Tax ID (CNPJ)", "text", false, null, List.of()),
