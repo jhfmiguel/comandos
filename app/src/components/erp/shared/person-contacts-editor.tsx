@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
+import { Trash } from "@primeicons/react";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import styles from "./workspace.module.css";
 
@@ -353,7 +354,7 @@ export function PersonContactsEditor({
                                                 aria-label={`Remover endereço ${index + 1}`}
                                                 onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                             >
-                                                <Trash2 size={17} />
+                                                <Trash size={17} />
                                             </button>
                                         </td>
                                     </tr>
@@ -473,7 +474,7 @@ export function PersonContactsEditor({
                                             aria-label={`Remover telefone ${index + 1}`}
                                             onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash2 size={17} />
+                                            <Trash size={17} />
                                         </button>
                                     </td>
                                 </tr>
@@ -559,7 +560,7 @@ export function PersonContactsEditor({
                                             aria-label={`Remover e-mail ${index + 1}`}
                                             onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash2 size={17} />
+                                            <Trash size={17} />
                                         </button>
                                     </td>
                                 </tr>
