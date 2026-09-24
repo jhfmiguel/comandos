@@ -816,7 +816,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                     modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
                                                     organizationId={values.organizationId} excludedId={["parentUnitId", "parentCategoryId"].includes(field.name) ? record?.id : undefined}
                                                     optionFilter={option => {
-                                                        if (["armament-types", "armament-classifications", "organization-natures", "economic-activities"].includes(field.reference ?? "") && option.active === false) return false;
+                                                        if (option.active === false) return false;
                                                         if (resource.key === "models" && field.name === "armamentTypeId") return String(option.categoryId) === String(values.categoryId);
                                                         if (resource.key === "models" && field.name === "armamentClassificationId") return String(option.typeId) === String(values.armamentTypeId);
                                                         return true;
