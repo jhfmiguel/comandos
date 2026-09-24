@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import styles from "./workspace.module.css";
 
@@ -84,6 +84,63 @@ function maskPhoneNumber(value: string, countryCode: string): string {
     return `(${area}) ${local.slice(0, 5)}-${local.slice(5, 9)}`;
 }
 
+
+type ContactPanelKey = "addresses" | "phones" | "emails";
+
+function ContactAccordionPanel({
+    value,
+    title,
+    activePanel,
+    onToggle,
+    children
+}: React.PropsWithChildren<{
+    value: ContactPanelKey;
+    title: string;
+    activePanel: ContactPanelKey | null;
+    onToggle: (value: ContactPanelKey) => void;
+}>) {
+    const open = activePanel === value;
+    const triggerId = `person-contact-${value}-trigger`;
+    const contentId = `person-contact-${value}-content`;
+
+    return (
+        <section
+            className={styles.contactAccordionPanel}
+            data-open={open ? "true" : "false"}
+        >
+            <h3 className={styles.contactAccordionHeading}>
+                <button
+                    id={triggerId}
+                    type="button"
+                    className={styles.contactAccordionTrigger}
+                    aria-expanded={open}
+                    aria-controls={contentId}
+                    onClick={() => onToggle(value)}
+                >
+                    <span>{title}</span>
+                    <ChevronDown
+                        size={18}
+                        aria-hidden="true"
+                        className={styles.contactAccordionChevron}
+                    />
+                </button>
+            </h3>
+
+            <div
+                id={contentId}
+                role="region"
+                aria-labelledby={triggerId}
+                className={styles.contactAccordionContent}
+                hidden={!open}
+            >
+                <div className={styles.contactAccordionContentInner}>
+                    {children}
+                </div>
+            </div>
+        </section>
+    );
+}
+
 export function PersonContactsEditor({
     addresses,
     setAddresses,
@@ -99,6 +156,12 @@ export function PersonContactsEditor({
     emails: EmailDraft[];
     setEmails: React.Dispatch<React.SetStateAction<EmailDraft[]>>;
 }) {
+    const [activePanel, setActivePanel] = React.useState<ContactPanelKey | null>("addresses");
+
+    const togglePanel = (value: ContactPanelKey) => {
+        setActivePanel(current => current === value ? null : value);
+    };
+
     const updateAddress = (index: number, patch: Partial<AddressDraft>) => {
         setAddresses(current => current.map((item, itemIndex) => {
             if (itemIndex !== index && patch.primaryAddress) {
@@ -127,13 +190,15 @@ export function PersonContactsEditor({
     };
 
     return (
-        <div className={styles.contactSections}>
-            <section className={styles.contactSection}>
+        <div className={styles.contactAccordion}>
+            <ContactAccordionPanel
+                value="addresses"
+                title="Endereços"
+                activePanel={activePanel}
+                onToggle={togglePanel}
+            >
                 <div className={styles.contactHeader}>
-                    <div>
-                        <h3>Endereços</h3>
-                        <small>Edite diretamente na tabela e marque um endereço principal.</small>
-                    </div>
+                    <small>Edite diretamente na tabela e marque um endereço principal.</small>
                     <button
                         type="button"
                         className="registration-yellow-button"
@@ -144,7 +209,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className="comandos-native-table-container">
+                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.addressTable}`}>
                         <thead>
                             <tr>
@@ -304,14 +369,16 @@ export function PersonContactsEditor({
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </ContactAccordionPanel>
 
-            <section className={styles.contactSection}>
+            <ContactAccordionPanel
+                value="phones"
+                title="Telefones"
+                activePanel={activePanel}
+                onToggle={togglePanel}
+            >
                 <div className={styles.contactHeader}>
-                    <div>
-                        <h3>Telefones</h3>
-                        <small>Edite diretamente na tabela, indique WhatsApp e selecione o telefone principal.</small>
-                    </div>
+                    <small>Edite diretamente na tabela, indique WhatsApp e selecione o telefone principal.</small>
                     <button
                         type="button"
                         className="registration-yellow-button"
@@ -322,7 +389,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className="comandos-native-table-container">
+                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.phoneTable}`}>
                         <thead>
                             <tr>
@@ -421,14 +488,16 @@ export function PersonContactsEditor({
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </ContactAccordionPanel>
 
-            <section className={styles.contactSection}>
+            <ContactAccordionPanel
+                value="emails"
+                title="E-mails"
+                activePanel={activePanel}
+                onToggle={togglePanel}
+            >
                 <div className={styles.contactHeader}>
-                    <div>
-                        <h3>E-mails</h3>
-                        <small>Edite diretamente na tabela e selecione o e-mail principal.</small>
-                    </div>
+                    <small>Edite diretamente na tabela e selecione o e-mail principal.</small>
                     <button
                         type="button"
                         className="registration-yellow-button"
@@ -439,7 +508,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className="comandos-native-table-container">
+                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.emailTable}`}>
                         <thead>
                             <tr>
@@ -505,7 +574,7 @@ export function PersonContactsEditor({
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </ContactAccordionPanel>
         </div>
     );
 }
