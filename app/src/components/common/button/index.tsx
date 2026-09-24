@@ -108,6 +108,7 @@ export const Button: React.FC<ButtonProps> = ({
                 variantClass,
                 `comandos-button-${severity}`,
                 iconOnly ? "comandos-button-icon-only" : "",
+                tableAction === "delete" ? "comandos-trash-button" : "",
                 fluid ? "w-full" : "",
                 columnClasses ?? "",
                 className ?? ""
