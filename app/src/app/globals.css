@@ -5669,3 +5669,165 @@ html[data-theme="dark"] .comandos-filter-row th { background:#171717; }
 .comandos-button-spinner{width:1rem;height:1rem;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:comandos-spin .7s linear infinite}
 @keyframes comandos-spin{to{transform:rotate(360deg)}}
 html[data-theme="dark"] .comandos-button-secondary.comandos-button-contained{background:#171717;color:#f3f4f6;border-color:#3f3f46}
+
+
+/* COMANDOS LEGACY VISUAL PARITY V1
+ * Reproduces the geometry of the pre-refactor frontend without restoring Prime dependencies.
+ */
+.comandos-app-layout {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.comandos-sidebar {
+    position: relative;
+    flex: 0 0 16rem;
+    width: 16rem;
+    min-width: 16rem;
+    max-width: 16rem;
+    transition: width 180ms ease, min-width 180ms ease, max-width 180ms ease, flex-basis 180ms ease;
+}
+
+.comandos-sidebar[data-state="collapsed"] {
+    flex-basis: 4rem !important;
+    width: 4rem !important;
+    min-width: 4rem !important;
+    max-width: 4rem !important;
+}
+
+.comandos-sidebar-aside {
+    left: 0;
+    width: 16rem;
+    min-width: 16rem;
+    max-width: 16rem;
+    transition: width 180ms ease, min-width 180ms ease, max-width 180ms ease;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-aside,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-panel {
+    width: 4rem !important;
+    min-width: 4rem !important;
+    max-width: 4rem !important;
+}
+
+.comandos-sidebar-panel {
+    width: 100%;
+    min-width: 0;
+}
+
+.comandos-sidebar-main {
+    flex: 1 1 auto;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+}
+
+.comandos-sidebar-panel > header,
+.comandos-sidebar-content,
+.comandos-sidebar-footer {
+    width: 100%;
+    min-width: 0;
+}
+
+.comandos-sidebar-content {
+    padding: 20px .5rem .5rem !important;
+}
+
+.comandos-sidebar-footer {
+    padding: .5rem;
+}
+
+.comandos-sidebar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.comandos-sidebar-menu-button,
+.comandos-sidebar-user {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: var(--comandos-menu-row-height, 2.5rem);
+    padding: .5rem .75rem;
+    gap: .625rem;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.comandos-sidebar-submenu {
+    display: grid;
+    gap: .125rem;
+}
+
+.comandos-sidebar-user-popup {
+    position: absolute;
+    left: calc(100% + .25rem);
+    bottom: 0;
+    z-index: 10002;
+    display: grid;
+    min-width: 13rem !important;
+    padding: .4rem;
+    border: 1px solid var(--comandos-border, #dee2e6);
+    border-radius: .5rem;
+}
+
+.comandos-sidebar-user-popup .comandos-sidebar-popup-link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    border: 0;
+    text-align: left;
+}
+
+.comandos-main-header {
+    flex: 0 0 3rem;
+}
+
+.comandos-main-content {
+    min-width: 0;
+}
+
+.comandos-main-card {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .comandos-sidebar {
+        flex: 0 0 3.5rem !important;
+        width: 3.5rem !important;
+        min-width: 3.5rem !important;
+        max-width: 3.5rem !important;
+    }
+
+    .comandos-sidebar .comandos-sidebar-aside,
+    .comandos-sidebar .comandos-sidebar-panel {
+        width: 3.5rem !important;
+        min-width: 3.5rem !important;
+        max-width: 3.5rem !important;
+    }
+
+    .comandos-sidebar .comandos-sidebar-mobile-overlay-open {
+        width: min(20rem, 86vw) !important;
+        min-width: min(20rem, 86vw) !important;
+        max-width: 86vw !important;
+    }
+
+    .comandos-sidebar .comandos-sidebar-mobile-overlay-open .comandos-sidebar-panel {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .comandos-sidebar-main {
+        width: auto !important;
+        max-width: none !important;
+    }
+}
