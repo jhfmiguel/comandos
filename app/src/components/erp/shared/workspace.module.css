@@ -1452,3 +1452,79 @@
     }
 }
 
+/* Nested parent-child editors for inventory/catalog records */
+.nestedEditorDialog {
+    width: min(82rem, calc(100vw - 2rem));
+}
+
+.nestedCollectionSection {
+    display: grid;
+    gap: .9rem;
+    margin: .35rem 0 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--p-content-border-color, #ddd);
+}
+
+.nestedCollectionSection h3 {
+    margin: 0 0 .2rem;
+    font-size: 1rem;
+}
+
+.nestedCollectionSection small {
+    color: var(--p-text-muted-color, #737373);
+}
+
+.nestedCollectionEditor {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+    gap: .8rem;
+    padding: .85rem;
+    border: 1px solid var(--p-content-border-color, #ddd);
+    border-radius: .5rem;
+    background: color-mix(in srgb, var(--p-content-background, transparent) 92%, currentColor 3%);
+}
+
+.nestedCollectionActions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.nestedBooleanField {
+    display: flex;
+    min-height: 3.35rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .7rem .8rem;
+    border: 1px solid var(--p-inputtext-border-color, #ccc);
+    border-radius: .4rem;
+    background: var(--p-inputtext-background, transparent);
+    color: inherit;
+    font-size: .84rem;
+}
+
+.nestedBooleanField input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--comandos-accent, #ff9900);
+}
+
+@media (max-width: 1000px) {
+    .nestedCollectionEditor {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .nestedEditorDialog {
+        width: 100%;
+    }
+
+    .nestedCollectionEditor {
+        grid-template-columns: 1fr;
+    }
+}
+
