@@ -57,6 +57,43 @@ const personTypeResource: ErpResource = {
     ]
 }
 
+
+const accessProfileLevelResource: ErpResource = {
+    key: "profile-levels",
+    label: "Access profile levels",
+    group: "Access",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
+const permissionResourceResource: ErpResource = {
+    key: "permission-resources",
+    label: "Permission resources",
+    group: "Access",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
+const permissionActionResource: ErpResource = {
+    key: "permission-actions",
+    label: "Permission actions",
+    group: "Access",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
 const sectionTabs: Record<
     string,
     Array<{
@@ -127,8 +164,23 @@ const sectionTabs: Record<
             label: "System users"
         },
         {
+            resource: "profile-levels",
+            label: "Access profile levels",
+            definition: accessProfileLevelResource
+        },
+        {
             resource: "profiles",
             label: "Access profiles"
+        },
+        {
+            resource: "permission-resources",
+            label: "Permission resources",
+            definition: permissionResourceResource
+        },
+        {
+            resource: "permission-actions",
+            label: "Permission actions",
+            definition: permissionActionResource
         },
         {
             resource: "permissions",
