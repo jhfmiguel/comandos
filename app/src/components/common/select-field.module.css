@@ -167,3 +167,12 @@
     opacity: .45;
     cursor: default;
 }
+
+
+.root[data-invalid="true"] .trigger {
+    border-color: #ef4444;
+}
+
+.root[data-invalid="true"] .label {
+    color: #ef4444;
+}
