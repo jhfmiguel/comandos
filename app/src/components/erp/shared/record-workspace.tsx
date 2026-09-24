@@ -879,7 +879,16 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 && field.name === "country"
                                                 && Boolean(values.foreignAddress))
                                         ) && !(record && field.type === "password");
-                                        return <fieldset key={field.name} data-comandos-field="true" className={styles.field} disabled={field.readOnly || Boolean(record && (
+                                        return <fieldset
+                                            key={field.name}
+                                            data-comandos-field="true"
+                                            className={[
+                                                styles.field,
+                                                resource.key === "organizations" && field.name === "taxId" ? styles.organizationTaxField : "",
+                                                resource.key === "organizations" && field.name === "publicOrganization" ? styles.organizationPublicField : "",
+                                                resource.key === "organizations" && field.name === "active" ? styles.organizationActiveField : ""
+                                            ].filter(Boolean).join(" ")}
+                                            disabled={field.readOnly || Boolean(record && (
                                                 field.createOnly
                                                 || (["person-addresses", "person-phones", "person-emails"].includes(resource.key)
                                                     && field.name === "personId")
@@ -1083,11 +1092,14 @@ export function ReferenceSelectField({
         error: ""
     });
     const [unitAttempted, setUnitAttempted] = React.useState(false);
+    const searchable = ["natureId", "economicActivityId"].includes(field.name);
+    const [referenceSearch, setReferenceSearch] = React.useState("");
 
     const requestKey = JSON.stringify([
         field.reference ?? "",
         organizationId ?? "",
-        modelFamily ?? ""
+        modelFamily ?? "",
+        searchable ? referenceSearch : ""
     ]);
 
     React.useEffect(() => {
@@ -1097,7 +1109,7 @@ export function ReferenceSelectField({
 
         service.list(
             field.reference,
-            "",
+            searchable ? referenceSearch : "",
             0,
             controller.signal,
             isUnit ? organizationId : undefined,
@@ -1143,6 +1155,8 @@ export function ReferenceSelectField({
         organizationMissing,
         service,
         modelFamily,
+        searchable,
+        referenceSearch,
         requestKey
     ]);
 
@@ -1184,6 +1198,16 @@ export function ReferenceSelectField({
                                 : String(option.label ?? "")
                 }))}
                 disabled={organizationMissing}
+                searchable={searchable}
+                searchValue={referenceSearch}
+                onSearchChange={setReferenceSearch}
+                searchPlaceholder={
+                    field.name === "natureId"
+                        ? "Pesquisar natureza..."
+                        : field.name === "economicActivityId"
+                            ? "Pesquisar atividade econômica..."
+                            : "Pesquisar..."
+                }
                 onDisabledAttempt={() => setUnitAttempted(true)}
                 onChange={nextValue => {
                     const nextId = nextValue ? Number(nextValue) : null;
