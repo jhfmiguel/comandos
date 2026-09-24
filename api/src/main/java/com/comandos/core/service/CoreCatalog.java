@@ -43,6 +43,15 @@ public final class CoreCatalog {
             new Field("description", "Description", "text", false, null, List.of()),
             new Field("active", "Active", "boolean", true, null, List.of())
         )),
+        new Resource("contact-types", "Contact types", "People", PersonContactType.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("addressEnabled", "Use for addresses", "boolean", true, null, List.of()),
+            new Field("phoneEnabled", "Use for phones", "boolean", true, null, List.of()),
+            new Field("emailEnabled", "Use for e-mails", "boolean", true, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
         new Resource("organizations", "Organizations", "Institutional", Organization.class, List.of(
             new Field("natureId", "Nature", "reference", true, "organization-natures", List.of()),
             new Field("economicActivityId", "Economic activity description", "reference", true, "economic-activities", List.of()),
@@ -69,7 +78,7 @@ public final class CoreCatalog {
         )),
         new Resource("person-addresses", "Endereços", "People", PersonAddress.class, List.of(
             new Field("personId", "Person", "reference", true, "people", List.of()),
-            new Field("type", "Tipo de endereço", "choice", true, null, List.of("RESIDENTIAL", "BUSINESS", "MAILING", "OTHER")),
+            new Field("contactTypeId", "Tipo de endereço", "reference", true, "contact-types", List.of()),
             new Field("foreignAddress", "Endereço no exterior", "boolean", false, null, List.of()),
             new Field("country", "País", "text", false, null, List.of()),
             new Field("postalCode", "CEP / código postal", "text", false, null, List.of()),
@@ -83,7 +92,7 @@ public final class CoreCatalog {
         )),
         new Resource("person-phones", "Telefones", "People", PersonPhone.class, List.of(
             new Field("personId", "Person", "reference", true, "people", List.of()),
-            new Field("type", "Tipo de telefone", "choice", true, null, List.of("MOBILE", "WHATSAPP", "HOME", "WORK", "OTHER")),
+            new Field("contactTypeId", "Tipo de telefone", "reference", true, "contact-types", List.of()),
             new Field("countryCode", "Código do país", "text", false, null, List.of()),
             new Field("number", "Telefone", "text", true, null, List.of()),
             new Field("whatsapp", "WhatsApp", "boolean", true, null, List.of()),
@@ -91,7 +100,7 @@ public final class CoreCatalog {
         )),
         new Resource("person-emails", "E-mails", "People", PersonEmail.class, List.of(
             new Field("personId", "Person", "reference", true, "people", List.of()),
-            new Field("type", "Tipo de e-mail", "choice", true, null, List.of("PERSONAL", "WORK", "OTHER")),
+            new Field("contactTypeId", "Tipo de e-mail", "reference", true, "contact-types", List.of()),
             new Field("email", "E-mail", "email", true, null, List.of()),
             new Field("primaryEmail", "E-mail principal", "boolean", true, null, List.of())
         )),
