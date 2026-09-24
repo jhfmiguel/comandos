@@ -55,9 +55,7 @@ const sectionTabs = {
         { resource: "armament-types", label: "Types" },
         { resource: "armament-classifications", label: "Classifications" },
         { resource: "brands", label: "Brands" },
-        { resource: "item-models", label: "Models" }
-    ],
-    specifications: [
+        { resource: "item-models", label: "Models" },
         { resource: "technical-characteristics", label: "Technical characteristics" }
     ],
     compliance: [
