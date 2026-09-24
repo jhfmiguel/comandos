@@ -3,7 +3,7 @@
 import * as React from "react";
 import axios from "axios";
 import { Message } from "components/common/message";
-import { ReferenceField } from "components/erp/shared/record-workspace";
+import { ReferenceSelectField } from "components/erp/shared/record-workspace";
 import { httpClient } from "api/http";
 import type { ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
@@ -118,8 +118,14 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                 <fieldset className={styles.fields} disabled={locked}>
                     {fields.map(field => <div className={styles.field} key={field.name}>
                         <label htmlFor={`core-${field.name}`}>{field.label}{field.required ? " *" : ""}</label>
-                        {field.type === "reference" ? <ReferenceField service={service} field={field} value={values[field.name] ?? null}
-                            organizationId={null} onChange={value => setValues(current => ({ ...current, [field.name]: value }))} />
+                        {field.type === "reference" ? <ReferenceSelectField
+                            service={service}
+                            field={field}
+                            value={values[field.name] ?? null}
+                            organizationId={null}
+                            modelFamily={!assets && field.name === "modelId" ? "AMMUNITION" : undefined}
+                            onChange={value => setValues(current => ({ ...current, [field.name]: value }))}
+                        />
                             : field.type === "choice" ? <select id={`core-${field.name}`} required={field.required}
                                 value={String(values[field.name] ?? "")} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))}>
                                 <option value="">Select an option</option>{field.choices.filter(choice => field.name !== "status" || ["DRAFT", "AVAILABLE", "BLOCKED"].includes(choice))
