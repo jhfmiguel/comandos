@@ -807,33 +807,49 @@
 .fieldHint {
     position: absolute;
     z-index: 30;
-    top: .48rem;
-    right: .62rem;
+    top: 50%;
+    right: .65rem;
     display: inline-flex;
     align-items: center;
+    transform: translateY(-50%);
 }
 
 .fieldHintButton {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.7rem;
-    height: 1.7rem;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    outline: 0;
-    background: transparent;
-    color: var(--comandos-text-muted, #737373);
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 1.35rem !important;
+    min-width: 1.35rem !important;
+    height: 1.35rem !important;
+    min-height: 1.35rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: var(--comandos-text-muted, #737373) !important;
     cursor: pointer;
-    transition: color .16s ease, filter .16s ease;
+    line-height: 1 !important;
+    transform: none !important;
+    transition: color .16s ease, filter .16s ease !important;
 }
 
 .fieldHintButton:hover,
 .fieldHintButton:focus-visible,
 .fieldHintOpen .fieldHintButton {
-    color: var(--comandos-accent, #ff9900);
-    filter: brightness(1.2);
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    filter: brightness(1.22) drop-shadow(0 0 .18rem color-mix(in srgb, var(--comandos-accent, #ff9900) 42%, transparent)) !important;
+}
+
+.fieldHintButton svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
 }
 
 .fieldHintBubble {
