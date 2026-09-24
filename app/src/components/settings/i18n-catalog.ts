@@ -387,10 +387,10 @@ export const translationPairs: TranslationPair[] = [
     ["Fixed after registration.", "Fixo após o cadastro."],
     ["At least 12 characters.", "No mínimo 12 caracteres."],
     ["Leave blank to keep the current password.", "Deixe em branco para manter a senha atual."],
-    ["Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.", "Use SYSTEM (todas as organizações), ORGANIZATION ou UNIT. Outros níveis não concedem acesso."],
-    ["Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.", "Use um código exato de recurso, como core/people, inventory/assets, sales ou security/access. Um asterisco concede acesso a todos os recursos."],
-    ["Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.", "Use READ, CREATE, UPDATE, DELETE, MANAGE (administração de acesso) ou *."],
-    ["Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.", "Obrigatório para perfis UNIT; deixe vazio para perfis SYSTEM e ORGANIZATION."],
+    ["Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.", "Use SISTEMA (SYSTEM, todas as organizações), ORGANIZAÇÃO (ORGANIZATION) ou UNIDADE (UNIT). Outros níveis não concedem acesso."],
+    ["Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.", "Use o código exato do recurso, como core/people, inventory/assets, sales ou security/access. O asterisco (*) concede acesso a todos os recursos."],
+    ["Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.", "Use LEITURA (READ), CRIAÇÃO (CREATE), ALTERAÇÃO (UPDATE), EXCLUSÃO (DELETE), ADMINISTRAÇÃO (MANAGE) ou * (todas as ações)."],
+    ["Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.", "Obrigatório para perfis de UNIDADE (UNIT); deixe vazio para perfis de SISTEMA (SYSTEM) e ORGANIZAÇÃO (ORGANIZATION)."],
     ["Select an existing model and register one individual item. Asset code must be unique; serial number is required for serialized models and must be unique within the model. Leading and trailing spaces are removed; letter case is preserved.", "Selecione um modelo existente e cadastre um item individual. O código patrimonial deve ser único; o número de série é obrigatório para modelos serializados e deve ser único dentro do modelo. Espaços no início e no fim são removidos; maiúsculas e minúsculas são preservadas."],
 
     // Equipment movements
