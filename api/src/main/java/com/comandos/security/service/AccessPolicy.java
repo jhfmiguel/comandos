@@ -21,6 +21,27 @@ public class AccessPolicy {
         "core/organization-natures",
         "core/economic-activities"
     );
+    private static final Set<String> INVENTORY_PARAMETER_RESOURCES = Set.of(
+        "inventory/calibers",
+        "inventory/ammunition-types",
+        "inventory/projectile-types",
+        "inventory/case-types",
+        "inventory/primer-types",
+        "inventory/grenade-types",
+        "inventory/agents",
+        "inventory/compositions",
+        "inventory/protection-types",
+        "inventory/protection-levels",
+        "inventory/materials",
+        "inventory/sizes",
+        "inventory/cartridge-types",
+        "inventory/optical-types",
+        "inventory/shield-types",
+        "inventory/locking-mechanisms",
+        "inventory/component-types",
+        "inventory/compatibilities",
+        "inventory/interfaces"
+    );
     public record Grant(String resource, String action, String scope, Long organizationId, Long unitId) {}
     public record AccessView(boolean enforced, List<Grant> grants) {}
     public record Scope(String organizationPath, String unitPath) {}
@@ -92,6 +113,7 @@ public class AccessPolicy {
         String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
             Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource) ? "core/people" :
             GLOBAL_PARAMETER_RESOURCES.contains(resource) ? "core/organizations" :
+            INVENTORY_PARAMETER_RESOURCES.contains(resource) ? "inventory/models" :
             resource;
         String requiredAction = ACCESS_RESOURCES.contains(resource) ? "MANAGE" : action;
 
@@ -100,7 +122,7 @@ public class AccessPolicy {
                 && (g.action().equals(requiredAction) || g.action().equals("*"))
         );
 
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
             return matched.toList();
         }
 
@@ -123,7 +145,7 @@ public class AccessPolicy {
         if (!enabled) return "1 = 1";
         var matching = matching(resource, action, scope);
         if (matching.isEmpty()) denied();
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) return "1 = 1";
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) return "1 = 1";
         if (matching.stream().anyMatch(g -> "SYSTEM".equals(g.scope()))) return "1 = 1";
         // All values below are typed database IDs; callers supply fixed property paths.
         return "(" + String.join(" or ", matching.stream().map(g -> {
@@ -134,7 +156,7 @@ public class AccessPolicy {
     }
 
     public void requireEntity(String resource, String action, CoreEntity entity) {
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
             requireAny(resource, action);
             return;
         }
