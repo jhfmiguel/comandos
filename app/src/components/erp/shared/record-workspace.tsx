@@ -1198,16 +1198,7 @@ export function ReferenceSelectField({
                                 : String(option.label ?? "")
                 }))}
                 disabled={organizationMissing}
-                searchable={searchable}
-                searchValue={referenceSearch}
-                onSearchChange={setReferenceSearch}
-                searchPlaceholder={
-                    field.name === "natureId"
-                        ? "Pesquisar natureza..."
-                        : field.name === "economicActivityId"
-                            ? "Pesquisar atividade econômica..."
-                            : "Pesquisar..."
-                }
+                onSearchChange={searchable ? setReferenceSearch : undefined}
                 onDisabledAttempt={() => setUnitAttempted(true)}
                 onChange={nextValue => {
                     const nextId = nextValue ? Number(nextValue) : null;
