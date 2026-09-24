@@ -7,6 +7,7 @@ import { Menu } from "./menu"
 import { TopToolbar } from "./top-toolbar"
 import { Message } from "components"
 import { Alert } from "components/common/message"
+import { SystemTableStandardizer } from "platform/components/system-table-standardizer"
 
 interface LayoutProps {
     title?: string
@@ -19,6 +20,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
     return (
         <div className="comandos-app-layout min-h-screen">
+            <SystemTableStandardizer />
             <Menu open={sidebarOpen} onOpenChange={setSidebarOpen} />
 
             <main className="comandos-sidebar-main pt-0">
