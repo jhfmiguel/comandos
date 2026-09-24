@@ -150,10 +150,19 @@ export function RecordWorkspace({
     ) ?? catalog[0];
 
     const workspaceTabs = tabs ?? [];
-    const [activeTab, setActiveTab] = React.useState(workspaceTabs[0]?.resource ?? "");
+    const initialTabResource = workspaceTabs.some(tab => tab.resource === initialResource)
+        ? initialResource
+        : workspaceTabs[0]?.resource ?? "";
+    const [activeTab, setActiveTab] = React.useState(initialTabResource);
     const resolvedActiveTab = workspaceTabs.some(tab => tab.resource === activeTab)
         ? activeTab
-        : workspaceTabs[0]?.resource ?? "";
+        : initialTabResource;
+    const tabsDragRef = React.useRef({
+        active: false,
+        moved: false,
+        startX: 0,
+        scrollLeft: 0
+    });
 
     return (
 
@@ -249,13 +258,43 @@ export function RecordWorkspace({
                                     aria-label={tr(title)}
                                     onWheel={event => {
                                         const element = event.currentTarget;
-                                        if (
-                                            element.scrollWidth > element.clientWidth
-                                            && Math.abs(event.deltaY) > Math.abs(event.deltaX)
-                                        ) {
-                                            event.preventDefault();
-                                            element.scrollLeft += event.deltaY;
+                                        if (element.scrollWidth <= element.clientWidth) return;
+                                        const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+                                            ? event.deltaX
+                                            : event.deltaY;
+                                        if (!delta) return;
+                                        event.preventDefault();
+                                        element.scrollLeft += delta;
+                                    }}
+                                    onPointerDown={event => {
+                                        if (event.pointerType !== "mouse" || event.button !== 0) return;
+                                        const element = event.currentTarget;
+                                        tabsDragRef.current = {
+                                            active: true,
+                                            moved: false,
+                                            startX: event.clientX,
+                                            scrollLeft: element.scrollLeft
+                                        };
+                                        element.setPointerCapture(event.pointerId);
+                                        element.classList.add("is-dragging");
+                                    }}
+                                    onPointerMove={event => {
+                                        if (!tabsDragRef.current.active || event.pointerType !== "mouse") return;
+                                        const distance = event.clientX - tabsDragRef.current.startX;
+                                        if (Math.abs(distance) > 3) tabsDragRef.current.moved = true;
+                                        event.currentTarget.scrollLeft = tabsDragRef.current.scrollLeft - distance;
+                                    }}
+                                    onPointerUp={event => {
+                                        if (!tabsDragRef.current.active) return;
+                                        tabsDragRef.current.active = false;
+                                        event.currentTarget.classList.remove("is-dragging");
+                                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                                            event.currentTarget.releasePointerCapture(event.pointerId);
                                         }
+                                    }}
+                                    onPointerCancel={event => {
+                                        tabsDragRef.current.active = false;
+                                        event.currentTarget.classList.remove("is-dragging");
                                     }}
                                 >
                                     {workspaceTabs.map((tab) => {
@@ -271,8 +310,17 @@ export function RecordWorkspace({
                                                 role="tab"
                                                 aria-selected={resolvedActiveTab === tab.resource}
                                                 className={`comandos-tab ${resolvedActiveTab === tab.resource ? "is-active" : ""}`}
-                                                onClick={() => {
+                                                onClick={event => {
+                                                    if (tabsDragRef.current.moved) {
+                                                        tabsDragRef.current.moved = false;
+                                                        return;
+                                                    }
                                                     setActiveTab(tab.resource);
+                                                    event.currentTarget.scrollIntoView({
+                                                        behavior: "smooth",
+                                                        block: "nearest",
+                                                        inline: "nearest"
+                                                    });
                                                     if (!tab.content && !tabResource) {
                                                         setError("");
                                                         setRetry(value => value + 1);
