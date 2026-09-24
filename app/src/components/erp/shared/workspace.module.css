@@ -648,3 +648,30 @@
         justify-content: center;
     }
 }
+
+
+/* Stock location organization/unit selects */
+.referenceSelect {
+    display: grid;
+    gap: .35rem;
+    min-width: 0;
+}
+
+.referenceSelect select {
+    width: 100%;
+    min-height: 3.35rem;
+}
+
+.referenceSelect select[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+.referenceNotice {
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
+    font-size: .78rem;
+}
+
+.referenceError {
+    color: #ef4444;
+    font-size: .78rem;
+}
