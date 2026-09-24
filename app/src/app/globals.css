@@ -6677,3 +6677,163 @@ html[data-theme="light"][data-palette] .comandos-tab[aria-selected="true"] {
     box-shadow:
         inset 0 -2px 0 color-mix(in srgb, var(--comandos-accent) 86%, #000000 14%);
 }
+
+
+/* COMANDOS TABLE ACTION + PAGINATION + SCROLLABLE TABS V5 */
+html[data-theme] body .comandos-tabs-scroll-button,
+html[data-theme] body .comandos-tabs-scroll-button:hover:not(:disabled),
+html[data-theme] body .comandos-tabs-scroll-button:focus-visible,
+html[data-theme] body .comandos-tabs-scroll-button:active:not(:disabled) {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
+html[data-theme] body .comandos-tabs-scroll-button {
+    width: 1.6rem;
+    min-width: 1.6rem;
+    padding: 0;
+    color: var(--comandos-text-muted, #94a3b8) !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+html[data-theme] body .comandos-tabs-scroll-button:hover:not(:disabled),
+html[data-theme] body .comandos-tabs-scroll-button:focus-visible {
+    color: color-mix(in srgb, var(--comandos-text, #f8fafc) 82%, #000 18%) !important;
+}
+
+.comandos-tabs-list {
+    cursor: default !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.comandos-tabs-list::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Table actions keep their semantic/original color. Hover only darkens it. */
+.comandos-icon-button-edit {
+    --comandos-table-action-color: #3b82f6;
+    color: var(--comandos-table-action-color) !important;
+    border-color: var(--comandos-table-action-color) !important;
+    background: color-mix(in srgb, var(--comandos-table-action-color) 7%, transparent) !important;
+}
+
+.comandos-icon-button-danger {
+    --comandos-table-action-color: #ef4444;
+}
+
+.comandos-icon-button-success {
+    --comandos-table-action-color: #16a34a;
+    color: var(--comandos-table-action-color) !important;
+    border-color: var(--comandos-table-action-color) !important;
+    background: color-mix(in srgb, var(--comandos-table-action-color) 7%, transparent) !important;
+}
+
+.comandos-native-table td .comandos-icon-button-edit:hover:not(:disabled),
+.comandos-native-table td .comandos-icon-button-edit:focus-visible,
+.comandos-native-table td .comandos-icon-button-danger:hover:not(:disabled),
+.comandos-native-table td .comandos-icon-button-danger:focus-visible,
+.comandos-native-table td .comandos-icon-button-success:hover:not(:disabled),
+.comandos-native-table td .comandos-icon-button-success:focus-visible {
+    color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
+    border-color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
+    background: color-mix(in srgb, var(--comandos-table-action-color) 14%, transparent) !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+/* Pagination pattern: << < 1 2 3 4 5 ... N > >> */
+.comandos-pagination {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .75rem !important;
+    min-height: 3.75rem;
+    padding: .65rem .85rem !important;
+    text-align: center;
+}
+
+.comandos-pagination-controls {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .2rem !important;
+}
+
+.comandos-pagination-nav,
+.comandos-pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0 !important;
+    border-radius: 999px;
+    background: transparent !important;
+    color: var(--comandos-text-muted, #94a3b8) !important;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+
+.comandos-pagination-page.is-active {
+    background: var(--comandos-text, #f8fafc) !important;
+    color: var(--comandos-bg, #0f172a) !important;
+}
+
+.comandos-pagination-nav:hover:not(:disabled),
+.comandos-pagination-page:hover:not(:disabled):not(.is-active),
+.comandos-pagination-nav:focus-visible,
+.comandos-pagination-page:focus-visible {
+    background: color-mix(in srgb, var(--comandos-text, #f8fafc) 8%, transparent) !important;
+    color: var(--comandos-text, #f8fafc) !important;
+    outline: none !important;
+}
+
+.comandos-pagination-nav:disabled {
+    opacity: .28;
+    cursor: default;
+}
+
+.comandos-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    color: var(--comandos-text-muted, #94a3b8);
+    user-select: none;
+}
+
+.comandos-pagination-meta {
+    position: absolute;
+    right: .85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    color: var(--comandos-text-muted, #94a3b8);
+    font-size: .825rem;
+}
+
+@media (max-width: 768px) {
+    .comandos-pagination {
+        flex-direction: column !important;
+    }
+
+    .comandos-pagination-meta {
+        position: static;
+    }
+}
