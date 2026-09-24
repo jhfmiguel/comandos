@@ -769,28 +769,34 @@
 
 
 /* Organization editor layout */
-.organizationTaxField {
-    grid-column: 1 / -1;
+.fields[data-comandos-resource="organizations"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
-.organizationPublicField {
-    grid-column: 1;
+.fields[data-comandos-resource="organizations"] .field[data-comandos-field-name="natureId"],
+.fields[data-comandos-resource="organizations"] .field[data-comandos-field-name="economicActivityId"],
+.fields[data-comandos-resource="organizations"] .field[data-comandos-field-name="name"],
+.fields[data-comandos-resource="organizations"] .field[data-comandos-field-name="acronym"] {
+    grid-column: span 3;
 }
 
-.organizationActiveField {
-    grid-column: 2;
-}
-
+.organizationTaxField,
 .organizationPublicField,
 .organizationActiveField {
+    grid-column: span 2;
     align-self: start;
 }
 
-@media (max-width: 550px) {
+@media (max-width: 700px) {
+    .fields[data-comandos-resource="organizations"] {
+        grid-template-columns: 1fr;
+    }
+
+    .fields[data-comandos-resource="organizations"] .field,
     .organizationTaxField,
     .organizationPublicField,
     .organizationActiveField {
-        grid-column: 1;
+        grid-column: 1 / -1 !important;
     }
 }
 
