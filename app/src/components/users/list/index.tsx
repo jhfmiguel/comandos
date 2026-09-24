@@ -191,7 +191,7 @@ export const UsersList: React.FC = () => {
                                         <div className="comandos-row-actions">
                                             {editing ? <>
                                                 <button className="comandos-icon-button comandos-icon-button-success" type="button" aria-label="Save changes" onClick={()=>void saveEdit(user)}><Check size={19}/></button>
-                                                <button className="comandos-icon-button" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
+                                                <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
                                             </> : <>
                                                 <button className="comandos-icon-button" type="button" aria-label="Edit user" onClick={()=>startEdit(user)}><Pencil size={19}/></button>
                                                 <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete user" onClick={()=>user.id!=null&&setDeleteId(user.id)}><Trash size={19}/></button>
