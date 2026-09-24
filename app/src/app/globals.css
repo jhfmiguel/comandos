@@ -6295,3 +6295,32 @@ html[data-theme="dark"] .comandos-button-contrast {
 .comandos-icon-button-danger:focus-visible {
     background: rgb(239 68 68 / 16%) !important;
 }
+
+
+/* COMANDOS TABLE PAGINATION ALIGNMENT V3 */
+.comandos-pagination {
+    position: relative;
+    justify-content: center !important;
+    text-align: center;
+}
+
+.comandos-pagination-controls {
+    justify-content: center !important;
+}
+
+.comandos-pagination > span {
+    position: absolute;
+    right: .85rem;
+    margin: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .comandos-pagination {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+
+    .comandos-pagination > span {
+        position: static;
+    }
+}
