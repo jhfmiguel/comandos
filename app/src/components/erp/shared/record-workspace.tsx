@@ -69,7 +69,7 @@ function FieldHint({ text }: { text: string }) {
         >
             <button
                 type="button"
-                className={styles.fieldHintButton}
+                className={`${styles.fieldHintButton} comandos-field-hint-button`}
                 aria-label="Ajuda sobre o campo"
                 aria-expanded={open}
                 onClick={() => setOpen(current => !current)}
