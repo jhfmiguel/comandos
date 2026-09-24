@@ -542,3 +542,15 @@
         border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
     }
 }
+
+
+/* CONTACT TABLES WITHOUT VISUAL HEADERS V2 */
+.contactTable thead {
+    display: none !important;
+}
+
+@media (min-width: 901px) {
+    .addressTable thead {
+        display: none !important;
+    }
+}
