@@ -1604,6 +1604,10 @@
 }
 
 .addBatchRowButton {
-    margin-top: .8rem !important;
+    margin-top: 1.25rem !important;
+}
+
+.looseUnitsField {
+    margin-top: 1rem !important;
 }
 
