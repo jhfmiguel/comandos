@@ -101,8 +101,6 @@ export const WeaponsList: React.FC = () => {
         }
     }
 
-    const totalPages = Math.max(Math.ceil(totalRecords / rows), 1)
-
     return (
         <Layout title="Weapons">
             <div className="comandos-list-page">
