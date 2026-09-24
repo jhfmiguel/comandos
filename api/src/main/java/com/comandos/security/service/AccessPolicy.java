@@ -134,12 +134,21 @@ public class AccessPolicy {
                 .toList();
         }
 
-        String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
-            Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource) ? "core/people" :
-            CORE_PARAMETER_PARENT_RESOURCES.getOrDefault(resource, resource);
+        Set<String> requiredResources;
+        if (ACCESS_RESOURCES.contains(resource)) {
+            requiredResources = Set.of("security/access");
+        } else if (Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource)) {
+            requiredResources = Set.of("core/people");
+        } else if ("core/unit-types".equals(resource)) {
+            requiredResources = Set.of("core/units", "core/organizations");
+        } else if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource)) {
+            requiredResources = Set.of(CORE_PARAMETER_PARENT_RESOURCES.get(resource));
+        } else {
+            requiredResources = Set.of(resource);
+        }
 
         var matched = grants().stream().filter(g ->
-            (g.resource().equals(requiredResource) || g.resource().equals("*"))
+            (requiredResources.contains(g.resource()) || g.resource().equals("*"))
                 && (g.action().equals(requiredAction) || g.action().equals("*"))
         );
 
