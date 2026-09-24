@@ -175,8 +175,8 @@ export default function DashboardPage() {
                             <svg viewBox="0 0 620 220" preserveAspectRatio="none" aria-label="Monthly movements chart">
                                 <defs>
                                     <linearGradient id="monthlyArea" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#ff9900" stopOpacity=".22" />
-                                        <stop offset="100%" stopColor="#ff9900" stopOpacity="0" />
+                                        <stop offset="0%" stopColor="var(--comandos-accent, #ff9900)" stopOpacity=".22" />
+                                        <stop offset="100%" stopColor="var(--comandos-accent, #ff9900)" stopOpacity="0" />
                                     </linearGradient>
                                 </defs>
                                 <polygon
