@@ -369,6 +369,9 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
         const value = record[field.name];
 
         if (value == null || value === "") return "—";
+        if (resource.key === "people" && field.name === "taxId") {
+            return maskPersonTaxId(String(value), String(record.personType ?? ""));
+        }
         if (field.type === "reference") return record.referenceLabels[field.name] || `#${value}`;
         if (field.type === "boolean") return value ? tr("Yes") : tr("No");
 
