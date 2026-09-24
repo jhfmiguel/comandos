@@ -777,16 +777,16 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
         )) as Record<string, ErpValue>;
 
         if (resource.key === "person-addresses" && !record) {
-            initial.type = "";
+            initial.contactTypeId = "";
             initial.country = "Brasil";
             initial.foreignAddress = false;
         }
         if (resource.key === "person-phones" && !record) {
-            initial.type = "";
+            initial.contactTypeId = "";
             initial.countryCode = "+55";
         }
         if (resource.key === "person-emails" && !record) {
-            initial.type = "";
+            initial.contactTypeId = "";
         }
 
         return initial;
@@ -1009,6 +1009,11 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         }
                                                         if (resource.key === "models" && field.name === "armamentClassificationId") {
                                                             return String(option.typeId) === String(values.armamentTypeId);
+                                                        }
+                                                        if (field.name === "contactTypeId") {
+                                                            if (resource.key === "person-addresses") return option.addressEnabled === true;
+                                                            if (resource.key === "person-phones") return option.phoneEnabled === true;
+                                                            if (resource.key === "person-emails") return option.emailEnabled === true;
                                                         }
                                                         return true;
                                                     }}
