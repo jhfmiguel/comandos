@@ -579,6 +579,50 @@ async function main() {
         }
         console.log('PASS system tables: search, horizontal icon actions and pagination');
 
+        const consolidatedResources = [
+            {
+                path: '/erp/inventory?section=compliance&resource=recall-items',
+                title: /Recalls|Chamamentos/i,
+                removedTab: /Recall items|Itens de recall/i
+            },
+            {
+                path: '/erp/inventory?section=inventory&resource=equipment-set-components',
+                title: /Equipment set|Conjunto de equipamentos/i,
+                removedTab: /Equipment set components|Componentes do conjunto/i
+            },
+            {
+                path: '/erp/inventory?section=catalog&resource=category-characteristics',
+                title: /Item categories|Categorias/i,
+                removedTab: /Category characteristics|Características da categoria/i
+            },
+            {
+                path: '/erp/inventory?section=catalog&resource=model-characteristics',
+                title: /Item models|Modelos/i,
+                removedTab: /Model characteristics|Características do modelo/i
+            },
+            {
+                path: '/erp/core?section=people&resource=role-data',
+                title: /Person role assignments|Vínculos de papel/i,
+                removedTab: /Role details|Dados do vínculo/i
+            }
+        ];
+
+        for (const entry of consolidatedResources) {
+            await page.goto(`${appURL}${entry.path}`);
+            await page.locator('#resource-title').waitFor();
+            assert.match(
+                await page.locator('#resource-title').innerText(),
+                entry.title,
+                `${entry.path}: legacy child resource must resolve to its parent`
+            );
+            assert.equal(
+                await page.getByRole('tab', { name: entry.removedTab }).count(),
+                0,
+                `${entry.path}: child resource must not remain as a standalone tab`
+            );
+        }
+        console.log('PASS nested resources: child screens resolve to their parent editors');
+
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
             ['/erp/sales', 'Inventory sales'], ['/erp/ammunition-consumption', 'Ammunition consumption'],
