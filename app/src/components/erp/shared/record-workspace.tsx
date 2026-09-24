@@ -53,6 +53,29 @@ function errorMessage(error: unknown): string {
     return "Unable to complete the request. Please try again.";
 }
 
+function maskCpf(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    return digits
+        .replace(/^(\d{3})(\d)/, "$1.$2")
+        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
+function maskCnpj(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 14);
+    return digits
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+function maskPersonTaxId(value: string, personType: string): string {
+    if (personType === "INDIVIDUAL") return maskCpf(value);
+    if (personType === "LEGAL_ENTITY") return maskCnpj(value);
+    return value.replace(/\D/g, "").slice(0, 14);
+}
+
 
 export function RecordWorkspace({
     module,
@@ -128,6 +151,9 @@ export function RecordWorkspace({
 
     const workspaceTabs = tabs ?? [];
     const [activeTab, setActiveTab] = React.useState(workspaceTabs[0]?.resource ?? "");
+    const resolvedActiveTab = workspaceTabs.some(tab => tab.resource === activeTab)
+        ? activeTab
+        : workspaceTabs[0]?.resource ?? "";
 
     return (
 
@@ -223,8 +249,8 @@ export function RecordWorkspace({
                                             key={tab.resource}
                                             type="button"
                                             role="tab"
-                                            aria-selected={activeTab === tab.resource}
-                                            className={`comandos-tab ${activeTab === tab.resource ? "is-active" : ""}`}
+                                            aria-selected={resolvedActiveTab === tab.resource}
+                                            className={`comandos-tab ${resolvedActiveTab === tab.resource ? "is-active" : ""}`}
                                             onClick={() => setActiveTab(tab.resource)}
                                         >
                                             {tr(tab.label)}
@@ -232,7 +258,7 @@ export function RecordWorkspace({
                                     ))}
                                 </div>
                                 {workspaceTabs.map((tab) => {
-                                    if (activeTab !== tab.resource) return null;
+                                    if (resolvedActiveTab !== tab.resource) return null;
                                     const tabResource = catalog.find(
                                         (item) =>
                                             item.key === tab.resource ||
@@ -651,6 +677,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             ...(resource.key === "person-addresses" && field.name === "foreignAddress"
                 ? { country: value ? "" : "Brasil" }
                 : {}),
+            ...(resource.key === "people" && field.name === "personType"
+                ? { taxId: "" }
+                : {}),
             ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
             ...(resource.key === "models" && field.name === "armamentTypeId" ? { armamentClassificationId: "" } : {}),
             ...(field.name === "organizationId" ? {
@@ -735,6 +764,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 </p>}
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
+                                        const personTaxId = resource.key === "people" && field.name === "taxId";
+                                        const personType = String(values.personType ?? "");
+                                        const fieldLabel = personTaxId
+                                            ? personType === "INDIVIDUAL"
+                                                ? "CPF"
+                                                : personType === "LEGAL_ENTITY"
+                                                    ? "CNPJ"
+                                                    : "CPF / CNPJ"
+                                            : tr(field.label);
                                         const required = (
                                             field.required
                                             || (resource.key === "person-addresses"
@@ -749,7 +787,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 || (["person-addresses", "person-phones", "person-emails"].includes(resource.key)
                                                     && field.name === "personId")
                                             ))}>
-                                            <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
+                                            <label htmlFor={`core-${field.name}`}>{fieldLabel}{required ? " *" : ""}</label>
                                             {resource.key === "models" && field.name === "manufacturerCode" && (
                                                 <small>{tr("Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.")}</small>
                                             )}
@@ -788,6 +826,25 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                     <option value="">Select an option</option>
                                                     {field.choices.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
                                                 </select>
+                                            ) : personTaxId ? (
+                                                <input
+                                                    id={`core-${field.name}`}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="off"
+                                                    placeholder={
+                                                        personType === "INDIVIDUAL"
+                                                            ? "000.000.000-00"
+                                                            : personType === "LEGAL_ENTITY"
+                                                                ? "00.000.000/0000-00"
+                                                                : "Selecione o tipo de pessoa"
+                                                    }
+                                                    maxLength={personType === "INDIVIDUAL" ? 14 : 18}
+                                                    required={required}
+                                                    disabled={!personType}
+                                                    value={maskPersonTaxId(String(values[field.name] ?? ""), personType)}
+                                                    onChange={event => change(field, maskPersonTaxId(event.target.value, personType))}
+                                                />
                                             ) : field.type === "decimal" ? (
                                                 <input
                                                     id={`core-${field.name}`}
