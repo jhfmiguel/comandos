@@ -6917,3 +6917,170 @@ html[data-theme] body .comandos-tabs-scroll-button:focus-visible {
     display: block;
     pointer-events: none;
 }
+
+
+/* COMANDOS GLOBAL FLOAT LABEL IN V1
+ * Native equivalent of PrimeReact FloatLabel variant="in".
+ * Applied to forms and editable table controls by FloatLabelEnhancer.
+ */
+[data-comandos-float-host="true"] {
+    position: relative !important;
+}
+
+[data-comandos-float-source="true"] {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+[data-comandos-float-host="true"]::after {
+    content: attr(data-comandos-float-label);
+    position: absolute;
+    z-index: 8;
+    left: var(--comandos-float-left, .75rem);
+    top: var(--comandos-float-idle-top, 50%);
+    width: var(--comandos-float-width, calc(100% - 1.5rem));
+    max-width: var(--comandos-float-width, calc(100% - 1.5rem));
+    overflow: hidden;
+    color: var(--comandos-text-muted, #737373);
+    font-size: .84rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transform-origin: left top;
+    transition:
+        top .16s ease,
+        transform .16s ease,
+        color .16s ease,
+        font-size .16s ease;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-active="true"]::after {
+    top: var(--comandos-float-active-top, .35rem);
+    color: var(--comandos-text-muted, #737373);
+    font-size: .68rem;
+    transform: translateY(0);
+}
+
+[data-comandos-float-host="true"][data-comandos-float-focused="true"]::after {
+    color: var(--comandos-accent, #ff9900);
+}
+
+[data-comandos-float-control="true"] {
+    min-height: 2.85rem !important;
+    padding-top: 1.15rem !important;
+    padding-bottom: .3rem !important;
+}
+
+textarea[data-comandos-float-control="true"] {
+    min-height: 5rem !important;
+    padding-top: 1.35rem !important;
+}
+
+[data-comandos-float-control="true"]::placeholder {
+    color: transparent !important;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-focused="true"]
+[data-comandos-float-control="true"]::placeholder {
+    color: var(--comandos-text-muted, #737373) !important;
+    opacity: .72;
+}
+
+/* Table row controls keep the same in-label behavior in compact cells. */
+td[data-comandos-float-host="true"],
+th[data-comandos-float-host="true"] {
+    position: relative !important;
+}
+
+td [data-comandos-float-control="true"],
+th [data-comandos-float-control="true"],
+td[data-comandos-float-host="true"] > [data-comandos-float-control="true"],
+th[data-comandos-float-host="true"] > [data-comandos-float-control="true"] {
+    min-height: 2.7rem !important;
+}
+
+/* COMPLETE TABLE ACTION ICON STANDARD V6
+ * All common Button actions inside tables become icon-only.
+ * No border/background/outline; hover only darkens the icon.
+ */
+table td .comandos-action-button[data-comandos-table-action] {
+    --comandos-table-action-color: var(--comandos-text-muted, #94a3b8);
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-height: 2.1rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--comandos-table-action-color) !important;
+}
+
+table td .comandos-action-button[data-comandos-table-action] .comandos-button-label,
+table td .comandos-action-button[data-comandos-table-action] .comandos-button-spinner {
+    display: none !important;
+}
+
+table td .comandos-action-button[data-comandos-table-action] .comandos-table-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+}
+
+table td .comandos-action-button[data-comandos-table-action="edit"] {
+    --comandos-table-action-color: #3b82f6;
+}
+
+table td .comandos-action-button[data-comandos-table-action="delete"],
+table td .comandos-action-button[data-comandos-table-action="cancel"] {
+    --comandos-table-action-color: #ef4444;
+}
+
+table td .comandos-action-button[data-comandos-table-action="success"],
+table td .comandos-action-button[data-comandos-table-action="add"] {
+    --comandos-table-action-color: #22c55e;
+}
+
+table td .comandos-action-button[data-comandos-table-action="view"],
+table td .comandos-action-button[data-comandos-table-action="analyze"] {
+    --comandos-table-action-color: #06b6d4;
+}
+
+table td .comandos-action-button[data-comandos-table-action="execute"],
+table td .comandos-action-button[data-comandos-table-action="refresh"] {
+    --comandos-table-action-color: #f97316;
+}
+
+table td .comandos-action-button[data-comandos-table-action="return"] {
+    --comandos-table-action-color: #a855f7;
+}
+
+table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+table td .comandos-action-button[data-comandos-table-action]:focus-visible {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--comandos-table-action-color) !important;
+    filter: brightness(.72) !important;
+}
+
+table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled) {
+    filter: brightness(.58) !important;
+}
