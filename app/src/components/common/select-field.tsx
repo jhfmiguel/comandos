@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Combobox } from "@base-ui/react/combobox";
+import { useComandosPreferences } from "components/settings/preferences-provider";
 import styles from "./select-field.module.css";
 
 export type ComandosSelectOption = {
@@ -43,17 +44,26 @@ export function ComandosSelectField({
     className?: string;
     onSearchChange?: (value: string) => void;
 }) {
+    const { tr } = useComandosPreferences();
     const [open, setOpen] = React.useState(false);
     const [hasUserTyped, setHasUserTyped] = React.useState(false);
 
+    const localizedOptions = React.useMemo(
+        () => options.map(option => ({
+            ...option,
+            label: tr(option.label)
+        })),
+        [options, tr]
+    );
+
     const effectiveOptions = React.useMemo(
         () => required
-            ? options
+            ? localizedOptions
             : [
-                { value: "", label: placeholder || "Nenhum" },
-                ...options.filter(option => option.value !== "")
+                { value: "", label: tr(placeholder || "Nenhum") },
+                ...localizedOptions.filter(option => option.value !== "")
             ],
-        [options, placeholder, required]
+        [localizedOptions, placeholder, required, tr]
     );
 
     const searchable = Boolean(onSearchChange);
@@ -152,7 +162,7 @@ export function ComandosSelectField({
             </Combobox.Root>
 
             <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
-                {label}{required ? " *" : ""}
+                {tr(label)}{required ? " *" : ""}
             </label>
         </div>
     );
