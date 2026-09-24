@@ -8,10 +8,10 @@ import {
     RefreshCw,
     RotateCcw,
     Search,
-    Trash2,
     X,
     type LucideIcon
 } from "lucide-react"
+import { Trash } from "@primeicons/react"
 
 type ComandosButtonSeverity = "primary" | "secondary" | "success" | "info" | "warn" | "help" | "danger" | "contrast"
 type ComandosButtonVariant = "text" | "outlined" | "link" | "contained"
@@ -63,11 +63,11 @@ const resolveTableAction = (value: React.ReactNode): TableAction | null => {
     return null
 }
 
-const tableActionIcon: Record<TableAction, LucideIcon> = {
+const tableActionIcon: Record<TableAction, React.ElementType> = {
     add: Plus,
     analyze: Search,
     cancel: X,
-    delete: Trash2,
+    delete: Trash,
     edit: Pencil,
     execute: Play,
     refresh: RefreshCw,
