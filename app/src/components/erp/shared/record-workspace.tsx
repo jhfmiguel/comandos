@@ -1171,6 +1171,299 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
     );
 }
 
+function RecallItemsEditor({
+    recall,
+    service
+}: {
+    recall: ErpRecord;
+    service: ErpService;
+}) {
+    const [items, setItems] = React.useState<ErpRecord[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [busy, setBusy] = React.useState(false);
+    const [error, setError] = React.useState("");
+    const [revision, setRevision] = React.useState(0);
+    const [editing, setEditing] = React.useState<ErpRecord | null>(null);
+    const [targetKind, setTargetKind] = React.useState<"asset" | "lot">("asset");
+    const [targetId, setTargetId] = React.useState<ErpValue>("");
+    const [action, setAction] = React.useState("");
+    const [description, setDescription] = React.useState("");
+    const [adding, setAdding] = React.useState(false);
+
+    const organizationId = recall.organizationId as ErpValue;
+
+    const assetField: ErpField = {
+        name: "assetId",
+        label: "Bem individual",
+        type: "reference",
+        required: true,
+        reference: "assets",
+        choices: []
+    };
+
+    const lotField: ErpField = {
+        name: "lotId",
+        label: "Lote de estoque",
+        type: "reference",
+        required: true,
+        reference: "lots",
+        choices: []
+    };
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+        setLoading(true);
+
+        service.list(
+            "recall-items",
+            "",
+            0,
+            controller.signal,
+            organizationId,
+            { recallId: String(recall.id) },
+            100
+        ).then(data => {
+            if (!controller.signal.aborted) {
+                setItems(data.content);
+                setError("");
+            }
+        }).catch(error => {
+            if (!controller.signal.aborted) setError(errorMessage(error));
+        }).finally(() => {
+            if (!controller.signal.aborted) setLoading(false);
+        });
+
+        return () => controller.abort();
+    }, [organizationId, recall.id, revision, service]);
+
+    const resetEditor = () => {
+        setEditing(null);
+        setAdding(false);
+        setTargetKind("asset");
+        setTargetId("");
+        setAction("");
+        setDescription("");
+        setError("");
+    };
+
+    const startEdit = (item: ErpRecord) => {
+        const isAsset = Boolean(item.assetId);
+        setEditing(item);
+        setAdding(true);
+        setTargetKind(isAsset ? "asset" : "lot");
+        setTargetId((isAsset ? item.assetId : item.lotId) as ErpValue);
+        setAction(String(item.action ?? ""));
+        setDescription(String(item.description ?? ""));
+        setError("");
+    };
+
+    const saveItem = async () => {
+        if (busy || !targetId || !action.trim()) return;
+
+        setBusy(true);
+        setError("");
+
+        try {
+            const payload: Record<string, ErpValue> = {
+                recallId: recall.id,
+                assetId: targetKind === "asset" ? targetId : null,
+                lotId: targetKind === "lot" ? targetId : null,
+                action: action.trim(),
+                description: description.trim() || null,
+                ...(editing ? { version: editing.version } : {})
+            };
+
+            await service.save("recall-items", payload, editing?.id);
+            resetEditor();
+            setRevision(value => value + 1);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const deleteItem = async (item: ErpRecord) => {
+        if (busy) return;
+
+        setBusy(true);
+        setError("");
+
+        try {
+            await service.remove("recall-items", item);
+            if (editing?.id === item.id) resetEditor();
+            setRevision(value => value + 1);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <section className={styles.recallItemsSection} aria-labelledby="recall-items-title">
+            <div className={styles.contactHeader}>
+                <div>
+                    <h3 id="recall-items-title">Bens e lotes afetados</h3>
+                    <small>
+                        Vincule os bens individuais ou lotes atingidos por este recall e informe a ação necessária.
+                    </small>
+                </div>
+                <button
+                    type="button"
+                    className="registration-yellow-button"
+                    disabled={busy}
+                    onClick={() => {
+                        resetEditor();
+                        setAdding(true);
+                    }}
+                >
+                    <Plus size={16} />
+                    Adicionar bem ou lote
+                </button>
+            </div>
+
+            {error && <Message type="error" text={error} onClose={() => setError("")} />}
+
+            {adding && (
+                <div className={styles.recallItemEditor}>
+                    <div className={styles.field}>
+                        <ComandosSelectField
+                            id="recall-item-kind"
+                            label="Tipo afetado *"
+                            value={targetKind}
+                            options={[
+                                { value: "asset", label: "Bem individual" },
+                                { value: "lot", label: "Lote de estoque" }
+                            ]}
+                            onChange={value => {
+                                setTargetKind(value === "lot" ? "lot" : "asset");
+                                setTargetId("");
+                            }}
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <ReferenceSelectField
+                            service={service}
+                            field={targetKind === "asset" ? assetField : lotField}
+                            label={targetKind === "asset" ? "Bem individual *" : "Lote de estoque *"}
+                            required
+                            value={targetId}
+                            selectedLabel={
+                                editing
+                                    ? editing.referenceLabels[targetKind === "asset" ? "assetId" : "lotId"]
+                                    : undefined
+                            }
+                            organizationId={organizationId}
+                            onChange={setTargetId}
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="recall-item-action">Ação necessária *</label>
+                        <input
+                            id="recall-item-action"
+                            value={action}
+                            maxLength={255}
+                            onChange={event => setAction(event.target.value)}
+                        />
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="recall-item-description">Observação</label>
+                        <input
+                            id="recall-item-description"
+                            value={description}
+                            maxLength={255}
+                            onChange={event => setDescription(event.target.value)}
+                        />
+                    </div>
+
+                    <div className={styles.recallItemEditorActions}>
+                        <button
+                            type="button"
+                            className="comandos-secondary-button"
+                            disabled={busy}
+                            onClick={resetEditor}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            className="registration-yellow-button"
+                            disabled={busy || !targetId || !action.trim()}
+                            onClick={() => void saveItem()}
+                        >
+                            {busy ? "Salvando..." : editing ? "Salvar item" : "Adicionar à lista"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className={[styles.tableContainer, "comandos-native-table-container"].join(" ")} aria-busy={loading}>
+                <table className="comandos-native-table comandos-erp-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Bem / lote</th>
+                            <th>Ação necessária</th>
+                            <th>Observação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {!loading && items.length === 0 && (
+                            <tr>
+                                <td colSpan={5}>Nenhum bem ou lote afetado foi incluído neste recall.</td>
+                            </tr>
+                        )}
+                        {items.map(item => {
+                            const isAsset = Boolean(item.assetId);
+                            const referenceName = isAsset ? "assetId" : "lotId";
+                            const referenceValue = isAsset ? item.assetId : item.lotId;
+
+                            return (
+                                <tr key={item.id}>
+                                    <td>{isAsset ? "Bem individual" : "Lote de estoque"}</td>
+                                    <td>{item.referenceLabels[referenceName] || ("#" + String(referenceValue ?? ""))}</td>
+                                    <td>{String(item.action ?? "—")}</td>
+                                    <td>{String(item.description ?? "—")}</td>
+                                    <td className={styles.actionCell}>
+                                        <div className={[styles.actions, styles.tableActions].join(" ")}>
+                                            <button
+                                                type="button"
+                                                className="comandos-icon-button comandos-icon-button-edit"
+                                                aria-label="Editar item do recall"
+                                                title="Editar"
+                                                disabled={busy}
+                                                onClick={() => startEdit(item)}
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="comandos-icon-button comandos-icon-button-danger"
+                                                data-comandos-table-action="delete"
+                                                aria-label="Remover item do recall"
+                                                title="Remover"
+                                                disabled={busy}
+                                                onClick={() => void deleteItem(item)}
+                                            >
+                                                <Trash />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    );
+}
+
 export function ReferenceSelectField({
     service,
     field,
