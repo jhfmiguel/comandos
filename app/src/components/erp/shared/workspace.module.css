@@ -436,10 +436,15 @@
     flex: 0 0 auto;
 }
 
+.contactAddButton,
 .contactAddButton:hover:not(:disabled),
 .contactAddButton:focus-visible,
 .contactAddButton:active:not(:disabled) {
-    background: transparent !important;
+    background: color-mix(
+        in srgb,
+        var(--comandos-accent, #ff9900) 7%,
+        transparent
+    ) !important;
     border-color: var(--comandos-accent, #ff9900) !important;
     color: var(--comandos-accent, #ff9900) !important;
     box-shadow: none !important;
