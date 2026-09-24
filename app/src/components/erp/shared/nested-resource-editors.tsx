@@ -869,7 +869,7 @@ const specificationByFamily: Record<string, string> = {
     TACTICAL_EQUIPMENT: "tactical-equipment-specifications"
 };
 
-function SpecificationField({
+function SpecificationReferenceField({
     field,
     value,
     service,
@@ -882,15 +882,36 @@ function SpecificationField({
 }) {
     const referenceOptions = useResourceOptions(service, field.reference ?? "");
 
+    return (
+        <ComandosSelectField
+            id={"model-spec-" + field.name}
+            label={field.label}
+            value={String(value ?? "")}
+            options={toOptions(referenceOptions.options)}
+            required={field.required}
+            onChange={next => onChange(next ? Number(next) : null)}
+        />
+    );
+}
+
+function SpecificationField({
+    field,
+    value,
+    service,
+    onChange
+}: {
+    field: ErpField;
+    value: ErpValue;
+    service: ErpService;
+    onChange: (value: ErpValue) => void;
+}) {
     if (field.type === "reference") {
         return (
-            <ComandosSelectField
-                id={"model-spec-" + field.name}
-                label={field.label}
-                value={String(value ?? "")}
-                options={toOptions(referenceOptions.options)}
-                required={field.required}
-                onChange={next => onChange(next ? Number(next) : null)}
+            <SpecificationReferenceField
+                field={field}
+                value={value}
+                service={service}
+                onChange={onChange}
             />
         );
     }
