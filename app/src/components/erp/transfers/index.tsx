@@ -157,9 +157,9 @@ function StockPicker({ organizationId, sourceUnitId, selected, onAdd }: {
         return () => { clearTimeout(timer); controller.abort(); };
     }, [organizationId, sourceUnitId, kind, search, page]);
     return <section><div className={styles.toolbar}><h2>Available stock at source</h2>
-        <div className={styles.field}><label htmlFor="transfer-kind">Stock type</label><select id="transfer-kind" value={kind}
-            onChange={event => { setKind(event.target.value as "ASSET" | "LOT"); setPage(0); setResult(null); }}>
-            <option value="ASSET">Individual assets</option><option value="LOT">Stock lots</option></select></div>
+        <div className={styles.field}><ComandosSelectField id="transfer-kind" label="Stock type" value={kind}
+            options={[{value:"ASSET",label:"Individual assets"},{value:"LOT",label:"Stock lots"}]}
+            onChange={value => { setKind(value as "ASSET" | "LOT"); setPage(0); setResult(null); }} /></div>
         <div className={styles.field}><label htmlFor="transfer-search">Code, model or SKU</label><input id="transfer-search"
             type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(0); setResult(null); }} /></div>
     </div>{error && <Message type="error" text={error} />}{!result && !error && <p role="status">Loading stock…</p>}
