@@ -76,7 +76,7 @@ function markActionCells(table: HTMLTableElement) {
     });
 }
 
-function findPaginationScope(table: HTMLTableElement): HTMLElement | null {
+function findPaginationScope(table: HTMLTableElement): Element | null {
     return table.closest("section")
         ?? table.closest("form")
         ?? table.parentElement?.parentElement
