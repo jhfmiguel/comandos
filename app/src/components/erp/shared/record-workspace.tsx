@@ -736,7 +736,11 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 && field.name === "country"
                                                 && Boolean(values.foreignAddress))
                                         ) && !(record && field.type === "password");
-                                        return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (field.createOnly || resource.key === "person-addresses" && field.name === "personId"))}>
+                                        return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (
+                                                field.createOnly
+                                                || (["person-addresses", "person-phones", "person-emails"].includes(resource.key)
+                                                    && field.name === "personId")
+                                            ))}>
                                             <label htmlFor={`core-${field.name}`}>{tr(field.label)}{required ? " *" : ""}</label>
                                             {resource.key === "models" && field.name === "manufacturerCode" && (
                                                 <small>{tr("Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.")}</small>
