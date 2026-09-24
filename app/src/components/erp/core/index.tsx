@@ -16,6 +16,14 @@ const sectionTabs: Record<
 > = {
     institutional: [
         {
+            resource: "organization-natures",
+            label: "Organization natures"
+        },
+        {
+            resource: "economic-activities",
+            label: "Economic activities"
+        },
+        {
             resource: "organizations",
             label: "Organizations"
         },
@@ -32,6 +40,14 @@ const sectionTabs: Record<
         {
             resource: "person-addresses",
             label: "Endereços"
+        },
+        {
+            resource: "person-phones",
+            label: "Telefones"
+        },
+        {
+            resource: "person-emails",
+            label: "E-mails"
         },
         {
             resource: "person-roles",
