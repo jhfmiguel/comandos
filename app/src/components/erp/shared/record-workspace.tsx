@@ -916,7 +916,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 <input id={`core-${field.name}`} type="checkbox" checked={Boolean(values[field.name])} onChange={event => change(field, event.target.checked)} />
                                             ) : field.type === "choice" ? (
                                                 <select id={`core-${field.name}`} required={required} value={String(values[field.name] ?? "")} onChange={event => change(field, event.target.value)}>
-                                                    <option value="">Select an option</option>
+                                                    <option value=""></option>
                                                     {field.choices.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
                                                 </select>
                                             ) : personTaxId ? (
