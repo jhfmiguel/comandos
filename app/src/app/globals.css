@@ -5664,27 +5664,28 @@ html[data-theme="dark"] .comandos-filter-row th { background:#171717; }
     display:none;
     align-items:center;
     justify-content:center;
-    width:2.5rem;
-    min-width:2.5rem;
+    width:1.75rem;
+    min-width:1.75rem;
     padding:0;
-    border:0;
-    background:
-        linear-gradient(
-            90deg,
-            var(--comandos-surface-2, var(--p-content-background, #fff)) 72%,
-            color-mix(in srgb, var(--comandos-surface-2, var(--p-content-background, #fff)) 10%, transparent)
-        );
+    border:0 !important;
+    background:transparent !important;
+    background-image:none !important;
+    box-shadow:none !important;
     color:var(--comandos-text, var(--p-content-color, #171717));
+    font:inherit;
+    font-size:1.35rem;
+    font-weight:700;
+    line-height:1;
     cursor:pointer;
-    transition:color .16s ease, opacity .16s ease, background-color .16s ease;
+    transition:color .16s ease, opacity .16s ease;
+}
+.comandos-tabs-scroll-button::before,
+.comandos-tabs-scroll-button::after {
+    display:none !important;
+    content:none !important;
 }
 .comandos-tabs-scroll-button-next {
-    background:
-        linear-gradient(
-            270deg,
-            var(--comandos-surface-2, var(--p-content-background, #fff)) 72%,
-            color-mix(in srgb, var(--comandos-surface-2, var(--p-content-background, #fff)) 10%, transparent)
-        );
+    background:transparent !important;
 }
 .comandos-tabs-scroll-button.is-visible {
     display:inline-flex;
