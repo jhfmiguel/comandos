@@ -21,7 +21,8 @@ public class AccessPolicy {
         "core/organization-natures", "core/organizations",
         "core/economic-activities", "core/organizations",
         "core/unit-types", "core/units",
-        "core/person-types", "core/people"
+        "core/person-types", "core/people",
+        "core/contact-types", "core/people"
     );
     private static final Set<String> INVENTORY_PARAMETER_PARENT_RESOURCES = Set.of(
         "inventory/item-categories",
