@@ -6,7 +6,16 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "erp_person")
 public class Person extends CoreEntity {
-    
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "person_type_id")
+    public PersonType personTypeRef;
+
+    /**
+     * Compatibilidade com a coluna histórica "person_type".
+     * Novos cadastros usam person_type_id; este texto continua sincronizado
+     * para preservar bancos existentes durante a transição.
+     */
 	@Column(name = "person_type", nullable = false, length = 255)
     public String personType;
     
