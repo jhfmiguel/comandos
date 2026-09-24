@@ -314,7 +314,7 @@ export function EquipmentSetComponentsEditor({
                                             </button>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger"
+                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                                 data-comandos-table-action="delete"
                                                 aria-label="Remover componente"
                                                 title="Remover"
@@ -545,7 +545,7 @@ export function CategoryCharacteristicsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                             data-comandos-table-action="delete"
                                             aria-label="Remover característica da categoria"
                                             title="Remover"
@@ -829,7 +829,7 @@ export function CharacteristicValuesEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                             data-comandos-table-action="delete"
                                             aria-label="Remover valor da característica"
                                             title="Remover"
@@ -1111,7 +1111,7 @@ export function ModelSpecificationEditor({
                 {specification && (
                     <button
                         type="button"
-                        className="comandos-icon-button comandos-icon-button-danger"
+                        className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                         data-comandos-table-action="delete"
                         aria-label="Remover especificação técnica"
                         title="Remover especificação"
