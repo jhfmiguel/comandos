@@ -155,11 +155,19 @@ public class DemoDataSeeder implements ApplicationRunner {
         asset(apx, centralVault, "PAT-DEMO-0001", "APX-DEMO-0001", "ARM-0001", "GOOD", "AVAILABLE", "6500.00");
         asset(apx, centralVault, "PAT-DEMO-0002", "APX-DEMO-0002", "ARM-0002", "GOOD", "AVAILABLE", "6500.00");
         asset(apx, operationalVault, "PAT-DEMO-0003", "APX-DEMO-0003", "ARM-0003", "GOOD", "AVAILABLE", "6500.00");
+        asset(apx, operationalVault, "PAT-DEMO-0004", "APX-DEMO-0004", "ARM-0004", "GOOD", "BLOCKED", "6500.00");
         asset(vest, operationalVault, "PAT-DEMO-0101", "VEST-DEMO-0101", "COL-0101", "GOOD", "AVAILABLE", "3200.00");
         asset(vest, trainingStore, "PAT-DEMO-0102", "VEST-DEMO-0102", "COL-0102", "GOOD", "AVAILABLE", "3200.00");
+        asset(vest, centralVault, "PAT-DEMO-0103", "VEST-DEMO-0103", "COL-0103", "GOOD", "BLOCKED", "3200.00");
 
         StockLot lot = lot(ammo9, centralVault, "CBC-DEMO-2026-001", "5000.0000", LocalDate.of(2031, 9, 30));
         balance(lot, centralVault, "5000.0000");
+
+        StockLot trainingLot = lot(ammo9, trainingStore, "CBC-DEMO-2026-002", "1500.0000", LocalDate.of(2030, 6, 30));
+        balance(trainingLot, trainingStore, "1250.0000");
+
+        StockLot operationalLot = lot(ammo9, operationalVault, "CBC-DEMO-2026-003", "800.0000", LocalDate.of(2029, 12, 31));
+        balance(operationalLot, operationalVault, "800.0000");
 
         entityManager.flush();
     }
