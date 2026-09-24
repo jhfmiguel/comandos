@@ -5621,21 +5621,82 @@ html[data-theme="dark"] .comandos-filter-row th { background:#171717; }
 
 /* Native generic ERP tabs */
 .comandos-tabs { min-width:0; }
+
+.comandos-tabs-scroll-shell {
+    position:relative;
+    display:grid;
+    grid-template-columns:auto minmax(0, 1fr) auto;
+    align-items:stretch;
+    min-width:0;
+    margin-bottom:1rem;
+    border-bottom:1px solid var(--p-content-border-color,#dee2e6);
+}
+
 .comandos-tabs-list {
     display:flex;
     gap:0.25rem;
+    min-width:0;
     overflow-x:auto;
-    border-bottom:1px solid var(--p-content-border-color,#dee2e6);
-    margin-bottom:1rem;
+    overflow-y:hidden;
+    margin:0;
+    border:0;
     scrollbar-width:none;
     -ms-overflow-style:none;
     scroll-behavior:smooth;
     overscroll-behavior-inline:contain;
+    touch-action:pan-x;
+    cursor:grab;
+}
+.comandos-tabs-list.is-dragging {
+    cursor:grabbing;
+    user-select:none;
+    scroll-behavior:auto;
 }
 .comandos-tabs-list::-webkit-scrollbar {
     display:none;
     width:0;
     height:0;
+}
+
+.comandos-tabs-scroll-button {
+    position:relative;
+    z-index:2;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    width:2.5rem;
+    min-width:2.5rem;
+    padding:0;
+    border:0;
+    background:
+        linear-gradient(
+            90deg,
+            var(--comandos-surface-2, var(--p-content-background, #fff)) 72%,
+            color-mix(in srgb, var(--comandos-surface-2, var(--p-content-background, #fff)) 10%, transparent)
+        );
+    color:var(--comandos-text, var(--p-content-color, #171717));
+    cursor:pointer;
+    transition:color .16s ease, opacity .16s ease, background-color .16s ease;
+}
+.comandos-tabs-scroll-button-next {
+    background:
+        linear-gradient(
+            270deg,
+            var(--comandos-surface-2, var(--p-content-background, #fff)) 72%,
+            color-mix(in srgb, var(--comandos-surface-2, var(--p-content-background, #fff)) 10%, transparent)
+        );
+}
+.comandos-tabs-scroll-button.is-visible {
+    display:inline-flex;
+}
+.comandos-tabs-scroll-button:hover:not(:disabled),
+.comandos-tabs-scroll-button:focus-visible {
+    color:var(--comandos-accent, #ff9900);
+    outline:none;
+}
+.comandos-tabs-scroll-button:disabled {
+    opacity:.28;
+    cursor:default;
 }
 .comandos-tab {
     border:0;
