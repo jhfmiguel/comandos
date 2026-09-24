@@ -5,7 +5,7 @@ import { Pencil, Plus } from "lucide-react";
 import { Trash } from "@primeicons/react";
 
 import { Message } from "components/common/message";
-import type { ErpRecord, ErpValue } from "api/models/erp";
+import type { ErpRecord } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "./workspace.module.css";
 
