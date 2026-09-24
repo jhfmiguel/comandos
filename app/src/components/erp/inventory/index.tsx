@@ -60,22 +60,8 @@ const sectionTabs = {
     specifications: [
         { resource: "technical-characteristics", label: "Technical characteristics" }
     ],
-    equipment: [
-        { resource: "firearm-specifications", label: "Firearm" },
-        { resource: "ammunition-specifications", label: "Ammunition" },
-        { resource: "grenade-specifications", label: "Grenade" },
-        { resource: "spray-specifications", label: "Spray" },
-        { resource: "ballistic-protection-specifications", label: "Ballistic protection" },
-        { resource: "electrical-device-specifications", label: "Electrical device" },
-        { resource: "optical-specifications", label: "Optical" },
-        { resource: "helmet-specifications", label: "Helmet" },
-        { resource: "shield-specifications", label: "Shield" },
-        { resource: "restraint-specifications", label: "Handcuffs/restraints" },
-        { resource: "accessory-component-specifications", label: "Accessories/components" },
-        { resource: "tactical-equipment-specifications", label: "Tactical equipment" },
-        { resource: "regulatory-controls", label: "Regulatory controls" }
-    ],
     compliance: [
+        { resource: "regulatory-controls", label: "Regulatory controls" },
         { resource: "expiration-controls", label: "Expiration controls" },
         { resource: "certifications", label: "Certifications" },
         { resource: "recalls", label: "Recalls" }
