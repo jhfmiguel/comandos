@@ -164,7 +164,17 @@ const enhanceControl = (control: FloatControl): void => {
     host.dataset.comandosFloatLabel = text;
     control.dataset.comandosFloatControl = "true";
 
-    if (source && !source.contains(control)) {
+    const sourceBelongsToHost =
+        source
+        && host.contains(source)
+        && !source.contains(control);
+
+    if (sourceBelongsToHost) {
+        host.dataset.comandosFloatUsesSource = "true";
+        source.dataset.comandosFloatLabelElement = "true";
+        delete source.dataset.comandosFloatSource;
+    } else if (source && !source.contains(control)) {
+        delete host.dataset.comandosFloatUsesSource;
         source.dataset.comandosFloatSource = "true";
     }
 
