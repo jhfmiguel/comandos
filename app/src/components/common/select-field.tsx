@@ -56,14 +56,21 @@ export function ComandosSelectField({
         [options, placeholder, required]
     );
 
-    const visibleOptions = hasUserTyped ? effectiveOptions : [];
+    const searchable = Boolean(onSearchChange);
+    const visibleOptions = searchable
+        ? (hasUserTyped ? effectiveOptions : [])
+        : effectiveOptions;
 
+    // Keep the complete option set registered with Base UI so a selected
+    // internal value (for example PERSON or ONEROUS) is always rendered
+    // using its human-readable label. Searchable reference fields still
+    // keep their popup hidden until the user types.
     const items = React.useMemo(
-        () => Combobox.createItems(visibleOptions, {
+        () => Combobox.createItems(effectiveOptions, {
             getValue: option => option.value,
             getLabel: option => option.label
         }),
-        [visibleOptions]
+        [effectiveOptions]
     );
 
     const selected = value || null;
@@ -116,7 +123,7 @@ export function ComandosSelectField({
                     />
                 </Combobox.InputGroup>
 
-                {hasUserTyped && (
+                {(searchable ? hasUserTyped : open) && (
                 <Combobox.Portal>
                     <Combobox.Positioner
                         className={styles.positioner}
