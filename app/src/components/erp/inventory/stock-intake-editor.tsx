@@ -10,6 +10,7 @@ import type { ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "components/erp/shared/workspace.module.css";
 import { Trash } from "@primeicons/react";
+import { formatBRLValue, isMonetaryField, maskBRLInput, parseBRLValue } from "utils/money";
 
 type RowResult = { row: number; status: string; errors: string[] };
 type BatchResult = { quantity: string; rows?: RowResult[] };
@@ -24,7 +25,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     const assets = resource.key === "assets";
     const fields = resource.fields.filter(field => !field.readOnly && !(assets
         ? ["assetCode", "serialNumber", "internalCode"].includes(field.name) : field.name === "initialQuantity"));
-    const [values, setValues] = React.useState<Record<string, ErpValue>>({ condition: "GOOD", status: "AVAILABLE", currentValue: "0" });
+    const [values, setValues] = React.useState<Record<string, ErpValue>>({ condition: "GOOD", status: "AVAILABLE", currentValue: formatBRLValue(0) });
     const [rows, setRows] = React.useState<Pair[]>([emptyRow()]);
     const [paste, setPaste] = React.useState("");
     const [looseUnits, setLooseUnits] = React.useState("0");
@@ -129,7 +130,15 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     async function submit(event: React.FormEvent) {
         event.preventDefault();
         if (saving.current || !valid || completed !== null) return;
-        const common = Object.fromEntries(fields.map(field => [field.name, values[field.name] ?? ""]));
+        const common = Object.fromEntries(fields.map(field => {
+            const value = values[field.name] ?? "";
+            return [
+                field.name,
+                field.type === "decimal" && isMonetaryField(field.name)
+                    ? parseBRLValue(String(value))
+                    : value
+            ];
+        }));
         const payload = pending ?? (assets
             ? { requestId: crypto.randomUUID(), common, items: normalized.map(row => ({ assetCode: row.first, serialNumber: row.second })) }
             : { requestId: crypto.randomUUID(), ...common, looseUnits, boxes: normalized.map(row => ({ boxes: row.first, roundsPerBox: row.second })) });
@@ -231,6 +240,15 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                                     }))}
                                 onChange={value => setValues(current => ({ ...current, [field.name]: value }))}
                             />
+                                : field.type === "decimal" && isMonetaryField(field.name) ? <input
+                                    id={`core-${field.name}`}
+                                    required={field.required}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={30}
+                                    value={String(values[field.name] ?? "")}
+                                    onChange={event => setValues(current => ({ ...current, [field.name]: maskBRLInput(event.target.value) }))}
+                                />
                                 : <input id={`core-${field.name}`} required={field.required} type={field.type === "decimal" ? "number" : field.type}
                                     min={field.type === "decimal" ? "0" : undefined} step={field.type === "decimal" ? "0.0001" : undefined}
                                     maxLength={255} value={String(values[field.name] ?? "")}
@@ -238,7 +256,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                     </div>)}
                 </fieldset>
                 <fieldset disabled={locked || activeTab !== "items"} hidden={activeTab !== "items"}>
-                    {assets && <details><summary>Importar bens para a tabela</summary>
+                    {assets && <details className={styles.assetImportDetails}><summary>Importar bens para a tabela</summary>
                         <div className={styles.assetImportBlock}>
                             <label className={styles.assetFileImport}>
                                 <span>Carregar arquivo</span>
@@ -251,7 +269,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                             <small>CSV, TSV ou TXT com duas colunas: Código patrimonial e Número de série. O cabeçalho é opcional.</small>
                             <label htmlFor="asset-pairs-paste">Ou cole duas colunas da planilha</label>
                             <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
-                            <button type="button" className="registration-yellow-button" onClick={importPairs}>Adicionar linhas coladas</button>
+                            <button type="button" className={`registration-yellow-button ${styles.pastedRowsButton}`} onClick={importPairs}>Adicionar linhas coladas</button>
                         </div>
                     </details>}
                     <div className={styles.tableContainer}><table data-comandos-table-standardize="off">
@@ -278,7 +296,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
                             onChange={event => setLooseUnits(event.target.value)} /></div>}
                 </fieldset>
-                {activeTab === "items" && <p role="status">{assets ? "Quantidade de bens" : "Total de munições"}: <strong>{total}</strong></p>}
+                {activeTab === "items" && <p role="status" className={styles.intakeQuantityTotal}>{assets ? "Quantidade de bens" : "Total de munições"}: <strong>{total}</strong></p>}
                 {activeTab === "items" && duplicate && <Message type="error" text="Cada código patrimonial e número de série deve ser único nesta lista." />}
                 {activeTab === "items" && !assets && (!validRows || total.length > 15) && <small>Informe quantidades inteiras positivas; o total pode conter no máximo 15 dígitos.</small>}
                 {activeTab === "items" && reviewed && !pending && <button type="button" className="registration-yellow-button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Editar lote</button>}
