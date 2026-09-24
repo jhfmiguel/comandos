@@ -49,6 +49,13 @@ public class CoreController {
     }
 
     
+    @PostMapping("/people/with-contacts")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, Object> createPersonWithContacts(
+            @RequestBody CoreService.PersonRegistration registration) {
+        return service.savePersonWithContacts(registration);
+    }
+
     @GetMapping("/{resource}")
     public CoreService.PageResult list(
     		@PathVariable String resource,
