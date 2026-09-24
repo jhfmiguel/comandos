@@ -3,7 +3,7 @@
 import * as React from "react";
 
 const CONTROL_SELECTOR = [
-    'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"])',
+    'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="search"])',
     "select",
     "textarea"
 ].join(",");
@@ -104,7 +104,8 @@ const positionLabel = (control: FloatControl, host: HTMLElement): void => {
 
     host.style.setProperty("--comandos-float-left", `${left}px`);
     host.style.setProperty("--comandos-float-idle-top", `${top + controlRect.height / 2}px`);
-    host.style.setProperty("--comandos-float-active-top", `${top + 5}px`);
+    const activeTop = control instanceof HTMLSelectElement ? top + 1 : top + 5;
+    host.style.setProperty("--comandos-float-active-top", `${activeTop}px`);
     host.style.setProperty("--comandos-float-width", `${width}px`);
 };
 
@@ -119,7 +120,11 @@ const updateState = (control: FloatControl): void => {
 };
 
 const enhanceControl = (control: FloatControl): void => {
-    if (control.dataset.comandosNoFloat === "true") return;
+    if (
+        control.dataset.comandosNoFloat === "true"
+        || control.closest(".comandos-filter-row")
+        || control.closest("[role='search']")
+    ) return;
 
     const { text, source } = resolveLabel(control);
     if (!text) return;
