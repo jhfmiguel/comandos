@@ -261,6 +261,9 @@ public class CoreService {
         if (spec.entity() == OrganizationalUnit.class) {
             normalizeLegacyOrganizationalUnitInput(input);
         }
+        if (spec.entity() == AccessProfile.class) {
+            normalizeLegacyAccessProfileInput(input);
+        }
 
         Set<String> allowed = new HashSet<>(spec.fields().stream().map(CoreCatalog.Field::name).toList());
         allowed.add("version");
@@ -329,6 +332,9 @@ public class CoreService {
         if (entity instanceof Person person && person.personTypeRef != null) {
             person.personType = person.personTypeRef.code;
         }
+        if (entity instanceof AccessProfile profile && profile.levelType != null) {
+            profile.level = profile.levelType.code;
+        }
         access.requireEntity("core/" + resource, action, entity);
         validate(entity);
         if (id == null) em.persist(entity);
@@ -338,6 +344,39 @@ public class CoreService {
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
         audit.record("core/" + resource, entity.id, action, before, auditResult);
         return result;
+    }
+
+    private void normalizeLegacyAccessProfileInput(Map<String, Object> input) {
+        if (input.containsKey("levelTypeId")) {
+            input.remove("level");
+            return;
+        }
+
+        Object legacyLevel = input.remove("level");
+        String raw = legacyLevel == null ? "" : legacyLevel.toString().trim();
+        if (raw.isEmpty()) return;
+
+        String code = raw.toUpperCase(Locale.ROOT);
+        var existing = em.createQuery(
+                "select l from AccessProfileLevel l where upper(l.code) = :code",
+                AccessProfileLevel.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+
+        AccessProfileLevel level;
+        if (!existing.isEmpty()) {
+            level = existing.getFirst();
+        } else {
+            level = new AccessProfileLevel();
+            level.code = code;
+            level.name = raw;
+            level.description = "Migrado automaticamente do nível legado";
+            level.active = true;
+            em.persist(level);
+        }
+
+        input.put("levelTypeId", level.id);
     }
 
     private void normalizeLegacyOrganizationalUnitInput(Map<String, Object> input) {
@@ -832,6 +871,15 @@ public class CoreService {
                 result.put(field.name(), null);
                 if (unit.type != null && !unit.type.isBlank()) {
                     labels.put(field.name(), unit.type);
+                }
+            } else if (
+                entity instanceof AccessProfile profile
+                && "levelTypeId".equals(field.name())
+                && profile.levelType == null
+            ) {
+                result.put(field.name(), null);
+                if (profile.level != null && !profile.level.isBlank()) {
+                    labels.put(field.name(), profile.level);
                 }
             } else result.put(field.name(), value);
         }
