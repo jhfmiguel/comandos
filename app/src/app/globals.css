@@ -7953,3 +7953,30 @@ html body button.comandos-trash-button:active svg {
     background-color: transparent !important;
     filter: none !important;
 }
+
+
+/* TRASH HOVER MUST NOT HIGHLIGHT THE TABLE ROW V15
+ * The generic table-row hover paints the cells with the active palette color.
+ * When the pointer is on a trash action, keep both the row and its cells neutral.
+ */
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover),
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible),
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover) > td,
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible) > td,
+html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) > td {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover),
+html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible),
+html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
