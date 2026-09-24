@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import { Trash } from "@primeicons/react";
 
 import { Message } from "components/common/message";
 import type { ErpRecord } from "api/models/erp";
@@ -210,14 +211,14 @@ export function RoleDetailsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
                                             data-comandos-table-action="delete"
                                             aria-label="Remover dado do vínculo"
                                             title="Remover"
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash />
                                         </button>
                                     </div>
                                 </td>
