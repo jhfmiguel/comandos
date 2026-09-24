@@ -404,7 +404,7 @@ export function PersonContactsEditor({
                                                 aria-label={`Remover endereço ${index + 1}`}
                                                 onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                             >
-                                                <Trash size={17} />
+                                                <Trash />
                                             </button>
                                         </td>
                                     </tr>
@@ -522,7 +522,7 @@ export function PersonContactsEditor({
                                             aria-label={`Remover telefone ${index + 1}`}
                                             onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash size={17} />
+                                            <Trash />
                                         </button>
                                     </td>
                                 </tr>
@@ -607,7 +607,7 @@ export function PersonContactsEditor({
                                             aria-label={`Remover e-mail ${index + 1}`}
                                             onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
-                                            <Trash size={17} />
+                                            <Trash />
                                         </button>
                                     </td>
                                 </tr>
