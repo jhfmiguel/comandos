@@ -266,6 +266,12 @@ public class CoreService {
         if (entity instanceof PersonAddress address && id != null
                 && !Objects.equals(address.person.id, positiveLong(data.get("personId"), "Person", false)))
             bad("An address cannot be transferred to another person.");
+        if (entity instanceof PersonPhone phone && id != null
+                && !Objects.equals(phone.person.id, positiveLong(data.get("personId"), "Person", false)))
+            bad("A phone cannot be transferred to another person.");
+        if (entity instanceof PersonEmail email && id != null
+                && !Objects.equals(email.person.id, positiveLong(data.get("personId"), "Person", false)))
+            bad("An email cannot be transferred to another person.");
         for (var field : spec.fields()) {
             boolean supplied = data.containsKey(field.name());
             if (!supplied) {
@@ -368,21 +374,80 @@ public class CoreService {
             organization.legacyNature = organization.nature.name;
         }
         if (entity instanceof PersonAddress address) {
-            if (!address.postalCode.matches("[0-9]{5}-?[0-9]{3}")) bad("CEP inválido. Informe oito dígitos.");
-            address.postalCode = address.postalCode.replace("-", "");
-            address.state = address.state.toUpperCase(Locale.ROOT);
-            if (!Set.of("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO").contains(address.state)) bad("UF inválida.");
+            boolean foreign = Boolean.TRUE.equals(address.foreignAddress);
+            address.foreignAddress = foreign;
+
+            if (!foreign) {
+                address.country = "Brasil";
+                if (address.postalCode == null || !address.postalCode.matches("[0-9]{5}-?[0-9]{3}"))
+                    bad("CEP inválido. Informe oito dígitos.");
+                address.postalCode = address.postalCode.replace("-", "");
+                address.state = address.state.toUpperCase(Locale.ROOT);
+                if (!Set.of("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO").contains(address.state))
+                    bad("UF inválida.");
+            } else {
+                if (address.country == null || address.country.isBlank())
+                    bad("País é obrigatório para endereço no exterior.");
+                if (address.postalCode != null) address.postalCode = address.postalCode.trim();
+            }
+
             // The person lock serializes duplicate and primary checks, including concurrent inserts.
             var others = em.createQuery("select a from PersonAddress a where a.person.id = :person and a.archived = false and a.id <> :id", PersonAddress.class)
                 .setParameter("person", address.person.id).setParameter("id", address.id == null ? -1L : address.id)
                 .setFlushMode(jakarta.persistence.FlushModeType.COMMIT).getResultList();
             for (var other : others) {
-                if (address.primaryAddress && other.primaryAddress)
+                if (Boolean.TRUE.equals(address.primaryAddress) && Boolean.TRUE.equals(other.primaryAddress))
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um endereço principal. Desmarque o atual antes de escolher outro.");
-                if (address.postalCode.equals(other.postalCode) && address.street.equalsIgnoreCase(other.street)
+
+                boolean sameAddress;
+                if (!foreign && !Boolean.TRUE.equals(other.foreignAddress)) {
+                    sameAddress = Objects.equals(address.postalCode, other.postalCode)
+                        && address.street.equalsIgnoreCase(other.street)
                         && address.number.equalsIgnoreCase(other.number)
-                        && Objects.toString(address.complement, "").equalsIgnoreCase(Objects.toString(other.complement, "")))
+                        && Objects.toString(address.complement, "").equalsIgnoreCase(Objects.toString(other.complement, ""));
+                } else {
+                    sameAddress = Objects.toString(address.country, "").equalsIgnoreCase(Objects.toString(other.country, ""))
+                        && address.street.equalsIgnoreCase(other.street)
+                        && address.number.equalsIgnoreCase(other.number)
+                        && address.city.equalsIgnoreCase(other.city)
+                        && address.state.equalsIgnoreCase(other.state)
+                        && Objects.toString(address.complement, "").equalsIgnoreCase(Objects.toString(other.complement, ""));
+                }
+                if (sameAddress)
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Este endereço já está cadastrado para a pessoa.");
+            }
+        }
+        if (entity instanceof PersonPhone phone) {
+            if (phone.countryCode == null || phone.countryCode.isBlank()) phone.countryCode = "+55";
+            phone.countryCode = phone.countryCode.trim();
+            if (!phone.countryCode.matches("\\+?[0-9]{1,4}"))
+                bad("Código do país inválido.");
+
+            String digits = phone.number.replaceAll("\\D", "");
+            if (digits.length() < 7 || digits.length() > 15)
+                bad("Telefone inválido.");
+
+            var others = em.createQuery("select p from PersonPhone p where p.person.id = :person and p.id <> :id", PersonPhone.class)
+                .setParameter("person", phone.person.id).setParameter("id", phone.id == null ? -1L : phone.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT).getResultList();
+            for (var other : others) {
+                if (Boolean.TRUE.equals(phone.primaryPhone) && Boolean.TRUE.equals(other.primaryPhone))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um telefone principal.");
+                if (phone.countryCode.equals(other.countryCode)
+                        && digits.equals(other.number.replaceAll("\\D", "")))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Este telefone já está cadastrado para a pessoa.");
+            }
+        }
+        if (entity instanceof PersonEmail email) {
+            email.email = email.email.toLowerCase(Locale.ROOT);
+            var others = em.createQuery("select e from PersonEmail e where e.person.id = :person and e.id <> :id", PersonEmail.class)
+                .setParameter("person", email.person.id).setParameter("id", email.id == null ? -1L : email.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT).getResultList();
+            for (var other : others) {
+                if (Boolean.TRUE.equals(email.primaryEmail) && Boolean.TRUE.equals(other.primaryEmail))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um e-mail principal.");
+                if (email.email.equalsIgnoreCase(other.email))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está cadastrado para a pessoa.");
             }
         }
         if (entity instanceof Person person) {
@@ -431,7 +496,9 @@ public class CoreService {
     // Acquire scope locks before loading related entities so hierarchy checks see
     // the latest committed relationships, including concurrent parent changes.
     private void lockScope(CoreCatalog.Resource spec, Long id, Map<String, Object> data) {
-        if (spec.entity() == PersonAddress.class) {
+        if (spec.entity() == PersonAddress.class
+                || spec.entity() == PersonPhone.class
+                || spec.entity() == PersonEmail.class) {
             var person = em.find(Person.class, positiveLong(data.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
             if (person == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found.");
             access.requireEntity("core/people", "READ", person);
