@@ -55,16 +55,34 @@ function Remote<T>({ load, children }: { load: (signal: AbortSignal) => Promise<
         }).catch(reason => { if (!controller.signal.aborted) setError(errorText(reason)); });
         return () => controller.abort();
     }, [load, retry]);
-    if (error) return <><Message type="error" text={error} /><button onClick={() => { setError(""); setRetry(n => n + 1); }}>Tentar novamente</button></>;
+    if (error) return <><Message type="error" text={error} /><button type="button" className="comandos-secondary-button" onClick={() => { setError(""); setRetry(n => n + 1); }}>Tentar novamente</button></>;
     if (data === undefined) return <p role="status">Carregando…</p>;
     return <>{children(data)}</>;
 }
 
 function Pagination({ page, size, total, change }: { page: number; size: number; total: number; change: (page: number) => void }) {
-    return <nav aria-label="Paginação" className={styles.actions}>
-        <button disabled={page === 0} onClick={() => change(page - 1)}>Anterior</button>
-        <span>Página {page + 1} · {total} registros</span>
-        <button disabled={(page + 1) * size >= total || page >= 100000} onClick={() => change(page + 1)}>Próxima</button>
+    const totalPages = Math.max(Math.ceil(total / Math.max(size, 1)), 1);
+    return <nav aria-label="Paginação" className="comandos-pagination">
+        <div className="comandos-pagination-controls">
+            <button
+                type="button"
+                className="comandos-secondary-button"
+                disabled={page === 0}
+                onClick={() => change(page - 1)}
+            >
+                Anterior
+            </button>
+            <span>Página {page + 1} / {totalPages}</span>
+            <button
+                type="button"
+                className="comandos-secondary-button"
+                disabled={(page + 1) * size >= total || page >= 100000}
+                onClick={() => change(page + 1)}
+            >
+                Próxima
+            </button>
+        </div>
+        <span>Total de registros: {total}</span>
     </nav>;
 }
 
@@ -138,27 +156,99 @@ function Query() {
     return <Layout title="Consulta de armamento"><div className={styles.workspace}>
         <p className={styles.intro}>Consulte patrimônio, série, modelo, status, unidade e localização. Os filtros são combinados no servidor.</p>
         {!allowed("inventory/assets") ? <Message type="info" text="Sem autorização para consultar armamento." /> : <>
-            <form key={query} onSubmit={event => {
-                event.preventDefault();
-                const next = new URLSearchParams();
-                new FormData(event.currentTarget).forEach((entry, key) => { if (String(entry).trim()) next.set(key, String(entry).trim()); });
-                navigate(next);
-            }}><div className={styles.fields}>
-                {fields.map(([key, label]) => <div className={styles.field} key={key}><label htmlFor={`query-${key}`}>{label}</label>
-                    <input id={`query-${key}`} name={key} defaultValue={params.get(key) || ""} maxLength={255} /></div>)}
-                <div className={styles.field}><label htmlFor="query-status">Status</label><select id="query-status" name="status" defaultValue={params.get("status") || ""}>
-                    <option value="">Todos</option>{statuses.map(status => <option key={status}>{status}</option>)}
-                </select></div>
-            </div><div className={styles.actions}><button type="submit">Consultar</button><button type="button" onClick={() => navigate(new URLSearchParams())}>Limpar filtros</button></div></form>
+            <section aria-labelledby="armament-query-filters-title">
+                <h2 id="armament-query-filters-title">Filtros de consulta</h2>
+                <form
+                    key={query}
+                    data-comandos-erp-form="true"
+                    onSubmit={event => {
+                        event.preventDefault();
+                        const next = new URLSearchParams();
+                        new FormData(event.currentTarget).forEach((entry, key) => {
+                            if (String(entry).trim()) next.set(key, String(entry).trim());
+                        });
+                        navigate(next);
+                    }}
+                >
+                    <div className={styles.fields}>
+                        {fields.map(([key, label]) => <div className={styles.field} key={key}>
+                            <label htmlFor={`query-${key}`}>{label}</label>
+                            <input id={`query-${key}`} name={key} defaultValue={params.get(key) || ""} maxLength={255} />
+                        </div>)}
+                        <div className={styles.field}>
+                            <label htmlFor="query-status">Situação</label>
+                            <select id="query-status" name="status" defaultValue={params.get("status") || ""}>
+                                <option value="">Todos</option>
+                                {statuses.map(status => <option key={status}>{status}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className={styles.actions}>
+                        <button type="button" className="comandos-secondary-button" onClick={() => navigate(new URLSearchParams())}>
+                            Limpar filtros
+                        </button>
+                        <button type="submit" className="registration-yellow-button">
+                            Consultar
+                        </button>
+                    </div>
+                </form>
+            </section>
+
             <Remote key={query + accessKey} load={load}>{data => <>
-                {!data.content.length ? <p>Nenhum armamento encontrado.</p> : <div className={styles.tableContainer}><table>
-                    <thead><tr>{["Patrimônio", "Série", "Modelo", "Status", "Unidade", "Localização", "Detalhe"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-                    <tbody>{data.content.map(record => <tr key={record.id}>
-                        {["assetCode", "serialNumber", "modelId", "status", "unitId", "locationId"].map(field => <td key={field}>{value(record, field)}</td>)}
-                        <td><button onClick={() => { const next = new URLSearchParams(query); next.set("asset", String(record.id)); navigate(next); }}>Ver detalhe</button></td>
-                    </tr>)}</tbody></table></div>}
-                <Pagination page={data.page} size={data.size} total={data.totalElements} change={nextPage => { const next = new URLSearchParams(query); next.set("page", String(nextPage)); next.delete("asset"); navigate(next); }} />
+                <section aria-labelledby="armament-query-results-title">
+                    <div className={styles.toolbar}>
+                        <h2 id="armament-query-results-title">Resultados</h2>
+                        <span>{data.totalElements} {data.totalElements === 1 ? "registro encontrado" : "registros encontrados"}</span>
+                    </div>
+                    <div className="comandos-native-table-container">
+                        <table className="comandos-native-table comandos-erp-table">
+                            <thead>
+                                <tr>
+                                    {["Patrimônio", "Série", "Modelo", "Situação", "Unidade", "Localização", "Detalhe"].map(label =>
+                                        <th key={label}>{label}</th>
+                                    )}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {!data.content.length ? (
+                                    <tr>
+                                        <td colSpan={7}>Nenhum armamento encontrado para os filtros informados.</td>
+                                    </tr>
+                                ) : data.content.map(record => <tr key={record.id}>
+                                    {["assetCode", "serialNumber", "modelId", "status", "unitId", "locationId"].map(field =>
+                                        <td key={field}>{value(record, field)}</td>
+                                    )}
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className="comandos-secondary-button"
+                                            onClick={() => {
+                                                const next = new URLSearchParams(query);
+                                                next.set("asset", String(record.id));
+                                                navigate(next);
+                                            }}
+                                        >
+                                            Ver detalhe
+                                        </button>
+                                    </td>
+                                </tr>)}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination
+                        page={data.page}
+                        size={data.size}
+                        total={data.totalElements}
+                        change={nextPage => {
+                            const next = new URLSearchParams(query);
+                            next.set("page", String(nextPage));
+                            next.delete("asset");
+                            navigate(next);
+                        }}
+                    />
+                </section>
             </>}</Remote>
+
             {selected && !assetId && <Message type="error" text="Identificador de armamento inválido." />}
             {assetId && <Remote key={`${assetId}-${accessKey}`} load={detail}>{asset => <AssetDetail asset={asset} allowed={allowed} />}</Remote>}
         </>}
