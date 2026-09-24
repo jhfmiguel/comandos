@@ -724,6 +724,14 @@ public class CoreService {
             if (organization.nature == null) bad("Nature is required.");
             if (organization.economicActivity == null) bad("Economic activity is required.");
             organization.legacyNature = organization.nature.name;
+
+            if (organization.taxId != null && !organization.taxId.isBlank()) {
+                String digits = organization.taxId.replaceAll("\\D", "");
+                if (digits.length() != 14) {
+                    bad("CNPJ inválido. Informe 14 dígitos.");
+                }
+                organization.taxId = digits;
+            }
         }
         if (entity instanceof PersonAddress address) {
             boolean foreign = Boolean.TRUE.equals(address.foreignAddress);
