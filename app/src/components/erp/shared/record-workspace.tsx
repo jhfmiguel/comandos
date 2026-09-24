@@ -40,7 +40,8 @@ import {
 import {
     EquipmentSetComponentsEditor,
     CategoryCharacteristicsEditor,
-    CharacteristicValuesEditor
+    CharacteristicValuesEditor,
+    ModelSpecificationEditor
 } from "./nested-resource-editors";
 
 
@@ -1200,11 +1201,17 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 )}
 
                                 {resource.key === "models" && record && (
-                                    <CharacteristicValuesEditor
-                                        owner={record}
-                                        ownerType="model"
-                                        service={service}
-                                    />
+                                    <>
+                                        <ModelSpecificationEditor
+                                            model={record}
+                                            service={service}
+                                        />
+                                        <CharacteristicValuesEditor
+                                            owner={record}
+                                            ownerType="model"
+                                            service={service}
+                                        />
+                                    </>
                                 )}
 
                                 {resource.key === "models" && !record && (
