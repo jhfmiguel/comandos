@@ -14,6 +14,7 @@ import type { ErpField, ErpValue } from "api/models/erp";
 import type { InventorySale, SaleRequest, SaleReturnRequest, SalesPage, StockOption } from "api/models/erp/sales";
 import styles from "../shared/workspace.module.css";
 import { QuantityInput } from "components/erp/shared/quantity-input";
+import { formatBRLValue } from "utils/money";
 
 const core = createErpService("core");
 const inventory = createErpService("inventory");
@@ -135,12 +136,12 @@ function SalesForm({ onNewSale }: { onNewSale: () => void }) {
                         <td><div className={styles.field}><QuantityInput code={item.code} max={item.available} value={item.quantity}
                             disabled={locked} individual={item.kind === "ASSET"}
                             onChange={quantity => setCart(cart.map(line => keyOf(line) === keyOf(item) ? { ...line, quantity } : line))} /></div>{item.unitOfMeasure}</td>
-                        <td>{item.unitPrice}</td><td>{amount(subtotal(item))}</td>
+                        <td>{formatBRLValue(item.unitPrice)}</td><td>{formatBRLValue(amount(subtotal(item)))}</td>
                         <td className={styles.actionCell}><Button type="button" severity="secondary" disabled={locked} aria-label={`Remove ${item.code}`}
                             onClick={() => setCart(cart.filter(line => keyOf(line) !== keyOf(item)))}>Remove</Button></td>
                     </tr>)}{!cart.length && <tr><td colSpan={6}>Select an organization and add stock items.</td></tr>}</tbody>
                 </table>
-                <p className={styles.pagination}>Total: {amount(cart.reduce((total, item) => total + subtotal(item), 0n))}</p>
+                <p className={styles.pagination}>Total: {formatBRLValue(amount(cart.reduce((total, item) => total + subtotal(item), 0n)))}</p>
             </div>}
             {completed && <SaleReceipt sale={completed} />}
             <div className={styles.actions}>
@@ -182,7 +183,7 @@ function StockPicker({ organizationId, unitId, cart, onAdd }: { organizationId: 
         {!result && !error && <p role="status">Loading stock…</p>}
         {result && <><div className={styles.tableContainer}><table><thead><tr><th>Code / model</th><th>Location</th><th>Available</th><th>Unit price</th><th className={styles.actionCell}>Actions</th></tr></thead>
             <tbody>{result.content.map(item => <tr key={keyOf(item)}><td>{item.code}<br />{item.modelName} · {item.sku}</td><td>{item.locationName}</td>
-                <td>{item.available} {item.unitOfMeasure}</td><td>{item.unitPrice}</td><td className={styles.actionCell}><Button type="button" disabled={cart.length >= 100 || cart.some(line => keyOf(line) === keyOf(item))}
+                <td>{item.available} {item.unitOfMeasure}</td><td>{formatBRLValue(item.unitPrice)}</td><td className={styles.actionCell}><Button type="button" disabled={cart.length >= 100 || cart.some(line => keyOf(line) === keyOf(item))}
                     onClick={() => onAdd(item)}>Add</Button></td></tr>)}{!result.content.length && <tr><td colSpan={5}>No available stock matches your search.</td></tr>}</tbody></table></div>
             <Pagination page={page} result={result} onPage={value => { setResult(null); setPage(value); }} /></>}
     </section>;
@@ -196,9 +197,9 @@ function SaleReceipt({ sale }: { sale: InventorySale }) {
         <p>{sale.organizationName} · Buyer: {sale.buyerName} · {sale.paymentMethod.replaceAll("_", " ")}</p>
         <table><thead><tr><th>Item / code</th><th>Location</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th></tr></thead>
             <tbody>{sale.items.map(item => <tr key={item.id}><td>{item.modelName}<br />{item.stockCode}</td><td>{item.locationName}</td><td>{item.quantity} {item.unitOfMeasure}</td>
-                <td>{item.unitPrice}</td><td>{item.subtotal}</td></tr>)}</tbody></table>
-        <p className={styles.pagination}>Total: {sale.total}</p>
-        {!!sale.returns?.length && <div><h3>Returns and cancellations</h3>{sale.returns.map(entry => <p key={entry.id}>#{entry.id} · {entry.cancellation ? "Cancellation" : "Return"} · {entry.reasonName} · Refund {entry.refundAmount}</p>)}</div>}
+                <td>{formatBRLValue(item.unitPrice)}</td><td>{formatBRLValue(item.subtotal)}</td></tr>)}</tbody></table>
+        <p className={styles.pagination}>Total: {formatBRLValue(sale.total)}</p>
+        {!!sale.returns?.length && <div><h3>Returns and cancellations</h3>{sale.returns.map(entry => <p key={entry.id}>#{entry.id} · {entry.cancellation ? "Cancellation" : "Return"} · {entry.reasonName} · Refund {formatBRLValue(entry.refundAmount)}</p>)}</div>}
     </div>;
 }
 
@@ -216,7 +217,7 @@ function SaleHistory({ organizationId, unitId, refresh }: { organizationId: numb
     return <section className="mt-8"><div className={styles.toolbar}><h2>Sales history</h2><Button type="button" severity="secondary" onClick={() => setRetry(value => value + 1)}>Refresh history</Button></div>
         {error && <Message type="error" text={error} />}
         {!result && !error && <p role="status">Loading sales…</p>}
-        {result?.content.map(sale => <details key={sale.id}><summary>Sale #{sale.id} · {sale.buyerName} · {sale.total}</summary><SaleReceipt sale={sale} /><SaleReturnForm sale={sale} onDone={() => setRetry(value => value + 1)} /></details>)}
+        {result?.content.map(sale => <details key={sale.id}><summary>Sale #{sale.id} · {sale.buyerName} · {formatBRLValue(sale.total)}</summary><SaleReceipt sale={sale} /><SaleReturnForm sale={sale} onDone={() => setRetry(value => value + 1)} /></details>)}
         {result && !result.content.length && <p>No sales recorded for the selected scope.</p>}
         {result && <Pagination page={page} result={result} onPage={value => { setResult(null); setPage(value); }} />}
     </section>;
