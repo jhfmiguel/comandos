@@ -110,10 +110,17 @@ async function main() {
         assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Organization natures|Naturezas das organizações/i);
         await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
 
-        await page.getByRole('tab', { name: /Economic activities|Atividades econômicas/i }).click();
-        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Economic activities|Atividades econômicas/i);
-        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
-        console.log('PASS institutional registrations render full CRUD panels');
+        for (const [tabName, titlePattern] of [
+            [/Economic activities|Atividades econômicas/i, /Economic activities|Atividades econômicas/i],
+            [/Organizations|Organizações/i, /Organizations|Organizações/i],
+            [/Organizational units|Unidades organizacionais/i, /Organizational units|Unidades organizacionais/i]
+        ]) {
+            await page.getByRole('tab', { name: tabName }).click();
+            await page.waitForTimeout(80);
+            assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), titlePattern);
+            await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
+        }
+        console.log('PASS institutional registrations: every tab is clickable and renders CRUD');
 
         await page.goto(`${appURL}/erp/inventory?section=technical-parameters&resource=calibers`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
@@ -124,8 +131,24 @@ async function main() {
         await technicalTabs.waitFor();
         const isScrollable = await technicalTabs.evaluate(element => element.scrollWidth > element.clientWidth);
         assert.equal(isScrollable, true, 'Technical parameter tabs must be horizontally scrollable');
-        await page.locator('.comandos-tabs-scroll-button-next.is-visible').waitFor();
-        console.log('PASS technical registrations render full CRUD panels with scrollable tabs');
+
+        const nextTabs = page.locator('.comandos-tabs-scroll-button-next.is-visible');
+        await nextTabs.waitFor();
+        assert.equal((await nextTabs.innerText()).trim(), '>');
+        assert.equal(await nextTabs.evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(0, 0, 0, 0)');
+
+        await page.getByRole('tab', { name: /Ammunition types|Tipos de munição/i }).click();
+        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Ammunition types|Tipos de munição/i);
+
+        for (let index = 0; index < 8; index += 1) {
+            if (await page.getByRole('tab', { name: /Interfaces/i }).isVisible()) break;
+            await nextTabs.click();
+            await page.waitForTimeout(120);
+        }
+        await page.getByRole('tab', { name: /Interfaces/i }).click();
+        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Interfaces/i);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
+        console.log('PASS technical registrations: tabs clickable, scrollable and arrows are transparent symbols');
 
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
