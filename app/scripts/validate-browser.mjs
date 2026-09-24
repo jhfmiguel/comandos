@@ -45,6 +45,24 @@ async function main() {
     }
     try {
         const suffix = Date.now().toString();
+
+        const coreCatalog = await get('core/catalog');
+        for (const resourceKey of [
+            'organization-natures',
+            'economic-activities',
+            'unit-types',
+            'person-types',
+            'profile-levels',
+            'permission-resources',
+            'permission-actions'
+        ]) {
+            assert.ok(
+                coreCatalog.some(resource => resource.key === resourceKey),
+                `core catalog must expose ${resourceKey}`
+            );
+        }
+        console.log('PASS core catalog: all parameter registrations are exposed by the API');
+
         const organizationNatureId = await create('core/organization-natures', {
             code: `BROWSER-NATURE-${suffix}`,
             name: 'Public safety',
