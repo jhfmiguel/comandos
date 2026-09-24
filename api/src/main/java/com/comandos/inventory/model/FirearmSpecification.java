@@ -14,6 +14,10 @@ public class FirearmSpecification extends CoreEntity {
     @Column(nullable = false, length = 100)
     public String caliber;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "caliber_id")
+    public ArmamentParameter caliberRef;
+
     @Column(name = "operating_mechanism", nullable = false, length = 100)
     public String operatingMechanism;
 
