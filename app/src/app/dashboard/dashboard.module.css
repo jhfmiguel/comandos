@@ -1,10 +1,13 @@
-﻿.dashboard {
+.dashboard {
     --accent: var(--comandos-accent, #ff9900);
     --border: var(--comandos-border, color-mix(in srgb, currentColor 14%, transparent));
+    --surface: var(--comandos-surface, var(--p-content-background, #fff));
+    --surface-soft: var(--comandos-surface-2, color-mix(in srgb, currentColor 4%, transparent));
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.15rem;
     width: 100%;
+    min-width: 0;
     color: var(--comandos-text, inherit);
 }
 
@@ -23,15 +26,30 @@
 .hero p,
 .kpi span,
 .kpi small {
-    opacity: .62;
+    opacity: .64;
+}
+
+.heroActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .65rem;
+    flex-wrap: wrap;
 }
 
 .eyebrow,
 .cardEyebrow {
     color: var(--accent);
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 800;
     letter-spacing: .13em;
+}
+
+.live,
+.refreshButton,
+.segmented {
+    border: 1px solid var(--border);
+    background: var(--surface);
 }
 
 .live {
@@ -39,7 +57,6 @@
     align-items: center;
     gap: .5rem;
     padding: .55rem .8rem;
-    border: 1px solid var(--border);
     border-radius: 999px;
     font-size: .78rem;
     font-weight: 700;
@@ -52,58 +69,107 @@
     background: #22c55e;
 }
 
+.refreshButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 2.25rem;
+    padding: .48rem .72rem;
+    border-radius: .55rem;
+    color: inherit;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.refreshButton:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.refreshButton:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.spinning {
+    animation: dashboardSpin .8s linear infinite;
+}
+
+@keyframes dashboardSpin {
+    to { transform: rotate(360deg); }
+}
+
+.error {
+    padding: .8rem 1rem;
+    border: 1px solid color-mix(in srgb, #ef4444 34%, transparent);
+    border-radius: .7rem;
+    background: color-mix(in srgb, #ef4444 8%, transparent);
+    color: #ef4444;
+    font-size: .82rem;
+}
+
 .kpis {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
 }
 
 .kpi,
 .card {
     border: 1px solid var(--border);
-    border-radius: 1rem;
-    background: var(--comandos-surface, var(--p-content-background, #fff));
+    border-radius: .9rem;
+    background: var(--surface);
 }
 
 .kpi {
     display: flex;
-    gap: .9rem;
-    padding: 1.1rem;
+    align-items: center;
+    min-width: 0;
+    gap: .8rem;
+    padding: 1rem;
 }
 
 .kpiIcon {
     display: grid;
     place-items: center;
-    flex: 0 0 2.5rem;
-    height: 2.5rem;
-    border-radius: .75rem;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    flex: 0 0 2.45rem;
+    height: 2.45rem;
+    border-radius: .7rem;
+    background: color-mix(in srgb, var(--accent) 11%, transparent);
     color: var(--accent);
+}
+
+.kpi > div:last-child {
+    min-width: 0;
 }
 
 .kpi span,
 .kpi small {
-    display: flex;
-    align-items: center;
-    gap: .25rem;
-    font-size: .75rem;
+    display: block;
+    overflow: hidden;
+    font-size: .72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .kpi strong {
     display: block;
-    margin: .18rem 0;
-    font-size: 1.45rem;
+    margin: .12rem 0;
+    font-size: 1.35rem;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: .9rem;
 }
 
 .card {
     min-width: 0;
-    padding: 1.2rem;
+    padding: 1.1rem;
 }
 
 .wide {
@@ -112,27 +178,33 @@
 
 .cardHeader {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
 }
 
 .cardHeader h2 {
-    margin: .25rem 0 0;
+    margin: .22rem 0 0;
     font-size: 1rem;
 }
 
+.cardHeader > strong {
+    font-size: .83rem;
+}
+
 .period {
-    padding: .4rem .65rem;
+    padding: .38rem .6rem;
     border: 1px solid var(--border);
-    border-radius: .55rem;
-    font-size: .72rem;
+    border-radius: .5rem;
+    font-size: .7rem;
+    white-space: nowrap;
 }
 
 .legend {
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: .6rem;
+    margin-top: .55rem;
     font-size: .7rem;
 }
 
@@ -154,7 +226,7 @@
 
 .lineChart {
     position: relative;
-    height: 270px;
+    height: 265px;
 }
 
 .lineChart svg {
@@ -184,41 +256,49 @@
 }
 
 .linePrimary { stroke: var(--accent); }
-.lineMuted { stroke: #64748b; opacity: .55; }
+.lineMuted { stroke: #64748b; opacity: .62; }
 
 .months {
     position: absolute;
     inset: auto 0 0;
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    font-size: .65rem;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    font-size: .62rem;
     text-align: center;
-    opacity: .55;
+    opacity: .58;
 }
 
-.bars {
+.bars,
+.locationChart,
+.operationChart,
+.valueChart {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    gap: .82rem;
+    margin-top: 1.15rem;
 }
 
 .barRow > div:first-child,
-.donutLegend div {
+.valueChart > div > div:first-child {
     display: flex;
     justify-content: space-between;
-    font-size: .75rem;
+    gap: .75rem;
+    font-size: .74rem;
 }
 
-.track {
+.track,
+.operationTrack,
+.valueTrack {
     height: .5rem;
-    margin-top: .4rem;
+    margin-top: .35rem;
     overflow: hidden;
     border-radius: 999px;
     background: color-mix(in srgb, currentColor 8%, transparent);
 }
 
-.track span {
+.track span,
+.operationTrack i,
+.valueTrack i {
     display: block;
     height: 100%;
     border-radius: inherit;
@@ -227,35 +307,28 @@
 
 .donutArea {
     display: grid;
-    grid-template-columns: 180px 1fr;
+    grid-template-columns: 170px 1fr;
     align-items: center;
-    gap: 1.5rem;
-    margin-top: 1.4rem;
+    gap: 1.25rem;
+    margin-top: 1.1rem;
 }
 
 .donut {
+    position: relative;
     display: grid;
     place-items: center;
-    width: 165px;
+    width: 155px;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: conic-gradient(
-        var(--accent) 0 38%,
-        #64748b 38% 62%,
-        #94a3b8 62% 79%,
-        #475569 79% 91%,
-        #cbd5e1 91% 100%
-    );
-    position: relative;
 }
 
 .donut::after {
     content: "";
     position: absolute;
-    width: 62%;
+    width: 61%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--comandos-surface, var(--p-content-background, #fff));
+    background: var(--surface);
 }
 
 .donut > div {
@@ -269,44 +342,182 @@
     display: block;
 }
 
+.donut strong {
+    font-size: 1.2rem;
+}
+
+.donut span {
+    margin-top: .1rem;
+    font-size: .68rem;
+    opacity: .6;
+}
+
 .donutLegend {
     display: flex;
     flex-direction: column;
-    gap: .75rem;
+    gap: .55rem;
+    min-width: 0;
 }
 
 .donutLegend div {
-    padding-bottom: .55rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.readiness {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
+    justify-content: space-between;
     gap: .75rem;
-    margin-top: 1.2rem;
+    padding-bottom: .45rem;
+    border-bottom: 1px solid var(--border);
+    font-size: .72rem;
 }
 
-.readiness div {
-    padding: 1rem;
+.stackedBar {
+    display: flex;
+    width: 100%;
+    height: 1.15rem;
+    margin-top: 1.15rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--surface-soft);
+}
+
+.stackedBar span {
+    display: block;
+    min-width: 0;
+    height: 100%;
+}
+
+.stack1 { background: var(--accent); }
+.stack2 { background: #64748b; }
+.stack3 { background: #ef4444; }
+
+.stockLegend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+    margin-top: .85rem;
+}
+
+.stockLegend div {
+    padding: .7rem;
     border: 1px solid var(--border);
-    border-radius: .75rem;
+    border-radius: .6rem;
 }
 
-.readiness strong,
-.readiness span {
+.stockLegend span,
+.stockLegend strong {
     display: block;
 }
 
-.readiness span {
-    margin-top: .2rem;
-    font-size: .7rem;
+.stockLegend span {
+    font-size: .68rem;
     opacity: .6;
+}
+
+.stockLegend strong {
+    margin-top: .1rem;
+    font-size: .9rem;
+}
+
+.segmented {
+    display: inline-flex;
+    overflow: hidden;
+    border-radius: .5rem;
+}
+
+.segmented button {
+    min-height: 2rem;
+    padding: .35rem .55rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: .68rem;
+    cursor: pointer;
+}
+
+.segmented .selected {
+    background: color-mix(in srgb, var(--accent) 11%, transparent);
+    color: var(--accent);
+}
+
+.locationRow {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1.1fr) minmax(8rem, 2fr) auto;
+    align-items: center;
+    gap: .65rem;
+    font-size: .72rem;
+}
+
+.locationRow > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.locationRow > div {
+    height: .46rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.locationRow i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+.operationChart > div {
+    display: grid;
+    grid-template-columns: minmax(6.8rem, 1fr) minmax(8rem, 2fr) 2.6rem;
+    align-items: center;
+    gap: .6rem;
+    font-size: .7rem;
+}
+
+.operationTrack {
+    margin-top: 0;
+}
+
+.operationTrack i {
+    background: #64748b;
+}
+
+.valueTrack i {
+    background: color-mix(in srgb, var(--accent) 70%, #64748b);
+}
+
+.expiryChart {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .7rem;
+    margin-top: 1.15rem;
+}
+
+.expiryChart div {
+    padding: .8rem;
+    border: 1px solid var(--border);
+    border-radius: .65rem;
+    background: var(--surface-soft);
+}
+
+.expiryChart span,
+.expiryChart strong {
+    display: block;
+}
+
+.expiryChart span {
+    font-size: .68rem;
+    opacity: .62;
+}
+
+.expiryChart strong {
+    margin-top: .2rem;
+    font-size: 1.05rem;
 }
 
 .note {
     margin: 0;
-    font-size: .72rem;
+    font-size: .7rem;
     opacity: .5;
     text-align: right;
 }
@@ -316,8 +527,12 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .readiness {
-        grid-template-columns: repeat(3, 1fr);
+    .donutArea {
+        grid-template-columns: 150px 1fr;
+    }
+
+    .donut {
+        width: 140px;
     }
 }
 
@@ -325,6 +540,10 @@
     .hero {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .heroActions {
+        justify-content: flex-start;
     }
 
     .kpis,
@@ -345,31 +564,46 @@
         width: 100%;
     }
 
-    .readiness {
-        grid-template-columns: repeat(2, 1fr);
+    .stockLegend,
+    .expiryChart {
+        grid-template-columns: 1fr;
+    }
+
+    .months {
+        font-size: .54rem;
     }
 }
 
+@media (max-width: 520px) {
+    .kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .cardHeader {
+        flex-direction: column;
+    }
+
+    .locationRow,
+    .operationChart > div {
+        grid-template-columns: 1fr auto;
+    }
+
+    .locationRow > div,
+    .operationTrack {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .operationChart > div > strong,
+    .locationRow > strong {
+        grid-column: 2;
+        grid-row: 1;
+    }
+}
 
 :global(html[data-theme="dark"]) .dashboard {
     --border: var(--comandos-border, #303842);
+    --surface: var(--comandos-surface, #171717);
+    --surface-soft: var(--comandos-surface-2, #202020);
     color: var(--comandos-text, #f3f5f7);
-}
-
-:global(html[data-theme="dark"]) .kpi,
-:global(html[data-theme="dark"]) .card,
-:global(html[data-theme="dark"]) .live,
-:global(html[data-theme="dark"]) .period,
-:global(html[data-theme="dark"]) .readiness div {
-    background: var(--comandos-surface, #171717);
-    color: var(--comandos-text, #f3f5f7);
-    border-color: var(--border);
-}
-
-:global(html[data-theme="dark"]) .donut::after {
-    background: var(--comandos-surface, #171717);
-}
-
-:global(html[data-theme="dark"]) .track {
-    background: var(--comandos-surface-3, #272e36);
 }
