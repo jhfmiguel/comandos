@@ -881,10 +881,9 @@ function SpecificationReferenceField({
     return (
         <ComandosSelectField
             id={"model-spec-" + field.name}
-            label={field.label}
+            label={field.label + (field.required ? " *" : "")}
             value={String(value ?? "")}
             options={toOptions(referenceOptions.options)}
-            required={field.required}
             onChange={next => onChange(next ? Number(next) : null)}
         />
     );
