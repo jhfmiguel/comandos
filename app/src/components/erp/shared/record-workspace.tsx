@@ -19,9 +19,9 @@ import {
     CircleHelp,
     Plus,
     Pencil,
-    ListChecks,
-    Trash2
+    ListChecks
 } from "lucide-react";
+import { Trash } from "@primeicons/react";
 
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
@@ -679,12 +679,12 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                                    className="comandos-icon-button comandos-icon-button-danger"
                                                     aria-label={`${tr("Delete")} ${record.label}`}
                                                     disabled={!allowed("DELETE")}
                                                     onClick={() => setDeleting(record)}
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash size={18} />
                                                 </button>
                                             </div>
                                         </td>
@@ -1634,14 +1634,14 @@ function RecallItemsEditor({
                                             </button>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                                className="comandos-icon-button comandos-icon-button-danger"
                                                 data-comandos-table-action="delete"
                                                 aria-label="Remover item do recall"
                                                 title="Remover"
                                                 disabled={busy || !recallEditable}
                                                 onClick={() => void deleteItem(item)}
                                             >
-                                                <Trash2 />
+                                                <Trash />
                                             </button>
                                         </div>
                                     </td>
