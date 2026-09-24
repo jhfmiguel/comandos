@@ -31,6 +31,9 @@ public class JpaOrganizationDirectory implements OrganizationDirectory {
             organization.nature == null
                 ? organization.legacyNature
                 : organization.nature.name,
+            organization.economicActivity == null
+                ? null
+                : organization.economicActivity.description,
             organization.name,
             organization.acronym,
             organization.taxId,
