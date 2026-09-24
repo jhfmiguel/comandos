@@ -793,3 +793,84 @@
         grid-column: 1;
     }
 }
+
+
+/* Contextual form help: hover on desktop, click/tap on touch devices. */
+.fieldWithHint {
+    position: relative;
+}
+
+.fieldWithHint :global(.comandos-composed-select) input {
+    padding-right: 2.65rem !important;
+}
+
+.fieldHint {
+    position: absolute;
+    z-index: 30;
+    top: .48rem;
+    right: .62rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.fieldHintButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    outline: 0;
+    background: transparent;
+    color: var(--comandos-text-muted, #737373);
+    cursor: pointer;
+    transition: color .16s ease, filter .16s ease;
+}
+
+.fieldHintButton:hover,
+.fieldHintButton:focus-visible,
+.fieldHintOpen .fieldHintButton {
+    color: var(--comandos-accent, #ff9900);
+    filter: brightness(1.2);
+}
+
+.fieldHintBubble {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + .38rem);
+    right: 0;
+    width: min(21rem, calc(100vw - 3rem));
+    padding: .65rem .75rem;
+    border: 1px solid var(--comandos-border, var(--p-content-border-color, #d6d6d6));
+    border-radius: 6px;
+    background: var(--comandos-surface, var(--p-content-background, #1f2937));
+    color: var(--comandos-text, var(--p-content-color, #fff));
+    box-shadow: 0 .65rem 1.6rem rgba(0, 0, 0, .22);
+    font-size: .78rem;
+    font-weight: 500;
+    line-height: 1.35;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-.2rem);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+}
+
+.fieldHintOpen .fieldHintBubble {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .fieldHint:hover .fieldHintBubble,
+    .fieldHint:focus-within .fieldHintBubble {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+}
