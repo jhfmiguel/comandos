@@ -381,24 +381,36 @@ public class CoreService {
         boolean legacyTypeSupplied = input.containsKey("personType");
         Object legacyType = input.remove("personType");
 
-        if (legacyTypeSupplied && !input.containsKey("personTypeRefId")) {
-            String code = legacyType == null
-                ? ""
-                : legacyType.toString().trim().toUpperCase(Locale.ROOT);
+        if (!legacyTypeSupplied || input.containsKey("personTypeRefId")) return;
 
-            if (!code.isEmpty()) {
-                var existing = em.createQuery(
-                        "select t from PersonType t where t.code = :code",
-                        PersonType.class)
-                    .setParameter("code", code)
-                    .setMaxResults(1)
-                    .getResultList();
+        String raw = legacyType == null ? "" : legacyType.toString().trim();
+        if (raw.isEmpty()) return;
 
-                if (!existing.isEmpty()) {
-                    input.put("personTypeRefId", existing.getFirst().id);
-                }
-            }
+        String code = raw.toUpperCase(Locale.ROOT);
+        var existing = em.createQuery(
+                "select t from PersonType t where upper(t.code) = :code",
+                PersonType.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+
+        PersonType type;
+        if (!existing.isEmpty()) {
+            type = existing.getFirst();
+        } else {
+            type = new PersonType();
+            type.code = code;
+            type.name = "INDIVIDUAL".equals(code)
+                ? "Pessoa física"
+                : "LEGAL_ENTITY".equals(code)
+                    ? "Pessoa jurídica"
+                    : raw;
+            type.description = "Migrado automaticamente de cadastro legado";
+            type.active = true;
+            em.persist(type);
         }
+
+        input.put("personTypeRefId", type.id);
     }
 
     private void normalizeLegacyOrganizationInput(Map<String, Object> input) {
