@@ -90,10 +90,23 @@ function hasManagedPagination(table: HTMLTableElement): boolean {
         .some(element => element.dataset.comandosAutoPagination !== "true");
 }
 
-function createFilterRow(table: HTMLTableElement, apply: () => void) {
-    if (table.dataset.comandosTableFilter === "off") return;
+function shouldCreateFilterRow(table: HTMLTableElement): boolean {
+    if (table.dataset.comandosTableFilter === "off") return false;
+    if (table.dataset.comandosTableFilter === "on") return true;
 
+    // Editable/cadastro tables live inside ERP forms and should not receive
+    // automatic search inputs. Listing tables remain filterable by default.
+    return table.closest('form[data-comandos-erp-form="true"]') == null;
+}
+
+function createFilterRow(table: HTMLTableElement, apply: () => void) {
     const head = table.tHead;
+    if (!shouldCreateFilterRow(table)) {
+        head?.querySelector(".comandos-filter-row")?.remove();
+        return;
+    }
+
+    
     const header = head?.rows.item(0);
     if (!head || !header) return;
     if (head.querySelector(".comandos-filter-row")) return;
@@ -213,8 +226,16 @@ function applyTable(table: HTMLTableElement) {
     );
 
     if (!state.pagination?.isConnected) {
-        dataRows.forEach(row => { row.hidden = !filtered.includes(row); });
-        placeholderRows.forEach(row => { row.hidden = dataRows.length > 0; });
+        dataRows.forEach(row => {
+            const visible = filtered.includes(row);
+            row.hidden = !visible;
+            row.style.display = visible ? "" : "none";
+        });
+        placeholderRows.forEach(row => {
+            const visible = dataRows.length === 0;
+            row.hidden = !visible;
+            row.style.display = visible ? "" : "none";
+        });
         return;
     }
 
@@ -223,8 +244,16 @@ function applyTable(table: HTMLTableElement) {
     const start = state.page * state.pageSize;
     const visible = new Set(filtered.slice(start, start + state.pageSize));
 
-    dataRows.forEach(row => { row.hidden = !visible.has(row); });
-    placeholderRows.forEach(row => { row.hidden = filtered.length > 0; });
+    dataRows.forEach(row => {
+        const show = visible.has(row);
+        row.hidden = !show;
+        row.style.display = show ? "" : "none";
+    });
+    placeholderRows.forEach(row => {
+        const show = filtered.length === 0;
+        row.hidden = !show;
+        row.style.display = show ? "" : "none";
+    });
 
     const buttons = state.pagination.querySelectorAll<HTMLButtonElement>("button");
     const [first, previous, current, next, last] = Array.from(buttons);
