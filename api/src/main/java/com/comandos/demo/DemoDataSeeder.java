@@ -148,43 +148,9 @@ public class DemoDataSeeder implements ApplicationRunner {
         ItemModel ammo9 = model(ammunition, cbc, "9 mm FMJ", "UN", "CBC-9-FMJ", "Munição 9 mm de treinamento", "4.50");
         ItemModel vest = model(ballistic, demoArmor, "Colete Nível III-A", "EA", "VEST-III-A-M", "Colete balístico demonstrativo", "3200.00");
 
-        FirearmSpecification firearmSpec = new FirearmSpecification();
-        firearmSpec.model = apx;
-        firearmSpec.caliber = caliber9.name;
-        firearmSpec.caliberRef = caliber9;
-        firearmSpec.operatingMechanism = "SEMI_AUTOMATIC";
-        firearmSpec.capacity = 17;
-        firearmSpec.barrelLength = new BigDecimal("108.00");
-        entityManager.persist(firearmSpec);
-
-        AmmunitionSpecification ammunitionSpec = new AmmunitionSpecification();
-        ammunitionSpec.model = ammo9;
-        ammunitionSpec.caliber = caliber9.name;
-        ammunitionSpec.caliberRef = caliber9;
-        ammunitionSpec.ammunitionType = ammunitionType.name;
-        ammunitionSpec.ammunitionTypeRef = ammunitionType;
-        ammunitionSpec.lethalityClassification = "LETHAL";
-        ammunitionSpec.projectileType = projectileType.name;
-        ammunitionSpec.projectileTypeRef = projectileType;
-        ammunitionSpec.caseType = caseType.name;
-        ammunitionSpec.caseTypeRef = caseType;
-        ammunitionSpec.primerType = primerType.name;
-        ammunitionSpec.primerTypeRef = primerType;
-        entityManager.persist(ammunitionSpec);
-
-        BallisticProtectionSpecification ballisticSpec = new BallisticProtectionSpecification();
-        ballisticSpec.model = vest;
-        ballisticSpec.protectionType = protectionType.name;
-        ballisticSpec.protectionTypeRef = protectionType;
-        ballisticSpec.protectionLevel = protectionLevel.name;
-        ballisticSpec.protectionLevelRef = protectionLevel;
-        ballisticSpec.material = material.name;
-        ballisticSpec.materialRef = material;
-        ballisticSpec.certification = "DEMO-CERT-III-A";
-        ballisticSpec.size = sizeM.name;
-        ballisticSpec.sizeRef = sizeM;
-        ballisticSpec.serviceLifeMonths = 60;
-        entityManager.persist(ballisticSpec);
+        firearmSpecification(apx, caliber9);
+        ammunitionSpecification(ammo9, caliber9, ammunitionType, projectileType, caseType, primerType);
+        ballisticSpecification(vest, protectionType, protectionLevel, material, sizeM);
 
         asset(apx, centralVault, "PAT-DEMO-0001", "APX-DEMO-0001", "ARM-0001", "GOOD", "AVAILABLE", "6500.00");
         asset(apx, centralVault, "PAT-DEMO-0002", "APX-DEMO-0002", "ARM-0002", "GOOD", "AVAILABLE", "6500.00");
@@ -192,24 +158,8 @@ public class DemoDataSeeder implements ApplicationRunner {
         asset(vest, operationalVault, "PAT-DEMO-0101", "VEST-DEMO-0101", "COL-0101", "GOOD", "AVAILABLE", "3200.00");
         asset(vest, trainingStore, "PAT-DEMO-0102", "VEST-DEMO-0102", "COL-0102", "GOOD", "AVAILABLE", "3200.00");
 
-        StockLot lot = new StockLot();
-        lot.model = ammo9;
-        lot.openingLocation = centralVault;
-        lot.lotNumber = "CBC-DEMO-2026-001";
-        lot.initialQuantity = new BigDecimal("5000.0000");
-        lot.availableQuantity = new BigDecimal("5000.0000");
-        lot.validUntil = LocalDate.of(2031, 9, 30);
-        lot.condition = "GOOD";
-        lot.status = "AVAILABLE";
-        entityManager.persist(lot);
-
-        StockBalance balance = new StockBalance();
-        balance.lot = lot;
-        balance.location = centralVault;
-        balance.available = new BigDecimal("5000.0000");
-        balance.reserved = BigDecimal.ZERO;
-        balance.blocked = BigDecimal.ZERO;
-        entityManager.persist(balance);
+        StockLot lot = lot(ammo9, centralVault, "CBC-DEMO-2026-001", "5000.0000", LocalDate.of(2031, 9, 30));
+        balance(lot, centralVault, "5000.0000");
 
         entityManager.flush();
     }
@@ -413,6 +363,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private PersonRole role(String code, String name) {
+        var existing = entityManager.createQuery(
+                "select r from PersonRole r where r.code = :code",
+                PersonRole.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         PersonRole value = new PersonRole();
         value.code = code;
         value.name = name;
@@ -421,6 +379,16 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private void assignment(Person person, PersonRole role, Organization organization, OrganizationalUnit unit) {
+        Long existing = entityManager.createQuery(
+                "select count(a) from PersonRoleAssignment a where a.person = :person and a.role = :role and a.organization = :organization and ((:unit is null and a.unit is null) or a.unit = :unit)",
+                Long.class)
+            .setParameter("person", person)
+            .setParameter("role", role)
+            .setParameter("organization", organization)
+            .setParameter("unit", unit)
+            .getSingleResult();
+        if (existing > 0) return;
+
         PersonRoleAssignment value = new PersonRoleAssignment();
         value.person = person;
         value.role = role;
@@ -432,6 +400,15 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private StockLocation location(Organization organization, OrganizationalUnit unit, String code, String name, String type, boolean controlled) {
+        var existing = entityManager.createQuery(
+                "select l from StockLocation l where l.organization = :organization and l.code = :code",
+                StockLocation.class)
+            .setParameter("organization", organization)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         StockLocation value = new StockLocation();
         value.organization = organization;
         value.unit = unit;
@@ -446,6 +423,15 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private ItemCategory category(String name, String family, boolean serialized, boolean lotControlled, boolean consumable) {
+        var existing = entityManager.createQuery(
+                "select c from ItemCategory c where c.name = :name and c.family = :family",
+                ItemCategory.class)
+            .setParameter("name", name)
+            .setParameter("family", family)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         ItemCategory value = new ItemCategory();
         value.name = name;
         value.family = family;
@@ -457,6 +443,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private Brand brand(String name, String manufacturer, String country) {
+        var existing = entityManager.createQuery(
+                "select b from Brand b where b.name = :name",
+                Brand.class)
+            .setParameter("name", name)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         Brand value = new Brand();
         value.name = name;
         value.manufacturer = manufacturer;
@@ -466,6 +460,14 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private ItemModel model(ItemCategory category, Brand brand, String name, String unit, String sku, String description, String price) {
+        var existing = entityManager.createQuery(
+                "select m from ItemModel m where m.sku = :sku",
+                ItemModel.class)
+            .setParameter("sku", sku)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         ItemModel value = new ItemModel();
         value.category = category;
         value.brand = brand;
@@ -480,6 +482,14 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private void asset(ItemModel model, StockLocation location, String assetCode, String serial, String internalCode,
                        String condition, String status, String currentValue) {
+        Long existing = entityManager.createQuery(
+                "select count(a) from AssetItem a where a.assetCode = :assetCode or a.serialNumber = :serial",
+                Long.class)
+            .setParameter("assetCode", assetCode)
+            .setParameter("serial", serial)
+            .getSingleResult();
+        if (existing > 0) return;
+
         AssetItem value = new AssetItem();
         value.model = model;
         value.location = location;
@@ -489,6 +499,114 @@ public class DemoDataSeeder implements ApplicationRunner {
         value.condition = condition;
         value.status = status;
         value.currentValue = new BigDecimal(currentValue);
+        entityManager.persist(value);
+    }
+
+    private void firearmSpecification(ItemModel model, ArmamentParameter caliber) {
+        Long existing = entityManager.createQuery(
+                "select count(s) from FirearmSpecification s where s.model = :model",
+                Long.class)
+            .setParameter("model", model)
+            .getSingleResult();
+        if (existing > 0) return;
+
+        FirearmSpecification value = new FirearmSpecification();
+        value.model = model;
+        value.caliber = caliber.name;
+        value.caliberRef = caliber;
+        value.operatingMechanism = "SEMI_AUTOMATIC";
+        value.capacity = 17;
+        value.barrelLength = new BigDecimal("108.00");
+        entityManager.persist(value);
+    }
+
+    private void ammunitionSpecification(ItemModel model, ArmamentParameter caliber, ArmamentParameter ammunitionType,
+                                          ArmamentParameter projectileType, ArmamentParameter caseType, ArmamentParameter primerType) {
+        Long existing = entityManager.createQuery(
+                "select count(s) from AmmunitionSpecification s where s.model = :model",
+                Long.class)
+            .setParameter("model", model)
+            .getSingleResult();
+        if (existing > 0) return;
+
+        AmmunitionSpecification value = new AmmunitionSpecification();
+        value.model = model;
+        value.caliber = caliber.name;
+        value.caliberRef = caliber;
+        value.ammunitionType = ammunitionType.name;
+        value.ammunitionTypeRef = ammunitionType;
+        value.lethalityClassification = "LETHAL";
+        value.projectileType = projectileType.name;
+        value.projectileTypeRef = projectileType;
+        value.caseType = caseType.name;
+        value.caseTypeRef = caseType;
+        value.primerType = primerType.name;
+        value.primerTypeRef = primerType;
+        entityManager.persist(value);
+    }
+
+    private void ballisticSpecification(ItemModel model, ArmamentParameter protectionType, ArmamentParameter protectionLevel,
+                                         ArmamentParameter material, ArmamentParameter size) {
+        Long existing = entityManager.createQuery(
+                "select count(s) from BallisticProtectionSpecification s where s.model = :model",
+                Long.class)
+            .setParameter("model", model)
+            .getSingleResult();
+        if (existing > 0) return;
+
+        BallisticProtectionSpecification value = new BallisticProtectionSpecification();
+        value.model = model;
+        value.protectionType = protectionType.name;
+        value.protectionTypeRef = protectionType;
+        value.protectionLevel = protectionLevel.name;
+        value.protectionLevelRef = protectionLevel;
+        value.material = material.name;
+        value.materialRef = material;
+        value.certification = "DEMO-CERT-III-A";
+        value.size = size.name;
+        value.sizeRef = size;
+        value.serviceLifeMonths = 60;
+        entityManager.persist(value);
+    }
+
+    private StockLot lot(ItemModel model, StockLocation location, String lotNumber, String quantity, LocalDate validUntil) {
+        var existing = entityManager.createQuery(
+                "select l from StockLot l where l.model = :model and l.lotNumber = :lotNumber",
+                StockLot.class)
+            .setParameter("model", model)
+            .setParameter("lotNumber", lotNumber)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
+        StockLot value = new StockLot();
+        value.model = model;
+        value.openingLocation = location;
+        value.lotNumber = lotNumber;
+        value.initialQuantity = new BigDecimal(quantity);
+        value.availableQuantity = new BigDecimal(quantity);
+        value.validUntil = validUntil;
+        value.condition = "GOOD";
+        value.status = "AVAILABLE";
+        entityManager.persist(value);
+        return value;
+    }
+
+    private void balance(StockLot lot, StockLocation location, String available) {
+        Long existing = entityManager.createQuery(
+                "select count(b) from StockBalance b where b.lot = :lot and b.location = :location",
+                Long.class)
+            .setParameter("lot", lot)
+            .setParameter("location", location)
+            .getSingleResult();
+        if (existing > 0) return;
+
+        StockBalance value = new StockBalance();
+        value.lot = lot;
+        value.location = location;
+        value.available = new BigDecimal(available);
+        value.reserved = BigDecimal.ZERO;
+        value.blocked = BigDecimal.ZERO;
         entityManager.persist(value);
     }
 }
