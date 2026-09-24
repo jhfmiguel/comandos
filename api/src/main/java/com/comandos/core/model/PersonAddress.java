@@ -8,6 +8,11 @@ public class PersonAddress extends CoreEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "person_id", nullable = false, updatable = false)
     public Person person;
+
+    @ManyToOne
+    @JoinColumn(name = "contact_type_id")
+    public PersonContactType contactType;
+
     @Column(name = "address_type", nullable = false) public String type;
     @Column public String postalCode;
     @Column(nullable = false) public String street;
