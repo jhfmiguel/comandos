@@ -2,11 +2,24 @@
 
 import { InventoryCountPanel } from "components/erp/inventory-counts"
 import { RecordWorkspace } from "components/erp/shared/record-workspace"
+import type { ErpResource } from "api/models/erp"
 
 interface InventoryWorkspaceProps {
     initialResource?: string
     section?: string
 }
+
+const parameterResource = (key: string, label: string): ErpResource => ({
+    key,
+    label,
+    group: "Technical parameters",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+})
 
 const sectionTabs = {
     "reference-data": [
@@ -17,25 +30,25 @@ const sectionTabs = {
         { resource: "reservation-status-types", label: "Reservation status" }
     ],
     "technical-parameters": [
-        { resource: "calibers", label: "Calibers" },
-        { resource: "ammunition-types", label: "Ammunition types" },
-        { resource: "projectile-types", label: "Projectile types" },
-        { resource: "case-types", label: "Case types" },
-        { resource: "primer-types", label: "Primer types" },
-        { resource: "grenade-types", label: "Grenade types" },
-        { resource: "agents", label: "Agents" },
-        { resource: "compositions", label: "Compositions" },
-        { resource: "protection-types", label: "Protection types" },
-        { resource: "protection-levels", label: "Protection levels" },
-        { resource: "materials", label: "Materials" },
-        { resource: "sizes", label: "Sizes" },
-        { resource: "cartridge-types", label: "Cartridge types" },
-        { resource: "optical-types", label: "Optical types" },
-        { resource: "shield-types", label: "Shield types" },
-        { resource: "locking-mechanisms", label: "Locking mechanisms" },
-        { resource: "component-types", label: "Component types" },
-        { resource: "compatibilities", label: "Compatibilities" },
-        { resource: "interfaces", label: "Interfaces" }
+        { resource: "calibers", label: "Calibers", definition: parameterResource("calibers", "Calibers") },
+        { resource: "ammunition-types", label: "Ammunition types", definition: parameterResource("ammunition-types", "Ammunition types") },
+        { resource: "projectile-types", label: "Projectile types", definition: parameterResource("projectile-types", "Projectile types") },
+        { resource: "case-types", label: "Case types", definition: parameterResource("case-types", "Case types") },
+        { resource: "primer-types", label: "Primer types", definition: parameterResource("primer-types", "Primer types") },
+        { resource: "grenade-types", label: "Grenade types", definition: parameterResource("grenade-types", "Grenade types") },
+        { resource: "agents", label: "Agents", definition: parameterResource("agents", "Agents") },
+        { resource: "compositions", label: "Compositions", definition: parameterResource("compositions", "Compositions") },
+        { resource: "protection-types", label: "Protection types", definition: parameterResource("protection-types", "Protection types") },
+        { resource: "protection-levels", label: "Protection levels", definition: parameterResource("protection-levels", "Protection levels") },
+        { resource: "materials", label: "Materials", definition: parameterResource("materials", "Materials") },
+        { resource: "sizes", label: "Sizes", definition: parameterResource("sizes", "Sizes") },
+        { resource: "cartridge-types", label: "Cartridge types", definition: parameterResource("cartridge-types", "Cartridge types") },
+        { resource: "optical-types", label: "Optical types", definition: parameterResource("optical-types", "Optical types") },
+        { resource: "shield-types", label: "Shield types", definition: parameterResource("shield-types", "Shield types") },
+        { resource: "locking-mechanisms", label: "Locking mechanisms", definition: parameterResource("locking-mechanisms", "Locking mechanisms") },
+        { resource: "component-types", label: "Component types", definition: parameterResource("component-types", "Component types") },
+        { resource: "compatibilities", label: "Compatibilities", definition: parameterResource("compatibilities", "Compatibilities") },
+        { resource: "interfaces", label: "Interfaces", definition: parameterResource("interfaces", "Interfaces") }
     ],
     catalog: [
         { resource: "item-categories", label: "Categories" },
