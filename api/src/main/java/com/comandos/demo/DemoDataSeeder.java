@@ -311,6 +311,15 @@ public class DemoDataSeeder implements ApplicationRunner {
     }
 
     private ArmamentParameter parameter(String type, String code, String name, String description) {
+        var existing = entityManager.createQuery(
+                "select p from ArmamentParameter p where p.parameterType = :type and p.code = :code",
+                ArmamentParameter.class)
+            .setParameter("type", type)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
         ArmamentParameter value = new ArmamentParameter();
         value.parameterType = type;
         value.code = code;
