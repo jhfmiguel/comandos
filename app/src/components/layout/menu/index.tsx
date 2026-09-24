@@ -57,18 +57,13 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
     }
 
     return (
-        <>
-            <div
-                className="comandos-sidebar-spacer"
-                data-part="spacer"
-                aria-hidden="true"
-                style={{ width: open ? undefined : undefined }}
-            />
-
+        <div
+            id="comandos-sidebar"
+            className="comandos-sidebar"
+            data-state={open ? "expanded" : "collapsed"}
+        >
             <aside
-                id="comandos-sidebar"
-                className={`comandos-sidebar comandos-sidebar-aside ${mobile && open ? "comandos-sidebar-mobile-overlay-open" : ""}`}
-                data-state={open ? "expanded" : "collapsed"}
+                className={`comandos-sidebar-aside ${mobile && open ? "comandos-sidebar-mobile-overlay-open" : ""}`}
             >
                 <div className="comandos-sidebar-panel">
                     <header>
@@ -108,7 +103,7 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
 
                                 <MenuItem
                                     menuKey="command-center"
-                                    href="/dashboard"
+                                    href="/bot"
                                     label={tr("Command Center")}
                                     icon={Settings2}
                                     collapsed={!open}
@@ -248,6 +243,6 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                     </footer>
                 </div>
             </aside>
-        </>
+        </div>
     )
 }
