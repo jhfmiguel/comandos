@@ -761,8 +761,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                     })}
                                 </fieldset>
                                 <div className={styles.actions}>
-                                    <button type="button" className="comandos-action-button comandos-button-outlined comandos-button-secondary" disabled={busy} onClick={onCancel}>Cancel</button>
-                                    <button type="submit" className="comandos-action-button comandos-button-outlined comandos-button-primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                    <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
+                                    <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
                                 </div>
                             </form>
                 </div>
