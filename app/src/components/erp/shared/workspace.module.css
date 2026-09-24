@@ -1611,3 +1611,19 @@
     margin-top: 1rem !important;
 }
 
+.assetImportDetails {
+    margin-bottom: 1.1rem;
+}
+
+.assetImportDetails > summary {
+    margin-bottom: .85rem;
+}
+
+.pastedRowsButton {
+    margin-bottom: 1rem !important;
+}
+
+.intakeQuantityTotal {
+    margin-top: 1.2rem !important;
+}
+
