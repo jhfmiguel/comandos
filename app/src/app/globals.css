@@ -6454,3 +6454,87 @@ html[data-theme][data-palette] .comandos-tab:focus-visible {
 .comandos-sidebar:not([data-state="collapsed"]) .comandos-sidebar-content {
     padding-top: 3.25rem !important;
 }
+
+
+/* COMANDOS GLOBAL ACTION BUTTON STANDARD V1
+ * All application action buttons use the same outlined visual language.
+ * Navigation, tabs, pagination, icon-only controls and backdrops are excluded.
+ */
+html[data-theme] body .comandos-accent-button,
+html[data-theme] body .prime-yellow-button,
+html[data-theme] body .command-button-primary,
+html[data-theme] body .taskboard-add-button,
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab),
+html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button) {
+    --button-color: var(--comandos-accent, #ff9900);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 2.5rem;
+    padding: .55rem .9rem;
+    border: 1px solid var(--button-color) !important;
+    border-radius: .375rem;
+    background: color-mix(in srgb, var(--button-color) 7%, transparent) !important;
+    background-image: none !important;
+    color: var(--button-color) !important;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: background-color .16s ease, border-color .16s ease, color .16s ease, opacity .16s ease;
+}
+
+html[data-theme] body .comandos-accent-button:hover:not(:disabled),
+html[data-theme] body .prime-yellow-button:hover:not(:disabled),
+html[data-theme] body .command-button-primary:hover:not(:disabled),
+html[data-theme] body .taskboard-add-button:hover:not(:disabled),
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):hover:not(:disabled),
+html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button):hover:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 14%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-accent-button:active:not(:disabled),
+html[data-theme] body .prime-yellow-button:active:not(:disabled),
+html[data-theme] body .command-button-primary:active:not(:disabled),
+html[data-theme] body .taskboard-add-button:active:not(:disabled),
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):active:not(:disabled),
+html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button):active:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 21%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body form[data-comandos-erp-form="true"] button.comandos-button-secondary,
+html[data-theme] body form[data-comandos-erp-form="true"] button.comandos-secondary-button,
+html[data-theme] body .comandos-native-dialog button.comandos-button-secondary,
+html[data-theme] body .comandos-native-dialog button.comandos-secondary-button {
+    --button-color: #94a3b8;
+}
+
+html[data-theme] body form[data-comandos-erp-form="true"] button.comandos-button-danger,
+html[data-theme] body form[data-comandos-erp-form="true"] button.comandos-red-button,
+html[data-theme] body .comandos-native-dialog button.comandos-button-danger,
+html[data-theme] body .comandos-native-dialog button.comandos-red-button {
+    --button-color: #ef4444;
+}
+
+html[data-theme] body form[data-comandos-erp-form="true"] button:disabled,
+html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:disabled,
+html[data-theme] body .comandos-accent-button:disabled,
+html[data-theme] body .prime-yellow-button:disabled,
+html[data-theme] body .command-button-primary:disabled,
+html[data-theme] body .taskboard-add-button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
