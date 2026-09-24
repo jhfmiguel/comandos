@@ -127,7 +127,6 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                         { href: "/erp/inventory?section=technical-parameters&resource=calibers", label: "Parâmetros técnicos" },
                                         { href: "/erp/inventory?section=catalog", label: "Catalog" },
                                         { href: "/erp/inventory?section=specifications", label: "Specifications" },
-                                        { href: "/erp/inventory?section=equipment", label: "Equipment" },
                                         { href: "/erp/inventory?section=compliance", label: "Compliance" },
                                         { href: "/erp/inventory?section=inventory", label: "Inventory" },
                                         { href: "/erp/inventory?section=stock", label: "Stock" }
