@@ -160,11 +160,7 @@ export function FloatLabelEnhancer() {
                 if (
                     mutation.type === "attributes"
                     && mutation.target instanceof HTMLElement
-                    && (
-                        mutation.attributeName === "hidden"
-                        || mutation.attributeName === "class"
-                        || mutation.attributeName === "style"
-                    )
+                    && mutation.attributeName === "hidden"
                 ) {
                     shouldRefresh = true;
                     break;
@@ -178,7 +174,7 @@ export function FloatLabelEnhancer() {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ["hidden", "class", "style"]
+            attributeFilter: ["hidden"]
         });
 
         const syncFromEvent = (event: Event) => {
