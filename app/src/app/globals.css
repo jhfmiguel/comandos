@@ -7426,16 +7426,9 @@ html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled),
 html[data-theme] body table td button.comandos-icon-button:focus-visible {
     border: 0 !important;
     outline: 0 !important;
-    background: color-mix(
-        in srgb,
-        var(--comandos-table-action-color) 12%,
-        transparent
-    ) !important;
-    background-color: color-mix(
-        in srgb,
-        var(--comandos-table-action-color) 12%,
-        transparent
-    ) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     color: var(--comandos-table-action-color) !important;
     box-shadow: none !important;
     text-shadow: none !important;
@@ -7454,11 +7447,9 @@ html[data-theme] body table td button.comandos-icon-button:focus-visible svg {
 
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled),
 html[data-theme] body table td button.comandos-icon-button:active:not(:disabled) {
-    background: color-mix(
-        in srgb,
-        var(--comandos-table-action-color) 18%,
-        transparent
-    ) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
     color: var(--comandos-table-action-color) !important;
     box-shadow: none !important;
     filter: none !important;
@@ -7729,3 +7720,27 @@ html[data-theme="dark"] body .comandos-main-content .comandos-pagination {
     }
 }
 
+
+
+/* TABLE ACTIONS — TRANSPARENT V11
+ * Every action control rendered inside a table stays unfilled in every state.
+ * Semantic icon/label colors remain; no palette-colored tile is allowed.
+ */
+html body table td.comandos-standard-actions-cell button,
+html body table td .comandos-action-button[data-comandos-table-action],
+html body table td button.comandos-icon-button,
+html body table td.comandos-standard-actions-cell button:hover:not(:disabled),
+html body table td.comandos-standard-actions-cell button:focus-visible,
+html body table td.comandos-standard-actions-cell button:active:not(:disabled),
+html body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+html body table td .comandos-action-button[data-comandos-table-action]:focus-visible,
+html body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled),
+html body table td button.comandos-icon-button:hover:not(:disabled),
+html body table td button.comandos-icon-button:focus-visible,
+html body table td button.comandos-icon-button:active:not(:disabled) {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
