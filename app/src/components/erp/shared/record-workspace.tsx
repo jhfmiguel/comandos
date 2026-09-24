@@ -878,7 +878,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 && field.name === "country"
                                                 && Boolean(values.foreignAddress))
                                         ) && !(record && field.type === "password");
-                                        return <fieldset key={field.name} className={styles.field} disabled={field.readOnly || Boolean(record && (
+                                        return <fieldset key={field.name} data-comandos-field="true" className={styles.field} disabled={field.readOnly || Boolean(record && (
                                                 field.createOnly
                                                 || (["person-addresses", "person-phones", "person-emails"].includes(resource.key)
                                                     && field.name === "personId")
@@ -1099,7 +1099,7 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
 
     return (
         <div className={styles.reference}>
-            <div className={styles.referenceCombobox}>
+            <div className={styles.referenceCombobox} data-comandos-field="true">
                 <input
                     id={`core-${field.name}`}
                     type="search"
