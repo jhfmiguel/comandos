@@ -536,10 +536,10 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                         <div className="comandos-native-dialog-content">
                             <p>Delete {deleting?.label}? Records referenced by another record cannot be deleted.</p>
                             <div className={styles.actions}>
-                                <button type="button" className="comandos-secondary-button" disabled={busy} onClick={() => setDeleting(null)}>Cancel</button>
+                                <button type="button" className="comandos-action-button comandos-button-outlined comandos-button-secondary" disabled={busy} onClick={() => setDeleting(null)}>Cancel</button>
                                 <button
                                     type="button"
-                                    className="comandos-red-button comandos-dialog-action-button"
+                                    className="comandos-action-button comandos-button-outlined comandos-button-danger"
                                     disabled={busy}
                                     onClick={async () => {
                                         if (!deleting || busy) return;
@@ -761,8 +761,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>
                                     })}
                                 </fieldset>
                                 <div className={styles.actions}>
-                                    <button type="button" className="comandos-secondary-button" disabled={busy} onClick={onCancel}>Cancel</button>
-                                    <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                    <button type="button" className="comandos-action-button comandos-button-outlined comandos-button-secondary" disabled={busy} onClick={onCancel}>Cancel</button>
+                                    <button type="submit" className="comandos-action-button comandos-button-outlined comandos-button-primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
                                 </div>
                             </form>
                 </div>
