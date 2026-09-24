@@ -37,6 +37,11 @@ import {
     type PhoneDraft as PersonPhoneDraft,
     type EmailDraft as PersonEmailDraft
 } from "./person-contacts-editor";
+import {
+    EquipmentSetComponentsEditor,
+    CategoryCharacteristicsEditor,
+    CharacteristicValuesEditor
+} from "./nested-resource-editors";
 
 
 type ErpTableFilters = Record<string, string>;
