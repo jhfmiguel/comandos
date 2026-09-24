@@ -9,6 +9,28 @@ interface InventoryWorkspaceProps {
     section?: string
 }
 
+const legacyResourceParent: Record<string, string> = {
+    "recall-items": "recalls",
+    "equipment-set-components": "equipment-sets",
+    "category-characteristics": "item-categories",
+    "model-characteristics": "item-models",
+    "model-values": "item-models",
+    "asset-characteristics": "individual-assets",
+    "item-values": "individual-assets",
+    "firearm-specifications": "item-models",
+    "ammunition-specifications": "item-models",
+    "grenade-specifications": "item-models",
+    "spray-specifications": "item-models",
+    "ballistic-protection-specifications": "item-models",
+    "electrical-device-specifications": "item-models",
+    "optical-specifications": "item-models",
+    "helmet-specifications": "item-models",
+    "shield-specifications": "item-models",
+    "restraint-specifications": "item-models",
+    "accessory-component-specifications": "item-models",
+    "tactical-equipment-specifications": "item-models"
+}
+
 const parameterResource = (key: string, label: string): ErpResource => ({
     key,
     label,
@@ -78,16 +100,22 @@ const sectionTabs = {
 }
 
 export function InventoryWorkspace({ initialResource, section }: InventoryWorkspaceProps) {
-    const tabs = section ? sectionTabs[section as keyof typeof sectionTabs] : undefined
+    const normalizedSection = ["equipment", "specifications"].includes(section ?? "")
+        ? "catalog"
+        : section
+    const normalizedResource = initialResource
+        ? legacyResourceParent[initialResource] ?? initialResource
+        : undefined
+    const tabs = normalizedSection ? sectionTabs[normalizedSection as keyof typeof sectionTabs] : undefined
     const firstTabResource = tabs?.[0]?.resource
     const requestedResource =
-        initialResource && tabs?.some(tab => tab.resource === initialResource)
-            ? initialResource
-            : firstTabResource ?? initialResource ?? "item-categories"
+        normalizedResource && tabs?.some(tab => tab.resource === normalizedResource)
+            ? normalizedResource
+            : firstTabResource ?? normalizedResource ?? "item-categories"
 
     return (
         <RecordWorkspace
-            key={`${section ?? "all"}:${requestedResource}`}
+            key={`${normalizedSection ?? "all"}:${requestedResource}`}
             module="inventory"
             title="Assets and inventory"
             initialResource={requestedResource}
