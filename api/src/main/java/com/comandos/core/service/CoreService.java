@@ -328,6 +328,57 @@ public class CoreService {
         return result;
     }
 
+    private void normalizeLegacyOrganizationInput(Map<String, Object> input) {
+        boolean legacyNatureSupplied = input.containsKey("nature");
+        Object legacyNature = input.remove("nature");
+
+        if (legacyNatureSupplied && !input.containsKey("natureId")) {
+            String name = legacyNature == null ? "" : legacyNature.toString().trim();
+            if (!name.isEmpty()) {
+                input.put("natureId", ensureLegacyOrganizationNature(name).id);
+            }
+        }
+
+        if (legacyNatureSupplied && !input.containsKey("economicActivityId")) {
+            input.put("economicActivityId", ensureLegacyEconomicActivity().id);
+        }
+    }
+
+    private OrganizationNature ensureLegacyOrganizationNature(String name) {
+        var existing = em.createQuery(
+                "select n from OrganizationNature n where lower(n.name) = lower(:name)",
+                OrganizationNature.class)
+            .setParameter("name", name)
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
+        OrganizationNature nature = new OrganizationNature();
+        nature.code = "LEGACY-" + Integer.toUnsignedString(name.toLowerCase(Locale.ROOT).hashCode(), 36).toUpperCase(Locale.ROOT);
+        nature.name = name;
+        nature.description = "Migrado automaticamente de cadastro legado";
+        nature.active = true;
+        em.persist(nature);
+        return nature;
+    }
+
+    private EconomicActivity ensureLegacyEconomicActivity() {
+        var existing = em.createQuery(
+                "select a from EconomicActivity a where a.code = :code",
+                EconomicActivity.class)
+            .setParameter("code", "UNSPECIFIED")
+            .setMaxResults(1)
+            .getResultList();
+        if (!existing.isEmpty()) return existing.getFirst();
+
+        EconomicActivity activity = new EconomicActivity();
+        activity.code = "UNSPECIFIED";
+        activity.description = "Não informada";
+        activity.active = true;
+        em.persist(activity);
+        return activity;
+    }
+
     public record PersonRegistration(
             Map<String, Object> person,
             List<Map<String, Object>> addresses,
