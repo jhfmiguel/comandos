@@ -22,6 +22,12 @@ public class AccessPolicy {
         "core/economic-activities"
     );
     private static final Set<String> INVENTORY_PARAMETER_PARENT_RESOURCES = Set.of(
+        "inventory/item-categories",
+        "inventory/armament-types",
+        "inventory/armament-classifications",
+        "inventory/brands",
+        "inventory/item-models",
+        "inventory/technical-characteristics",
         "inventory/categories",
         "inventory/models",
         "inventory/characteristics"
