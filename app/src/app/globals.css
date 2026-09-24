@@ -6266,15 +6266,22 @@ html[data-theme="dark"] .comandos-native-dialog-header {
 
 .comandos-icon-button-danger {
     color: #ef4444 !important;
-    border-color: #ef4444 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 
 .comandos-icon-button-danger:hover:not(:disabled),
 .comandos-icon-button-danger:focus-visible {
-    background: rgb(239 68 68 / 10%) !important;
+    background: transparent !important;
+    background-color: transparent !important;
     color: #ef4444 !important;
-    border-color: #ef4444 !important;
-    box-shadow: 0 0 0 .12rem rgb(239 68 68 / 22%) !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
 }
 
 html[data-theme="dark"] .comandos-button-secondary,
@@ -6357,14 +6364,23 @@ html[data-theme="dark"] .comandos-button-contrast {
 }
 
 .comandos-icon-button-danger {
-    background: rgb(239 68 68 / 7%) !important;
-    border-color: #ef4444 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    border-color: transparent !important;
     color: #ef4444 !important;
+    box-shadow: none !important;
 }
 
 .comandos-icon-button-danger:hover:not(:disabled),
 .comandos-icon-button-danger:focus-visible {
-    background: rgb(239 68 68 / 16%) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    color: #ef4444 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
 }
 
 
@@ -6742,14 +6758,24 @@ html[data-theme] body .comandos-tabs-scroll-button:focus-visible {
 
 .comandos-native-table td .comandos-icon-button-edit:hover:not(:disabled),
 .comandos-native-table td .comandos-icon-button-edit:focus-visible,
-.comandos-native-table td .comandos-icon-button-danger:hover:not(:disabled),
-.comandos-native-table td .comandos-icon-button-danger:focus-visible,
 .comandos-native-table td .comandos-icon-button-success:hover:not(:disabled),
 .comandos-native-table td .comandos-icon-button-success:focus-visible {
     color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
     border-color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
     background: color-mix(in srgb, var(--comandos-table-action-color) 14%, transparent) !important;
     box-shadow: none !important;
+    filter: none !important;
+}
+
+.comandos-native-table td .comandos-icon-button-danger:hover:not(:disabled),
+.comandos-native-table td .comandos-icon-button-danger:focus-visible {
+    color: #ef4444 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
     filter: none !important;
 }
 
@@ -7790,4 +7816,41 @@ html body button[data-comandos-contact-delete="true"] svg * {
 
 html body .comandos-action-button[data-comandos-table-action="delete"] .comandos-table-action-icon {
     color: #ef4444 !important;
+}
+
+
+/* TRASH BUTTON — FINAL CASCADE LOCK V13
+ * Highest-specificity rule: trash is always a red outline icon only.
+ */
+html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger,
+html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:hover:not(:disabled),
+html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:focus-visible,
+html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:active:not(:disabled),
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger,
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:hover:not(:disabled),
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:focus-visible,
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:active:not(:disabled),
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:disabled {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    color: #ef4444 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
+html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger svg,
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger svg,
+html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger svg * {
+    color: #ef4444 !important;
+    stroke: #ef4444 !important;
+    fill: none !important;
 }
