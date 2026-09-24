@@ -23,12 +23,12 @@ import org.springframework.transaction.support.TransactionTemplate;
  * Complements the curated demo data with one synthetic row for every empty
  * application entity table that can be safely instantiated from JPA metadata.
  *
- * Runs only in the demo profile. Each entity is seeded in its own transaction,
+ * Runs only when demo seeding is enabled and executes after curated scenario seeders. Each entity is seeded in its own transaction,
  * so one unsupported relationship never rolls back the other demo records.
  */
 @Component
 @ConditionalOnProperty(name = "comandos.demo.seed", havingValue = "true")
-@Order(100)
+@Order(1000)
 public class DemoCoverageSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoCoverageSeeder.class);
