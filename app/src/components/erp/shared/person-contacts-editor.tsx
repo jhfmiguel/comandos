@@ -216,13 +216,13 @@ export function PersonContactsEditor({
                                 <th>Tipo</th>
                                 <th>Exterior</th>
                                 <th>País</th>
-                                <th>CEP / código postal</th>
+                                <th className={styles.addressPostalCell}>CEP</th>
                                 <th>Logradouro</th>
-                                <th>Número</th>
+                                <th className={styles.addressNumberCell}>Número</th>
                                 <th>Complemento</th>
                                 <th>Bairro / Distrito</th>
                                 <th>Cidade</th>
-                                <th>UF / Região</th>
+                                <th className={styles.addressStateCell}>Estado</th>
                                 <th>Principal</th>
                                 <th>Ações</th>
                             </tr>
@@ -266,7 +266,7 @@ export function PersonContactsEditor({
                                                 onChange={event => updateAddress(index, { country: event.target.value })}
                                             />
                                         </td>
-                                        <td>
+                                        <td className={styles.addressPostalCell}>
                                             {address.foreignAddress ? (
                                                 <input
                                                     aria-label={`Código postal do endereço ${index + 1}`}
@@ -298,7 +298,7 @@ export function PersonContactsEditor({
                                                 onChange={event => updateAddress(index, { street: event.target.value })}
                                             />
                                         </td>
-                                        <td>
+                                        <td className={styles.addressNumberCell}>
                                             <input
                                                 aria-label={`Número do endereço ${index + 1}`}
                                                 required
@@ -328,9 +328,9 @@ export function PersonContactsEditor({
                                                 onChange={event => updateAddress(index, { city: event.target.value })}
                                             />
                                         </td>
-                                        <td>
+                                        <td className={styles.addressStateCell}>
                                             <input
-                                                aria-label={`UF ou região do endereço ${index + 1}`}
+                                                aria-label={`Estado do endereço ${index + 1}`}
                                                 required
                                                 value={address.state}
                                                 maxLength={address.foreignAddress ? 120 : 2}
