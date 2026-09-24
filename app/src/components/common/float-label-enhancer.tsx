@@ -34,8 +34,25 @@ const sourceLabelFor = (control: FloatControl): HTMLLabelElement | null => {
     const field = control.closest(
         ".field, .registration-field, [data-comandos-field], .comandos-field"
     );
+    const fieldLabel = field?.querySelector("label");
+    if (fieldLabel) return fieldLabel;
 
-    return field?.querySelector("label") ?? null;
+    // Legacy ERP forms often use CSS-module field classes and labels without htmlFor.
+    // Walk only through small single-control wrappers so a group label is never
+    // accidentally attached to the wrong select/input.
+    let current: HTMLElement | null = control.parentElement;
+    for (let depth = 0; current && depth < 4; depth += 1) {
+        const controls = current.querySelectorAll<FloatControl>(CONTROL_SELECTOR);
+        if (controls.length === 1 && controls[0] === control) {
+            const candidate = current.querySelector("label");
+            if (candidate && !candidate.contains(control)) return candidate;
+        }
+
+        if (current.tagName === "FORM" || current.tagName === "FIELDSET") break;
+        current = current.parentElement;
+    }
+
+    return null;
 };
 
 const resolveLabel = (control: FloatControl): {
@@ -72,23 +89,26 @@ const chooseHost = (control: FloatControl): HTMLElement | null => {
         return explicit;
     }
 
-    const linkedLabel = control.labels?.[0] ?? null;
-    const labelParent = linkedLabel?.parentElement ?? null;
-    if (
-        labelParent
-        && labelParent.contains(control)
-        && labelParent.querySelectorAll(CONTROL_SELECTOR).length <= 1
-    ) {
-        return labelParent;
+    const source = sourceLabelFor(control);
+    if (source) {
+        let current: HTMLElement | null = source.parentElement;
+        for (let depth = 0; current && depth < 4; depth += 1) {
+            if (
+                current.contains(control)
+                && current.querySelectorAll(CONTROL_SELECTOR).length === 1
+            ) {
+                return current;
+            }
+            current = current.parentElement;
+        }
     }
 
     const preferred = control.closest(
         ".field, .registration-field, .comandos-field, td, th"
     ) as HTMLElement | null;
 
-    if (preferred) {
-        const count = preferred.querySelectorAll(CONTROL_SELECTOR).length;
-        if (count <= 1) return preferred;
+    if (preferred && preferred.querySelectorAll(CONTROL_SELECTOR).length <= 1) {
+        return preferred;
     }
 
     return control.parentElement;
@@ -186,8 +206,8 @@ const scan = (root: ParentNode = document): void => {
 };
 
 export function FloatLabelEnhancer() {
-    React.useEffect(() => {
-        const refresh = () => requestAnimationFrame(() => scan());
+    React.useLayoutEffect(() => {
+        const refresh = () => scan();
 
         scan();
 
@@ -196,8 +216,16 @@ export function FloatLabelEnhancer() {
 
             for (const mutation of mutations) {
                 if (mutation.type === "childList" && mutation.addedNodes.length) {
-                    shouldRefresh = true;
-                    break;
+                    for (const node of mutation.addedNodes) {
+                        if (node instanceof HTMLElement) {
+                            if (node.matches(CONTROL_SELECTOR)) {
+                                enhanceControl(node as FloatControl);
+                            }
+                            scan(node);
+                        }
+                    }
+                    shouldRefresh = false;
+                    continue;
                 }
 
                 if (
