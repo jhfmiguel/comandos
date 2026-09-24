@@ -53,8 +53,21 @@ class CoreApiTests {
 
     private String unique() { return UUID.randomUUID().toString(); }
 
-    private Map<String, Object> organizationData(String name) {
-        return Map.of("name", name, "nature", "Private company", "publicOrganization", false, "active", true);
+    private JsonNode organizationNature() throws Exception {
+        return create("organization-natures", Map.of(
+            "code", "N-" + unique(),
+            "name", "Nature " + unique(),
+            "active", true
+        ));
+    }
+
+    private Map<String, Object> organizationData(String name) throws Exception {
+        return Map.of(
+            "name", name,
+            "natureId", organizationNature().get("id").asLong(),
+            "publicOrganization", false,
+            "active", true
+        );
     }
 
     private JsonNode organization() throws Exception { return create("organizations", organizationData(unique())); }
@@ -133,12 +146,38 @@ class CoreApiTests {
     void catalogExposesAllCoreResourcesWithoutPersistenceClasses() throws Exception {
         var result = request("GET", "catalog", null);
         assertEquals(200, result.status());
-        assertEquals(14, result.body().size());
+        assertEquals(15, result.body().size());
         assertFalse(result.raw().contains("com.comandos"));
         for (var resource : result.body()) {
             var page = request("GET", resource.get("key").asText() + "?search=example", null);
             assertEquals(200, page.status(), page.raw());
         }
+    }
+
+    @Test
+    void organizationNatureIsParameterizedAndCannotBeDeletedWhileInUse() throws Exception {
+        var nature = create("organization-natures", Map.of(
+            "code", "public-agency",
+            "name", "Public agency",
+            "description", "Parameterized organization nature",
+            "active", true
+        ));
+        assertEquals("PUBLIC-AGENCY", nature.get("code").asText());
+
+        var organization = create("organizations", Map.of(
+            "natureId", nature.get("id").asLong(),
+            "name", unique(),
+            "publicOrganization", true,
+            "active", true
+        ));
+
+        assertEquals(nature.get("id").asLong(), organization.get("natureId").asLong());
+        assertTrue(organization.get("referenceLabels").get("natureId").asText().contains("Public agency"));
+        assertEquals(409, request(
+            "DELETE",
+            "organization-natures/" + nature.get("id").asLong() + "?version=" + nature.get("version").asLong(),
+            null
+        ).status());
     }
 
     @Test
