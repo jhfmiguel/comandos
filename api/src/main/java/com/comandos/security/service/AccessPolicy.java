@@ -21,6 +21,11 @@ public class AccessPolicy {
         "core/organization-natures",
         "core/economic-activities"
     );
+    private static final Set<String> INVENTORY_PARAMETER_PARENT_RESOURCES = Set.of(
+        "inventory/categories",
+        "inventory/models",
+        "inventory/characteristics"
+    );
     private static final Set<String> INVENTORY_PARAMETER_RESOURCES = Set.of(
         "inventory/calibers",
         "inventory/ammunition-types",
@@ -110,19 +115,27 @@ public class AccessPolicy {
     }
 
     private List<Grant> matching(String resource, String action, Scope scope) {
+        String requiredAction = ACCESS_RESOURCES.contains(resource) ? "MANAGE" : action;
+
+        if (INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
+            return grants().stream()
+                .filter(g -> (INVENTORY_PARAMETER_PARENT_RESOURCES.contains(g.resource()) || g.resource().equals("*"))
+                    && (g.action().equals(requiredAction) || g.action().equals("*"))
+                    && "SYSTEM".equals(g.scope()))
+                .toList();
+        }
+
         String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
             Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource) ? "core/people" :
             GLOBAL_PARAMETER_RESOURCES.contains(resource) ? "core/organizations" :
-            INVENTORY_PARAMETER_RESOURCES.contains(resource) ? "inventory/models" :
             resource;
-        String requiredAction = ACCESS_RESOURCES.contains(resource) ? "MANAGE" : action;
 
         var matched = grants().stream().filter(g ->
             (g.resource().equals(requiredResource) || g.resource().equals("*"))
                 && (g.action().equals(requiredAction) || g.action().equals("*"))
         );
 
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
             return matched.toList();
         }
 
