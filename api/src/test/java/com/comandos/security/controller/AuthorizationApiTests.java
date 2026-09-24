@@ -407,6 +407,37 @@ class AuthorizationApiTests {
     }
 
     @Test
+    void institutionalParametersInheritOrganizationPermissions() throws Exception {
+        var f = fixture();
+        grant(f, "core/organizations", "READ", "ORGANIZATION", null);
+        grant(f, "core/organizations", "CREATE", "ORGANIZATION", null);
+        login(f);
+
+        var catalog = request("GET", "/api/erp/core/catalog", null);
+        assertEquals(200, catalog.status(), catalog.raw());
+
+        var keys = new HashSet<String>();
+        catalog.body().forEach(item -> keys.add(item.get("key").asText()));
+        assertTrue(keys.contains("organization-natures"));
+        assertTrue(keys.contains("economic-activities"));
+
+        assertEquals(200, request("GET", "/api/erp/core/organization-natures", null).status());
+        assertEquals(200, request("GET", "/api/erp/core/economic-activities", null).status());
+
+        assertEquals(201, request("POST", "/api/erp/core/organization-natures", Map.of(
+            "code", "AUTH-NATURE-" + UUID.randomUUID(),
+            "name", "Natureza de teste",
+            "active", true
+        )).status());
+
+        assertEquals(201, request("POST", "/api/erp/core/economic-activities", Map.of(
+            "code", "AUTH-ACTIVITY-" + UUID.randomUUID(),
+            "description", "Atividade econômica de teste",
+            "active", true
+        )).status());
+    }
+
+    @Test
     void addressesInheritPeoplePermissions() throws Exception {
         var f = fixture(); login(f);
         assertEquals(403, request("GET", "/api/erp/core/person-addresses", null).status());
@@ -436,7 +467,7 @@ class AuthorizationApiTests {
     void systemAdministratorCanManageAccessAndInvalidScopesGrantNothing() throws Exception {
         var f = fixture(); grant(f, "*", "*", "SYSTEM", null); login(f);
         var result = request("GET", "/api/erp/core/catalog", null);
-        assertEquals(200, result.status(), result.raw()); assertEquals(14, result.body().size());
+        assertEquals(200, result.status(), result.raw()); assertEquals(18, result.body().size());
         assertEquals(201, request("POST", "/api/erp/core/profiles", Map.of("name", UUID.randomUUID().toString(), "level", "SYSTEM")).status());
         var invalid = fixture();
         grant(invalid, "*", "*", "SYSTEM", invalid.unit());
