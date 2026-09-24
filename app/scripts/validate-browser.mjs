@@ -536,6 +536,49 @@ async function main() {
         );
         console.log('PASS reference data forms: display order and boolean flag alignment');
 
+        await page.goto(`${appURL}/erp/core?section=institutional&resource=organizations`);
+        const standardizedTable = page.locator('table.comandos-standard-table').first();
+        await standardizedTable.waitFor();
+        assert.ok(
+            await standardizedTable.locator('thead .comandos-filter-row input').count() > 0,
+            'Standard tables must expose column search inputs'
+        );
+
+        const standardPagination = page.locator('.comandos-pagination').first();
+        await standardPagination.waitFor();
+        assert.equal(
+            await standardPagination.locator('.comandos-pagination-page.is-active').count(),
+            1,
+            'Standard tables must expose one active pagination page'
+        );
+
+        const standardActionCell = standardizedTable.locator('tbody tr td.comandos-standard-actions-cell').first();
+        if (await standardActionCell.count()) {
+            const actionButtons = standardActionCell.locator('button');
+            const buttonCount = await actionButtons.count();
+            assert.ok(buttonCount > 0, 'Actions column must contain icon buttons');
+
+            const boxes = [];
+            for (let index = 0; index < buttonCount; index += 1) {
+                const button = actionButtons.nth(index);
+                const box = await button.boundingBox();
+                if (box) boxes.push(box);
+                assert.equal(
+                    await button.evaluate(element => getComputedStyle(element).backgroundColor),
+                    'rgba(0, 0, 0, 0)',
+                    'Table action buttons must keep a transparent background'
+                );
+            }
+            if (boxes.length > 1) {
+                const rowTop = boxes[0].y;
+                assert.ok(
+                    boxes.every(box => Math.abs(box.y - rowTop) <= 3),
+                    'Table action buttons must stay on the same horizontal line'
+                );
+            }
+        }
+        console.log('PASS system tables: search, horizontal icon actions and pagination');
+
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
             ['/erp/sales', 'Inventory sales'], ['/erp/ammunition-consumption', 'Ammunition consumption'],
@@ -563,7 +606,7 @@ async function main() {
                 assert.equal(response.status(), 200, await response.text());
             }
             await page.goto(`${appURL}/queries/${resource}`);
-            const search = page.getByPlaceholder('Search name...');
+            const search = page.getByPlaceholder(/Search name|Pesquisar nome/i);
             await search.waitFor();
             let started;
             let release;
