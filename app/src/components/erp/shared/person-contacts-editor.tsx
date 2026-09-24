@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import styles from "./workspace.module.css";
 
@@ -69,9 +70,7 @@ function maskPhoneNumber(value: string, countryCode: string): string {
     const digits = value.replace(/\D/g, "").slice(0, 15);
     const countryDigits = countryCode.replace(/\D/g, "");
 
-    if (countryDigits !== "55") {
-        return digits;
-    }
+    if (countryDigits !== "55") return digits;
 
     const brazilian = digits.slice(0, 11);
     if (brazilian.length <= 2) return brazilian ? `(${brazilian}` : "";
@@ -102,28 +101,28 @@ export function PersonContactsEditor({
 }) {
     const updateAddress = (index: number, patch: Partial<AddressDraft>) => {
         setAddresses(current => current.map((item, itemIndex) => {
-            if (itemIndex !== index) {
-                return patch.primaryAddress ? { ...item, primaryAddress: false } : item;
+            if (itemIndex !== index && patch.primaryAddress) {
+                return { ...item, primaryAddress: false };
             }
-            return { ...item, ...patch };
+            return itemIndex === index ? { ...item, ...patch } : item;
         }));
     };
 
     const updatePhone = (index: number, patch: Partial<PhoneDraft>) => {
         setPhones(current => current.map((item, itemIndex) => {
-            if (itemIndex !== index) {
-                return patch.primaryPhone ? { ...item, primaryPhone: false } : item;
+            if (itemIndex !== index && patch.primaryPhone) {
+                return { ...item, primaryPhone: false };
             }
-            return { ...item, ...patch };
+            return itemIndex === index ? { ...item, ...patch } : item;
         }));
     };
 
     const updateEmail = (index: number, patch: Partial<EmailDraft>) => {
         setEmails(current => current.map((item, itemIndex) => {
-            if (itemIndex !== index) {
-                return patch.primaryEmail ? { ...item, primaryEmail: false } : item;
+            if (itemIndex !== index && patch.primaryEmail) {
+                return { ...item, primaryEmail: false };
             }
-            return { ...item, ...patch };
+            return itemIndex === index ? { ...item, ...patch } : item;
         }));
     };
 
@@ -133,236 +132,379 @@ export function PersonContactsEditor({
                 <div className={styles.contactHeader}>
                     <div>
                         <h3>Endereços</h3>
-                        <small>Adicione vários endereços. No Brasil, o CEP consulta e preenche os dados; no exterior, use país e código postal livre.</small>
+                        <small>Edite diretamente na tabela e marque um endereço principal.</small>
                     </div>
-                    <button type="button" className="comandos-secondary-button"
-                        onClick={() => setAddresses(current => [...current, newAddress(current.length === 0)])}>
-                        Adicionar endereço
+                    <button
+                        type="button"
+                        className="registration-yellow-button"
+                        onClick={() => setAddresses(current => [...current, newAddress(current.length === 0)])}
+                    >
+                        <Plus size={16} />
+                        <span>Adicionar endereço</span>
                     </button>
                 </div>
 
-                {addresses.map((address, index) => {
-                    const prefix = "person-address-" + index;
-                    return (
-                        <div className={styles.contactCard} key={prefix}>
-                            <div className={styles.contactCardHeader}>
-                                <strong>Endereço {index + 1}</strong>
-                                <button type="button" className="comandos-secondary-button"
-                                    onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}>
-                                    Remover
-                                </button>
-                            </div>
-                            <div className={styles.contactGrid}>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-type"}>Tipo *</label>
-                                    <select id={prefix + "-type"} required value={address.type}
-                                        onChange={event => updateAddress(index, { type: event.target.value })}>
-                                        <option value="RESIDENTIAL">Residencial</option>
-                                        <option value="BUSINESS">Comercial</option>
-                                        <option value="MAILING">Correspondência</option>
-                                        <option value="OTHER">Outro</option>
-                                    </select>
-                                </div>
-
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-foreign"}>Endereço no exterior</label>
-                                    <input id={prefix + "-foreign"} type="checkbox" checked={address.foreignAddress}
-                                        onChange={event => updateAddress(index, {
-                                            foreignAddress: event.target.checked,
-                                            country: event.target.checked ? "" : "Brasil",
-                                            postalCode: ""
-                                        })} />
-                                </div>
-
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-country"}>País{address.foreignAddress ? " *" : ""}</label>
-                                    <input id={prefix + "-country"} required={address.foreignAddress}
-                                        value={address.country} readOnly={!address.foreignAddress}
-                                        onChange={event => updateAddress(index, { country: event.target.value })} />
-                                </div>
-
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-postal"}>{address.foreignAddress ? "Código postal" : "CEP *"}</label>
-                                    {address.foreignAddress ? (
-                                        <input id={prefix + "-postal"} value={address.postalCode} maxLength={30}
-                                            onChange={event => updateAddress(index, { postalCode: event.target.value })} />
-                                    ) : (
-                                        <PostalCodeField id={prefix + "-postal"} value={address.postalCode}
-                                            onChange={value => updateAddress(index, { postalCode: value })}
-                                            onResolved={resolved => updateAddress(index, {
-                                                street: resolved.street || address.street,
-                                                district: resolved.district || address.district,
-                                                city: resolved.city || address.city,
-                                                state: resolved.state || address.state,
-                                                country: "Brasil"
-                                            })} />
-                                    )}
-                                </div>
-
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-street"}>Logradouro *</label>
-                                    <input id={prefix + "-street"} required value={address.street}
-                                        onChange={event => updateAddress(index, { street: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-number"}>Número *</label>
-                                    <input id={prefix + "-number"} required value={address.number}
-                                        onChange={event => updateAddress(index, { number: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-complement"}>Complemento</label>
-                                    <input id={prefix + "-complement"} value={address.complement}
-                                        onChange={event => updateAddress(index, { complement: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-district"}>Bairro / Distrito</label>
-                                    <input id={prefix + "-district"} value={address.district}
-                                        onChange={event => updateAddress(index, { district: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-city"}>Cidade *</label>
-                                    <input id={prefix + "-city"} required value={address.city}
-                                        onChange={event => updateAddress(index, { city: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-state"}>
-                                        {address.foreignAddress ? "Estado / Província / Região *" : "UF *"}
-                                    </label>
-                                    <input id={prefix + "-state"} required value={address.state}
-                                        maxLength={address.foreignAddress ? 120 : 2}
-                                        onChange={event => updateAddress(index, { state: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-primary"}>Endereço principal</label>
-                                    <input id={prefix + "-primary"} type="checkbox" checked={address.primaryAddress}
-                                        onChange={event => updateAddress(index, { primaryAddress: event.target.checked })} />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="comandos-native-table-container">
+                    <table className={`comandos-native-table ${styles.contactTable} ${styles.addressTable}`}>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Exterior</th>
+                                <th>País</th>
+                                <th>CEP / código postal</th>
+                                <th>Logradouro</th>
+                                <th>Número</th>
+                                <th>Complemento</th>
+                                <th>Bairro / Distrito</th>
+                                <th>Cidade</th>
+                                <th>UF / Região</th>
+                                <th>Principal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {addresses.map((address, index) => {
+                                const prefix = `person-address-${index}`;
+                                return (
+                                    <tr key={prefix}>
+                                        <td>
+                                            <select
+                                                aria-label={`Tipo do endereço ${index + 1}`}
+                                                required
+                                                value={address.type}
+                                                onChange={event => updateAddress(index, { type: event.target.value })}
+                                            >
+                                                <option value="RESIDENTIAL">Residencial</option>
+                                                <option value="BUSINESS">Comercial</option>
+                                                <option value="MAILING">Correspondência</option>
+                                                <option value="OTHER">Outro</option>
+                                            </select>
+                                        </td>
+                                        <td className={styles.contactBooleanCell}>
+                                            <input
+                                                aria-label={`Endereço ${index + 1} no exterior`}
+                                                type="checkbox"
+                                                checked={address.foreignAddress}
+                                                onChange={event => updateAddress(index, {
+                                                    foreignAddress: event.target.checked,
+                                                    country: event.target.checked ? "" : "Brasil",
+                                                    postalCode: ""
+                                                })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`País do endereço ${index + 1}`}
+                                                required={address.foreignAddress}
+                                                value={address.country}
+                                                readOnly={!address.foreignAddress}
+                                                onChange={event => updateAddress(index, { country: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            {address.foreignAddress ? (
+                                                <input
+                                                    aria-label={`Código postal do endereço ${index + 1}`}
+                                                    value={address.postalCode}
+                                                    maxLength={30}
+                                                    onChange={event => updateAddress(index, { postalCode: event.target.value })}
+                                                />
+                                            ) : (
+                                                <PostalCodeField
+                                                    id={`${prefix}-postal`}
+                                                    compact
+                                                    value={address.postalCode}
+                                                    onChange={value => updateAddress(index, { postalCode: value })}
+                                                    onResolved={resolved => updateAddress(index, {
+                                                        street: resolved.street || address.street,
+                                                        district: resolved.district || address.district,
+                                                        city: resolved.city || address.city,
+                                                        state: resolved.state || address.state,
+                                                        country: "Brasil"
+                                                    })}
+                                                />
+                                            )}
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`Logradouro do endereço ${index + 1}`}
+                                                required
+                                                value={address.street}
+                                                onChange={event => updateAddress(index, { street: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`Número do endereço ${index + 1}`}
+                                                required
+                                                value={address.number}
+                                                onChange={event => updateAddress(index, { number: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`Complemento do endereço ${index + 1}`}
+                                                value={address.complement}
+                                                onChange={event => updateAddress(index, { complement: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`Bairro do endereço ${index + 1}`}
+                                                value={address.district}
+                                                onChange={event => updateAddress(index, { district: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`Cidade do endereço ${index + 1}`}
+                                                required
+                                                value={address.city}
+                                                onChange={event => updateAddress(index, { city: event.target.value })}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                aria-label={`UF ou região do endereço ${index + 1}`}
+                                                required
+                                                value={address.state}
+                                                maxLength={address.foreignAddress ? 120 : 2}
+                                                onChange={event => updateAddress(index, { state: event.target.value })}
+                                            />
+                                        </td>
+                                        <td className={styles.contactBooleanCell}>
+                                            <input
+                                                aria-label={`Endereço ${index + 1} principal`}
+                                                type="radio"
+                                                name="person-primary-address"
+                                                checked={address.primaryAddress}
+                                                onChange={() => updateAddress(index, { primaryAddress: true })}
+                                            />
+                                        </td>
+                                        <td className={styles.contactActionCell}>
+                                            <button
+                                                type="button"
+                                                className="comandos-icon-button comandos-icon-button-danger"
+                                                aria-label={`Remover endereço ${index + 1}`}
+                                                onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
+                                            >
+                                                <Trash2 size={17} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {!addresses.length && (
+                                <tr>
+                                    <td colSpan={12} className={styles.contactEmpty}>
+                                        Nenhum endereço adicionado.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <section className={styles.contactSection}>
                 <div className={styles.contactHeader}>
                     <div>
                         <h3>Telefones</h3>
-                        <small>Adicione vários telefones, marque o principal e indique se possui WhatsApp.</small>
+                        <small>Edite diretamente na tabela, indique WhatsApp e selecione o telefone principal.</small>
                     </div>
-                    <button type="button" className="comandos-secondary-button"
-                        onClick={() => setPhones(current => [...current, newPhone(current.length === 0)])}>
-                        Adicionar telefone
+                    <button
+                        type="button"
+                        className="registration-yellow-button"
+                        onClick={() => setPhones(current => [...current, newPhone(current.length === 0)])}
+                    >
+                        <Plus size={16} />
+                        <span>Adicionar telefone</span>
                     </button>
                 </div>
 
-                {phones.map((phone, index) => {
-                    const prefix = "person-phone-" + index;
-                    return (
-                        <div className={styles.contactCard} key={prefix}>
-                            <div className={styles.contactCardHeader}>
-                                <strong>Telefone {index + 1}</strong>
-                                <button type="button" className="comandos-secondary-button"
-                                    onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}>
-                                    Remover
-                                </button>
-                            </div>
-                            <div className={styles.contactGrid}>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-type"}>Tipo *</label>
-                                    <select id={prefix + "-type"} required value={phone.type}
-                                        onChange={event => updatePhone(index, { type: event.target.value })}>
-                                        <option value="MOBILE">Celular</option>
-                                        <option value="WHATSAPP">WhatsApp</option>
-                                        <option value="HOME">Residencial</option>
-                                        <option value="WORK">Comercial</option>
-                                        <option value="OTHER">Outro</option>
-                                    </select>
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-country"}>Código do país *</label>
-                                    <input id={prefix + "-country"} required inputMode="tel" value={phone.countryCode} maxLength={5}
-                                        placeholder="+55"
-                                        onChange={event => {
-                                            const countryCode = maskCountryCode(event.target.value);
-                                            updatePhone(index, {
-                                                countryCode,
-                                                number: maskPhoneNumber(phone.number, countryCode)
-                                            });
-                                        }} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-number"}>Telefone *</label>
-                                    <input id={prefix + "-number"} required type="tel" inputMode="tel"
-                                        value={maskPhoneNumber(phone.number, phone.countryCode)}
-                                        maxLength={20}
-                                        placeholder={phone.countryCode.replace(/\D/g, "") === "55" ? "(00) 00000-0000" : "Somente números"}
-                                        onChange={event => updatePhone(index, {
-                                            number: maskPhoneNumber(event.target.value, phone.countryCode)
-                                        })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-whatsapp"}>WhatsApp</label>
-                                    <input id={prefix + "-whatsapp"} type="checkbox" checked={phone.whatsapp}
-                                        onChange={event => updatePhone(index, { whatsapp: event.target.checked })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-primary"}>Telefone principal</label>
-                                    <input id={prefix + "-primary"} type="checkbox" checked={phone.primaryPhone}
-                                        onChange={event => updatePhone(index, { primaryPhone: event.target.checked })} />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="comandos-native-table-container">
+                    <table className={`comandos-native-table ${styles.contactTable} ${styles.phoneTable}`}>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Código do país</th>
+                                <th>Telefone</th>
+                                <th>WhatsApp</th>
+                                <th>Principal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {phones.map((phone, index) => (
+                                <tr key={`person-phone-${index}`}>
+                                    <td>
+                                        <select
+                                            aria-label={`Tipo do telefone ${index + 1}`}
+                                            required
+                                            value={phone.type}
+                                            onChange={event => updatePhone(index, { type: event.target.value })}
+                                        >
+                                            <option value="MOBILE">Celular</option>
+                                            <option value="WHATSAPP">WhatsApp</option>
+                                            <option value="HOME">Residencial</option>
+                                            <option value="WORK">Comercial</option>
+                                            <option value="OTHER">Outro</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input
+                                            aria-label={`Código do país do telefone ${index + 1}`}
+                                            required
+                                            inputMode="tel"
+                                            value={phone.countryCode}
+                                            maxLength={5}
+                                            placeholder="+55"
+                                            onChange={event => {
+                                                const countryCode = maskCountryCode(event.target.value);
+                                                updatePhone(index, {
+                                                    countryCode,
+                                                    number: maskPhoneNumber(phone.number, countryCode)
+                                                });
+                                            }}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            aria-label={`Telefone ${index + 1}`}
+                                            required
+                                            type="tel"
+                                            inputMode="tel"
+                                            value={maskPhoneNumber(phone.number, phone.countryCode)}
+                                            maxLength={20}
+                                            placeholder={phone.countryCode.replace(/\D/g, "") === "55" ? "(00) 00000-0000" : "Somente números"}
+                                            onChange={event => updatePhone(index, {
+                                                number: maskPhoneNumber(event.target.value, phone.countryCode)
+                                            })}
+                                        />
+                                    </td>
+                                    <td className={styles.contactBooleanCell}>
+                                        <input
+                                            aria-label={`Telefone ${index + 1} possui WhatsApp`}
+                                            type="checkbox"
+                                            checked={phone.whatsapp}
+                                            onChange={event => updatePhone(index, { whatsapp: event.target.checked })}
+                                        />
+                                    </td>
+                                    <td className={styles.contactBooleanCell}>
+                                        <input
+                                            aria-label={`Telefone ${index + 1} principal`}
+                                            type="radio"
+                                            name="person-primary-phone"
+                                            checked={phone.primaryPhone}
+                                            onChange={() => updatePhone(index, { primaryPhone: true })}
+                                        />
+                                    </td>
+                                    <td className={styles.contactActionCell}>
+                                        <button
+                                            type="button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            aria-label={`Remover telefone ${index + 1}`}
+                                            onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
+                                        >
+                                            <Trash2 size={17} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {!phones.length && (
+                                <tr>
+                                    <td colSpan={6} className={styles.contactEmpty}>
+                                        Nenhum telefone adicionado.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <section className={styles.contactSection}>
                 <div className={styles.contactHeader}>
                     <div>
                         <h3>E-mails</h3>
-                        <small>Adicione vários e-mails e defina qual é o principal.</small>
+                        <small>Edite diretamente na tabela e selecione o e-mail principal.</small>
                     </div>
-                    <button type="button" className="comandos-secondary-button"
-                        onClick={() => setEmails(current => [...current, newEmail(current.length === 0)])}>
-                        Adicionar e-mail
+                    <button
+                        type="button"
+                        className="registration-yellow-button"
+                        onClick={() => setEmails(current => [...current, newEmail(current.length === 0)])}
+                    >
+                        <Plus size={16} />
+                        <span>Adicionar e-mail</span>
                     </button>
                 </div>
 
-                {emails.map((email, index) => {
-                    const prefix = "person-email-" + index;
-                    return (
-                        <div className={styles.contactCard} key={prefix}>
-                            <div className={styles.contactCardHeader}>
-                                <strong>E-mail {index + 1}</strong>
-                                <button type="button" className="comandos-secondary-button"
-                                    onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}>
-                                    Remover
-                                </button>
-                            </div>
-                            <div className={styles.contactGrid}>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-type"}>Tipo *</label>
-                                    <select id={prefix + "-type"} required value={email.type}
-                                        onChange={event => updateEmail(index, { type: event.target.value })}>
-                                        <option value="PERSONAL">Pessoal</option>
-                                        <option value="WORK">Profissional</option>
-                                        <option value="OTHER">Outro</option>
-                                    </select>
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-address"}>E-mail *</label>
-                                    <input id={prefix + "-address"} required type="email" value={email.email} maxLength={255}
-                                        onChange={event => updateEmail(index, { email: event.target.value })} />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={prefix + "-primary"}>E-mail principal</label>
-                                    <input id={prefix + "-primary"} type="checkbox" checked={email.primaryEmail}
-                                        onChange={event => updateEmail(index, { primaryEmail: event.target.checked })} />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                <div className="comandos-native-table-container">
+                    <table className={`comandos-native-table ${styles.contactTable} ${styles.emailTable}`}>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>E-mail</th>
+                                <th>Principal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {emails.map((email, index) => (
+                                <tr key={`person-email-${index}`}>
+                                    <td>
+                                        <select
+                                            aria-label={`Tipo do e-mail ${index + 1}`}
+                                            required
+                                            value={email.type}
+                                            onChange={event => updateEmail(index, { type: event.target.value })}
+                                        >
+                                            <option value="PERSONAL">Pessoal</option>
+                                            <option value="WORK">Profissional</option>
+                                            <option value="OTHER">Outro</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input
+                                            aria-label={`E-mail ${index + 1}`}
+                                            required
+                                            type="email"
+                                            value={email.email}
+                                            maxLength={255}
+                                            onChange={event => updateEmail(index, { email: event.target.value })}
+                                        />
+                                    </td>
+                                    <td className={styles.contactBooleanCell}>
+                                        <input
+                                            aria-label={`E-mail ${index + 1} principal`}
+                                            type="radio"
+                                            name="person-primary-email"
+                                            checked={email.primaryEmail}
+                                            onChange={() => updateEmail(index, { primaryEmail: true })}
+                                        />
+                                    </td>
+                                    <td className={styles.contactActionCell}>
+                                        <button
+                                            type="button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            aria-label={`Remover e-mail ${index + 1}`}
+                                            onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
+                                        >
+                                            <Trash2 size={17} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {!emails.length && (
+                                <tr>
+                                    <td colSpan={4} className={styles.contactEmpty}>
+                                        Nenhum e-mail adicionado.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </div>
     );
