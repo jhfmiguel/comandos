@@ -6421,3 +6421,24 @@ html[data-theme][data-palette] .comandos-tab:hover,
 html[data-theme][data-palette] .comandos-tab:focus-visible {
     color: var(--comandos-accent) !important;
 }
+
+
+/* COMANDOS USER POPUP ICON ALIGNMENT V1 */
+.comandos-sidebar-user-popup .comandos-sidebar-popup-link,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-user-popup .comandos-sidebar-popup-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: .5rem !important;
+}
+
+.comandos-sidebar-user-popup .comandos-sidebar-popup-link svg {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+}
+
+.comandos-sidebar-user-popup .comandos-sidebar-popup-link > span,
+.comandos-sidebar-user-popup .comandos-sidebar-popup-link {
+    line-height: 1.2;
+}
