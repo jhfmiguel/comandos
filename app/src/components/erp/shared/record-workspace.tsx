@@ -577,11 +577,10 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                 <h1 id="resource-title">{tr(resource.label)}</h1>
                 {allowed("CREATE") && 
                 <button type="button" className="registration-yellow-button" onClick={() => resource.key === "assets" ? setIntake(true) : setEditor({})}>
-                    <Plus size={16} /><span>{tr("New record")}</span>
+                    <Plus size={16} />
+                    <span>{tr(resource.key === "assets" ? "Register assets" : "New record")}</span>
                 </button>
                 }
-                {resource.key === "assets" && allowed("CREATE") && <button type="button" className="comandos-secondary-button"
-                    onClick={() => setEditor({})}>{tr("Register single asset")}</button>}
                 {resource.key === "lots" && allowed("CREATE") && <button type="button" className="registration-yellow-button"
                     onClick={() => setIntake(true)}>{tr("Receive ammunition boxes")}</button>}
             </div>
