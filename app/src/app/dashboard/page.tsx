@@ -9,7 +9,6 @@ import {
     ShieldCheck,
     Wrench,
     Archive,
-    TrendingUp
 } from "lucide-react";
 
 import { Layout } from "components";
