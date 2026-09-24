@@ -904,6 +904,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         country: "Brasil",
                                                         complement: manuallyEditedAddressFields.current.has("complement")
                                                             ? current.complement : current.complement || address.complement || "" }))} />
+                                            ) : field.type === "reference" && resource.key === "locations" && ["organizationId", "unitId"].includes(field.name) ? (
+                                                <ReferenceSelectField
+                                                    service={service}
+                                                    field={field}
+                                                    value={values[field.name]}
+                                                    selectedLabel={record?.referenceLabels[field.name]}
+                                                    organizationId={values.organizationId}
+                                                    onChange={value => change(field, value)}
+                                                />
                                             ) : field.type === "reference" ? (
                                                 <ReferenceField service={service} field={field} value={values[field.name]} selectedLabel={record?.referenceLabels[field.name]}
                                                     modelFamily={field.name === "modelId" ? equipmentModelFamilies[resource.key] : undefined}
@@ -1008,6 +1017,137 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             </div>
         </div>,
         document.body
+    );
+}
+
+function ReferenceSelectField({
+    service,
+    field,
+    value,
+    selectedLabel,
+    organizationId,
+    onChange
+}: {
+    service: ErpService;
+    field: ErpField;
+    value: ErpValue;
+    selectedLabel?: string;
+    organizationId: ErpValue;
+    onChange: (value: ErpValue) => void;
+}) {
+    const isUnit = ["units", "core/units"].includes(field.reference ?? "");
+    const organizationMissing = isUnit && !organizationId;
+    const [options, setOptions] = React.useState<ErpRecord[]>([]);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState("");
+    const [unitAttempted, setUnitAttempted] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!field.reference || organizationMissing) {
+            setOptions([]);
+            setLoading(false);
+            setError("");
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoading(true);
+        setError("");
+
+        service.list(
+            field.reference,
+            "",
+            0,
+            controller.signal,
+            isUnit ? organizationId : undefined,
+            {},
+            200
+        ).then(data => {
+            if (controller.signal.aborted) return;
+
+            const records = data.content
+                .filter(option =>
+                    option.active !== false
+                    && (
+                        !isUnit
+                        || !organizationId
+                        || String(option.organizationId) === String(organizationId)
+                    )
+                )
+                .sort((left, right) =>
+                    String(left.label ?? "").localeCompare(String(right.label ?? ""), "pt-BR")
+                );
+
+            setOptions(records);
+        }).catch(error => {
+            if (!controller.signal.aborted) {
+                setOptions([]);
+                setError(errorMessage(error));
+            }
+        }).finally(() => {
+            if (!controller.signal.aborted) setLoading(false);
+        });
+
+        return () => controller.abort();
+    }, [field.reference, isUnit, organizationId, organizationMissing, service]);
+
+    React.useEffect(() => {
+        if (!organizationMissing) setUnitAttempted(false);
+    }, [organizationMissing]);
+
+    const current = String(value ?? "");
+    const currentKnown = options.some(option => String(option.id ?? "") === current);
+
+    return (
+        <div className={styles.referenceSelect}>
+            <select
+                id={`core-${field.name}`}
+                required={field.required}
+                value={current}
+                aria-disabled={organizationMissing || undefined}
+                onFocus={() => {
+                    if (organizationMissing) setUnitAttempted(true);
+                }}
+                onPointerDown={() => {
+                    if (organizationMissing) setUnitAttempted(true);
+                }}
+                onChange={event => {
+                    if (organizationMissing) {
+                        setUnitAttempted(true);
+                        return;
+                    }
+                    onChange(event.target.value ? Number(event.target.value) : null);
+                }}
+            >
+                <option value="">
+                    {loading
+                        ? "Carregando..."
+                        : organizationMissing
+                            ? ""
+                            : "Selecione"}
+                </option>
+                {!currentKnown && current && selectedLabel && (
+                    <option value={current}>{selectedLabel}</option>
+                )}
+                {options.map(option => (
+                    <option key={option.id} value={String(option.id ?? "")}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+
+            {unitAttempted && organizationMissing && (
+                <small className={styles.referenceNotice}>
+                    Selecione uma organização primeiro.
+                </small>
+            )}
+
+            {error && (
+                <small className={styles.referenceError}>
+                    {error}
+                </small>
+            )}
+        </div>
     );
 }
 
