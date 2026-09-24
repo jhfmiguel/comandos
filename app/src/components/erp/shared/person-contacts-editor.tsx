@@ -60,6 +60,31 @@ const newEmail = (primary: boolean): EmailDraft => ({
     primaryEmail: primary
 });
 
+function maskCountryCode(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    return digits ? `+${digits}` : "";
+}
+
+function maskPhoneNumber(value: string, countryCode: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 15);
+    const countryDigits = countryCode.replace(/\D/g, "");
+
+    if (countryDigits !== "55") {
+        return digits;
+    }
+
+    const brazilian = digits.slice(0, 11);
+    if (brazilian.length <= 2) return brazilian ? `(${brazilian}` : "";
+
+    const area = brazilian.slice(0, 2);
+    const local = brazilian.slice(2);
+
+    if (local.length <= 4) return `(${area}) ${local}`;
+    if (local.length <= 8) return `(${area}) ${local.slice(0, 4)}-${local.slice(4)}`;
+
+    return `(${area}) ${local.slice(0, 5)}-${local.slice(5, 9)}`;
+}
+
 export function PersonContactsEditor({
     addresses,
     setAddresses,
@@ -255,13 +280,25 @@ export function PersonContactsEditor({
                                 </div>
                                 <div className={styles.field}>
                                     <label htmlFor={prefix + "-country"}>Código do país *</label>
-                                    <input id={prefix + "-country"} required value={phone.countryCode} maxLength={5}
-                                        onChange={event => updatePhone(index, { countryCode: event.target.value })} />
+                                    <input id={prefix + "-country"} required inputMode="tel" value={phone.countryCode} maxLength={5}
+                                        placeholder="+55"
+                                        onChange={event => {
+                                            const countryCode = maskCountryCode(event.target.value);
+                                            updatePhone(index, {
+                                                countryCode,
+                                                number: maskPhoneNumber(phone.number, countryCode)
+                                            });
+                                        }} />
                                 </div>
                                 <div className={styles.field}>
                                     <label htmlFor={prefix + "-number"}>Telefone *</label>
-                                    <input id={prefix + "-number"} required type="tel" value={phone.number} maxLength={30}
-                                        onChange={event => updatePhone(index, { number: event.target.value })} />
+                                    <input id={prefix + "-number"} required type="tel" inputMode="tel"
+                                        value={maskPhoneNumber(phone.number, phone.countryCode)}
+                                        maxLength={20}
+                                        placeholder={phone.countryCode.replace(/\D/g, "") === "55" ? "(00) 00000-0000" : "Somente números"}
+                                        onChange={event => updatePhone(index, {
+                                            number: maskPhoneNumber(event.target.value, phone.countryCode)
+                                        })} />
                                 </div>
                                 <div className={styles.field}>
                                     <label htmlFor={prefix + "-whatsapp"}>WhatsApp</label>
