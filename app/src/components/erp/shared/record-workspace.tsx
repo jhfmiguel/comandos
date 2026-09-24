@@ -1109,6 +1109,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                             {record && field.createOnly && <small>Fixed after registration.</small>}
                                         </fieldset>;
                                     })}
+                                    {resource.key === "role-data" && (
+                                        <div className={`${styles.actions} ${styles.roleDataInlineActions}`}>
+                                            <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
+                                            <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                        </div>
+                                    )}
                                 </fieldset>
 
                                 {isNewPerson && (
@@ -1122,10 +1128,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     />
                                 )}
 
-                                <div className={styles.actions}>
-                                    <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
-                                    <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
-                                </div>
+                                {resource.key !== "role-data" && (
+                                    <div className={styles.actions}>
+                                        <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
+                                        <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                    </div>
+                                )}
                             </form>
                 </div>
             </div>
