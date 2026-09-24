@@ -7563,7 +7563,7 @@ html[data-theme] body .comandos-main-content .comandos-standard-table .comandos-
 
 html[data-theme] body .comandos-main-content .comandos-standard-table .comandos-filter-row .comandos-input {
     width: 100% !important;
-    min-width: 7.5rem !important;
+    min-width: 0 !important;
     height: 2.75rem !important;
     margin: 0 !important;
     padding: .55rem .72rem !important;
