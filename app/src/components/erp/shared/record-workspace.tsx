@@ -1160,6 +1160,12 @@ export function ReferenceSelectField({
         && !requestCurrent;
     const error = requestCurrent ? resultState.error : "";
     const currentKnown = options.some(option => String(option.id ?? "") === current);
+    const selectOptions = [
+        ...(!currentKnown && current && selectedLabel
+            ? [{ id: Number(current), label: selectedLabel } as ErpRecord]
+            : []),
+        ...options
+    ];
 
     return (
         <div className={styles.referenceSelect}>
@@ -1168,7 +1174,7 @@ export function ReferenceSelectField({
                 label={label ?? field.label}
                 required={required ?? field.required}
                 value={current}
-                options={options.map(option => ({
+                options={selectOptions.map(option => ({
                     value: String(option.id ?? ""),
                     label: String(option.label ?? "")
                 }))}
@@ -1180,10 +1186,13 @@ export function ReferenceSelectField({
                     onSelectOption?.(
                         nextId == null
                             ? null
-                            : options.find(option => Number(option.id) === nextId) ?? null
+                            : selectOptions.find(option => Number(option.id) === nextId) ?? null
                     );
                 }}
             />
+            {loading && (
+                <small className={styles.referenceNotice}>Carregando opções...</small>
+            )}
 
             {unitAttempted && organizationMissing && (
                 <small className={styles.referenceNotice}>
@@ -1205,188 +1214,21 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
     excludedId?: number; optionFilter?: (record: ErpRecord) => boolean; modelFamily?: string; onChange: (value: ErpValue) => void;
     onSelectOption?: (option: ErpRecord | null) => void;
 }) {
-    const current = String(value ?? "");
-    const disabled = ["units", "core/units"].includes(field.reference ?? "") && !organizationId;
-    const [search, setSearch] = React.useState(selectedLabel ?? "");
-    const [result, setResult] = React.useState<ErpPage | null>(null);
-    const [error, setError] = React.useState("");
-    const [completedQuery, setCompletedQuery] = React.useState("");
-    const [retry, setRetry] = React.useState(0);
-    const [open, setOpen] = React.useState(false);
-    const [activeIndex, setActiveIndex] = React.useState(-1);
-
-    const displayedSearch = !current && !open ? "" : search;
-    const query = open && displayedSearch.trim() ? displayedSearch.trim() : "";
-    const queryKey = JSON.stringify([field.reference, query, organizationId, modelFamily, retry]);
-    const loading = Boolean(query) && !disabled && completedQuery !== queryKey;
-
-    React.useEffect(() => {
-        if (!query || disabled) return;
-
-        const controller = new AbortController();
-        const timer = setTimeout(() => {
-            service.list(
-                field.reference!,
-                query,
-                0,
-                controller.signal,
-                ["units", "core/units"].includes(field.reference ?? "") ? organizationId : undefined,
-                modelFamily ? { modelFamily } : {}
-            ).then(data => {
-                if (!controller.signal.aborted) {
-                    setResult(data);
-                    setError("");
-                }
-            }).catch(error => {
-                if (!controller.signal.aborted) {
-                    setResult(null);
-                    setError(errorMessage(error));
-                }
-            }).finally(() => {
-                if (!controller.signal.aborted) setCompletedQuery(queryKey);
-            });
-        }, 250);
-
-        return () => {
-            clearTimeout(timer);
-            controller.abort();
-        };
-    }, [field.reference, query, organizationId, service, modelFamily, queryKey, disabled]);
-
-    const visibleResult = completedQuery === queryKey ? result : null;
-    const visibleError = completedQuery === queryKey ? error : "";
-
-    const options = (loading ? [] : visibleResult?.content ?? []).filter(item =>
-        (!modelFamily || item.modelFamily === modelFamily) &&
-        item.id !== excludedId &&
-        (!optionFilter || optionFilter(item)) &&
-        !(["units", "core/units"].includes(field.reference ?? "") &&
-            organizationId &&
-            String(item.organizationId) !== String(organizationId))
-    );
-
-    const selectOption = (option: ErpRecord): void => {
-        onChange(option.id ?? null);
-        onSelectOption?.(option);
-        setSearch(option.label);
-        setOpen(false);
-        setActiveIndex(-1);
-    };
-
-    const clearSelectionForSearch = (nextSearch: string): void => {
-        setSearch(nextSearch);
-        setResult(null);
-        setError("");
-        setCompletedQuery("");
-        setActiveIndex(-1);
-        setOpen(Boolean(nextSearch.trim()));
-        if (current) {
-            onChange(null);
-            onSelectOption?.(null);
-        }
-    };
-
     return (
-        <div className={styles.reference}>
-            <div className={styles.referenceCombobox} data-comandos-field="true">
-                <input
-                    id={`core-${field.name}`}
-                    type="search"
-                    role="combobox"
-                    data-comandos-float-force="true"
-                    autoComplete="off"
-                    aria-label={`Search ${field.label.toLowerCase()}`}
-                    aria-autocomplete="list"
-                    aria-expanded={open && Boolean(query)}
-                    aria-controls={`core-${field.name}-options`}
-                    aria-activedescendant={
-                        open && activeIndex >= 0 && options[activeIndex]
-                            ? `core-${field.name}-option-${options[activeIndex].id}`
-                            : undefined
-                    }
-                    placeholder="Digite para localizar um registro"
-                    value={displayedSearch}
-                    required={field.required}
-                    disabled={disabled}
-                    onFocus={() => {
-                        if (displayedSearch.trim() && !current) setOpen(true);
-                    }}
-                    onChange={event => clearSelectionForSearch(event.target.value)}
-                    onKeyDown={event => {
-                        if (event.key === "ArrowDown" && options.length) {
-                            event.preventDefault();
-                            setOpen(true);
-                            setActiveIndex(index => Math.min(index + 1, options.length - 1));
-                        } else if (event.key === "ArrowUp" && options.length) {
-                            event.preventDefault();
-                            setActiveIndex(index => Math.max(index - 1, 0));
-                        } else if (event.key === "Enter" && open && activeIndex >= 0 && options[activeIndex]) {
-                            event.preventDefault();
-                            selectOption(options[activeIndex]);
-                        } else if (event.key === "Escape") {
-                            setOpen(false);
-                            setActiveIndex(-1);
-                        }
-                    }}
-                    onBlur={() => {
-                        window.setTimeout(() => setOpen(false), 100);
-                    }}
-                />
-
-                {open && Boolean(query) && (
-                    <div
-                        id={`core-${field.name}-options`}
-                        role="listbox"
-                        className={styles.referenceOptions}
-                    >
-                        {loading && (
-                            <div className={styles.referenceStatus} role="status">
-                                Localizando registros...
-                            </div>
-                        )}
-
-                        {!loading && !visibleError && options.map((option, index) => (
-                            <button
-                                key={option.id}
-                                id={`core-${field.name}-option-${option.id}`}
-                                type="button"
-                                role="option"
-                                aria-selected={index === activeIndex}
-                                className={index === activeIndex ? styles.referenceOptionActive : styles.referenceOption}
-                                onMouseDown={event => event.preventDefault()}
-                                onMouseEnter={() => setActiveIndex(index)}
-                                onClick={() => selectOption(option)}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
-
-                        {!loading && !visibleError && options.length === 0 && (
-                            <div className={styles.referenceStatus} role="status">
-                                Nenhum registro encontrado.
-                            </div>
-                        )}
-
-                        {!loading && visibleError && (
-                            <div className={styles.referenceStatus} role="alert">
-                                {visibleError}
-                                {" "}
-                                <button type="button" onMouseDown={event => event.preventDefault()} onClick={() => setRetry(value => value + 1)}>
-                                    Tentar novamente
-                                </button>
-                            </div>
-                        )}
-
-                        {!loading && visibleResult && visibleResult.totalElements > visibleResult.size && (
-                            <div className={styles.referenceHint}>
-                                Exibindo os primeiros {visibleResult.size} resultados. Continue digitando para refinar.
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {disabled && <small>Selecione uma organização primeiro.</small>}
-        </div>
+        <ReferenceSelectField
+            service={service}
+            field={field}
+            label={field.label}
+            required={field.required}
+            value={value}
+            selectedLabel={selectedLabel}
+            organizationId={organizationId}
+            excludedId={excludedId}
+            optionFilter={optionFilter}
+            modelFamily={modelFamily}
+            onChange={onChange}
+            onSelectOption={onSelectOption}
+        />
     );
 }
+
