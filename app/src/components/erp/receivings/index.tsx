@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Button } from "components/common/button";
+import { ComandosSelectField } from "components/common/select-field";
 import { useComandosPreferences } from "components/settings/preferences-provider"
 import { purchaseService } from "api/services/purchase.service"
 import { receivingService } from "api/services/receiving.service"
@@ -168,24 +169,25 @@ export const ReceivingWorkspace: React.FC = () => {
 
             <div className="registration-form-grid">
                 <div className="registration-field">
-                    <label>{tr("Receiving source")}</label>
-                    <select
-                        className="registration-input"
+                    <ComandosSelectField
+                        id="receiving-source"
+                        label={tr("Receiving source")}
                         value={sourceType}
-                        onChange={(event) => {
-                            setSourceType(event.target.value as ReceivingSourceType)
+                        options={[
+                            { value: "ACQUISITION", label: tr("Acquisition") },
+                            { value: "TRANSFER", label: tr("Transfer") },
+                            { value: "RETURN", label: tr("Return") },
+                            { value: "LOAN", label: tr("Loan") },
+                            { value: "DONATION", label: tr("Donation") },
+                            { value: "MAINTENANCE_RETURN", label: tr("Maintenance return") },
+                            { value: "OTHER", label: tr("Other") }
+                        ]}
+                        onChange={value => {
+                            setSourceType(value as ReceivingSourceType)
                             setAcquisition(null)
                             setItems([emptyItem()])
                         }}
-                    >
-                        <option value="ACQUISITION">{tr("Acquisition")}</option>
-                        <option value="TRANSFER">{tr("Transfer")}</option>
-                        <option value="RETURN">{tr("Return")}</option>
-                        <option value="LOAN">{tr("Loan")}</option>
-                        <option value="DONATION">{tr("Donation")}</option>
-                        <option value="MAINTENANCE_RETURN">{tr("Maintenance return")}</option>
-                        <option value="OTHER">{tr("Other")}</option>
-                    </select>
+                    />
                 </div>
 
                 {sourceType === "ACQUISITION" && (
@@ -257,34 +259,27 @@ export const ReceivingWorkspace: React.FC = () => {
                     <div className="registration-form-grid" key={`${index}-${item.acquisitionItemId}`}>
                         {sourceType === "ACQUISITION" ? (
                             <div className="registration-field">
-                                <label>{tr("Acquisition item")}</label>
-                                <select
-                                    className="registration-input"
+                                <ComandosSelectField
+                                    id={`receiving-item-${index}`}
+                                    label={tr("Acquisition item")}
                                     value={item.acquisitionItemId}
-                                    onChange={(event) => {
+                                    options={(acquisition?.items ?? []).map(option => ({
+                                        value: String(option.id),
+                                        label: `${option.itemName ?? `#${option.itemModelId}`} · ${tr("pending")}: ${Number(option.quantity) - Number(option.receivedQuantity)}`
+                                    }))}
+                                    onChange={value => {
                                         const selected = acquisition?.items.find(
-                                            (value) => value.id === Number(event.target.value)
+                                            option => option.id === Number(value)
                                         )
                                         updateItem(index, {
-                                            acquisitionItemId: event.target.value,
+                                            acquisitionItemId: value,
                                             itemModelId: selected ? String(selected.itemModelId) : "",
                                             quantity: selected
                                                 ? String(Number(selected.quantity) - Number(selected.receivedQuantity))
                                                 : "1"
                                         })
                                     }}
-                                >
-                                    <option value="">{tr("Select")}</option>
-                                    {acquisition?.items
-                                        .filter((value) =>
-                                            Number(value.quantity) - Number(value.receivedQuantity) > 0)
-                                        .map((value) => (
-                                            <option key={value.id} value={value.id}>
-                                                {value.itemName} · {tr("Pending")}:{" "}
-                                                {Number(value.quantity) - Number(value.receivedQuantity)}
-                                            </option>
-                                        ))}
-                                </select>
+                                />
                             </div>
                         ) : (
                             <div className="registration-field">
