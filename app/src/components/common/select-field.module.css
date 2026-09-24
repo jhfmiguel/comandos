@@ -79,37 +79,31 @@
     position: absolute;
     z-index: 2;
     left: .78rem;
-    top: 50%;
+    top: .42rem;
     max-width: calc(100% - 3rem);
     overflow: hidden;
     color: var(--comandos-text-muted, #737373);
-    font-size: .84rem;
+    font-size: .72rem;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     pointer-events: none;
-    transform: translateY(-50%);
+    transform: none;
     transform-origin: left top;
-    transition:
-        top .16s ease,
-        transform .16s ease,
-        color .16s ease,
-        font-size .16s ease;
+    transition: color .16s ease;
 }
 
+/* True FloatLabel variant="in": the label is always inside the field,
+ * at the top, even while the select is empty and unfocused.
+ */
+.root:focus-within .label,
 .root[data-active="true"] .label,
 .root[data-filled="true"] .label {
     top: .42rem;
-    font-size: .72rem;
-    transform: translateY(0);
-}
-
-.root:focus-within .label {
-    top: .42rem;
     color: var(--comandos-accent, #ff9900);
     font-size: .72rem;
-    transform: translateY(0);
+    transform: none;
 }
 
 .positioner {
