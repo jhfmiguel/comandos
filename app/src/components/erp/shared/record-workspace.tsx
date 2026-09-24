@@ -43,6 +43,7 @@ import {
     CharacteristicValuesEditor,
     ModelSpecificationEditor
 } from "./nested-resource-editors";
+import { RoleDetailsEditor } from "./nested-core-editors";
 
 
 type ErpTableFilters = Record<string, string>;
@@ -706,7 +707,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                     refresh();
 
                     if (
-                        ["recalls", "equipment-sets", "categories", "models", "assets"].includes(resource.key)
+                        ["recalls", "equipment-sets", "categories", "models", "assets", "person-roles"].includes(resource.key)
                         && !editor.record
                         && savedRecord
                     ) {
@@ -1226,6 +1227,20 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                         owner={record}
                                         ownerType="asset"
                                         service={service}
+                                    />
+                                )}
+
+                                {resource.key === "person-roles" && record && (
+                                    <RoleDetailsEditor
+                                        assignment={record}
+                                        service={service}
+                                    />
+                                )}
+
+                                {resource.key === "person-roles" && !record && (
+                                    <Message
+                                        type="info"
+                                        text="Salve o vínculo para adicionar seus dados complementares."
                                     />
                                 )}
 
