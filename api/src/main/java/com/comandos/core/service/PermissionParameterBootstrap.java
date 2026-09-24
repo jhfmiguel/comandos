@@ -35,6 +35,9 @@ public class PermissionParameterBootstrap implements ApplicationRunner {
         ensureAction("UPDATE", "Alterar", "Alterar registros existentes do recurso.");
         ensureAction("DELETE", "Excluir", "Excluir registros do recurso.");
         ensureAction("MANAGE", "Administrar", "Administrar acesso e configurações sensíveis do recurso.");
+        ensureAction("COUNT", "Contar", "Registrar a contagem física dos itens de inventário.");
+        ensureAction("APPROVE", "Aprovar", "Aprovar ajustes apurados no inventário físico.");
+        ensureAction("CANCEL", "Cancelar", "Cancelar uma contagem de inventário físico em andamento.");
         ensureAction("*", "Todas as ações", "Concede todas as ações suportadas pelo recurso.");
 
         var permissions = entityManager.createQuery(
