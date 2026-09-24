@@ -15,10 +15,50 @@ export const formatReal = (
 }
 
 export const isMonetaryField = (fieldName: string): boolean => {
-    const name = fieldName.trim().toLowerCase()
-    if (!name || ["value", "requiredvalue"].includes(name)) return false
+    const normalized = fieldName
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[_-]+/g, " ")
+        .trim()
+        .toLowerCase()
 
-    return /(price|cost|amount|freight|tax|discount|subtotal|total|refund|value)/.test(name)
+    if (!normalized || normalized === "required value") return false
+
+    const words = normalized.split(/\s+/)
+    const monetaryWords = new Set([
+        "price",
+        "cost",
+        "amount",
+        "freight",
+        "tax",
+        "taxes",
+        "fee",
+        "fees",
+        "charge",
+        "charges",
+        "discount",
+        "subtotal",
+        "refund",
+        "value",
+        "valuation",
+        "budget",
+        "payment",
+        "valor",
+        "preco",
+        "custo",
+        "frete",
+        "imposto",
+        "impostos",
+        "taxa",
+        "taxas",
+        "desconto",
+        "reembolso"
+    ])
+
+    if (words.some(word => monetaryWords.has(word))) return true
+
+    return normalized === "total"
 }
 
 export const parseBRLValue = (
