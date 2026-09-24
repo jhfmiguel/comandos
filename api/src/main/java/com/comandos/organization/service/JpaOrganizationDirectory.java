@@ -28,7 +28,9 @@ public class JpaOrganizationDirectory implements OrganizationDirectory {
 
         return Optional.of(new OrganizationView(
             organization.id,
-            organization.nature,
+            organization.nature == null
+                ? organization.legacyNature
+                : organization.nature.name,
             organization.name,
             organization.acronym,
             organization.taxId,
