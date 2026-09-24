@@ -866,26 +866,13 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
     const [open, setOpen] = React.useState(false);
     const [activeIndex, setActiveIndex] = React.useState(-1);
 
-    React.useEffect(() => {
-        if (current && selectedLabel && !open) {
-            setSearch(selectedLabel);
-        }
-        if (!current && !open) {
-            setSearch("");
-        }
-    }, [current, selectedLabel, open]);
-
-    const query = open && search.trim() ? search.trim() : "";
+    const displayedSearch = !current && !open ? "" : search;
+    const query = open && displayedSearch.trim() ? displayedSearch.trim() : "";
     const queryKey = JSON.stringify([field.reference, query, organizationId, modelFamily, retry]);
-    const loading = Boolean(query) && completedQuery !== queryKey;
+    const loading = Boolean(query) && !disabled && completedQuery !== queryKey;
 
     React.useEffect(() => {
-        if (!query || disabled) {
-            setResult(null);
-            setError("");
-            setCompletedQuery(queryKey);
-            return;
-        }
+        if (!query || disabled) return;
 
         const controller = new AbortController();
         const timer = setTimeout(() => {
@@ -917,7 +904,10 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
         };
     }, [field.reference, query, organizationId, service, modelFamily, queryKey, disabled]);
 
-    const options = (loading ? [] : result?.content ?? []).filter(item =>
+    const visibleResult = completedQuery === queryKey ? result : null;
+    const visibleError = completedQuery === queryKey ? error : "";
+
+    const options = (loading ? [] : visibleResult?.content ?? []).filter(item =>
         (!modelFamily || item.modelFamily === modelFamily) &&
         item.id !== excludedId &&
         (!optionFilter || optionFilter(item)) &&
@@ -925,10 +915,6 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
             organizationId &&
             String(item.organizationId) !== String(organizationId))
     );
-
-    React.useEffect(() => {
-        setActiveIndex(options.length ? 0 : -1);
-    }, [queryKey, options.length]);
 
     const selectOption = (option: ErpRecord): void => {
         onChange(option.id ?? null);
@@ -939,6 +925,10 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
 
     const clearSelectionForSearch = (nextSearch: string): void => {
         setSearch(nextSearch);
+        setResult(null);
+        setError("");
+        setCompletedQuery("");
+        setActiveIndex(-1);
         setOpen(Boolean(nextSearch.trim()));
         if (current) onChange(null);
     };
@@ -961,11 +951,11 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                             : undefined
                     }
                     placeholder="Digite para localizar um registro"
-                    value={search}
+                    value={displayedSearch}
                     required={field.required}
                     disabled={disabled}
                     onFocus={() => {
-                        if (search.trim() && !current) setOpen(true);
+                        if (displayedSearch.trim() && !current) setOpen(true);
                     }}
                     onChange={event => clearSelectionForSearch(event.target.value)}
                     onKeyDown={event => {
@@ -1001,7 +991,7 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                             </div>
                         )}
 
-                        {!loading && !error && options.map((option, index) => (
+                        {!loading && !visibleError && options.map((option, index) => (
                             <button
                                 key={option.id}
                                 id={`core-${field.name}-option-${option.id}`}
@@ -1017,15 +1007,15 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                             </button>
                         ))}
 
-                        {!loading && !error && options.length === 0 && (
+                        {!loading && !visibleError && options.length === 0 && (
                             <div className={styles.referenceStatus} role="status">
                                 Nenhum registro encontrado.
                             </div>
                         )}
 
-                        {!loading && error && (
+                        {!loading && visibleError && (
                             <div className={styles.referenceStatus} role="alert">
-                                {error}
+                                {visibleError}
                                 {" "}
                                 <button type="button" onMouseDown={event => event.preventDefault()} onClick={() => setRetry(value => value + 1)}>
                                     Tentar novamente
@@ -1033,9 +1023,9 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                             </div>
                         )}
 
-                        {!loading && result && result.totalElements > result.size && (
+                        {!loading && visibleResult && visibleResult.totalElements > visibleResult.size && (
                             <div className={styles.referenceHint}>
-                                Exibindo os primeiros {result.size} resultados. Continue digitando para refinar.
+                                Exibindo os primeiros {visibleResult.size} resultados. Continue digitando para refinar.
                             </div>
                         )}
                     </div>
