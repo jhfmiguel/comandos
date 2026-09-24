@@ -129,9 +129,21 @@ public final class CoreCatalog {
             new Field("name", "Name", "text", true, null, List.of()),
             new Field("levelTypeId", "Level", "reference", true, "profile-levels", List.of())
         )),
+        new Resource("permission-resources", "Permission resources", "Access", PermissionResource.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
+        new Resource("permission-actions", "Permission actions", "Access", PermissionAction.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
         new Resource("permissions", "Permissions", "Access", Permission.class, List.of(
-            new Field("resource", "Resource", "text", true, null, List.of()),
-            new Field("action", "Action", "text", true, null, List.of())
+            new Field("resourceTypeId", "Resource", "reference", true, "permission-resources", List.of()),
+            new Field("actionTypeId", "Action", "reference", true, "permission-actions", List.of())
         )),
         new Resource("user-profiles", "User profiles", "Access", UserProfile.class, List.of(
             new Field("userId", "User", "reference", true, "users", List.of()),
