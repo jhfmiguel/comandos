@@ -4,6 +4,7 @@ import * as React from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Button } from "components/common/button";
+import { ComandosSelectField } from "components/common/select-field";
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
 import { useSession } from "components/auth/session-provider";
@@ -89,11 +90,19 @@ function CustodyForm({ onNew }: { onNew: () => void }) {
                 <div className={styles.field}><label htmlFor="core-unitId">Issuing unit</label>
                     <ReferenceField key={String(organization)} service={core} field={unitField} value={unit} organizationId={organization}
                         onChange={value => { setUnit(value); setSelected([]); setSelectedSets([]); }} /></div>
-                <div className={styles.field}><label htmlFor="custody-recipient-type">Recipient type *</label>
-                    <select id="custody-recipient-type" value={recipientType}
-                        onChange={event => { setRecipientType(event.target.value as "PERSON" | "UNIT"); setRecipient(null); setRecipientUnit(null); }}>
-                        <option value="PERSON">Person</option><option value="UNIT">Organizational unit</option>
-                    </select></div>
+                <div className={styles.field}>
+                    <ComandosSelectField
+                        id="custody-recipient-type"
+                        label="Recipient type"
+                        required
+                        value={recipientType}
+                        options={[
+                            { value: "PERSON", label: "Person" },
+                            { value: "UNIT", label: "Organizational unit" }
+                        ]}
+                        onChange={value => { setRecipientType(value as "PERSON" | "UNIT"); setRecipient(null); setRecipientUnit(null); }}
+                    />
+                </div>
                 {recipientType === "PERSON"
                     ? <div className={styles.field}><label htmlFor="core-recipientId">Recipient *</label>
                         <ReferenceField service={core} field={recipientField} value={recipient} organizationId={null} onChange={setRecipient} /></div>
