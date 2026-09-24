@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 
 import {
@@ -775,8 +776,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
         }));
     };
 
-    return (
-        
+    return createPortal(
         <div className="comandos-dialog-layer">
             <button
                 type="button"
@@ -991,7 +991,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                             </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
