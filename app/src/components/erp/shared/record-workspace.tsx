@@ -744,6 +744,13 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
         return initial;
     });
 
+    const editorResourceLabel =
+        resource.key === "roles"
+            ? "Person roles"
+            : resource.key === "person-roles"
+                ? "Person role assignments"
+                : resource.label;
+
     const isNewPerson = resource.key === "people" && !record;
     const [personAddresses, setPersonAddresses] = React.useState<PersonAddressDraft[]>([]);
     const [personPhones, setPersonPhones] = React.useState<PersonPhoneDraft[]>([]);
@@ -792,7 +799,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             >
             
                 <div className="comandos-native-dialog-header">
-                    <h2>{record ? "Edit" : "New"} · {resource.label}</h2>
+                    <h2>{tr(record ? "Edit" : "New")} · {tr(editorResourceLabel)}</h2>
                 </div>
                 <div className="comandos-native-dialog-content">
                             
