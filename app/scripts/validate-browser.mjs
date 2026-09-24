@@ -113,6 +113,7 @@ async function main() {
         for (const [tabName, titlePattern] of [
             [/Economic activities|Atividades econômicas/i, /Economic activities|Atividades econômicas/i],
             [/Organizations|Organizações/i, /Organizations|Organizações/i],
+            [/Organizational unit types|Tipos de unidade organizacional/i, /Organizational unit types|Tipos de unidade organizacional/i],
             [/Organizational units|Unidades organizacionais/i, /Organizational units|Unidades organizacionais/i]
         ]) {
             await page.getByRole('tab', { name: tabName }).click();
@@ -223,14 +224,23 @@ async function main() {
         await page.goto(`${appURL}/erp/core?section=access&resource=profiles`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
 
-        for (const tabName of [
-            /Access profile levels|Níveis de perfil de acesso/i,
-            /Permission resources|Recursos de permissão/i,
-            /Permission actions|Ações de permissão/i
+        for (const [tabName, titlePattern] of [
+            [/Access profile levels|Níveis de perfil de acesso/i, /Access profile levels|Níveis de perfil de acesso/i],
+            [/Permission resources|Recursos de permissão/i, /Permission resources|Recursos de permissão/i],
+            [/Permission actions|Ações de permissão/i, /Permission actions|Ações de permissão/i]
         ]) {
-            await page.getByRole('tab', { name: tabName }).waitFor();
+            await page.getByRole('tab', { name: tabName }).click();
+            await page.waitForTimeout(80);
+            assert.match(
+                await page.locator('.comandos-tab-panel #resource-title').innerText(),
+                titlePattern
+            );
+            await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
         }
-        console.log('PASS access parameters: profile levels, permission resources and permission actions tabs are visible');
+        console.log('PASS access parameters: parameter tabs are clickable and render CRUD');
+
+        await page.getByRole('tab', { name: /Access profiles|Perfis de acesso/i }).click();
+        await page.waitForTimeout(80);
         assert.match(
             await page.locator('.comandos-tab-panel #resource-title').innerText(),
             /Access profiles|Perfis de acesso/i
