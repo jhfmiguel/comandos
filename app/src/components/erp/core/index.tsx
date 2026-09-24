@@ -57,6 +57,21 @@ const personTypeResource: ErpResource = {
     ]
 }
 
+const contactTypeResource: ErpResource = {
+    key: "contact-types",
+    label: "Contact types",
+    group: "People",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "addressEnabled", label: "Use for addresses", type: "boolean", required: true, reference: null, choices: [] },
+        { name: "phoneEnabled", label: "Use for phones", type: "boolean", required: true, reference: null, choices: [] },
+        { name: "emailEnabled", label: "Use for e-mails", type: "boolean", required: true, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
 
 const accessProfileLevelResource: ErpResource = {
     key: "profile-levels",
@@ -136,6 +151,11 @@ const sectionTabs: Record<
             resource: "person-types",
             label: "Person types",
             definition: personTypeResource
+        },
+        {
+            resource: "contact-types",
+            label: "Contact types",
+            definition: contactTypeResource
         },
         {
             resource: "roles",
