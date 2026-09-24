@@ -47,15 +47,14 @@ public final class CoreCatalog {
             new Field("fullName", "Full name / legal name", "text", true, null, List.of()),
             new Field("taxId", "Tax ID (CPF / CNPJ)", "text", false, null, List.of()),
             new Field("birthDate", "Birth date", "date", false, null, List.of()),
-            new Field("address", "Address", "text", false, null, List.of()),
-            new Field("phone", "Phone", "text", false, null, List.of()),
-            new Field("email", "Email", "email", false, null, List.of()),
             new Field("active", "Active", "boolean", true, null, List.of())
         )),
         new Resource("person-addresses", "Endereços", "People", PersonAddress.class, List.of(
             new Field("personId", "Person", "reference", true, "people", List.of()),
             new Field("type", "Tipo de endereço", "choice", true, null, List.of("RESIDENTIAL", "BUSINESS", "MAILING", "OTHER")),
-            new Field("postalCode", "CEP", "text", true, null, List.of()),
+            new Field("foreignAddress", "Endereço no exterior", "boolean", false, null, List.of()),
+            new Field("country", "País", "text", false, null, List.of()),
+            new Field("postalCode", "CEP / código postal", "text", false, null, List.of()),
             new Field("street", "Logradouro", "text", true, null, List.of()),
             new Field("number", "Número", "text", true, null, List.of()),
             new Field("complement", "Complemento", "text", false, null, List.of()),
@@ -63,6 +62,20 @@ public final class CoreCatalog {
             new Field("city", "Cidade", "text", true, null, List.of()),
             new Field("state", "UF", "text", true, null, List.of()),
             new Field("primaryAddress", "Endereço principal", "boolean", true, null, List.of())
+        )),
+        new Resource("person-phones", "Telefones", "People", PersonPhone.class, List.of(
+            new Field("personId", "Person", "reference", true, "people", List.of()),
+            new Field("type", "Tipo de telefone", "choice", true, null, List.of("MOBILE", "WHATSAPP", "HOME", "WORK", "OTHER")),
+            new Field("countryCode", "Código do país", "text", false, null, List.of()),
+            new Field("number", "Telefone", "text", true, null, List.of()),
+            new Field("whatsapp", "WhatsApp", "boolean", true, null, List.of()),
+            new Field("primaryPhone", "Telefone principal", "boolean", true, null, List.of())
+        )),
+        new Resource("person-emails", "E-mails", "People", PersonEmail.class, List.of(
+            new Field("personId", "Person", "reference", true, "people", List.of()),
+            new Field("type", "Tipo de e-mail", "choice", true, null, List.of("PERSONAL", "WORK", "OTHER")),
+            new Field("email", "E-mail", "email", true, null, List.of()),
+            new Field("primaryEmail", "E-mail principal", "boolean", true, null, List.of())
         )),
         new Resource("roles", "Person roles", "People", PersonRole.class, List.of(
             new Field("code", "Code", "text", true, null, List.of()),
