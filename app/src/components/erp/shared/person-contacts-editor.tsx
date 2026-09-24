@@ -4,7 +4,7 @@ import * as React from "react";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import styles from "./workspace.module.css";
 
-type AddressDraft = {
+export type AddressDraft = {
     type: string;
     foreignAddress: boolean;
     country: string;
@@ -18,7 +18,7 @@ type AddressDraft = {
     primaryAddress: boolean;
 };
 
-type PhoneDraft = {
+export type PhoneDraft = {
     type: string;
     countryCode: string;
     number: string;
@@ -26,7 +26,7 @@ type PhoneDraft = {
     primaryPhone: boolean;
 };
 
-type EmailDraft = {
+export type EmailDraft = {
     type: string;
     email: string;
     primaryEmail: boolean;
