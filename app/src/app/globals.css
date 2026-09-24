@@ -7126,3 +7126,28 @@ html[data-theme] body table td .comandos-action-button[data-comandos-table-actio
     background: transparent !important;
     filter: brightness(.58) !important;
 }
+
+
+/* COMANDOS INPUT CLEANUP V2
+ * No default placeholder text. Search fields keep their regular non-float behavior.
+ * Select float labels sit closer to the top edge.
+ */
+html[data-theme] body input::placeholder,
+html[data-theme] body textarea::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+}
+
+html[data-theme] body input[type="search"],
+html[data-theme] body .comandos-filter-row input {
+    padding-top: initial;
+}
+
+select[data-comandos-float-control="true"] {
+    padding-top: 1.3rem !important;
+}
+
+[data-comandos-float-host="true"]:has(select[data-comandos-float-control="true"])::after {
+    top: var(--comandos-float-active-top, .1rem);
+    font-size: .66rem;
+}
