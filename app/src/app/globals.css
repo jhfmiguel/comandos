@@ -6535,7 +6535,7 @@ html[data-theme] body .comandos-accent-button,
 html[data-theme] body .prime-yellow-button,
 html[data-theme] body .command-button-primary,
 html[data-theme] body .taskboard-add-button,
-html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab),
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):not(.comandos-field-hint-button),
 html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button) {
     --button-color: var(--comandos-accent, #ff9900);
     display: inline-flex;
@@ -6562,7 +6562,7 @@ html[data-theme] body .comandos-accent-button:hover:not(:disabled),
 html[data-theme] body .prime-yellow-button:hover:not(:disabled),
 html[data-theme] body .command-button-primary:hover:not(:disabled),
 html[data-theme] body .taskboard-add-button:hover:not(:disabled),
-html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):hover:not(:disabled),
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):not(.comandos-field-hint-button):hover:not(:disabled),
 html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button):hover:not(:disabled) {
     background: color-mix(in srgb, var(--button-color) 14%, transparent) !important;
     border-color: var(--button-color) !important;
@@ -6576,7 +6576,7 @@ html[data-theme] body .comandos-accent-button:active:not(:disabled),
 html[data-theme] body .prime-yellow-button:active:not(:disabled),
 html[data-theme] body .command-button-primary:active:not(:disabled),
 html[data-theme] body .taskboard-add-button:active:not(:disabled),
-html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):active:not(:disabled),
+html[data-theme] body form[data-comandos-erp-form="true"] button:not(.comandos-icon-button):not(.comandos-dialog-backdrop):not(.comandos-tab):not(.comandos-field-hint-button):active:not(:disabled),
 html[data-theme] body .comandos-native-dialog .comandos-dialog-actions button:not(.comandos-icon-button):active:not(:disabled) {
     background: color-mix(in srgb, var(--button-color) 21%, transparent) !important;
     border-color: var(--button-color) !important;
