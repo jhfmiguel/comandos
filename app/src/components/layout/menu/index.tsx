@@ -108,7 +108,7 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     selectedMenu={selectedMenu}
                                     onSelect={handleSelect}
                                     subItems={[
-                                        { href: "/erp/core?section=institutional", label: "Institutional" },
+                                        { href: "/erp/core?section=institutional&resource=organization-natures", label: "Cadastros" },
                                         { href: "/erp/core?section=people", label: "People" },
                                         { href: "/erp/core?section=access", label: "Access" }
                                     ]}
@@ -124,7 +124,7 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     subItems={[
                                         { href: "/queries/weapons", label: "Consulta de armamento" },
                                         { href: "/erp/inventory?section=reference-data", label: "Reference data" },
-                                        { href: "/erp/inventory?section=technical-parameters", label: "Parâmetros técnicos" },
+                                        { href: "/erp/inventory?section=technical-parameters&resource=calibers", label: "Parâmetros técnicos" },
                                         { href: "/erp/inventory?section=catalog", label: "Catalog" },
                                         { href: "/erp/inventory?section=specifications", label: "Specifications" },
                                         { href: "/erp/inventory?section=equipment", label: "Equipment" },
