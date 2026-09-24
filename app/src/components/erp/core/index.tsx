@@ -218,15 +218,19 @@ export function CoreWorkspace({
     section
 }: CoreWorkspaceProps) {
 
+    const normalizedResource = initialResource === "role-data"
+        ? "person-roles"
+        : initialResource
+
     const tabs = section
         ? sectionTabs[section]
         : undefined
 
     const firstTabResource = tabs?.[0]?.resource
     const requestedResource =
-        initialResource && tabs?.some(tab => tab.resource === initialResource)
-            ? initialResource
-            : firstTabResource ?? initialResource ?? "organizations"
+        normalizedResource && tabs?.some(tab => tab.resource === normalizedResource)
+            ? normalizedResource
+            : firstTabResource ?? normalizedResource ?? "organizations"
 
     return (
         <RecordWorkspace
