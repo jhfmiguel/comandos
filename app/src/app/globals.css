@@ -7294,3 +7294,15 @@ select[data-comandos-float-control="true"] {
     padding-top: 1.78rem !important;
     padding-bottom: .22rem !important;
 }
+
+
+/* Composed registration selects own their floating label.
+ * Hide legacy wrapper labels that directly precede a reference select.
+ */
+label:has(+ .comandos-reference-select) {
+    display: none !important;
+}
+
+label:empty {
+    display: none !important;
+}
