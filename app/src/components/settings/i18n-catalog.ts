@@ -19,6 +19,7 @@ export const translationPairs: TranslationPair[] = [
     ["Organizational unit types", "Tipos de unidade organizacional"],
     ["Organizational units", "Unidades organizacionais"],
     ["People", "Pessoas"],
+    ["Person types", "Tipos de pessoa"],
     ["Person roles", "Papéis de pessoa"],
     ["Person role assignments", "Atribuições de papéis"],
     ["Role details", "Detalhes do papel"],
