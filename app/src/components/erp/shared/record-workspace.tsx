@@ -1168,7 +1168,7 @@ export function ReferenceSelectField({
     ];
 
     return (
-        <div className={styles.referenceSelect}>
+        <div className={`${styles.referenceSelect} comandos-reference-select`}>
             <ComandosSelectField
                 id={`core-${field.name}`}
                 label={label ?? field.label}
