@@ -158,6 +158,25 @@ async function main() {
         await assertSelectLabelInside('core-natureId');
         await assertSelectLabelInside('core-economicActivityId');
 
+        const natureInput = page.locator('#core-natureId');
+        await natureInput.click();
+        await page.waitForTimeout(100);
+        assert.equal(
+            await page.getByText('Public safety', { exact: true }).count(),
+            0,
+            'Nature options must stay hidden before the user types'
+        );
+        await natureInput.fill('Public');
+        await page.getByText('Public safety', { exact: true }).waitFor();
+        await natureInput.fill('');
+        await page.waitForTimeout(100);
+        assert.equal(
+            await page.getByText('Public safety', { exact: true }).count(),
+            0,
+            'Nature options must hide again when the query is cleared'
+        );
+        console.log('PASS searchable selects: options appear only after typing');
+
         const natureBox = await page.locator('#core-natureId').boundingBox();
         const activityBox = await page.locator('#core-economicActivityId').boundingBox();
         const nameBox = await page.locator('#core-name').boundingBox();
