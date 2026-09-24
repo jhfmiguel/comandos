@@ -524,8 +524,14 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     };
     const columns = resource.fields
                                 .filter(field => field.type !== "password")
-                                .filter((field, index) => resource.readOnly || index < 4 || ["status", "availableQuantity"]
-                                .includes(field.name) || (["recalls", "recall-items"].includes(resource.key) && field.name === "description"));
+                                .filter((field, index) =>
+                                    resource.readOnly
+                                    || index < 4
+                                    || ["status", "availableQuantity"].includes(field.name)
+                                    || (resource.key === "contact-types"
+                                        && ["addressEnabled", "phoneEnabled", "emailEnabled", "active"].includes(field.name))
+                                    || (["recalls", "recall-items"].includes(resource.key) && field.name === "description")
+                                );
     
     const display = (record: ErpRecord, field: ErpField): string => {
         const value = record[field.name];
