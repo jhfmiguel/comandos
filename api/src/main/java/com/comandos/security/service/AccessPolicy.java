@@ -17,6 +17,10 @@ public class AccessPolicy {
     private final EntityManager em;
     private final boolean enabled;
     private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
+    private static final Set<String> GLOBAL_PARAMETER_RESOURCES = Set.of(
+        "core/organization-natures",
+        "core/economic-activities"
+    );
     public record Grant(String resource, String action, String scope, Long organizationId, Long unitId) {}
     public record AccessView(boolean enforced, List<Grant> grants) {}
     public record Scope(String organizationPath, String unitPath) {}
@@ -87,13 +91,23 @@ public class AccessPolicy {
     private List<Grant> matching(String resource, String action, Scope scope) {
         String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
             Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource) ? "core/people" :
-            Set.of("core/organization-natures", "core/economic-activities").contains(resource) ? "core/organizations" :
+            GLOBAL_PARAMETER_RESOURCES.contains(resource) ? "core/organizations" :
             resource;
         String requiredAction = ACCESS_RESOURCES.contains(resource) ? "MANAGE" : action;
-        return grants().stream().filter(g -> (g.resource().equals(requiredResource) || g.resource().equals("*"))
-            && (g.action().equals(requiredAction) || g.action().equals("*")))
+
+        var matched = grants().stream().filter(g ->
+            (g.resource().equals(requiredResource) || g.resource().equals("*"))
+                && (g.action().equals(requiredAction) || g.action().equals("*"))
+        );
+
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
+            return matched.toList();
+        }
+
+        return matched
             .filter(g -> "SYSTEM".equals(g.scope()) || scope.organizationPath() != null
-                && ("ORGANIZATION".equals(g.scope()) || scope.unitPath() != null)).toList();
+                && ("ORGANIZATION".equals(g.scope()) || scope.unitPath() != null))
+            .toList();
     }
 
     public boolean canAny(String resource, String action) { return !enabled || !matching(resource, action, scope(resource)).isEmpty(); }
@@ -109,6 +123,7 @@ public class AccessPolicy {
         if (!enabled) return "1 = 1";
         var matching = matching(resource, action, scope);
         if (matching.isEmpty()) denied();
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) return "1 = 1";
         if (matching.stream().anyMatch(g -> "SYSTEM".equals(g.scope()))) return "1 = 1";
         // All values below are typed database IDs; callers supply fixed property paths.
         return "(" + String.join(" or ", matching.stream().map(g -> {
@@ -119,6 +134,10 @@ public class AccessPolicy {
     }
 
     public void requireEntity(String resource, String action, CoreEntity entity) {
+        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
+            requireAny(resource, action);
+            return;
+        }
         var scope = scope(resource);
         requireScope(resource, action, scope, idAt(entity, scope.organizationPath()), idAt(entity, scope.unitPath()));
     }
