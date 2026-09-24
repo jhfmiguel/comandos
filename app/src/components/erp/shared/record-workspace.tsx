@@ -1441,7 +1441,6 @@ function RecallItemsEditor({
                             service={service}
                             field={targetKind === "asset" ? assetField : lotField}
                             label={targetKind === "asset" ? "Bem individual *" : "Lote de estoque *"}
-                            required
                             value={targetId}
                             selectedLabel={
                                 editing
