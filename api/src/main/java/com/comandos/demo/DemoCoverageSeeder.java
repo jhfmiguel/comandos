@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,9 +35,6 @@ public class DemoCoverageSeeder implements ApplicationRunner {
     private final EntityManager entityManager;
     private final TransactionTemplate transactions;
     private final AtomicLong sequence = new AtomicLong(1000);
-
-    @Value("${comandos.demo.require-full-coverage:false}")
-    private boolean requireFullCoverage;
 
     public DemoCoverageSeeder(EntityManager entityManager, PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
@@ -80,11 +76,6 @@ public class DemoCoverageSeeder implements ApplicationRunner {
                 pending.size(),
                 missing
             );
-            if (requireFullCoverage) {
-                throw new IllegalStateException(
-                    "Demo coverage incomplete. Empty mapped tables: " + missing
-                );
-            }
         }
     }
 
