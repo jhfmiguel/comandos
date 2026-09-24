@@ -37,6 +37,12 @@ public final class CoreCatalog {
             new Field("description", "Description", "text", false, null, List.of()),
             new Field("active", "Active", "boolean", true, null, List.of())
         )),
+        new Resource("person-types", "Person types", "People", PersonType.class, List.of(
+            new Field("code", "Code", "text", true, null, List.of()),
+            new Field("name", "Name", "text", true, null, List.of()),
+            new Field("description", "Description", "text", false, null, List.of()),
+            new Field("active", "Active", "boolean", true, null, List.of())
+        )),
         new Resource("organizations", "Organizations", "Institutional", Organization.class, List.of(
             new Field("natureId", "Nature", "reference", true, "organization-natures", List.of()),
             new Field("economicActivityId", "Economic activity description", "reference", true, "economic-activities", List.of()),
@@ -55,7 +61,7 @@ public final class CoreCatalog {
             new Field("active", "Active", "boolean", false, null, List.of())
         )),
         new Resource("people", "People", "People", Person.class, List.of(
-            new Field("personType", "Person type", "choice", true, null, List.of("INDIVIDUAL", "LEGAL_ENTITY")),
+            new Field("personTypeRefId", "Person type", "reference", true, "person-types", List.of()),
             new Field("fullName", "Full name / legal name", "text", true, null, List.of()),
             new Field("taxId", "Tax ID (CPF / CNPJ)", "text", false, null, List.of()),
             new Field("birthDate", "Birth date", "date", false, null, List.of()),
