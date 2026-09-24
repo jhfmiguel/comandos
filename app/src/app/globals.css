@@ -6032,3 +6032,13 @@ html[data-theme="dark"] .comandos-native-dialog-header {
 .comandos-sidebar[data-state="collapsed"] .comandos-sidebar-content {
     padding-top: 1.25rem !important;
 }
+
+
+/* COMANDOS COLLAPSED LOGO LOWER V3 */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-brand {
+    padding-top: 1.35rem !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo {
+    transform: translateY(.75rem) !important;
+}
