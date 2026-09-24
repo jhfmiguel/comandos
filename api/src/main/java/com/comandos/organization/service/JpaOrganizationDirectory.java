@@ -54,7 +54,7 @@ public class JpaOrganizationDirectory implements OrganizationDirectory {
             unit.parentUnit == null ? null : unit.parentUnit.id,
             unit.code,
             unit.name,
-            unit.type,
+            unit.unitType == null ? unit.type : unit.unitType.name,
             Boolean.TRUE.equals(unit.active)
         ));
     }
