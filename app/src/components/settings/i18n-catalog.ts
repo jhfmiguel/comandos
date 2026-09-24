@@ -14,6 +14,8 @@ export const translationPairs: TranslationPair[] = [
     ["Institutional core", "Núcleo institucional"],
     ["Institutional", "Institucional"],
     ["Organizations", "Organizações"],
+    ["Organization natures", "Naturezas das organizações"],
+    ["Economic activities", "Atividades econômicas"],
     ["Organizational units", "Unidades organizacionais"],
     ["People", "Pessoas"],
     ["Person roles", "Papéis de pessoa"],
@@ -715,6 +717,7 @@ export const translationPairs: TranslationPair[] = [
     // Deep i18n sweep - ERP metadata, catalogs, statuses and shared UI
     ["Command center", "Centro de comando"],
     ["Nature", "Natureza"],
+    ["Economic activity description", "Descrição da atividade econômica"],
     ["Acronym", "Sigla"],
     ["Tax ID (CNPJ)", "CNPJ"],
     ["Tax ID (CPF / CNPJ)", "CPF / CNPJ"],
