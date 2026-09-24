@@ -61,10 +61,19 @@ class CoreApiTests {
         ));
     }
 
+    private JsonNode economicActivity() throws Exception {
+        return create("economic-activities", Map.of(
+            "code", "EA-" + unique(),
+            "description", "Economic activity " + unique(),
+            "active", true
+        ));
+    }
+
     private Map<String, Object> organizationData(String name) throws Exception {
         return Map.of(
             "name", name,
             "natureId", organizationNature().get("id").asLong(),
+            "economicActivityId", economicActivity().get("id").asLong(),
             "publicOrganization", false,
             "active", true
         );
@@ -127,6 +136,79 @@ class CoreApiTests {
     }
 
     @Test
+    void createsPersonWithMultipleAddressesPhonesAndEmails() throws Exception {
+        var payload = Map.<String, Object>of(
+            "person", Map.of(
+                "personType", "INDIVIDUAL",
+                "fullName", unique(),
+                "active", true
+            ),
+            "addresses", java.util.List.of(
+                Map.of(
+                    "type", "RESIDENTIAL",
+                    "foreignAddress", false,
+                    "country", "Brasil",
+                    "postalCode", "01001-000",
+                    "street", "Praça da Sé",
+                    "number", "100",
+                    "city", "São Paulo",
+                    "state", "SP",
+                    "primaryAddress", true
+                ),
+                Map.of(
+                    "type", "OTHER",
+                    "foreignAddress", true,
+                    "country", "Estados Unidos",
+                    "postalCode", "94105",
+                    "street", "Market Street",
+                    "number", "200",
+                    "city", "San Francisco",
+                    "state", "California",
+                    "primaryAddress", false
+                )
+            ),
+            "phones", java.util.List.of(
+                Map.of(
+                    "type", "MOBILE",
+                    "countryCode", "+55",
+                    "number", "(62) 99999-0001",
+                    "whatsapp", true,
+                    "primaryPhone", true
+                ),
+                Map.of(
+                    "type", "WORK",
+                    "countryCode", "+1",
+                    "number", "4155550100",
+                    "whatsapp", false,
+                    "primaryPhone", false
+                )
+            ),
+            "emails", java.util.List.of(
+                Map.of(
+                    "type", "PERSONAL",
+                    "email", "pessoal-" + unique() + "@example.com",
+                    "primaryEmail", true
+                ),
+                Map.of(
+                    "type", "WORK",
+                    "email", "trabalho-" + unique() + "@example.com",
+                    "primaryEmail", false
+                )
+            )
+        );
+
+        var result = request("POST", "people/with-contacts", payload);
+        assertEquals(201, result.status(), result.raw());
+        long personId = result.body().get("id").asLong();
+        assertEquals(2, result.body().get("addressesCreated").asInt());
+        assertEquals(2, result.body().get("phonesCreated").asInt());
+        assertEquals(2, result.body().get("emailsCreated").asInt());
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_person_address where person_id = ?", Long.class, personId));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_person_phone where person_id = ?", Long.class, personId));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_person_email where person_id = ?", Long.class, personId));
+    }
+
+    @Test
     void concurrentAddressCreationAllowsOnlyOnePrimary() throws Exception {
         long personId = person().get("id").asLong();
         var first = CompletableFuture.supplyAsync(() -> {
@@ -146,7 +228,7 @@ class CoreApiTests {
     void catalogExposesAllCoreResourcesWithoutPersistenceClasses() throws Exception {
         var result = request("GET", "catalog", null);
         assertEquals(200, result.status());
-        assertEquals(15, result.body().size());
+        assertEquals(18, result.body().size());
         assertFalse(result.raw().contains("com.comandos"));
         for (var resource : result.body()) {
             var page = request("GET", resource.get("key").asText() + "?search=example", null);
@@ -166,6 +248,7 @@ class CoreApiTests {
 
         var organization = create("organizations", Map.of(
             "natureId", nature.get("id").asLong(),
+            "economicActivityId", economicActivity().get("id").asLong(),
             "name", unique(),
             "publicOrganization", true,
             "active", true
@@ -176,6 +259,32 @@ class CoreApiTests {
         assertEquals(409, request(
             "DELETE",
             "organization-natures/" + nature.get("id").asLong() + "?version=" + nature.get("version").asLong(),
+            null
+        ).status());
+    }
+
+    @Test
+    void economicActivityIsParameterizedAndCannotBeDeletedWhileInUse() throws Exception {
+        var activity = create("economic-activities", Map.of(
+            "code", "retail",
+            "description", "Retail trade",
+            "active", true
+        ));
+        assertEquals("RETAIL", activity.get("code").asText());
+
+        var organization = create("organizations", Map.of(
+            "natureId", organizationNature().get("id").asLong(),
+            "economicActivityId", activity.get("id").asLong(),
+            "name", unique(),
+            "publicOrganization", false,
+            "active", true
+        ));
+
+        assertEquals(activity.get("id").asLong(), organization.get("economicActivityId").asLong());
+        assertTrue(organization.get("referenceLabels").get("economicActivityId").asText().contains("Retail trade"));
+        assertEquals(409, request(
+            "DELETE",
+            "economic-activities/" + activity.get("id").asLong() + "?version=" + activity.get("version").asLong(),
             null
         ).status());
     }
