@@ -459,7 +459,8 @@ export function PersonContactsEditor({
                                             })}
                                         />
                                     </td>
-                                    <td className={styles.contactBooleanCell}>
+                                    <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
+                                        <span className={styles.contactBooleanLabel}>WhatsApp</span>
                                         <input
                                             aria-label={`Telefone ${index + 1} possui WhatsApp`}
                                             type="checkbox"
@@ -467,7 +468,8 @@ export function PersonContactsEditor({
                                             onChange={event => updatePhone(index, { whatsapp: event.target.checked })}
                                         />
                                     </td>
-                                    <td className={styles.contactBooleanCell}>
+                                    <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
+                                        <span className={styles.contactBooleanLabel}>Principal</span>
                                         <input
                                             aria-label={`Telefone ${index + 1} principal`}
                                             type="radio"
@@ -553,7 +555,8 @@ export function PersonContactsEditor({
                                             onChange={event => updateEmail(index, { email: event.target.value })}
                                         />
                                     </td>
-                                    <td className={styles.contactBooleanCell}>
+                                    <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
+                                        <span className={styles.contactBooleanLabel}>Principal</span>
                                         <input
                                             aria-label={`E-mail ${index + 1} principal`}
                                             type="radio"
