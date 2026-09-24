@@ -264,6 +264,9 @@ public class CoreService {
         if (spec.entity() == AccessProfile.class) {
             normalizeLegacyAccessProfileInput(input);
         }
+        if (spec.entity() == Permission.class) {
+            normalizeLegacyPermissionInput(input);
+        }
 
         Set<String> allowed = new HashSet<>(spec.fields().stream().map(CoreCatalog.Field::name).toList());
         allowed.add("version");
@@ -335,6 +338,10 @@ public class CoreService {
         if (entity instanceof AccessProfile profile && profile.levelType != null) {
             profile.level = profile.levelType.code;
         }
+        if (entity instanceof Permission permission) {
+            if (permission.resourceType != null) permission.resource = permission.resourceType.code;
+            if (permission.actionType != null) permission.action = permission.actionType.code;
+        }
         access.requireEntity("core/" + resource, action, entity);
         validate(entity);
         if (id == null) em.persist(entity);
@@ -344,6 +351,62 @@ public class CoreService {
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
         audit.record("core/" + resource, entity.id, action, before, auditResult);
         return result;
+    }
+
+    private void normalizeLegacyPermissionInput(Map<String, Object> input) {
+        if (!input.containsKey("resourceTypeId")) {
+            Object legacyResource = input.remove("resource");
+            String rawResource = legacyResource == null ? "" : legacyResource.toString().trim();
+            if (!rawResource.isEmpty()) {
+                var existing = em.createQuery(
+                        "select r from PermissionResource r where r.code = :code",
+                        PermissionResource.class)
+                    .setParameter("code", rawResource)
+                    .setMaxResults(1)
+                    .getResultList();
+                PermissionResource resource;
+                if (!existing.isEmpty()) {
+                    resource = existing.getFirst();
+                } else {
+                    resource = new PermissionResource();
+                    resource.code = rawResource;
+                    resource.name = rawResource;
+                    resource.description = "Migrado automaticamente de permissão existente";
+                    resource.active = true;
+                    em.persist(resource);
+                }
+                input.put("resourceTypeId", resource.id);
+            }
+        } else {
+            input.remove("resource");
+        }
+
+        if (!input.containsKey("actionTypeId")) {
+            Object legacyAction = input.remove("action");
+            String rawAction = legacyAction == null ? "" : legacyAction.toString().trim().toUpperCase(Locale.ROOT);
+            if (!rawAction.isEmpty()) {
+                var existing = em.createQuery(
+                        "select a from PermissionAction a where upper(a.code) = :code",
+                        PermissionAction.class)
+                    .setParameter("code", rawAction)
+                    .setMaxResults(1)
+                    .getResultList();
+                PermissionAction action;
+                if (!existing.isEmpty()) {
+                    action = existing.getFirst();
+                } else {
+                    action = new PermissionAction();
+                    action.code = rawAction;
+                    action.name = rawAction;
+                    action.description = "Migrado automaticamente de permissão existente";
+                    action.active = true;
+                    em.persist(action);
+                }
+                input.put("actionTypeId", action.id);
+            }
+        } else {
+            input.remove("action");
+        }
     }
 
     private void normalizeLegacyAccessProfileInput(Map<String, Object> input) {
@@ -880,6 +943,24 @@ public class CoreService {
                 result.put(field.name(), null);
                 if (profile.level != null && !profile.level.isBlank()) {
                     labels.put(field.name(), profile.level);
+                }
+            } else if (
+                entity instanceof Permission permission
+                && "resourceTypeId".equals(field.name())
+                && permission.resourceType == null
+            ) {
+                result.put(field.name(), null);
+                if (permission.resource != null && !permission.resource.isBlank()) {
+                    labels.put(field.name(), permission.resource);
+                }
+            } else if (
+                entity instanceof Permission permission
+                && "actionTypeId".equals(field.name())
+                && permission.actionType == null
+            ) {
+                result.put(field.name(), null);
+                if (permission.action != null && !permission.action.isBlank()) {
+                    labels.put(field.name(), permission.action);
                 }
             } else result.put(field.name(), value);
         }
