@@ -16,7 +16,6 @@ import {
     LogIn,
     LogOut,
     PackageOpen,
-    Settings2,
     Shield
 } from "lucide-react"
 
@@ -96,16 +95,6 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     href="/"
                                     label={tr("Dashboard")}
                                     icon={Home}
-                                    collapsed={!open}
-                                    selectedMenu={selectedMenu}
-                                    onSelect={handleSelect}
-                                />
-
-                                <MenuItem
-                                    menuKey="command-center"
-                                    href="/bot"
-                                    label={tr("Command Center")}
-                                    icon={Settings2}
                                     collapsed={!open}
                                     selectedMenu={selectedMenu}
                                     onSelect={handleSelect}
