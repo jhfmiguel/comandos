@@ -464,7 +464,7 @@ export function PersonContactsEditor({
                                         <td className={styles.contactActionCell}>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger"
+                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                                 data-comandos-contact-delete="true"
                                                 data-severity="danger"
                                                 aria-label={`Remover endereço ${index + 1}`}
@@ -584,7 +584,7 @@ export function PersonContactsEditor({
                                     <td className={styles.contactActionCell}>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                             data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover telefone ${index + 1}`}
@@ -671,7 +671,7 @@ export function PersonContactsEditor({
                                     <td className={styles.contactActionCell}>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger"
+                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                             data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover e-mail ${index + 1}`}
