@@ -554,3 +554,97 @@
         display: none !important;
     }
 }
+
+
+/* PERSON ADDRESS TWO-ROW DESKTOP GRID V3 */
+.contactBooleanField {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: .45rem;
+    padding-top: .45rem !important;
+}
+
+.contactBooleanLabel {
+    display: block;
+    min-height: .9rem;
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
+    font-size: .72rem;
+    font-weight: 500;
+    line-height: 1.05;
+    white-space: nowrap;
+}
+
+.contactBooleanField input[type="checkbox"],
+.contactBooleanField input[type="radio"] {
+    margin-top: .35rem;
+}
+
+@media (min-width: 901px) {
+    .addressTable tbody tr {
+        display: grid !important;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: .55rem;
+        row-gap: .7rem;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .addressTable tbody tr > td {
+        min-width: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+    }
+
+    .addressTable tbody tr > td:nth-child(1) {
+        grid-column: span 2;
+    }
+
+    .addressTable tbody tr > td:nth-child(2) {
+        grid-column: span 1;
+    }
+
+    .addressTable tbody tr > td:nth-child(3) {
+        grid-column: span 2;
+    }
+
+    .addressTable tbody tr > td:nth-child(4) {
+        grid-column: span 2;
+    }
+
+    .addressTable tbody tr > td:nth-child(5) {
+        grid-column: span 4;
+    }
+
+    .addressTable tbody tr > td:nth-child(6) {
+        grid-column: span 1;
+    }
+
+    .addressTable tbody tr > td:nth-child(7),
+    .addressTable tbody tr > td:nth-child(8),
+    .addressTable tbody tr > td:nth-child(9) {
+        grid-column: span 3;
+    }
+
+    .addressTable tbody tr > td:nth-child(10),
+    .addressTable tbody tr > td:nth-child(11),
+    .addressTable tbody tr > td:nth-child(12) {
+        grid-column: span 1;
+    }
+
+    .addressTable tbody tr > td:nth-child(7),
+    .addressTable tbody tr > td:nth-child(8),
+    .addressTable tbody tr > td:nth-child(9),
+    .addressTable tbody tr > td:nth-child(10),
+    .addressTable tbody tr > td:nth-child(11),
+    .addressTable tbody tr > td:nth-child(12) {
+        margin-top: .15rem;
+    }
+
+    .addressTable tbody tr > td:nth-child(12) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
