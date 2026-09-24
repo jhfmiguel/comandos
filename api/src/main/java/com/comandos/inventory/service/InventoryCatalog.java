@@ -41,26 +41,26 @@ public final class InventoryCatalog {
             new Field("code", "Code", "text", true, null, List.of(), false, true),
             new Field("name", "Name", "text", true, null, List.of(), false, false),
             new Field("description", "Description", "text", false, null, List.of(), false, false),
+            new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
             new Field("active", "Active", "boolean", true, null, List.of(), false, false),
             new Field("blocksAvailability", "Blocks availability", "boolean", true, null, List.of(), false, false),
-            new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
             new Field("systemProtected", "System protected", "boolean", true, null, List.of(), true, false)
         ), false),
         new Resource("sale-return-reason-types", "Sale return reason types", "Reference data", SaleReturnReasonType.class, List.of(
             new Field("code", "Code", "text", true, null, List.of(), false, true),
             new Field("name", "Name", "text", true, null, List.of(), false, false),
             new Field("description", "Description", "text", false, null, List.of(), false, false),
-            new Field("active", "Active", "boolean", true, null, List.of(), false, false),
             new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
+            new Field("active", "Active", "boolean", true, null, List.of(), false, false),
             new Field("systemProtected", "System protected", "boolean", true, null, List.of(), true, false)
         ), false),
         new Resource("inventory-count-status-types", "Inventory count status types", "Reference data", InventoryCountStatusType.class, List.of(
             new Field("code", "Code", "text", true, null, List.of(), false, true),
             new Field("name", "Name", "text", true, null, List.of(), false, false),
             new Field("description", "Description", "text", false, null, List.of(), false, false),
+            new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
             new Field("active", "Active", "boolean", true, null, List.of(), false, false),
             new Field("terminal", "Terminal status", "boolean", true, null, List.of(), false, false),
-            new Field("displayOrder", "Display order", "integer", true, null, List.of(), false, false),
             new Field("systemProtected", "System protected", "boolean", true, null, List.of(), true, false)
         ), false),
         new Resource("inventory-count-result-types", "Inventory count result types", "Reference data", InventoryCountResultType.class, List.of(
