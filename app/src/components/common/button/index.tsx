@@ -9,7 +9,8 @@ import {
     RotateCcw,
     Search,
     Trash2,
-    X
+    X,
+    type LucideIcon
 } from "lucide-react"
 
 type ComandosButtonSeverity = "primary" | "secondary" | "success" | "info" | "warn" | "help" | "danger" | "contrast"
@@ -62,7 +63,7 @@ const resolveTableAction = (value: React.ReactNode): TableAction | null => {
     return null
 }
 
-const tableActionIcon: Record<TableAction, React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = {
+const tableActionIcon: Record<TableAction, LucideIcon> = {
     add: Plus,
     analyze: Search,
     cancel: X,
