@@ -166,10 +166,6 @@ const sectionTabs: Record<
             label: "Person role assignments"
         },
         {
-            resource: "role-data",
-            label: "Role details"
-        },
-        {
             resource: "credentials",
             label: "Credentials"
         },
