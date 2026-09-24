@@ -6442,3 +6442,9 @@ html[data-theme][data-palette] .comandos-tab:focus-visible {
 .comandos-sidebar-user-popup .comandos-sidebar-popup-link {
     line-height: 1.2;
 }
+
+
+/* COMANDOS COLLAPSED MENU LOWER V5 */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-content {
+    padding-top: 3rem !important;
+}
