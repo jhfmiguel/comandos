@@ -2,7 +2,8 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react"
+import { Trash } from "@primeicons/react"
 
 import { Layout, Loader } from "components"
 import type { Weapon } from "api/models/weapons"
@@ -139,7 +140,7 @@ export const WeaponsList: React.FC = () => {
                                             <button className="comandos-icon-button" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
                                         </> : <>
                                             <button className="comandos-icon-button" type="button" aria-label="Edit weapon" onClick={()=>startEdit(weapon)}><Pencil size={19}/></button>
-                                            <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete weapon" onClick={()=>weapon.id!=null&&setDeleteId(String(weapon.id))}><Trash2 size={19}/></button>
+                                            <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete weapon" onClick={()=>weapon.id!=null&&setDeleteId(String(weapon.id))}><Trash size={19}/></button>
                                         </>}
                                     </div></td>
                                 </tr>
