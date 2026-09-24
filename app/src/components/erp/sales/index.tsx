@@ -113,11 +113,14 @@ function SalesForm({ onNewSale }: { onNewSale: () => void }) {
                     <ReferenceField service={core} field={buyerField} value={buyer} organizationId={null} onChange={setBuyer} />
                 </div>
                 <div className={styles.field}>
-                    <label htmlFor="sale-payment">Payment method *</label>
-                    <select id="sale-payment" required value={payment} onChange={event => setPayment(event.target.value)}>
-                        <option value="">Select a payment method</option>
-                        {paymentMethods.map(method => <option key={method} value={method}>{method.replaceAll("_", " ")}</option>)}
-                    </select>
+                    <ComandosSelectField
+                        id="sale-payment"
+                        label="Payment method"
+                        required
+                        value={payment}
+                        options={paymentMethods.map(method => ({ value: method, label: method.replaceAll("_", " ") }))}
+                        onChange={setPayment}
+                    />
                 </div>
             </fieldset>
             {!!organization && !completed && canCreate && canRead && <fieldset disabled={locked} className={styles.field}>
@@ -168,8 +171,9 @@ function StockPicker({ organizationId, unitId, cart, onAdd }: { organizationId: 
     return <section>
         <div className={styles.toolbar}>
             <h2>Available stock</h2>
-            <div className={styles.field}><label htmlFor="stock-kind">Stock type</label><select id="stock-kind" value={kind}
-                onChange={event => { setKind(event.target.value); reset(); }}><option value="ASSET">Individual assets</option><option value="LOT">Stock lots</option></select></div>
+            <div className={styles.field}><ComandosSelectField id="stock-kind" label="Stock type" value={kind}
+                options={[{value:"ASSET",label:"Individual assets"},{value:"LOT",label:"Stock lots"}]}
+                onChange={value => { setKind(value); reset(); }} /></div>
             <div className={styles.field}><label htmlFor="stock-search">Code, SKU or model</label><input id="stock-search" type="search" value={search}
                 onChange={event => { setSearch(event.target.value); reset(); }} /></div>
             <Button type="button" severity="secondary" onClick={() => { reset(); setRetry(value => value + 1); }}>Refresh stock</Button>
