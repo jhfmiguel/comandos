@@ -31,7 +31,12 @@ import { useComandosPreferences } from "components/settings/preferences-provider
 import type { ErpField, ErpPage, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
 import { createErpService, type ErpService, type ErpModule } from "api/services/erp.service";
 import styles from "./workspace.module.css";
-import { PersonContactsEditor } from "./person-contacts-editor";
+import {
+    PersonContactsEditor,
+    type AddressDraft as PersonAddressDraft,
+    type PhoneDraft as PersonPhoneDraft,
+    type EmailDraft as PersonEmailDraft
+} from "./person-contacts-editor";
 
 
 type ErpTableFilters = Record<string, string>;
@@ -580,62 +585,6 @@ const equipmentModelFamilies: Record<string, string> = {
     "electrical-device-specifications": "ELECTRICAL_DEVICE",
     "optical-specifications": "OPTICAL",
 };
-
-type PersonAddressDraft = {
-    type: string;
-    foreignAddress: boolean;
-    country: string;
-    postalCode: string;
-    street: string;
-    number: string;
-    complement: string;
-    district: string;
-    city: string;
-    state: string;
-    primaryAddress: boolean;
-};
-
-type PersonPhoneDraft = {
-    type: string;
-    countryCode: string;
-    number: string;
-    whatsapp: boolean;
-    primaryPhone: boolean;
-};
-
-type PersonEmailDraft = {
-    type: string;
-    email: string;
-    primaryEmail: boolean;
-};
-
-const newAddressDraft = (primary: boolean): PersonAddressDraft => ({
-    type: "RESIDENTIAL",
-    foreignAddress: false,
-    country: "Brasil",
-    postalCode: "",
-    street: "",
-    number: "",
-    complement: "",
-    district: "",
-    city: "",
-    state: "",
-    primaryAddress: primary
-});
-
-const newPhoneDraft = (primary: boolean): PersonPhoneDraft => ({
-    type: "MOBILE",
-    countryCode: "+55",
-    number: "",
-    whatsapp: false,
-    primaryPhone: primary
-});
-
-const newEmailDraft = (primary: boolean): PersonEmailDraft => ({
-    type: "PERSONAL",
-    email: "",
-    primaryEmail: primary
-});
 
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
