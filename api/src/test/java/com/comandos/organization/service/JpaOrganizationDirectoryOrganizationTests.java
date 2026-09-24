@@ -1,5 +1,6 @@
 package com.comandos.organization.service;
 
+import com.comandos.core.model.EconomicActivity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationNature;
 import jakarta.persistence.EntityManager;
@@ -31,6 +32,14 @@ class JpaOrganizationDirectoryOrganizationTests {
         nature.active = true;
         organization.nature = nature;
         organization.legacyNature = "Public agency";
+
+        var activity = new EconomicActivity();
+        activity.id = 3L;
+        activity.code = "PUBLIC_ADMIN";
+        activity.description = "Public administration";
+        activity.active = true;
+        organization.economicActivity = activity;
+
         organization.name = "Example Organization";
         organization.acronym = "EX";
         organization.taxId = "12345678000199";
@@ -46,6 +55,7 @@ class JpaOrganizationDirectoryOrganizationTests {
 
         assertEquals(10L, view.id());
         assertEquals("Public agency", view.nature());
+        assertEquals("Public administration", view.economicActivity());
         assertEquals("Example Organization", view.name());
         assertEquals("EX", view.acronym());
         assertEquals(true, view.publicOrganization());
