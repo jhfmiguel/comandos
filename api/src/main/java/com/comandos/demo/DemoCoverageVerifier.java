@@ -6,13 +6,13 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("demo")
-@Order(200)
+@ConditionalOnProperty(name = "comandos.demo.seed", havingValue = "true")
+@Order(300)
 public class DemoCoverageVerifier implements ApplicationRunner {
 
     private final EntityManager entityManager;
