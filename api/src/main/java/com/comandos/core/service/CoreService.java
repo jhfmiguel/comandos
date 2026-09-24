@@ -587,7 +587,7 @@ public class CoreService {
         if (spec.entity() == PersonAddress.class
                 || spec.entity() == PersonPhone.class
                 || spec.entity() == PersonEmail.class) {
-            var person = em.find(Person.class, positiveLong(input.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
+            var person = em.find(Person.class, positiveLong(data.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
             if (person == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found.");
             access.requireEntity("core/people", "READ", person);
             return;
