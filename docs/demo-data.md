@@ -51,6 +51,18 @@ Há também cargas complementares para:
 
 Os dados curados usam chaves estáveis de demonstração e a carga é idempotente: reiniciar com a opção demo ativa complementa o banco sem recriar os mesmos registros principais.
 
+## Exemplos de catálogo
+
+A carga usa exemplos reconhecíveis para deixar clara a hierarquia do catálogo:
+
+- Arma de fogo → Pistola → Semiautomática → Beretta APX A1 Full Size;
+- Arma de fogo → Pistola → Semiautomática → Glock G17 Gen5;
+- Arma de fogo → Pistola → Semiautomática → Taurus G3 Tactical;
+- Arma de fogo → Fuzil → Seletivo → Fuzil de Assalto IMBEL 5,56 IA2;
+- Arma de fogo → Espingarda → Pump action → CBC Pump Military 3.0 Cal. 12;
+- Munições → Munição para pistola → FMJ → CBC 9 mm Luger FMJ;
+- Proteção balística → Colete balístico → Nível III-A → Point Blank Alpha Elite Black.
+
 ## Identificação
 
 Os registros curados usam nomes/códigos fáceis de reconhecer, por exemplo:
