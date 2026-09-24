@@ -1234,14 +1234,19 @@
 
 .phoneTable .contactBooleanField,
 .emailTable .contactBooleanField {
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
+    gap: .65rem !important;
     text-align: center !important;
+    vertical-align: middle !important;
+    padding-top: .45rem !important;
 }
 
 .phoneTable .contactBooleanLabel,
 .emailTable .contactBooleanLabel {
-    width: 100% !important;
+    width: auto !important;
+    min-height: 0 !important;
     text-align: center !important;
 }
 
@@ -1249,30 +1254,26 @@
 .phoneTable .contactBooleanField input[type="radio"],
 .emailTable .contactBooleanField input[type="checkbox"],
 .emailTable .contactBooleanField input[type="radio"] {
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin: 0 !important;
+    flex: 0 0 auto;
 }
 
 .phoneTable .contactActionCell,
 .emailTable .contactActionCell {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: .5rem;
+    display: table-cell !important;
     text-align: center !important;
-    padding-top: .6rem !important;
+    vertical-align: middle !important;
+    padding-top: .45rem !important;
 }
 
 .phoneTable .contactActionCell::before,
 .emailTable .contactActionCell::before {
-    content: "";
-    display: block;
-    min-height: 1rem;
+    content: none !important;
+    display: none !important;
 }
 
 .phoneTable .contactActionCell :global(.comandos-icon-button-danger),
 .emailTable .contactActionCell :global(.comandos-icon-button-danger) {
-    margin: .38rem auto 0 !important;
+    margin: 0 auto !important;
 }
 
