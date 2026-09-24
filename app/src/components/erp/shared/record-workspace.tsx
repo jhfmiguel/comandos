@@ -484,7 +484,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
 
         if (value == null || value === "") return "—";
         if (resource.key === "people" && field.name === "taxId") {
-            return maskPersonTaxId(String(value), String(record.personType ?? ""));
+            return maskPersonTaxId(String(value), String(record.personTypeCode ?? ""));
         }
         if (field.type === "reference") return record.referenceLabels[field.name] || `#${value}`;
         if (field.type === "boolean") return value ? tr("Yes") : tr("No");
@@ -752,6 +752,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                 : resource.label;
 
     const isNewPerson = resource.key === "people" && !record;
+    const [personTypeCode, setPersonTypeCode] = React.useState(
+        String(record?.personTypeCode ?? "")
+    );
     const [personAddresses, setPersonAddresses] = React.useState<PersonAddressDraft[]>([]);
     const [personPhones, setPersonPhones] = React.useState<PersonPhoneDraft[]>([]);
     const [personEmails, setPersonEmails] = React.useState<PersonEmailDraft[]>([]);
@@ -771,7 +774,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             ...(resource.key === "person-addresses" && field.name === "foreignAddress"
                 ? { country: value ? "" : "Brasil" }
                 : {}),
-            ...(resource.key === "people" && field.name === "personType"
+            ...(resource.key === "people" && field.name === "personTypeRefId"
                 ? { taxId: "" }
                 : {}),
             ...(resource.key === "models" && field.name === "categoryId" ? { armamentTypeId: "", armamentClassificationId: "" } : {}),
@@ -858,7 +861,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 <fieldset disabled={busy} className={styles.fields}>
                                     {resource.fields.map(field => {
                                         const personTaxId = resource.key === "people" && field.name === "taxId";
-                                        const personType = String(values.personType ?? "");
+                                        const personType = personTypeCode;
                                         const fieldLabel = personTaxId
                                             ? personType === "INDIVIDUAL"
                                                 ? "CPF"
@@ -911,7 +914,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         if (resource.key === "models" && field.name === "armamentClassificationId") return String(option.typeId) === String(values.armamentTypeId);
                                                         return true;
                                                     }}
-                                                    onChange={value => change(field, value)} />
+                                                    onChange={value => change(field, value)}
+                                                    onSelectOption={option => {
+                                                        if (resource.key === "people" && field.name === "personTypeRefId") {
+                                                            setPersonTypeCode(String(option?.code ?? ""));
+                                                        }
+                                                    }} />
                                             ) : field.type === "boolean" ? (
                                                 <input id={`core-${field.name}`} type="checkbox" checked={Boolean(values[field.name])} onChange={event => change(field, event.target.checked)} />
                                             ) : field.type === "choice" ? (
@@ -932,7 +940,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                                 ? "00.000.000/0000-00"
                                                                 : "Selecione o tipo de pessoa"
                                                     }
-                                                    maxLength={personType === "INDIVIDUAL" ? 14 : 18}
+                                                    maxLength={personType === "INDIVIDUAL" ? 14 : personType === "LEGAL_ENTITY" ? 18 : 255}
                                                     required={required}
                                                     disabled={!personType}
                                                     value={maskPersonTaxId(String(values[field.name] ?? ""), personType)}
@@ -1003,9 +1011,10 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
     );
 }
 
-export function ReferenceField({ service, field, value, selectedLabel, organizationId, excludedId, optionFilter, modelFamily, onChange }: {
+export function ReferenceField({ service, field, value, selectedLabel, organizationId, excludedId, optionFilter, modelFamily, onChange, onSelectOption }: {
     service: ErpService; field: ErpField; value: ErpValue; selectedLabel?: string; organizationId: ErpValue;
     excludedId?: number; optionFilter?: (record: ErpRecord) => boolean; modelFamily?: string; onChange: (value: ErpValue) => void;
+    onSelectOption?: (option: ErpRecord | null) => void;
 }) {
     const current = String(value ?? "");
     const disabled = ["units", "core/units"].includes(field.reference ?? "") && !organizationId;
@@ -1069,6 +1078,7 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
 
     const selectOption = (option: ErpRecord): void => {
         onChange(option.id ?? null);
+        onSelectOption?.(option);
         setSearch(option.label);
         setOpen(false);
         setActiveIndex(-1);
@@ -1081,7 +1091,10 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
         setCompletedQuery("");
         setActiveIndex(-1);
         setOpen(Boolean(nextSearch.trim()));
-        if (current) onChange(null);
+        if (current) {
+            onChange(null);
+            onSelectOption?.(null);
+        }
     };
 
     return (
