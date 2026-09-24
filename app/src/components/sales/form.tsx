@@ -9,6 +9,7 @@ import type { User } from "api/models/users"
 import type { Weapon } from "api/models/weapons"
 import { useUserService, useWeaponService } from "api/services"
 import { Message } from "components/common/message"
+import { ComandosSelectField } from "components/common/select-field"
 
 interface SalesFormProps {
     onSubmit: (sale: Sale) => Promise<void>
@@ -530,31 +531,22 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                 </div>
 
                 <div className="field col-12 md:col-6 mt-3">
-                    <label htmlFor="paymentMethod" className="comandos-float-label">
-                        Payment Method *
-                    </label>
-                    <select
+                    <ComandosSelectField
                         id="paymentMethod"
                         name="paymentMethod"
+                        label="Payment Method"
+                        required
                         value={formik.values.paymentMethod || ""}
-                        className={`comandos-input w-full sales-payment-yellow ${paymentMethodError ? "is-invalid" : ""}`}
-                        aria-required="true"
-                        aria-invalid={Boolean(paymentMethodError)}
-                        aria-describedby={paymentMethodError ? "paymentMethodError" : undefined}
-                        onChange={(event) => {
-                            void formik.setFieldValue("paymentMethod", event.target.value)
+                        options={paymentMethods}
+                        invalid={Boolean(paymentMethodError)}
+                        describedBy={paymentMethodError ? "paymentMethodError" : undefined}
+                        onChange={value => {
+                            void formik.setFieldValue("paymentMethod", value)
                         }}
                         onBlur={() => {
                             void formik.setFieldTouched("paymentMethod", true)
                         }}
-                    >
-                        <option value="">Select payment method</option>
-                        {paymentMethods.map((method) => (
-                            <option key={method.value} value={method.value}>
-                                {method.label}
-                            </option>
-                        ))}
-                    </select>
+                    />
                     {paymentMethodError && (
                         <div id="paymentMethodError" className="mt-2">
                             <Message type="error" text={paymentMethodError} />
