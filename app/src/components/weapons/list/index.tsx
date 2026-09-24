@@ -7,6 +7,7 @@ import { Trash } from "@primeicons/react"
 
 import { Layout, Loader } from "components"
 import { Pagination } from "platform/components/pagination"
+import { formatBRLValue, maskBRLInput, parseBRLValue } from "utils/money"
 import type { Weapon } from "api/models/weapons"
 import { useWeaponService, type WeaponSearchFilters } from "api/services/weapon.service"
 
@@ -131,7 +132,7 @@ export const WeaponsList: React.FC = () => {
                                     <td>{weapon.id}</td>
                                     <td>{editing ? <input className="comandos-input" value={draft.sku ?? ""} onChange={e=>setDraft(v=>({...v,sku:e.target.value}))}/> : weapon.sku}</td>
                                     <td>{editing ? <input className="comandos-input" value={draft.name ?? ""} onChange={e=>setDraft(v=>({...v,name:e.target.value}))}/> : weapon.name}</td>
-                                    <td>{editing ? <input className="comandos-input" type="number" min="0" step="0.01" value={draft.price ?? ""} onChange={e=>setDraft(v=>({...v,price:e.target.value===""?undefined:Number(e.target.value)}))}/> : (weapon.priceFormatted ?? (weapon.price == null ? "" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(weapon.price)))}</td>
+                                    <td>{editing ? <input className="comandos-input" type="text" inputMode="numeric" value={draft.price == null ? "" : formatBRLValue(draft.price)} onChange={e=>setDraft(v=>({...v,price:e.target.value===""?undefined:parseBRLValue(maskBRLInput(e.target.value))}))}/> : (weapon.priceFormatted ?? (weapon.price == null ? "" : formatBRLValue(weapon.price)))}</td>
                                     <td>{editing ? <input className="comandos-input" value={draft.description ?? ""} onChange={e=>setDraft(v=>({...v,description:e.target.value}))}/> : weapon.description}</td>
                                     <td><div className="comandos-row-actions">
                                         {editing ? <>
