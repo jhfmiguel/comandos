@@ -1210,3 +1210,69 @@
     margin-right: 0 !important;
 }
 
+/* PERSON CONTACT CONTROL COLUMNS V2
+ * Telefones: WhatsApp, Principal e excluir ocupam colunas iguais e ficam na mesma linha visual.
+ * E-mails: Principal e excluir seguem a mesma distribuição.
+ */
+.phoneTable th:nth-child(4),
+.phoneTable td:nth-child(4),
+.phoneTable th:nth-child(5),
+.phoneTable td:nth-child(5),
+.phoneTable th:nth-child(6),
+.phoneTable td:nth-child(6) {
+    width: 10.6667% !important;
+    text-align: center !important;
+}
+
+.emailTable th:nth-child(3),
+.emailTable td:nth-child(3),
+.emailTable th:nth-child(4),
+.emailTable td:nth-child(4) {
+    width: 10% !important;
+    text-align: center !important;
+}
+
+.phoneTable .contactBooleanField,
+.emailTable .contactBooleanField {
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: center !important;
+}
+
+.phoneTable .contactBooleanLabel,
+.emailTable .contactBooleanLabel {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+.phoneTable .contactBooleanField input[type="checkbox"],
+.phoneTable .contactBooleanField input[type="radio"],
+.emailTable .contactBooleanField input[type="checkbox"],
+.emailTable .contactBooleanField input[type="radio"] {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.phoneTable .contactActionCell,
+.emailTable .contactActionCell {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: .5rem;
+    text-align: center !important;
+    padding-top: .6rem !important;
+}
+
+.phoneTable .contactActionCell::before,
+.emailTable .contactActionCell::before {
+    content: "";
+    display: block;
+    min-height: 1rem;
+}
+
+.phoneTable .contactActionCell :global(.comandos-icon-button-danger),
+.emailTable .contactActionCell :global(.comandos-icon-button-danger) {
+    margin: .38rem auto 0 !important;
+}
+
