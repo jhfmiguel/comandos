@@ -1176,7 +1176,12 @@ export function ReferenceSelectField({
                 value={current}
                 options={selectOptions.map(option => ({
                     value: String(option.id ?? ""),
-                    label: String(option.label ?? "")
+                    label:
+                        field.name === "natureId"
+                            ? String(option.name ?? option.label ?? "")
+                            : field.name === "economicActivityId"
+                                ? String(option.description ?? option.label ?? "")
+                                : String(option.label ?? "")
                 }))}
                 disabled={organizationMissing}
                 onDisabledAttempt={() => setUnitAttempted(true)}
