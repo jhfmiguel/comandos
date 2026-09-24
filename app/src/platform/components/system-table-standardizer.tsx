@@ -94,9 +94,13 @@ function shouldCreateFilterRow(table: HTMLTableElement): boolean {
     if (table.dataset.comandosTableFilter === "off") return false;
     if (table.dataset.comandosTableFilter === "on") return true;
 
-    // Editable/cadastro tables live inside ERP forms and should not receive
-    // automatic search inputs. Listing tables remain filterable by default.
-    return table.closest('form[data-comandos-erp-form="true"]') == null;
+    // Cadastro/operational tables must not receive automatic search inputs.
+    // Treat a table as a listing only when it is outside an ERP form and its
+    // body does not contain editable controls.
+    if (table.closest('form[data-comandos-erp-form="true"]')) return false;
+    if (table.tBodies.item(0)?.querySelector("input, select, textarea")) return false;
+
+    return true;
 }
 
 function createFilterRow(table: HTMLTableElement, apply: () => void) {
