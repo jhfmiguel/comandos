@@ -91,6 +91,8 @@ function hasManagedPagination(table: HTMLTableElement): boolean {
 }
 
 function createFilterRow(table: HTMLTableElement, apply: () => void) {
+    if (table.dataset.comandosTableFilter === "off") return;
+
     const head = table.tHead;
     const header = head?.rows.item(0);
     if (!head || !header) return;
