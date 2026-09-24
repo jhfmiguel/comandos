@@ -906,7 +906,11 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     serial number is required for serialized models and must be unique within the model.
                                     Leading and trailing spaces are removed; letter case is preserved.
                                 </p>}
-                                <fieldset disabled={busy} className={styles.fields}>
+                                <fieldset
+                                    disabled={busy}
+                                    className={styles.fields}
+                                    data-comandos-resource={resource.key}
+                                >
                                     {resource.fields.map(field => {
                                         const personTaxId = resource.key === "people" && field.name === "taxId";
                                         const organizationTaxId = resource.key === "organizations" && field.name === "taxId";
@@ -930,6 +934,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                         return <fieldset
                                             key={field.name}
                                             data-comandos-field="true"
+                                            data-comandos-field-name={field.name}
                                             className={[
                                                 styles.field,
                                                 resource.key === "organizations" && field.name === "taxId" ? styles.organizationTaxField : "",
