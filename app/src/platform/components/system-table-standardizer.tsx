@@ -96,9 +96,6 @@ function createFilterRow(table: HTMLTableElement, apply: () => void) {
     if (!head || !header) return;
     if (head.querySelector(".comandos-filter-row")) return;
 
-    const editableBody = table.tBodies.item(0)?.querySelector("input, select, textarea");
-    if (editableBody) return;
-
     const row = document.createElement("tr");
     row.className = "comandos-filter-row";
     row.dataset.comandosAutoFilter = "true";
@@ -178,9 +175,7 @@ function createPagination(table: HTMLTableElement, state: TableState, apply: () 
         apply();
     });
     last.addEventListener("click", () => {
-        const rows = tableRows(table).filter(row => !row.hidden);
-        const totalPages = Math.max(Math.ceil(rows.length / state.pageSize), 1);
-        state.page = totalPages - 1;
+        state.page = Number.MAX_SAFE_INTEGER;
         apply();
     });
 
@@ -265,10 +260,7 @@ function enhanceTable(table: HTMLTableElement) {
 
     createFilterRow(table, apply);
 
-    const editableBody = table.tBodies.item(0)?.querySelector("input, select, textarea");
-    if (!editableBody) {
-        createPagination(table, state, () => applyTable(table));
-    }
+    createPagination(table, state, () => applyTable(table));
 
     applyTable(table);
 }
