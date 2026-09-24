@@ -1,6 +1,6 @@
 import React from "react"
 
-type ComandosButtonSeverity = "primary" | "secondary" | "success" | "info" | "warn" | "danger" | "contrast"
+type ComandosButtonSeverity = "primary" | "secondary" | "success" | "info" | "warn" | "help" | "danger" | "contrast"
 type ComandosButtonVariant = "text" | "outlined" | "link" | "contained"
 
 interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
     type = "button",
     disabled,
     severity = "primary",
-    variant = "contained",
+    variant = "outlined",
     iconOnly = false,
     fluid = false,
     loading = false,
