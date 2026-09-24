@@ -4,21 +4,15 @@
     min-width: 0;
 }
 
-.trigger {
+.inputGroup {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: .75rem;
+    align-items: stretch;
     width: 100%;
     min-height: 3.35rem;
-    padding: 1.42rem .78rem .42rem;
     border: 1px solid var(--p-inputtext-border-color, var(--comandos-border, #cbd5e1));
     border-radius: 6px;
     background: var(--p-inputtext-background, var(--comandos-surface, transparent));
     color: var(--p-inputtext-color, var(--comandos-text, inherit));
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
     box-shadow: none;
     transition:
         border-color .16s ease,
@@ -26,42 +20,63 @@
         background-color .16s ease;
 }
 
-.trigger:hover:not([aria-disabled="true"]) {
+.inputGroup:hover:not([data-disabled]) {
     border-color: color-mix(in srgb, var(--comandos-accent, #ff9900) 62%, var(--p-inputtext-border-color, #cbd5e1));
 }
 
-.trigger:focus-visible,
-.trigger[data-popup-open] {
-    outline: 0;
+.inputGroup:focus-within,
+.inputGroup[data-popup-open] {
     border-color: var(--comandos-accent, #ff9900);
     box-shadow: 0 0 0 1px var(--comandos-accent, #ff9900);
 }
 
-.trigger[aria-disabled="true"] {
-    cursor: not-allowed;
-    opacity: .72;
-}
-
-.value {
+.input {
+    flex: 1 1 auto;
     min-width: 0;
-    overflow: hidden;
-    color: inherit;
+    min-height: 3.35rem;
+    box-sizing: border-box;
+    padding: 1.55rem .35rem .38rem .78rem;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: inherit !important;
+    font: inherit;
     line-height: 1.2;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    box-shadow: none !important;
 }
 
-.value[data-placeholder] {
-    color: transparent;
+.input::placeholder {
+    color: var(--comandos-text-muted, #737373);
+    opacity: .55;
+}
+
+.trigger {
+    display: inline-flex;
+    flex: 0 0 2.65rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.35rem;
+    padding: 1.1rem .6rem .2rem;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--comandos-text-muted, #737373);
+    cursor: pointer;
+}
+
+.trigger[data-disabled],
+.input:disabled {
+    cursor: not-allowed;
+}
+
+.root:has(.input:disabled) {
+    opacity: .72;
 }
 
 .indicator {
     display: inline-flex;
-    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    margin-bottom: .05rem;
-    color: var(--comandos-text-muted, #737373);
     transition: transform .16s ease, color .16s ease;
 }
 
@@ -84,26 +99,16 @@
     overflow: hidden;
     color: var(--comandos-text-muted, #737373);
     font-size: .72rem;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     pointer-events: none;
     transform: none;
-    transform-origin: left top;
-    transition: color .16s ease;
 }
 
-/* True FloatLabel variant="in": the label is always inside the field,
- * at the top, even while the select is empty and unfocused.
- */
-.root:focus-within .label,
-.root[data-active="true"] .label,
-.root[data-filled="true"] .label {
-    top: .42rem;
+.root:focus-within .label {
     color: var(--comandos-accent, #ff9900);
-    font-size: .72rem;
-    transform: none;
 }
 
 .positioner {
@@ -162,44 +167,16 @@
     cursor: default;
 }
 
+.empty {
+    padding: .85rem .75rem;
+    color: var(--comandos-text-muted, #737373);
+    font-size: .85rem;
+}
 
-.root[data-invalid="true"] .trigger {
+.root[data-invalid="true"] .inputGroup {
     border-color: #ef4444;
 }
 
 .root[data-invalid="true"] .label {
     color: #ef4444;
-}
-
-
-.searchBox {
-    position: sticky;
-    z-index: 2;
-    top: 0;
-    padding: .5rem;
-    border-bottom: 1px solid var(--comandos-border, var(--p-content-border-color, #d6d6d6));
-    background: var(--comandos-surface, var(--p-content-background, #fff));
-}
-
-.searchInput {
-    width: 100%;
-    min-height: 2.6rem;
-    box-sizing: border-box;
-    padding: .55rem .7rem;
-    border: 1px solid var(--p-inputtext-border-color, var(--comandos-border, #cbd5e1));
-    border-radius: 6px;
-    outline: 0;
-    background: var(--p-inputtext-background, transparent);
-    color: var(--p-inputtext-color, inherit);
-    font: inherit;
-}
-
-.searchInput:focus {
-    border-color: var(--comandos-accent, #ff9900);
-    box-shadow: 0 0 0 1px var(--comandos-accent, #ff9900);
-}
-
-.searchInput::placeholder {
-    color: var(--comandos-text-muted, #737373);
-    opacity: .75;
 }
