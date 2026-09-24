@@ -182,43 +182,46 @@
 
 .phoneTable th:nth-child(1),
 .phoneTable td:nth-child(1) {
-    width: 22%;
+    width: 25%;
 }
 
 .phoneTable th:nth-child(2),
 .phoneTable td:nth-child(2) {
-    width: 14%;
+    width: 12%;
 }
 
 .phoneTable th:nth-child(3),
 .phoneTable td:nth-child(3) {
-    width: 28%;
+    width: 31%;
 }
 
 .phoneTable th:nth-child(4),
 .phoneTable td:nth-child(4),
 .phoneTable th:nth-child(5),
-.phoneTable td:nth-child(5),
+.phoneTable td:nth-child(5) {
+    width: 11%;
+}
+
 .phoneTable th:nth-child(6),
 .phoneTable td:nth-child(6) {
-    width: 12%;
+    width: 10%;
 }
 
 .emailTable th:nth-child(1),
 .emailTable td:nth-child(1) {
-    width: 26%;
+    width: 25%;
 }
 
 .emailTable th:nth-child(2),
 .emailTable td:nth-child(2) {
-    width: 50%;
+    width: 55%;
 }
 
 .emailTable th:nth-child(3),
 .emailTable td:nth-child(3),
 .emailTable th:nth-child(4),
 .emailTable td:nth-child(4) {
-    width: 12%;
+    width: 10%;
 }
 
 @media (min-width: 701px) {
@@ -431,6 +434,17 @@
 
 .contactHeader :global(.registration-yellow-button) {
     flex: 0 0 auto;
+}
+
+.contactAddButton:hover:not(:disabled),
+.contactAddButton:focus-visible,
+.contactAddButton:active:not(:disabled) {
+    background: transparent !important;
+    border-color: var(--comandos-accent, #ff9900) !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
 }
 
 .contactTableScroll {
@@ -1129,6 +1143,16 @@
 .phoneTable td input:not([type="checkbox"]):not([type="radio"]),
 .emailTable td input:not([type="checkbox"]):not([type="radio"]) {
     text-align: right !important;
+}
+
+.phoneTable td input:not([type="checkbox"]):not([type="radio"]),
+.emailTable td input:not([type="checkbox"]):not([type="radio"]),
+.phoneTable td select,
+.emailTable td select,
+.phoneTable td :global(.comandos-composed-select),
+.emailTable td :global(.comandos-composed-select) {
+    min-width: 0 !important;
+    width: 100% !important;
 }
 
 .phoneTable td :global(.comandos-composed-select),
