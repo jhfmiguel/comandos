@@ -25,7 +25,11 @@ export function ComandosSelectField({
     onBlur,
     invalid = false,
     describedBy,
-    className
+    className,
+    searchable = false,
+    searchValue,
+    onSearchChange,
+    searchPlaceholder = "Pesquisar..."
 }: {
     id: string;
     label: string;
@@ -41,10 +45,27 @@ export function ComandosSelectField({
     invalid?: boolean;
     describedBy?: string;
     className?: string;
+    searchable?: boolean;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
+    searchPlaceholder?: string;
 }) {
     const [open, setOpen] = React.useState(false);
+    const [internalSearch, setInternalSearch] = React.useState("");
+    const search = searchValue ?? internalSearch;
     const filled = value !== "";
     const active = filled || open;
+
+    const updateSearch = (next: string) => {
+        if (onSearchChange) onSearchChange(next);
+        else setInternalSearch(next);
+    };
+
+    const visibleOptions = searchable && !onSearchChange && search.trim()
+        ? options.filter(option =>
+            option.label.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR"))
+        )
+        : options;
 
     if (disabled) {
         return (
@@ -91,7 +112,10 @@ export function ComandosSelectField({
             <Select.Root
                 value={value || null}
                 onValueChange={next => onChange(typeof next === "string" ? next : "")}
-                onOpenChange={setOpen}
+                onOpenChange={nextOpen => {
+                    setOpen(nextOpen);
+                    if (!nextOpen && searchable) updateSearch("");
+                }}
                 items={items}
                 required={required}
                 name={name}
@@ -116,6 +140,20 @@ export function ComandosSelectField({
                         alignItemWithTrigger={false}
                     >
                         <Select.Popup className={styles.popup}>
+                            {searchable && (
+                                <div className={styles.searchBox}>
+                                    <input
+                                        type="search"
+                                        className={styles.searchInput}
+                                        data-comandos-no-float="true"
+                                        value={search}
+                                        placeholder={searchPlaceholder}
+                                        autoComplete="off"
+                                        onChange={event => updateSearch(event.target.value)}
+                                        onKeyDown={event => event.stopPropagation()}
+                                    />
+                                </div>
+                            )}
                             <Select.List className={styles.list}>
                                 {!required && (
                                     <Select.Item
@@ -128,7 +166,7 @@ export function ComandosSelectField({
                                         </Select.ItemText>
                                     </Select.Item>
                                 )}
-                                {options.map(option => (
+                                {visibleOptions.map(option => (
                                     <Select.Item
                                         key={option.value}
                                         value={option.value}
