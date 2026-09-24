@@ -1191,6 +1191,7 @@ function RecallItemsEditor({
     const [adding, setAdding] = React.useState(false);
 
     const organizationId = recall.organizationId as ErpValue;
+    const recallEditable = ["OPEN", "IN_PROGRESS"].includes(String(recall.status ?? ""));
 
     const assetField: ErpField = {
         name: "assetId",
@@ -1312,7 +1313,7 @@ function RecallItemsEditor({
                 <button
                     type="button"
                     className="registration-yellow-button"
-                    disabled={busy}
+                    disabled={busy || !recallEditable}
                     onClick={() => {
                         resetEditor();
                         setAdding(true);
@@ -1325,7 +1326,14 @@ function RecallItemsEditor({
 
             {error && <Message type="error" text={error} onClose={() => setError("")} />}
 
-            {adding && (
+            {!recallEditable && (
+                <Message
+                    type="info"
+                    text="Este recall está encerrado ou cancelado. Os itens permanecem disponíveis para consulta, mas não podem ser alterados."
+                />
+            )}
+
+            {adding && recallEditable && (
                 <div className={styles.recallItemEditor}>
                     <div className={styles.field}>
                         <ComandosSelectField
@@ -1436,7 +1444,7 @@ function RecallItemsEditor({
                                                 className="comandos-icon-button comandos-icon-button-edit"
                                                 aria-label="Editar item do recall"
                                                 title="Editar"
-                                                disabled={busy}
+                                                disabled={busy || !recallEditable}
                                                 onClick={() => startEdit(item)}
                                             >
                                                 <Pencil size={18} />
@@ -1447,7 +1455,7 @@ function RecallItemsEditor({
                                                 data-comandos-table-action="delete"
                                                 aria-label="Remover item do recall"
                                                 title="Remover"
-                                                disabled={busy}
+                                                disabled={busy || !recallEditable}
                                                 onClick={() => void deleteItem(item)}
                                             >
                                                 <Trash />
