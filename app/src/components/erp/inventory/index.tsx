@@ -85,13 +85,20 @@ const sectionTabs = {
     ]
 }
 
-export function InventoryWorkspace({ initialResource = "item-categories", section }: InventoryWorkspaceProps) {
+export function InventoryWorkspace({ initialResource, section }: InventoryWorkspaceProps) {
     const tabs = section ? sectionTabs[section as keyof typeof sectionTabs] : undefined
+    const firstTabResource = tabs?.[0]?.resource
+    const requestedResource =
+        initialResource && tabs?.some(tab => tab.resource === initialResource)
+            ? initialResource
+            : firstTabResource ?? initialResource ?? "item-categories"
+
     return (
         <RecordWorkspace
+            key={`${section ?? "all"}:${requestedResource}`}
             module="inventory"
             title="Assets and inventory"
-            initialResource={tabs?.[0]?.resource ?? initialResource}
+            initialResource={requestedResource}
             description="Manage equipment models, type-specific technical specifications, identification, individual assets, controlled lots, locations, conditions and immutable stock movement history."
             showNavigation={false}
             tabs={tabs}
