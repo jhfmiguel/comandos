@@ -215,13 +215,12 @@ export function EquipmentSetComponentsEditor({
                 <div className={styles.nestedCollectionEditor}>
                     <ComandosSelectField
                         id="equipment-set-component-kind"
-                        label="Origem do componente"
+                        label="Origem do componente *"
                         value={targetKind}
                         options={[
                             { value: "asset", label: "Bem individual" },
                             { value: "balance", label: "Saldo de estoque" }
                         ]}
-                        required
                         onChange={value => {
                             setTargetKind(value === "balance" ? "balance" : "asset");
                             setTargetId("");
@@ -230,10 +229,9 @@ export function EquipmentSetComponentsEditor({
 
                     <ComandosSelectField
                         id="equipment-set-component-target"
-                        label={targetKind === "asset" ? "Bem individual" : "Saldo de estoque"}
+                        label={targetKind === "asset" ? "Bem individual *" : "Saldo de estoque *"}
                         value={targetId}
                         options={toOptions(targetKind === "asset" ? assets.options : balances.options)}
-                        required
                         disabled={Boolean(editing)}
                         onChange={setTargetId}
                     />
@@ -473,10 +471,9 @@ export function CategoryCharacteristicsEditor({
                 <div className={styles.nestedCollectionEditor}>
                     <ComandosSelectField
                         id="category-characteristic"
-                        label="Característica"
+                        label="Característica *"
                         value={characteristicId}
                         options={toOptions(characteristics.options)}
-                        required
                         disabled={Boolean(editing)}
                         onChange={setCharacteristicId}
                     />
@@ -769,10 +766,9 @@ export function CharacteristicValuesEditor({
                 <div className={styles.nestedCollectionEditor}>
                     <ComandosSelectField
                         id={ownerType + "-characteristic-value"}
-                        label="Característica"
+                        label="Característica *"
                         value={characteristicId}
                         options={characteristicOptions}
-                        required
                         disabled={Boolean(editing)}
                         onChange={setCharacteristicId}
                     />
@@ -920,10 +916,9 @@ function SpecificationField({
         return (
             <ComandosSelectField
                 id={"model-spec-" + field.name}
-                label={field.label}
+                label={field.label + (field.required ? " *" : "")}
                 value={String(value ?? "")}
                 options={field.choices.map(choice => ({ value: choice, label: choice.replaceAll("_", " ") }))}
-                required={field.required}
                 onChange={onChange}
             />
         );
@@ -952,7 +947,6 @@ function SpecificationField({
                 type={field.type === "integer" || field.type === "decimal" ? "number" : "text"}
                 step={field.type === "integer" ? "1" : field.type === "decimal" ? "0.0001" : undefined}
                 value={String(value ?? "")}
-                required={field.required}
                 maxLength={field.type === "text" ? 500 : undefined}
                 onChange={event => onChange(event.target.value)}
             />
@@ -1067,6 +1061,12 @@ export function ModelSpecificationEditor({
     }
 
     const editableFields = resource.fields.filter(field => field.name !== "modelId" && !field.readOnly);
+    const missingRequired = editableFields.some(field => {
+        if (!field.required) return false;
+        const current = values[field.name];
+        if (field.type === "boolean") return false;
+        return current == null || String(current).trim() === "";
+    });
 
     const save = async () => {
         if (busy) return;
@@ -1143,7 +1143,7 @@ export function ModelSpecificationEditor({
                 <button
                     type="button"
                     className="registration-yellow-button"
-                    disabled={busy}
+                    disabled={busy || missingRequired}
                     onClick={() => void save()}
                 >
                     {busy ? "Salvando..." : specification ? "Salvar especificação" : "Cadastrar especificação"}
