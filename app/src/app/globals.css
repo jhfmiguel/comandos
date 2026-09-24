@@ -7854,3 +7854,102 @@ html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger sv
     stroke: #ef4444 !important;
     fill: none !important;
 }
+
+
+/* TRASH BUTTON ISOLATION V14
+ * Dedicated reset so palette/form hover rules can never paint the trash action.
+ */
+html body button.comandos-trash-button,
+html body button.comandos-trash-button:hover,
+html body button.comandos-trash-button:focus,
+html body button.comandos-trash-button:focus-visible,
+html body button.comandos-trash-button:active {
+    all: unset !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-height: 2.1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #ef4444 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+    cursor: pointer !important;
+}
+
+html body button.comandos-trash-button:disabled {
+    all: unset !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-height: 2.1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #ef4444 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    opacity: .4 !important;
+    cursor: not-allowed !important;
+}
+
+html body button.comandos-trash-button::before,
+html body button.comandos-trash-button::after,
+html body button.comandos-trash-button:hover::before,
+html body button.comandos-trash-button:hover::after,
+html body button.comandos-trash-button:focus-visible::before,
+html body button.comandos-trash-button:focus-visible::after {
+    content: none !important;
+    display: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+html body button.comandos-trash-button > *,
+html body button.comandos-trash-button:hover > *,
+html body button.comandos-trash-button:focus-visible > *,
+html body button.comandos-trash-button:active > *,
+html body button.comandos-trash-button .comandos-table-action-icon {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+html body button.comandos-trash-button svg,
+html body button.comandos-trash-button svg *,
+html body button.comandos-trash-button:hover svg,
+html body button.comandos-trash-button:focus-visible svg,
+html body button.comandos-trash-button:active svg {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    color: #ef4444 !important;
+    stroke: #ef4444 !important;
+    fill: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    filter: none !important;
+}
