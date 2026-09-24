@@ -322,6 +322,46 @@ public class CoreService {
         return result;
     }
 
+    public record PersonRegistration(
+            Map<String, Object> person,
+            List<Map<String, Object>> addresses,
+            List<Map<String, Object>> phones,
+            List<Map<String, Object>> emails) {}
+
+    @Transactional
+    public Map<String, Object> savePersonWithContacts(PersonRegistration registration) {
+        if (registration == null || registration.person() == null) {
+            bad("Person data is required.");
+        }
+
+        Map<String, Object> person = save("people", null, registration.person());
+        long personId = ((Number) person.get("id")).longValue();
+
+        int addressCount = savePersonContacts("person-addresses", personId, registration.addresses());
+        int phoneCount = savePersonContacts("person-phones", personId, registration.phones());
+        int emailCount = savePersonContacts("person-emails", personId, registration.emails());
+
+        Map<String, Object> result = new LinkedHashMap<>(person);
+        result.put("addressesCreated", addressCount);
+        result.put("phonesCreated", phoneCount);
+        result.put("emailsCreated", emailCount);
+        return result;
+    }
+
+    private int savePersonContacts(String resource, long personId, List<Map<String, Object>> contacts) {
+        if (contacts == null || contacts.isEmpty()) return 0;
+
+        for (Map<String, Object> contact : contacts) {
+            if (contact == null) continue;
+            Map<String, Object> data = new LinkedHashMap<>(contact);
+            data.put("personId", personId);
+            data.remove("id");
+            data.remove("version");
+            save(resource, null, data);
+        }
+        return contacts.size();
+    }
+
     @Transactional
     public void delete(String resource, long id, Long version) {
         access.requireAny("core/" + resource, "DELETE");
