@@ -125,7 +125,7 @@ async function main() {
         await page.getByRole('button', { name: /New record|Novo registro/i }).click();
         await page.getByRole('dialog').waitFor();
 
-        async function assertSelectLabelInside(triggerId) {
+        async function assertSelectLabelFloatsFromCenter(triggerId) {
             const trigger = page.locator(`#${triggerId}`);
             const label = page.locator(`label[for="${triggerId}"]`);
             await trigger.waitFor();
@@ -134,10 +134,12 @@ async function main() {
             const beforeTrigger = await trigger.boundingBox();
             const beforeLabel = await label.boundingBox();
             assert.ok(beforeTrigger && beforeLabel, `${triggerId}: trigger/label must be visible`);
+
+            const beforeControlCenter = beforeTrigger.y + beforeTrigger.height / 2;
+            const beforeLabelCenter = beforeLabel.y + beforeLabel.height / 2;
             assert.ok(
-                beforeLabel.y >= beforeTrigger.y
-                && beforeLabel.y + beforeLabel.height <= beforeTrigger.y + beforeTrigger.height,
-                `${triggerId}: label must start inside select before interaction`
+                Math.abs(beforeControlCenter - beforeLabelCenter) <= 5,
+                `${triggerId}: empty select label must start vertically centered`
             );
 
             await trigger.click();
@@ -147,16 +149,21 @@ async function main() {
             const afterLabel = await label.boundingBox();
             assert.ok(afterTrigger && afterLabel, `${triggerId}: trigger/label must remain visible`);
             assert.ok(
+                afterLabel.y < beforeLabel.y - 6,
+                `${triggerId}: select label must float upward after focus`
+            );
+            assert.ok(
                 afterLabel.y >= afterTrigger.y
                 && afterLabel.y + afterLabel.height <= afterTrigger.y + afterTrigger.height,
-                `${triggerId}: label must remain inside select after interaction`
+                `${triggerId}: floated label must stay inside select`
             );
 
             await page.keyboard.press('Escape');
+            await page.locator('body').click({ position: { x: 2, y: 2 } });
         }
 
-        await assertSelectLabelInside('core-natureId');
-        await assertSelectLabelInside('core-economicActivityId');
+        await assertSelectLabelFloatsFromCenter('core-natureId');
+        await assertSelectLabelFloatsFromCenter('core-economicActivityId');
 
         const natureInput = page.locator('#core-natureId');
         await natureInput.click();
