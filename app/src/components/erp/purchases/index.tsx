@@ -24,6 +24,7 @@ import type {
     PurchaseView
 } from "api/models/erp/purchase";
 import styles from "components/erp/shared/workspace.module.css";
+import { formatBRLValue, maskBRLInput, parseBRLValue } from "utils/money";
 
 const core = createErpService("core");
 const inventory = createErpService("inventory");
@@ -55,8 +56,8 @@ const emptyLine = (): PurchaseLine => ({
     key: crypto.randomUUID(),
     itemModelId: null,
     quantity: "1",
-    unitPrice: "0",
-    discount: "0",
+    unitPrice: formatBRLValue(0),
+    discount: formatBRLValue(0),
     conditionDescription: "",
     notes: ""
 });
@@ -70,12 +71,8 @@ function failure(error: unknown): string {
     return "Unable to complete the request. Check the API connection and try again.";
 }
 
-function money(value: number | string | undefined, locale: "pt-BR" | "en-US"): string {
-    const parsed = Number(value ?? 0);
-    return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: "BRL"
-    }).format(Number.isFinite(parsed) ? parsed : 0);
+function money(value: number | string | undefined, _locale: "pt-BR" | "en-US"): string {
+    return formatBRLValue(value ?? 0);
 }
 
 export function PurchasePanel() {
@@ -96,9 +93,9 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
     const [originPerson, setOriginPerson] = React.useState<ErpValue>(null);
     const [acquisitionType, setAcquisitionType] = React.useState<AcquisitionType>("ONEROUS");
     const [originDescription, setOriginDescription] = React.useState("");
-    const [freight, setFreight] = React.useState("0");
-    const [taxes, setTaxes] = React.useState("0");
-    const [otherCosts, setOtherCosts] = React.useState("0");
+    const [freight, setFreight] = React.useState(formatBRLValue(0));
+    const [taxes, setTaxes] = React.useState(formatBRLValue(0));
+    const [otherCosts, setOtherCosts] = React.useState(formatBRLValue(0));
     const [paymentConditions, setPaymentConditions] = React.useState("");
     const [deliveryConditions, setDeliveryConditions] = React.useState("");
     const [warrantyConditions, setWarrantyConditions] = React.useState("");
@@ -121,8 +118,8 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
         lines.every(line =>
             line.itemModelId &&
             Number(line.quantity) > 0 &&
-            Number(line.unitPrice) >= 0 &&
-            Number(line.discount || 0) >= 0
+            parseBRLValue(line.unitPrice) >= 0 &&
+            parseBRLValue(line.discount || 0) >= 0
         )
     );
 
@@ -133,8 +130,8 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
         const items: CreatePurchaseItemRequest[] = lines.map(line => ({
             itemModelId: Number(line.itemModelId),
             quantity: Number(line.quantity),
-            unitPrice: Number(line.unitPrice),
-            discount: Number(line.discount || 0),
+            unitPrice: parseBRLValue(line.unitPrice),
+            discount: parseBRLValue(line.discount || 0),
             conditionDescription: line.conditionDescription.trim() || undefined,
             notes: line.notes.trim() || undefined
         }));
@@ -151,9 +148,9 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                 purchaseNumber: purchaseNumber.trim(),
                 purchaseDate,
                 notes: notes.trim() || undefined,
-                freight: Number(freight || 0),
-                taxes: Number(taxes || 0),
-                otherCosts: Number(otherCosts || 0),
+                freight: parseBRLValue(freight),
+                taxes: parseBRLValue(taxes),
+                otherCosts: parseBRLValue(otherCosts),
                 paymentConditions: paymentConditions.trim() || undefined,
                 deliveryConditions: deliveryConditions.trim() || undefined,
                 warrantyConditions: warrantyConditions.trim() || undefined,
@@ -228,15 +225,15 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                     </div>
                     <div className={styles.field}>
                         <label htmlFor="purchase-freight">Frete</label>
-                        <input id="purchase-freight" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={freight} onChange={event => setFreight(event.target.value)} />
+                        <input id="purchase-freight" type="text" inputMode="numeric" disabled={acquisitionType === "FREE"} value={freight} onChange={event => setFreight(maskBRLInput(event.target.value))} />
                     </div>
                     <div className={styles.field}>
                         <label htmlFor="purchase-taxes">Tributos</label>
-                        <input id="purchase-taxes" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={taxes} onChange={event => setTaxes(event.target.value)} />
+                        <input id="purchase-taxes" type="text" inputMode="numeric" disabled={acquisitionType === "FREE"} value={taxes} onChange={event => setTaxes(maskBRLInput(event.target.value))} />
                     </div>
                     <div className={styles.field}>
                         <label htmlFor="purchase-other-costs">Outros custos</label>
-                        <input id="purchase-other-costs" type="number" min="0" step="0.01" disabled={acquisitionType === "FREE"} value={otherCosts} onChange={event => setOtherCosts(event.target.value)} />
+                        <input id="purchase-other-costs" type="text" inputMode="numeric" disabled={acquisitionType === "FREE"} value={otherCosts} onChange={event => setOtherCosts(maskBRLInput(event.target.value))} />
                     </div>
                     <div className={styles.field}><label>Condições de pagamento</label><textarea value={paymentConditions} onChange={event => setPaymentConditions(event.target.value)} /></div>
                     <div className={styles.field}><label>Condições de entrega</label><textarea value={deliveryConditions} onChange={event => setDeliveryConditions(event.target.value)} /></div>
@@ -382,17 +379,16 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                                         </td>
                                         <td>
                                             <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={doc.amount ?? ""}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={doc.amount == null ? "" : formatBRLValue(doc.amount)}
                                                 onChange={event =>
                                                     setDocuments(documents.map((item, itemIndex) =>
                                                         itemIndex === index
                                                             ? {
                                                                 ...item,
                                                                 amount: event.target.value
-                                                                    ? Number(event.target.value)
+                                                                    ? parseBRLValue(maskBRLInput(event.target.value))
                                                                     : undefined
                                                             }
                                                             : item
@@ -540,21 +536,19 @@ function PurchaseItems({
                                 <td>
                                     <input
                                         aria-label="Unit price"
-                                        type="number"
-                                        min="0"
-                                        step="0.0001"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={line.unitPrice}
-                                        onChange={event => update(line.key, { unitPrice: event.target.value })}
+                                        onChange={event => update(line.key, { unitPrice: maskBRLInput(event.target.value) })}
                                     />
                                 </td>
                                 <td>
                                     <input
                                         aria-label="Discount"
-                                        type="number"
-                                        min="0"
-                                        step="0.0001"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={line.discount}
-                                        onChange={event => update(line.key, { discount: event.target.value })}
+                                        onChange={event => update(line.key, { discount: maskBRLInput(event.target.value) })}
                                     />
                                 </td>
                                 <td>
