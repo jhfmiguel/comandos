@@ -164,7 +164,7 @@ public class DemoDataSeeder implements ApplicationRunner {
         balance(lot, centralVault, "5000.0000");
 
         StockLot trainingLot = lot(ammo9, trainingStore, "CBC-DEMO-2026-002", "1500.0000", LocalDate.of(2030, 6, 30));
-        balance(trainingLot, trainingStore, "1250.0000");
+        balance(trainingLot, trainingStore, "1500.0000");
 
         StockLot operationalLot = lot(ammo9, operationalVault, "CBC-DEMO-2026-003", "800.0000", LocalDate.of(2029, 12, 31));
         balance(operationalLot, operationalVault, "800.0000");
