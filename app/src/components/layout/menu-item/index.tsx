@@ -143,7 +143,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                     </div>
                 )}
 
-                {props.collapsed && submenuOpen && (
+                {props.collapsed && (
                     <div className="comandos-sidebar-popup">
                         <div className="comandos-sidebar-popup-title">{props.label}</div>
                         {props.subItems?.map((item, index) => item.href ? (
