@@ -158,6 +158,8 @@ export function RecordWorkspace({
     const resolvedActiveTab = workspaceTabs.some(tab => tab.resource === activeTab)
         ? activeTab
         : initialTabResource;
+    const hasWorkspaceContent =
+        catalog.length > 0 || workspaceTabs.some(tab => Boolean(tab.definition));
     const tabsDragRef = React.useRef({
         active: false,
         moved: false,
@@ -225,14 +227,14 @@ export function RecordWorkspace({
                     <p role="status">{tr("Loading records…")}</p>
                 )}
 
-                {catalogLoaded && !catalog.length && (
+                {catalogLoaded && !catalog.length && !workspaceTabs.some(tab => tab.definition) && (
                     <Message
                         type="info"
                         text={tr("No resources are available for your access profile.")}
                     />
                 )}
 
-                {!!catalog.length || workspaceTabs.some(tab => tab.definition) ? (
+                {hasWorkspaceContent && (
 
                     <div
                         className={
