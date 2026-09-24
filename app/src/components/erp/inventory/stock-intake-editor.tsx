@@ -9,6 +9,7 @@ import { httpClient } from "api/http";
 import type { ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "components/erp/shared/workspace.module.css";
+import { Trash } from "@primeicons/react";
 
 type RowResult = { row: number; status: string; errors: string[] };
 type BatchResult = { quantity: string; rows?: RowResult[] };
@@ -31,7 +32,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     const [busy, setBusy] = React.useState(false);
     const [pending, setPending] = React.useState<Payload | null>(null);
     const [reviewed, setReviewed] = React.useState(false);
-    const [results, setResults] = React.useState<RowResult[]>([]);
+    const [, setResults] = React.useState<RowResult[]>([]);
     const [completed, setCompleted] = React.useState<string | null>(null);
     const saving = React.useRef(false);
     const locked = busy || !!pending || reviewed || completed !== null;
@@ -51,16 +52,72 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
         setResults([]);
         setRows(current => current.map((row, i) => i === index ? { ...row, [column]: value } : row));
     }
-    function importPairs() {
-        const lines = paste.trim().split(/\r?\n/).filter(line => line.trim());
-        const parsed = lines.map(line => line.split(/\t|;/));
-        if (!paste.trim() || parsed.some(row => row.length !== 2 || row.some(cell => !cell.trim()))) {
-            setError("Paste two columns per line: asset code and serial number, separated by a tab or semicolon."); return;
-        }
+    function parseImportedPairs(text: string): Pair[] | null {
+        const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        if (!lines.length) return null;
+
+        const sample = lines[0];
+        const delimiter = sample.includes("\t") ? "\t" : sample.includes(";") ? ";" : sample.includes(",") ? "," : null;
+        if (!delimiter) return null;
+
+        const parsed = lines.map(line => line.split(delimiter).map(cell =>
+            cell.trim().replace(/^"(.*)"$/, "$1").trim()
+        ));
+        if (parsed.some(row => row.length !== 2 || row.some(cell => !cell))) return null;
+
+        const normalizeHeader = (value: string) => value
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase();
+
+        const [firstHeader, secondHeader] = parsed[0].map(normalizeHeader);
+        const hasHeader =
+            ["codigo patrimonial", "asset code"].includes(firstHeader)
+            && ["numero de serie", "serial number"].includes(secondHeader);
+
+        const data = hasHeader ? parsed.slice(1) : parsed;
+        return data.length ? data.map(([first, second]) => ({ first, second })) : null;
+    }
+
+    function addImportedPairs(imported: Pair[]) {
         const existing = rows.filter(row => row.first.trim() || row.second.trim());
-        if (existing.length + parsed.length > 1000) { setError("An entry can contain at most 1000 assets."); return; }
-        setRows([...existing, ...parsed.map(([first, second]) => ({ first: first.trim(), second: second.trim() }))]);
-        setPaste(""); setError(""); setResults([]);
+        if (existing.length + imported.length > 1000) {
+            setError("O cadastro aceita no máximo 1000 bens por vez.");
+            return false;
+        }
+        setRows([...existing, ...imported]);
+        setError("");
+        setResults([]);
+        return true;
+    }
+
+    function importPairs() {
+        const imported = parseImportedPairs(paste);
+        if (!imported) {
+            setError("Informe duas colunas: Código patrimonial e Número de série, separadas por tabulação, ponto e vírgula ou vírgula.");
+            return;
+        }
+        if (addImportedPairs(imported)) setPaste("");
+    }
+
+    async function importFile(event: React.ChangeEvent<HTMLInputElement>) {
+        const input = event.currentTarget;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        try {
+            const imported = parseImportedPairs(await file.text());
+            if (!imported) {
+                setError("Arquivo inválido. Use CSV, TSV ou TXT com duas colunas: Código patrimonial e Número de série.");
+                return;
+            }
+            addImportedPairs(imported);
+        } catch {
+            setError("Não foi possível ler o arquivo selecionado.");
+        } finally {
+            input.value = "";
+        }
     }
     async function submit(event: React.FormEvent) {
         event.preventDefault();
@@ -152,19 +209,41 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                     </div>)}
                 </fieldset>
                 <fieldset disabled={locked}>
-                    {assets && <details><summary>Paste a list from a spreadsheet</summary>
-                        <label htmlFor="asset-pairs-paste">Asset code and serial number (two columns, no header)</label>
-                        <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
-                        <button type="button" className="registration-yellow-button" onClick={importPairs}>Add pasted rows</button></details>}
+                    {assets && <details><summary>Importar bens para a tabela</summary>
+                        <div className={styles.assetImportBlock}>
+                            <label className={styles.assetFileImport}>
+                                <span>Carregar arquivo</span>
+                                <input
+                                    type="file"
+                                    accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                                    onChange={importFile}
+                                />
+                            </label>
+                            <small>CSV, TSV ou TXT com duas colunas: Código patrimonial e Número de série. O cabeçalho é opcional.</small>
+                            <label htmlFor="asset-pairs-paste">Ou cole duas colunas da planilha</label>
+                            <textarea id="asset-pairs-paste" rows={5} value={paste} onChange={event => setPaste(event.target.value)} />
+                            <button type="button" className="registration-yellow-button" onClick={importPairs}>Adicionar linhas coladas</button>
+                        </div>
+                    </details>}
                     <div className={styles.tableContainer}><table><caption>{assets ? "Asset code / serial number pairs" : "Opening packaging"}</caption>
-                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th>{assets && <th>Validation</th>}</tr></thead>
+                        <thead><tr><th>#</th><th>{assets ? "Asset code" : "Number of boxes"}</th><th>{assets ? "Serial number" : "Rounds per box"}</th><th className={styles.actionCell}>Actions</th></tr></thead>
                         <tbody>{rows.map((row, index) => <tr key={index}><td>{index + 1}</td>
                             {(["first", "second"] as const).map(column => <td key={column}><input required
                                 aria-label={`${assets ? column === "first" ? "Asset code" : "Serial number" : column === "first" ? "Number of boxes" : "Rounds per box"} ${index + 1}`}
                                 type="text" inputMode={assets ? "text" : "numeric"} maxLength={assets ? 255 : 15}
                                 value={row[column]} onChange={event => update(index, column, event.target.value)} /></td>)}
-                            <td className={styles.actionCell}><button type="button" className="registration-yellow-button" aria-label={`Remove row ${index + 1}`}
-                                onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}>Remove</button></td>{assets && <td aria-live="polite">{results[index]?.errors.length ? results[index].errors.join(" ") : normalized[index].first === "" || normalized[index].second === "" ? "Asset code and serial number are required." : normalized.some((other, i) => i !== index && (other.first === normalized[index].first || other.second === normalized[index].second)) ? "Duplicate asset code or serial number." : results[index]?.status === "ACCEPTED" ? "Accepted; saved" : results[index]?.status === "VALID" ? "Valid; not saved yet" : ""}</td>}</tr>)}</tbody></table></div>
+                            <td className={styles.actionCell}>
+                                <button
+                                    type="button"
+                                    className="comandos-icon-button comandos-icon-button-danger"
+                                    data-comandos-table-action="delete"
+                                    aria-label={`Remover linha ${index + 1}`}
+                                    onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}
+                                >
+                                    <Trash />
+                                </button>
+                            </td>
+                        </tr>)}</tbody></table></div>
                     <button type="button" className="registration-yellow-button" disabled={rows.length >= 1000} onClick={() => setRows(current => [...current, emptyRow()])}>{assets ? "Add another asset" : "Add another box line"}</button>
                     {!assets && <div className={styles.field}><label htmlFor="intake-loose-units">Loose rounds (without a box)</label>
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
