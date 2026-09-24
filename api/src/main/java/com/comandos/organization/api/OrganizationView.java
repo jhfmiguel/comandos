@@ -3,6 +3,7 @@ package com.comandos.organization.api;
 public record OrganizationView(
     long id,
     String nature,
+    String economicActivity,
     String name,
     String acronym,
     String taxId,
