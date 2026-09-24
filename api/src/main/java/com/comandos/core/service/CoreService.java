@@ -258,6 +258,9 @@ public class CoreService {
         if (spec.entity() == Person.class) {
             normalizeLegacyPersonInput(input);
         }
+        if (spec.entity() == OrganizationalUnit.class) {
+            normalizeLegacyOrganizationalUnitInput(input);
+        }
 
         Set<String> allowed = new HashSet<>(spec.fields().stream().map(CoreCatalog.Field::name).toList());
         allowed.add("version");
@@ -335,6 +338,43 @@ public class CoreService {
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
         audit.record("core/" + resource, entity.id, action, before, auditResult);
         return result;
+    }
+
+    private void normalizeLegacyOrganizationalUnitInput(Map<String, Object> input) {
+        boolean legacyTypeSupplied = input.containsKey("type");
+        Object legacyType = input.remove("type");
+
+        if (!legacyTypeSupplied || input.containsKey("typeId")) return;
+
+        String raw = legacyType == null ? "" : legacyType.toString().trim();
+        if (raw.isEmpty()) return;
+
+        String code = raw
+            .toUpperCase(Locale.ROOT)
+            .replaceAll("[^A-Z0-9]+", "_")
+            .replaceAll("^_+|_+$", "");
+
+        var existing = em.createQuery(
+                "select t from OrganizationalUnitType t where upper(t.code) = :code or lower(t.name) = lower(:name)",
+                OrganizationalUnitType.class)
+            .setParameter("code", code)
+            .setParameter("name", raw)
+            .setMaxResults(1)
+            .getResultList();
+
+        OrganizationalUnitType type;
+        if (!existing.isEmpty()) {
+            type = existing.getFirst();
+        } else {
+            type = new OrganizationalUnitType();
+            type.code = code.isBlank() ? "LEGACY_UNIT_TYPE" : code;
+            type.name = raw;
+            type.description = "Migrado automaticamente de cadastro legado";
+            type.active = true;
+            em.persist(type);
+        }
+
+        input.put("typeId", type.id);
     }
 
     private void normalizeLegacyPersonInput(Map<String, Object> input) {
