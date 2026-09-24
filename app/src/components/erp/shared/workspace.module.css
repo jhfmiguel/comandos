@@ -562,13 +562,13 @@
     flex-direction: column;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: .45rem;
-    padding-top: .45rem !important;
+    gap: .5rem;
+    padding-top: .15rem !important;
 }
 
 .contactBooleanLabel {
     display: block;
-    min-height: .9rem;
+    min-height: 1rem;
     color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
     font-size: .72rem;
     font-weight: 500;
@@ -578,7 +578,7 @@
 
 .contactBooleanField input[type="checkbox"],
 .contactBooleanField input[type="radio"] {
-    margin-top: .35rem;
+    margin-top: .38rem;
 }
 
 @media (min-width: 901px) {
