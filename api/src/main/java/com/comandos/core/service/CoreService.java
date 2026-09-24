@@ -341,10 +341,19 @@ public class CoreService {
     }
 
     private void normalizeLegacyOrganizationalUnitInput(Map<String, Object> input) {
-        boolean legacyTypeSupplied = input.containsKey("type");
+        if (input.containsKey("unitTypeId")) {
+            input.remove("typeId");
+            input.remove("type");
+            return;
+        }
+
+        Object legacyReference = input.remove("typeId");
         Object legacyType = input.remove("type");
 
-        if (!legacyTypeSupplied || input.containsKey("typeId")) return;
+        if (legacyReference != null) {
+            input.put("unitTypeId", legacyReference);
+            return;
+        }
 
         String raw = legacyType == null ? "" : legacyType.toString().trim();
         if (raw.isEmpty()) return;
@@ -374,7 +383,7 @@ public class CoreService {
             em.persist(type);
         }
 
-        input.put("typeId", type.id);
+        input.put("unitTypeId", type.id);
     }
 
     private void normalizeLegacyPersonInput(Map<String, Object> input) {
@@ -817,7 +826,7 @@ public class CoreService {
                 }
             } else if (
                 entity instanceof OrganizationalUnit unit
-                && "typeId".equals(field.name())
+                && "unitTypeId".equals(field.name())
                 && unit.unitType == null
             ) {
                 result.put(field.name(), null);
