@@ -60,21 +60,34 @@
     position: absolute;
     z-index: 2;
     left: .78rem;
-    top: .42rem;
-    max-width: calc(100% - 3rem);
+    top: 50%;
+    max-width: calc(100% - 1.56rem);
     overflow: hidden;
     color: var(--comandos-text-muted, #737373);
-    font-size: .72rem;
-    font-weight: 600;
+    font-size: .84rem;
+    font-weight: 500;
     line-height: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     pointer-events: none;
-    transform: none;
+    transform: translateY(-50%);
+    transform-origin: left top;
+    transition:
+        top .16s ease,
+        transform .16s ease,
+        color .16s ease,
+        font-size .16s ease;
 }
 
-.root:focus-within .label {
+.root:focus-within .label,
+.root[data-active="true"] .label,
+.root[data-filled="true"] .label {
+    top: .42rem;
+    max-width: calc(100% - 1.56rem);
     color: var(--comandos-accent, #ff9900);
+    font-size: .72rem;
+    font-weight: 600;
+    transform: none;
 }
 
 .positioner {
