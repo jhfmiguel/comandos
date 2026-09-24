@@ -11,6 +11,7 @@ import {
     parseLocaleDecimal
 } from "utils/locale";
 import { convertToIsoDate, formatDate } from "utils/date";
+import { formatBRLValue, isMonetaryField, maskBRLInput, parseBRLValue } from "utils/money";
 
 import axios from "axios";
 
@@ -571,6 +572,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
         }
 
         if (field.type === "decimal") {
+            if (isMonetaryField(field.name)) return formatBRLValue(value as string | number);
             const numericValue = Number(value);
             return Number.isFinite(numericValue)
                 ? formatLocaleNumber(numericValue, locale)
@@ -833,11 +835,19 @@ function RecordEditor({ resource, service, record, initialSection, onCancel, onS
     };
 
 const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
-        const initial = Object.fromEntries(resource.fields.map(field =>
-            [field.name, field.type === "password" ? ""
+        const initial = Object.fromEntries(resource.fields.map(field => {
+            const rawValue = field.type === "password"
+                ? ""
                 : record?.[field.name]
-                ?? (field.type === "boolean" ? field.name === "active" : "")]
-        )) as Record<string, ErpValue>;
+                ?? (field.type === "boolean" ? field.name === "active" : "");
+
+            return [
+                field.name,
+                field.type === "decimal" && isMonetaryField(field.name) && rawValue !== ""
+                    ? formatBRLValue(rawValue as string | number)
+                    : rawValue
+            ];
+        })) as Record<string, ErpValue>;
 
         if (resource.key === "person-addresses" && !record) {
             initial.contactTypeId = "";
@@ -967,7 +977,14 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                     const value = values[field.name];
 
                                                     if (field.type === "decimal") {
-                                                        return [field.name, value === "" ? null : parseLocaleDecimal(String(value), locale)];
+                                                        return [
+                                                            field.name,
+                                                            value === ""
+                                                                ? null
+                                                                : isMonetaryField(field.name)
+                                                                    ? parseBRLValue(String(value))
+                                                                    : parseLocaleDecimal(String(value), locale)
+                                                        ];
                                                     }
 
                                                     if (field.type === "integer") {
@@ -1174,10 +1191,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 <input
                                                     id={`core-${field.name}`}
                                                     type="text"
-                                                    inputMode="numeric"
+                                                    inputMode={isMonetaryField(field.name) ? "numeric" : "decimal"}
                                                     required={required}
                                                     value={String(values[field.name] ?? "")}
-                                                    onChange={event => change(field, maskDecimalInput(event.target.value))}
+                                                    onChange={event => change(
+                                                        field,
+                                                        isMonetaryField(field.name)
+                                                            ? maskBRLInput(event.target.value)
+                                                            : maskDecimalInput(event.target.value)
+                                                    )}
                                                 />
                                             ) : field.type === "date" ? (
                                                 <input
