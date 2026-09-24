@@ -191,6 +191,34 @@ async function main() {
 
         await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
 
+        await page.goto(`${appURL}/erp/core?section=access&resource=profiles`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        assert.match(
+            await page.locator('.comandos-tab-panel #resource-title').innerText(),
+            /Access profiles|Perfis de acesso/i
+        );
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+        await page.locator('#core-levelTypeId').waitFor();
+
+        const levelHelp = page.getByRole('button', { name: /Ajuda sobre o campo|Field help/i });
+        await levelHelp.waitFor();
+        const levelHint = page.getByRole('tooltip');
+        assert.equal(await levelHint.isVisible(), false, 'Access level hint must not occupy fixed form space');
+
+        await levelHelp.hover();
+        await page.waitForTimeout(80);
+        assert.equal(await levelHint.isVisible(), true, 'Access level hint must appear on desktop hover');
+
+        await page.mouse.move(1, 1);
+        await page.waitForTimeout(80);
+        await levelHelp.click();
+        assert.equal(await levelHint.isVisible(), true, 'Access level hint must appear on click/tap');
+        await levelHelp.click();
+        assert.equal(await levelHint.isVisible(), false, 'Access level hint must close on second click');
+
+        console.log('PASS access profiles: parameterized level field and contextual help behavior');
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
 
         await page.goto(`${appURL}/erp/inventory?section=technical-parameters&resource=calibers`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
