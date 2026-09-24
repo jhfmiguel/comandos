@@ -121,6 +121,28 @@ async function main() {
             await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
         }
         console.log('PASS institutional registrations: every tab is clickable and renders CRUD');
+
+        await page.goto(`${appURL}/erp/core?section=people&resource=person-types`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        assert.match(
+            await page.locator('.comandos-tab-panel #resource-title').innerText(),
+            /Person types|Tipos de pessoa/i
+        );
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+
+        const browserPersonTypeCode = `BROWSER_PERSON_TYPE_${suffix}`;
+        await page.locator('#core-code').fill(browserPersonTypeCode);
+        await page.locator('#core-name').fill(`Browser person type ${suffix}`);
+        await page.locator('#core-description').fill('Browser validation person type');
+        await page.getByRole('button', { name: /Save|Salvar/i }).click();
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        await page.getByText(`Browser person type ${suffix}`, { exact: false }).waitFor();
+        console.log('PASS person types: create and save through registration form');
+
+        await page.goto(`${appURL}/erp/core?section=institutional&resource=organizations`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
         await page.getByRole('tab', { name: /Organizations|Organizações/i }).click();
         await page.getByRole('button', { name: /New record|Novo registro/i }).click();
         await page.getByRole('dialog').waitFor();
