@@ -7235,3 +7235,62 @@ input[type="search"][data-comandos-float-control="true"]::placeholder {
     color: var(--comandos-text-muted, #737373) !important;
     opacity: .62 !important;
 }
+
+
+/* GLOBAL SELECT IN-LABEL STANDARD V6
+ * Applied to every select/input label discovered by FloatLabelEnhancer.
+ * Attribute-only selectors make this work across CSS Modules and legacy forms.
+ */
+[data-comandos-float-host="true"] {
+    position: relative !important;
+}
+
+[data-comandos-float-label-element="true"] {
+    position: absolute !important;
+    z-index: 10 !important;
+    left: var(--comandos-float-left, .78rem) !important;
+    top: var(--comandos-float-idle-top, 50%) !important;
+    width: var(--comandos-float-width, calc(100% - 1.56rem)) !important;
+    max-width: var(--comandos-float-width, calc(100% - 1.56rem)) !important;
+    min-height: 1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    color: var(--comandos-text-muted, #737373) !important;
+    font-size: .84rem !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    pointer-events: none !important;
+    transform: translateY(-50%) !important;
+    transform-origin: left top !important;
+    transition:
+        top .16s ease,
+        transform .16s ease,
+        color .16s ease,
+        font-size .16s ease !important;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-active="true"]
+[data-comandos-float-label-element="true"] {
+    top: var(--comandos-float-active-top, .3rem) !important;
+    font-size: .74rem !important;
+    transform: translateY(0) !important;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-focused="true"]
+[data-comandos-float-label-element="true"] {
+    color: var(--comandos-accent, #ff9900) !important;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-uses-source="true"]::after {
+    content: none !important;
+}
+
+/* Selects always reserve a real in-label area, including before interaction. */
+select[data-comandos-float-control="true"] {
+    min-height: 3.35rem !important;
+    padding-top: 1.78rem !important;
+    padding-bottom: .22rem !important;
+}
