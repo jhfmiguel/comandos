@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Select } from "@base-ui/react/select";
+import { Combobox } from "@base-ui/react/combobox";
 import { ChevronDown } from "@primeicons/react/chevron-down";
 import styles from "./select-field.module.css";
 
@@ -26,10 +26,7 @@ export function ComandosSelectField({
     invalid = false,
     describedBy,
     className,
-    searchable = false,
-    searchValue,
-    onSearchChange,
-    searchPlaceholder = "Pesquisar..."
+    onSearchChange
 }: {
     id: string;
     label: string;
@@ -45,143 +42,102 @@ export function ComandosSelectField({
     invalid?: boolean;
     describedBy?: string;
     className?: string;
-    searchable?: boolean;
-    searchValue?: string;
     onSearchChange?: (value: string) => void;
-    searchPlaceholder?: string;
 }) {
     const [open, setOpen] = React.useState(false);
-    const [internalSearch, setInternalSearch] = React.useState("");
-    const search = searchValue ?? internalSearch;
-    const filled = value !== "";
-    const active = filled || open;
 
-    const updateSearch = (next: string) => {
-        if (onSearchChange) onSearchChange(next);
-        else setInternalSearch(next);
-    };
+    const effectiveOptions = React.useMemo(
+        () => required
+            ? options
+            : [
+                { value: "", label: placeholder || "Nenhum" },
+                ...options.filter(option => option.value !== "")
+            ],
+        [options, placeholder, required]
+    );
 
-    const visibleOptions = searchable && !onSearchChange && search.trim()
-        ? options.filter(option =>
-            option.label.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR"))
-        )
-        : options;
+    const items = React.useMemo(
+        () => Combobox.createItems(effectiveOptions, {
+            getValue: option => option.value,
+            getLabel: option => option.label
+        }),
+        [effectiveOptions]
+    );
 
-    if (disabled) {
-        return (
-            <div className={[styles.root, "comandos-composed-select", className ?? ""].filter(Boolean).join(" ")} data-active={active ? "true" : "false"} data-invalid={invalid ? "true" : "false"}>
-                <button
-                    id={id}
-                    type="button"
-                    className={`${styles.trigger} comandos-composed-select-trigger`}
-                    aria-disabled="true"
-                    aria-describedby={describedBy}
-                    onPointerDown={event => {
-                        event.preventDefault();
-                        onDisabledAttempt?.();
-                    }}
-                    onClick={event => {
-                        event.preventDefault();
-                        onDisabledAttempt?.();
-                    }}
-                >
-                    <span className={styles.value}>{placeholder}</span>
-                    <span className={styles.indicator} aria-hidden="true">
-                        <ChevronDown />
-                    </span>
-                </button>
-                <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
-                    {label}{required ? " *" : ""}
-                </label>
-            </div>
-        );
-    }
-
-    const items = options.map(option => ({
-        label: option.label,
-        value: option.value
-    }));
+    const selected = value || null;
 
     return (
         <div
             className={[styles.root, "comandos-composed-select", className ?? ""].filter(Boolean).join(" ")}
-            data-active={active ? "true" : "false"}
-            data-filled={filled ? "true" : "false"}
+            data-active={open || value !== "" ? "true" : "false"}
+            data-filled={value !== "" ? "true" : "false"}
             data-invalid={invalid ? "true" : "false"}
+            onPointerDownCapture={() => {
+                if (disabled) onDisabledAttempt?.();
+            }}
         >
-            <Select.Root
-                value={value || null}
-                onValueChange={next => onChange(typeof next === "string" ? next : "")}
-                onOpenChange={nextOpen => {
-                    setOpen(nextOpen);
-                    if (!nextOpen && searchable) updateSearch("");
-                }}
+            <Combobox.Root
                 items={items}
+                value={selected}
+                onValueChange={next => {
+                    onChange(typeof next === "string" ? next : "");
+                }}
+                onInputValueChange={(next, details) => {
+                    if (details.reason !== "item-press") {
+                        onSearchChange?.(String(next ?? ""));
+                    }
+                }}
+                onOpenChange={setOpen}
+                filter={onSearchChange ? null : undefined}
                 required={required}
                 name={name}
+                disabled={disabled}
             >
-                <Select.Trigger
-                    id={id}
-                    className={`${styles.trigger} comandos-composed-select-trigger`}
-                    aria-invalid={invalid || undefined}
-                    aria-describedby={describedBy}
-                    onBlur={onBlur}
-                >
-                    <Select.Value className={styles.value} placeholder={placeholder} />
-                    <Select.Icon className={styles.indicator}>
-                        <ChevronDown />
-                    </Select.Icon>
-                </Select.Trigger>
+                <Combobox.InputGroup className={styles.inputGroup}>
+                    <Combobox.Input
+                        id={id}
+                        className={styles.input}
+                        placeholder={placeholder}
+                        aria-invalid={invalid || undefined}
+                        aria-describedby={describedBy}
+                        autoComplete="off"
+                        onBlur={onBlur}
+                    />
+                    <Combobox.Trigger
+                        className={styles.trigger}
+                        aria-label={`Abrir opções de ${label}`}
+                    >
+                        <Combobox.Icon className={styles.indicator}>
+                            <ChevronDown />
+                        </Combobox.Icon>
+                    </Combobox.Trigger>
+                </Combobox.InputGroup>
 
-                <Select.Portal>
-                    <Select.Positioner
+                <Combobox.Portal>
+                    <Combobox.Positioner
                         className={styles.positioner}
                         sideOffset={4}
-                        alignItemWithTrigger={false}
                     >
-                        <Select.Popup className={styles.popup}>
-                            {searchable && (
-                                <div className={styles.searchBox}>
-                                    <input
-                                        type="search"
-                                        className={styles.searchInput}
-                                        data-comandos-no-float="true"
-                                        value={search}
-                                        placeholder={searchPlaceholder}
-                                        autoComplete="off"
-                                        onChange={event => updateSearch(event.target.value)}
-                                        onKeyDown={event => event.stopPropagation()}
-                                    />
-                                </div>
-                            )}
-                            <Select.List className={styles.list}>
-                                {!required && (
-                                    <Select.Item
-                                        value={null}
-                                        className={styles.item}
-                                        label={placeholder || "Nenhum"}
-                                    >
-                                        <Select.ItemText>
-                                            {placeholder || "Nenhum"}
-                                        </Select.ItemText>
-                                    </Select.Item>
-                                )}
-                                {visibleOptions.map(option => (
-                                    <Select.Item
-                                        key={option.value}
+                        <Combobox.Popup className={styles.popup}>
+                            <Combobox.Empty className={styles.empty}>
+                                Nenhuma opção encontrada.
+                            </Combobox.Empty>
+                            <Combobox.List className={styles.list}>
+                                {effectiveOptions.map(option => (
+                                    <Combobox.Item
+                                        key={option.value || "__empty__"}
                                         value={option.value}
                                         disabled={option.disabled}
                                         className={styles.item}
-                                        label={option.label}
                                     >
-                                        <Select.ItemText>{option.label}</Select.ItemText>
-                                    </Select.Item>
+                                        {option.label}
+                                    </Combobox.Item>
                                 ))}
-                            </Select.List>
-                        </Select.Popup>
-                    </Select.Positioner>
-                </Select.Portal>
-            </Select.Root>
+                            </Combobox.List>
+                        </Combobox.Popup>
+                    </Combobox.Positioner>
+                </Combobox.Portal>
+            </Combobox.Root>
 
             <label htmlFor={id} className={`${styles.label} comandos-composed-select-label`}>
                 {label}{required ? " *" : ""}
