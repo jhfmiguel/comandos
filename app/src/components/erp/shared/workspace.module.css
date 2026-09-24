@@ -424,3 +424,121 @@
     background: var(--comandos-accent, #ff9900);
 }
 
+
+
+/* Desktop person address layout: wrap fields instead of horizontal scrolling */
+@media (min-width: 901px) {
+    .addressTableScroll {
+        overflow-x: hidden !important;
+    }
+
+    .addressTable {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+        table-layout: auto;
+    }
+
+    .addressTable thead,
+    .addressTable tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .addressTable thead tr,
+    .addressTable tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .addressTable thead tr {
+        background:
+            linear-gradient(
+                90deg,
+                rgba(var(--comandos-accent-rgb, 255, 153, 0), .08),
+                transparent 52%
+            ),
+            var(--comandos-surface-2, var(--p-content-hover-background, #f8fafc));
+    }
+
+    .addressTable th,
+    .addressTable td {
+        display: flex;
+        align-items: center;
+        min-width: 0 !important;
+        max-width: none !important;
+        box-sizing: border-box;
+        border-bottom: 1px solid var(--comandos-border-soft, var(--p-content-border-color, #ddd));
+    }
+
+    .addressTable th:nth-child(1),
+    .addressTable td:nth-child(1) {
+        flex: 1 1 9rem;
+    }
+
+    .addressTable th:nth-child(2),
+    .addressTable td:nth-child(2) {
+        flex: 0 1 5.5rem;
+        justify-content: center;
+    }
+
+    .addressTable th:nth-child(3),
+    .addressTable td:nth-child(3) {
+        flex: 1 1 9rem;
+    }
+
+    .addressTable th:nth-child(4),
+    .addressTable td:nth-child(4) {
+        flex: 1 1 9rem;
+    }
+
+    .addressTable th:nth-child(5),
+    .addressTable td:nth-child(5) {
+        flex: 2 1 18rem;
+    }
+
+    .addressTable th:nth-child(6),
+    .addressTable td:nth-child(6) {
+        flex: 0 1 6.25rem;
+    }
+
+    .addressTable th:nth-child(7),
+    .addressTable td:nth-child(7) {
+        flex: 1 1 12rem;
+    }
+
+    .addressTable th:nth-child(8),
+    .addressTable td:nth-child(8) {
+        flex: 1 1 12rem;
+    }
+
+    .addressTable th:nth-child(9),
+    .addressTable td:nth-child(9) {
+        flex: 1 1 12rem;
+    }
+
+    .addressTable th:nth-child(10),
+    .addressTable td:nth-child(10) {
+        flex: 0 1 7rem;
+    }
+
+    .addressTable th:nth-child(11),
+    .addressTable td:nth-child(11),
+    .addressTable th:nth-child(12),
+    .addressTable td:nth-child(12) {
+        flex: 0 1 5.5rem;
+        justify-content: center;
+    }
+
+    .addressTable td input:not([type="checkbox"]):not([type="radio"]),
+    .addressTable td select {
+        width: 100%;
+        min-width: 0 !important;
+    }
+
+    .addressTable tbody tr + tr {
+        border-top: 1px solid var(--comandos-border, var(--p-content-border-color, #ddd));
+    }
+}
