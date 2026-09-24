@@ -200,6 +200,15 @@ async function main() {
 
         await page.goto(`${appURL}/erp/core?section=access&resource=profiles`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
+
+        for (const tabName of [
+            /Access profile levels|Níveis de perfil de acesso/i,
+            /Permission resources|Recursos de permissão/i,
+            /Permission actions|Ações de permissão/i
+        ]) {
+            await page.getByRole('tab', { name: tabName }).waitFor();
+        }
+        console.log('PASS access parameters: profile levels, permission resources and permission actions tabs are visible');
         assert.match(
             await page.locator('.comandos-tab-panel #resource-title').innerText(),
             /Access profiles|Perfis de acesso/i
@@ -252,6 +261,11 @@ async function main() {
         const unitFieldset = page.locator('#core-unitId').locator('xpath=ancestor::fieldset[1]');
         const unitHelp = unitFieldset.getByRole('button', { name: /Ajuda sobre o campo|Field help/i });
         const unitTooltip = unitFieldset.getByRole('tooltip');
+        const unitHelpBox = await unitHelp.boundingBox();
+        assert.ok(
+            unitHelpBox && unitHelpBox.width <= 24 && unitHelpBox.height <= 24,
+            'Unit help marker must stay compact beside the select'
+        );
         assert.equal(await unitTooltip.isVisible(), false, 'Unit tooltip must start hidden');
         await unitHelp.hover();
         await page.waitForTimeout(80);
