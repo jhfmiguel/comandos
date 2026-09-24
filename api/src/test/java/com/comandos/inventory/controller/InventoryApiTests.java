@@ -37,6 +37,14 @@ class InventoryApiTests {
         return result.body();
     }
     private String unique() { return UUID.randomUUID().toString(); }
+    private long parameter(String resource, String name) throws Exception {
+        String code = "P" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase(Locale.ROOT);
+        return create("inventory/" + resource, Map.of(
+            "code", code,
+            "name", name,
+            "active", true
+        )).get("id").asLong();
+    }
     @Test
     void brandCountryUsesIsoChoicesPreservesLegacyClientsAndAuditsChanges() throws Exception {
         var catalog = request("GET", "inventory/catalog", null);
@@ -132,7 +140,9 @@ class InventoryApiTests {
             var data = new HashMap<String, Object>();
             for (var field : com.comandos.inventory.service.InventoryCatalog.get(resource).fields()) {
                 data.put(field.name(), switch (field.type()) {
-                    case "reference" -> ids.get(family);
+                    case "reference" -> field.name().equals("modelId")
+                        ? ids.get(family)
+                        : parameter(field.reference(), "Test " + field.reference() + " " + unique());
                     case "integer", "decimal" -> 1;
                     case "boolean" -> false;
                     case "choice" -> field.choices().get(0);
@@ -750,7 +760,8 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "2500")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "caliber", "9x19 mm",
+        long caliber9mm = parameter("calibers", "9x19 mm");
+        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "caliberRefId", caliber9mm,
             "operatingMechanism", "SEMI_AUTOMATIC", "capacity", 17, "barrelLength", "102.5000"));
         assertEquals(400, request("POST", "inventory/firearm-specifications", data).status());
         data.put("modelId", firearmModel); data.put("capacity", "1.5");
@@ -765,10 +776,11 @@ class InventoryApiTests {
         assertEquals(17, specification.get("capacity").asInt());
         assertEquals("102.5", specification.get("barrelLength").asText());
         assertEquals(409, request("POST", "inventory/firearm-specifications", data).status());
-        data.put("version", 0); data.put("caliber", ".40 S&W"); data.put("operatingMechanism", "REVOLVER");
+        long caliber40 = parameter("calibers", ".40 S&W");
+        data.put("version", 0); data.put("caliberRefId", caliber40); data.put("operatingMechanism", "REVOLVER");
         var updated = request("PUT", "inventory/firearm-specifications/" + specification.get("id").asLong(), data);
         assertEquals(200, updated.status(), updated.raw());
-        assertEquals(".40 S&W", updated.body().get("caliber").asText());
+        assertTrue(updated.body().get("referenceLabels").get("caliberRefId").asText().contains(".40 S&W"));
         var model = request("GET", "inventory/models/" + firearmModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + firearmModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "2500", "version", 0)).status());
@@ -787,17 +799,30 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "2")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "2")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "caliber", "12 GA",
-            "ammunitionType", "CARTRIDGE", "lethalityClassification", "LESS_LETHAL",
-            "projectileType", "Kinetic impact projectile", "caseType", "Polymer", "primerType", "Boxer"));
+        long caliber12 = parameter("calibers", "12 GA");
+        long ammunitionType = parameter("ammunition-types", "CARTRIDGE");
+        long projectileType = parameter("projectile-types", "Kinetic impact projectile");
+        long caseType = parameter("case-types", "Polymer");
+        long primerType = parameter("primer-types", "Boxer");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "caliberRefId", caliber12,
+            "ammunitionTypeRefId", ammunitionType,
+            "lethalityClassification", "LESS_LETHAL",
+            "projectileTypeRefId", projectileType,
+            "caseTypeRefId", caseType,
+            "primerTypeRefId", primerType
+        ));
         assertEquals(400, request("POST", "inventory/ammunition-specifications", data).status());
         data.put("modelId", ammunitionModel);
         var specification = create("inventory/ammunition-specifications", data);
         assertEquals("Duty cartridge / 12 GA (#" + specification.get("id").asLong() + ")", specification.get("label").asText());
         assertEquals(409, request("POST", "inventory/ammunition-specifications", data).status());
-        data.put("version", 0); data.put("projectileType", "Hollow point");
+        long hollowPoint = parameter("projectile-types", "Hollow point");
+        data.put("version", 0); data.put("projectileTypeRefId", hollowPoint);
         var updated = request("PUT", "inventory/ammunition-specifications/" + specification.get("id").asLong(), data);
-        assertEquals(200, updated.status(), updated.raw()); assertEquals("Hollow point", updated.body().get("projectileType").asText());
+        assertEquals(200, updated.status(), updated.raw());
+        assertTrue(updated.body().get("referenceLabels").get("projectileTypeRefId").asText().contains("Hollow point"));
         var model = request("GET", "inventory/models/" + ammunitionModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + ammunitionModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "2", "version", 0)).status());
@@ -815,9 +840,18 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "100")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "grenadeType", "TRAINING",
-            "agent", "INERT", "composition", "INERT TRAINING COMPOUND", "shelfLifeMonths", 60,
-            "delaySeconds", 4, "safetyRadius", "15.5000"));
+        long grenadeType = parameter("grenade-types", "TRAINING");
+        long inertAgent = parameter("agents", "INERT");
+        long inertComposition = parameter("compositions", "INERT TRAINING COMPOUND");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "grenadeTypeRefId", grenadeType,
+            "agentRefId", inertAgent,
+            "compositionRefId", inertComposition,
+            "shelfLifeMonths", 60,
+            "delaySeconds", 4,
+            "safetyRadius", "15.5000"
+        ));
         assertEquals(400, request("POST", "inventory/grenade-specifications", data).status());
         data.put("modelId", grenadeModel); data.put("delaySeconds", 0);
         assertEquals(400, request("POST", "inventory/grenade-specifications", data).status());
@@ -827,9 +861,11 @@ class InventoryApiTests {
         var specification = create("inventory/grenade-specifications", data);
         assertEquals("Training grenade / TRAINING (#" + specification.get("id").asLong() + ")", specification.get("label").asText());
         assertEquals(409, request("POST", "inventory/grenade-specifications", data).status());
-        data.put("version", 0); data.put("agent", "CS");
+        long csAgent = parameter("agents", "CS");
+        data.put("version", 0); data.put("agentRefId", csAgent);
         var updated = request("PUT", "inventory/grenade-specifications/" + specification.get("id").asLong(), data);
-        assertEquals(200, updated.status(), updated.raw()); assertEquals("CS", updated.body().get("agent").asText());
+        assertEquals(200, updated.status(), updated.raw());
+        assertTrue(updated.body().get("referenceLabels").get("agentRefId").asText().contains("CS"));
         var model = request("GET", "inventory/models/" + grenadeModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + grenadeModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "100", "version", 0)).status());
@@ -847,9 +883,17 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "80")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "agent", "OC",
-            "composition", "OC SOLUTION", "shelfLifeMonths", 36,
-            "concentration", "10", "volumeMl", "50", "rangeMeters", "4.5"));
+        long ocAgent = parameter("agents", "OC");
+        long ocComposition = parameter("compositions", "OC SOLUTION");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "agentRefId", ocAgent,
+            "compositionRefId", ocComposition,
+            "shelfLifeMonths", 36,
+            "concentration", "10",
+            "volumeMl", "50",
+            "rangeMeters", "4.5"
+        ));
         assertEquals(400, request("POST", "inventory/spray-specifications", data).status());
         data.put("modelId", sprayModel); data.put("concentration", "101");
         assertEquals(400, request("POST", "inventory/spray-specifications", data).status());
@@ -878,9 +922,19 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "1500")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "protectionType", "VEST",
-            "protectionLevel", "LEVEL III-A", "material", "Aramid", "certification", "CERT-001",
-            "size", "M", "serviceLifeMonths", 60));
+        long protectionType = parameter("protection-types", "VEST");
+        long protectionLevel = parameter("protection-levels", "LEVEL III-A");
+        long material = parameter("materials", "Aramid");
+        long size = parameter("sizes", "M");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "protectionTypeRefId", protectionType,
+            "protectionLevelRefId", protectionLevel,
+            "materialRefId", material,
+            "certification", "CERT-001",
+            "sizeRefId", size,
+            "serviceLifeMonths", 60
+        ));
         assertEquals(400, request("POST", "inventory/ballistic-protection-specifications", data).status());
         data.put("modelId", ballisticModel);
         var specification = create("inventory/ballistic-protection-specifications", data);
@@ -906,7 +960,13 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "3000")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "voltage", "50000", "cycles", 5, "cartridgeType", "STANDARD"));
+        long cartridgeType = parameter("cartridge-types", "STANDARD");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "voltage", "50000",
+            "cycles", 5,
+            "cartridgeTypeRefId", cartridgeType
+        ));
         assertEquals(400, request("POST", "inventory/electrical-device-specifications", data).status());
         data.put("modelId", deviceModel); data.put("voltage", "0");
         assertEquals(400, request("POST", "inventory/electrical-device-specifications", data).status());
@@ -916,9 +976,11 @@ class InventoryApiTests {
         var specification = create("inventory/electrical-device-specifications", data);
         assertEquals("Electrical incapacitation device / STANDARD (#" + specification.get("id").asLong() + ")", specification.get("label").asText());
         assertEquals(409, request("POST", "inventory/electrical-device-specifications", data).status());
-        data.put("version", 0); data.put("cartridgeType", "EXTENDED_RANGE");
+        long extendedCartridge = parameter("cartridge-types", "EXTENDED_RANGE");
+        data.put("version", 0); data.put("cartridgeTypeRefId", extendedCartridge);
         var updated = request("PUT", "inventory/electrical-device-specifications/" + specification.get("id").asLong(), data);
-        assertEquals(200, updated.status(), updated.raw()); assertEquals("EXTENDED_RANGE", updated.body().get("cartridgeType").asText());
+        assertEquals(200, updated.status(), updated.raw());
+        assertTrue(updated.body().get("referenceLabels").get("cartridgeTypeRefId").asText().contains("EXTENDED_RANGE"));
         var model = request("GET", "inventory/models/" + deviceModel, null).body();
         assertEquals(400, request("PUT", "inventory/models/" + deviceModel, Map.of("name", "Changed", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", model.get("sku").asText(), "listPrice", "3000", "version", 0)).status());
@@ -936,9 +998,16 @@ class InventoryApiTests {
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "5000")).get("id").asLong();
         long generalModel = create("inventory/models", Map.of("name", "General item", "categoryId", generalCategory,
             "brandId", brand, "unitOfMeasure", "EA", "sku", unique(), "listPrice", "10")).get("id").asLong();
-        var data = new HashMap<String, Object>(Map.of("modelId", generalModel, "opticalType", "WEAPON_SIGHT",
-            "minimumMagnification", "1", "maximumMagnification", "8", "reticle", "MIL-DOT",
-            "nightVision", false, "thermalVision", true));
+        long opticalType = parameter("optical-types", "WEAPON_SIGHT");
+        var data = new HashMap<String, Object>(Map.of(
+            "modelId", generalModel,
+            "opticalTypeRefId", opticalType,
+            "minimumMagnification", "1",
+            "maximumMagnification", "8",
+            "reticle", "MIL-DOT",
+            "nightVision", false,
+            "thermalVision", true
+        ));
         assertEquals(400, request("POST", "inventory/optical-specifications", data).status());
         data.put("modelId", opticalModel); data.put("maximumMagnification", "0");
         assertEquals(400, request("POST", "inventory/optical-specifications", data).status());
