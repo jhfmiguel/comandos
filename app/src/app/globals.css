@@ -7541,3 +7541,191 @@ html[data-theme] body button[data-comandos-contact-delete="true"]:active:not(:di
     transform: none !important;
 }
 
+/* SYSTEM TABLE STANDARD V10
+ * Shared visual contract for every record-list table:
+ * header + search row + icon-only horizontal actions + centered pagination.
+ */
+html[data-theme] body .comandos-main-content .comandos-standard-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-table thead > tr:first-child > th {
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-table .comandos-filter-row > th {
+    padding: .65rem .75rem !important;
+    background: var(--p-content-hover-background, color-mix(in srgb, currentColor 4%, transparent)) !important;
+    border-bottom: 1px solid var(--p-content-border-color, #dee2e6) !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-table .comandos-filter-row .comandos-input {
+    width: 100% !important;
+    min-width: 7.5rem !important;
+    height: 2.75rem !important;
+    margin: 0 !important;
+    padding: .55rem .72rem !important;
+    border-radius: .38rem !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-table .comandos-filter-row input::placeholder {
+    color: var(--comandos-text-muted, #8a8f98) !important;
+    opacity: .95 !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-actions-header {
+    text-align: right !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-actions-cell {
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-standard-actions-cell > .comandos-row-actions,
+html[data-theme] body .comandos-main-content .comandos-standard-actions-cell > div {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-wrap: nowrap !important;
+    gap: .35rem !important;
+    width: auto !important;
+    margin: 0 !important;
+}
+
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action],
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button {
+    flex: 0 0 2.1rem !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-height: 2.1rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+}
+
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action]:focus-visible,
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button:focus-visible {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: brightness(.72) !important;
+    transform: none !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 3.8rem !important;
+    width: 100% !important;
+    padding: .65rem .85rem !important;
+    gap: .65rem !important;
+    border: 1px solid var(--p-content-border-color, #dee2e6) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 .38rem .38rem !important;
+    background: var(--p-content-background, #fff) !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-controls {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: .35rem !important;
+    margin: 0 auto !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-nav,
+html[data-theme] body .comandos-main-content .comandos-pagination-page {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.15rem !important;
+    min-width: 2.15rem !important;
+    height: 2.15rem !important;
+    min-height: 2.15rem !important;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    font: inherit !important;
+    cursor: pointer;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-page.is-active {
+    border-color: var(--comandos-accent, #ff9900) !important;
+    background: transparent !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    font-weight: 700 !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-nav:hover:not(:disabled),
+html[data-theme] body .comandos-main-content .comandos-pagination-page:hover:not(:disabled) {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-nav:disabled,
+html[data-theme] body .comandos-main-content .comandos-pagination-page:disabled:not(.is-active) {
+    opacity: .28 !important;
+    cursor: default !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-pagination-meta,
+html[data-theme] body .comandos-main-content .comandos-pagination > span {
+    position: absolute !important;
+    right: .85rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: .5rem !important;
+    margin: 0 !important;
+    font-size: .76rem !important;
+}
+
+html[data-theme] body .comandos-main-content .comandos-auto-pagination {
+    margin-top: 0 !important;
+}
+
+html[data-theme="dark"] body .comandos-main-content .comandos-standard-table .comandos-filter-row > th,
+html[data-theme="dark"] body .comandos-main-content .comandos-pagination {
+    background: #20242a !important;
+    border-color: #343a43 !important;
+}
+
+@media (max-width: 768px) {
+    html[data-theme] body .comandos-main-content .comandos-pagination {
+        flex-direction: column !important;
+        min-height: 4.2rem !important;
+    }
+
+    html[data-theme] body .comandos-main-content .comandos-pagination-meta,
+    html[data-theme] body .comandos-main-content .comandos-pagination > span {
+        position: static !important;
+        right: auto !important;
+    }
+}
+
