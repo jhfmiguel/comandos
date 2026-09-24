@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(name = "comandos.demo.seed", havingValue = "true")
-@Order(300)
+@Order(2000)
 public class DemoCoverageVerifier implements ApplicationRunner {
 
     private final EntityManager entityManager;
