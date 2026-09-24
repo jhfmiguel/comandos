@@ -45,7 +45,23 @@ async function main() {
     }
     try {
         const suffix = Date.now().toString();
-        const organizationId = await create('core/organizations', { name: `Browser validation ${suffix}`, nature: 'Public safety', publicOrganization: true, active: true });
+        const organizationNatureId = await create('core/organization-natures', {
+            code: `BROWSER-NATURE-${suffix}`,
+            name: 'Public safety',
+            active: true
+        });
+        const economicActivityId = await create('core/economic-activities', {
+            code: `BROWSER-ACTIVITY-${suffix}`,
+            description: 'Public safety administration',
+            active: true
+        });
+        const organizationId = await create('core/organizations', {
+            name: `Browser validation ${suffix}`,
+            natureId: organizationNatureId,
+            economicActivityId,
+            publicOrganization: true,
+            active: true
+        });
         const unitId = await create('core/units', { organizationId, code: `UNIT-${suffix}`, name: 'Validation unit', type: 'Unit' });
         const recipientId = await create('core/people', { personType: 'INDIVIDUAL', fullName: `Recipient ${suffix}`, active: true });
         const authorizerId = await create('core/people', { personType: 'INDIVIDUAL', fullName: `Authorizer ${suffix}`, active: true });
@@ -88,6 +104,28 @@ async function main() {
         await page.getByText(/Work order #\d+ opened successfully\./).waitFor();
         assert.equal((await get(`inventory/assets/${assetId}`)).status, 'IN_MAINTENANCE');
         console.log('PASS PostgreSQL/browser: custody issue -> damaged return -> linked maintenance');
+
+        await page.goto(`${appURL}/erp/core?section=institutional&resource=organization-natures`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Organization natures|Naturezas das organizações/i);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
+
+        await page.getByRole('tab', { name: /Economic activities|Atividades econômicas/i }).click();
+        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Economic activities|Atividades econômicas/i);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
+        console.log('PASS institutional registrations render full CRUD panels');
+
+        await page.goto(`${appURL}/erp/inventory?section=technical-parameters&resource=calibers`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Calibers|Calibres/i);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
+
+        const technicalTabs = page.locator('.comandos-tabs-list');
+        await technicalTabs.waitFor();
+        const isScrollable = await technicalTabs.evaluate(element => element.scrollWidth > element.clientWidth);
+        assert.equal(isScrollable, true, 'Technical parameter tabs must be horizontally scrollable');
+        await page.locator('.comandos-tabs-scroll-button-next.is-visible').waitFor();
+        console.log('PASS technical registrations render full CRUD panels with scrollable tabs');
 
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
