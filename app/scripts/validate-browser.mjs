@@ -220,6 +220,51 @@ async function main() {
         console.log('PASS access profiles: parameterized level field and contextual help behavior');
         await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
 
+        await page.goto(`${appURL}/erp/core?section=access&resource=permissions`);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+        await page.locator('#core-resourceTypeId').waitFor();
+        await page.locator('#core-actionTypeId').waitFor();
+
+        for (const fieldId of ['core-resourceTypeId', 'core-actionTypeId']) {
+            const fieldset = page.locator(`#${fieldId}`).locator('xpath=ancestor::fieldset[1]');
+            const help = fieldset.getByRole('button', { name: /Ajuda sobre o campo|Field help/i });
+            const tooltip = fieldset.getByRole('tooltip');
+            assert.equal(await tooltip.isVisible(), false, `${fieldId}: tooltip must start hidden`);
+            await help.hover();
+            await page.waitForTimeout(80);
+            assert.equal(await tooltip.isVisible(), true, `${fieldId}: tooltip must appear on desktop hover`);
+            await page.mouse.move(1, 1);
+        }
+        console.log('PASS permissions: resource/action are parameterized and use contextual tooltips');
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+
+        await page.goto(`${appURL}/erp/core?section=access&resource=user-profiles`);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+        const unitFieldset = page.locator('#core-unitId').locator('xpath=ancestor::fieldset[1]');
+        const unitHelp = unitFieldset.getByRole('button', { name: /Ajuda sobre o campo|Field help/i });
+        const unitTooltip = unitFieldset.getByRole('tooltip');
+        assert.equal(await unitTooltip.isVisible(), false, 'Unit tooltip must start hidden');
+        await unitHelp.hover();
+        await page.waitForTimeout(80);
+        assert.equal(await unitTooltip.isVisible(), true, 'Unit tooltip must appear on desktop hover');
+        console.log('PASS user profiles: Unit help uses contextual tooltip');
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+
+        await page.goto(`${appURL}/erp/core?section=institutional&resource=organizations`);
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+        const organizationTaxId = page.locator('#core-taxId');
+        await organizationTaxId.fill('12345678000195');
+        assert.equal(
+            await organizationTaxId.inputValue(),
+            '12.345.678/0001-95',
+            'Organization CNPJ must be masked while typing'
+        );
+        console.log('PASS organizations: CNPJ input mask');
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+
         await page.goto(`${appURL}/erp/inventory?section=technical-parameters&resource=calibers`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
         assert.match(await page.locator('.comandos-tab-panel #resource-title').innerText(), /Calibers|Calibres/i);
