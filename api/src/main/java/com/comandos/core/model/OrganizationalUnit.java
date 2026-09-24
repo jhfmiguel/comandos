@@ -21,6 +21,15 @@ public class OrganizationalUnit extends CoreEntity {
     @Column(name = "name", nullable = false, length = 255)
     public String name;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_type_id")
+    public OrganizationalUnitType unitType;
+
+    /**
+     * Compatibilidade com a coluna histórica "type".
+     * Novos cadastros usam unit_type_id; este texto continua sincronizado
+     * para preservar bancos existentes durante a transição.
+     */
     @Column(name = "type", nullable = false, length = 255)
     public String type;
 
