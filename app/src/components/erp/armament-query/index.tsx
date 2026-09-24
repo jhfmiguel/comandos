@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Eye } from "lucide-react";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { httpClient } from "api/http";
@@ -12,6 +13,7 @@ import { useSession } from "components/auth/session-provider";
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
 import styles from "components/erp/shared/workspace.module.css";
+import { Pagination as PlatformPagination } from "platform/components/pagination";
 
 const inventory = createErpService("inventory");
 const fields = [
@@ -61,29 +63,21 @@ function Remote<T>({ load, children }: { load: (signal: AbortSignal) => Promise<
 }
 
 function Pagination({ page, size, total, change }: { page: number; size: number; total: number; change: (page: number) => void }) {
-    const totalPages = Math.max(Math.ceil(total / Math.max(size, 1)), 1);
-    return <nav aria-label="Paginação" className="comandos-pagination">
-        <div className="comandos-pagination-controls">
-            <button
-                type="button"
-                className="comandos-secondary-button"
-                disabled={page === 0}
-                onClick={() => change(page - 1)}
-            >
-                Anterior
-            </button>
-            <span>Página {page + 1} / {totalPages}</span>
-            <button
-                type="button"
-                className="comandos-secondary-button"
-                disabled={(page + 1) * size >= total || page >= 100000}
-                onClick={() => change(page + 1)}
-            >
-                Próxima
-            </button>
-        </div>
-        <span>Total de registros: {total}</span>
-    </nav>;
+    return (
+        <PlatformPagination
+            page={page}
+            totalElements={total}
+            pageSize={size}
+            onPageChange={change}
+            labels={{
+                totalRecords: "registros",
+                first: "Primeira página",
+                previous: "Página anterior",
+                next: "Próxima página",
+                last: "Última página"
+            }}
+        />
+    );
 }
 
 function History<T>({ title, allowed, load, render }: {
@@ -221,14 +215,17 @@ function Query() {
                                     <td>
                                         <button
                                             type="button"
-                                            className="comandos-secondary-button"
+                                            className="comandos-icon-button"
+                                            data-comandos-table-action="view"
+                                            aria-label="Ver detalhe"
+                                            title="Ver detalhe"
                                             onClick={() => {
                                                 const next = new URLSearchParams(query);
                                                 next.set("asset", String(record.id));
                                                 navigate(next);
                                             }}
                                         >
-                                            Ver detalhe
+                                            <Eye size={18} />
                                         </button>
                                     </td>
                                 </tr>)}
