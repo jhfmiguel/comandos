@@ -58,10 +58,7 @@ const sectionTabs = {
         { resource: "item-models", label: "Models" }
     ],
     specifications: [
-        { resource: "technical-characteristics", label: "Technical" },
-        { resource: "category-characteristics", label: "Category" },
-        { resource: "model-characteristics", label: "Model" },
-        { resource: "asset-characteristics", label: "Asset" }
+        { resource: "technical-characteristics", label: "Technical characteristics" }
     ],
     equipment: [
         { resource: "firearm-specifications", label: "Firearm" },
@@ -86,7 +83,6 @@ const sectionTabs = {
     inventory: [
         { resource: "stock-locations", label: "Stock locations" },
         { resource: "equipment-sets", label: "Equipment set" },
-        { resource: "equipment-set-components", label: "Equipment set components" },
         { resource: "individual-assets", label: "Individual assets" },
         { resource: "stock-lots", label: "Stock lots" },
         { resource: "physical-inventory", label: "Physical inventory", content: <InventoryCountPanel /> }
