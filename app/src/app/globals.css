@@ -6558,14 +6558,25 @@ html[data-theme] .comandos-native-dialog-header h2 {
 }
 
 
-/* COMANDOS DIALOG HEADER + TAB EMPHASIS V2 */
-.comandos-native-dialog-header {
-    background: var(--comandos-surface-2, #1f2a36) !important;
-    border-bottom-color: var(--comandos-border, #3b4652) !important;
+/* COMANDOS DIALOG HEADER + TAB EMPHASIS V3
+ * Mantem os cabecalhos dos cadastros com o mesmo tratamento visual
+ * dos cards principais, incluindo o gradiente discreto da paleta.
+ */
+html[data-theme] .comandos-native-dialog-header {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(var(--comandos-accent-rgb), 0.12),
+            transparent 44%
+        ),
+        var(--comandos-surface-2) !important;
+    border-color: var(--comandos-border) !important;
+    border-bottom-color: var(--comandos-border) !important;
+    color: var(--comandos-text) !important;
 }
 
-html[data-theme="dark"] .comandos-native-dialog-header {
-    background: var(--comandos-surface-2, #1f2a36) !important;
+html[data-theme] .comandos-native-dialog-header h2 {
+    color: var(--comandos-text) !important;
 }
 
 .comandos-tab {
