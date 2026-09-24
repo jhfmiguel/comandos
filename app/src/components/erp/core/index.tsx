@@ -83,7 +83,7 @@ const sectionTabs: Record<
 }
 
 export function CoreWorkspace({
-    initialResource = "organizations",
+    initialResource,
     section
 }: CoreWorkspaceProps) {
 
@@ -92,14 +92,17 @@ export function CoreWorkspace({
         : undefined
 
     const firstTabResource = tabs?.[0]?.resource
+    const requestedResource =
+        initialResource && tabs?.some(tab => tab.resource === initialResource)
+            ? initialResource
+            : firstTabResource ?? initialResource ?? "organizations"
 
     return (
         <RecordWorkspace
+            key={`${section ?? "all"}:${requestedResource}`}
             module="core"
             title="Institutional core"
-            initialResource={
-                firstTabResource ?? initialResource
-            }
+            initialResource={requestedResource}
             description="Manage organizations, people, their roles, and system account assignments."
             showNavigation={false}
             tabs={tabs}
