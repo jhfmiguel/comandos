@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import axios from "axios"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Eye } from "lucide-react"
 
 import { Layout } from "components/layout"
 import { Message } from "components/common/message"
 import { useSession } from "components/auth/session-provider"
+import { Pagination } from "platform/components/pagination"
 import {
     auditService,
     type AuditDetail,
@@ -124,7 +125,6 @@ function AuditHistory(): React.JSX.Element {
     }
 
     const total = result?.totalElements ?? 0
-    const totalPages = Math.max(Math.ceil(total / rows), 1)
 
     return (
         <div className={styles.workspace}>
@@ -204,8 +204,10 @@ function AuditHistory(): React.JSX.Element {
                                 <td className="text-center">
                                     <button
                                         type="button"
-                                        className="comandos-text-button"
-                                        aria-label={`View audit event ${event.id}`}
+                                        className="comandos-icon-button"
+                                        data-comandos-table-action="view"
+                                        aria-label={`Ver evento de auditoria ${event.id}`}
+                                        title="Ver detalhes"
                                         onClick={() => {
                                             if (selected !== event.id) {
                                                 setDetail(null)
@@ -214,7 +216,7 @@ function AuditHistory(): React.JSX.Element {
                                             }
                                         }}
                                     >
-                                        View
+                                        <Eye size={18} />
                                     </button>
                                 </td>
                             </tr>
@@ -226,14 +228,23 @@ function AuditHistory(): React.JSX.Element {
                 </table>
             </div>
 
-            <div className="comandos-pagination">
-                <div className="comandos-pagination-controls">
-                    <button className="comandos-icon-button" type="button" disabled={page===0} onClick={()=>{setLoading(true);setResult(null);setPage(page-1)}}><ChevronLeft size={18}/></button>
-                    <span>Page {page+1} of {totalPages}</span>
-                    <button className="comandos-icon-button" type="button" disabled={page+1>=totalPages} onClick={()=>{setLoading(true);setResult(null);setPage(page+1)}}><ChevronRight size={18}/></button>
-                </div>
-                <span>Total records: {total}</span>
-            </div>
+            <Pagination
+                page={page}
+                totalElements={total}
+                pageSize={rows}
+                onPageChange={(nextPage) => {
+                    setLoading(true)
+                    setResult(null)
+                    setPage(nextPage)
+                }}
+                labels={{
+                    totalRecords: "registros",
+                    first: "Primeira página",
+                    previous: "Página anterior",
+                    next: "Próxima página",
+                    last: "Última página"
+                }}
+            />
 
             {loading && <p role="status">Loading audit history…</p>}
 
