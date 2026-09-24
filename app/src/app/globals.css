@@ -7084,3 +7084,45 @@ table td .comandos-action-button[data-comandos-table-action]:focus-visible {
 table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled) {
     filter: brightness(.58) !important;
 }
+
+
+/* COMANDOS TABLE ICON-ONLY FINAL OVERRIDE V7
+ * Absolute final rule for every table action button.
+ * No colored tile, border, outline or shadow; only the semantic icon remains.
+ */
+html[data-theme] body table td button.comandos-icon-button,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action] {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body table td button.comandos-icon-button-danger,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="delete"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="cancel"] {
+    color: #ef4444 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+}
+
+html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled),
+html[data-theme] body table td button.comandos-icon-button:focus-visible,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:focus-visible {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: brightness(.72) !important;
+}
+
+html[data-theme] body table td button.comandos-icon-button:active:not(:disabled),
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled) {
+    background: transparent !important;
+    filter: brightness(.58) !important;
+}
