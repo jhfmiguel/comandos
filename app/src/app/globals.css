@@ -7370,79 +7370,100 @@ form[data-comandos-erp-form="true"] .comandos-composed-select[data-filled="true"
 }
 
 
-/* TABLE ACTION ICON HOVER — BRIGHT GLOW V8
- * Action buttons remain icon-only. Hover/focus brightens the semantic color
- * and adds a soft glow; it never darkens or draws a box/background.
+/* TABLE ACTION ICON HOVER — REFERENCE VIDEO V9
+ * Global standard for action buttons inside every table:
+ * icon-only at rest; a compact rounded semantic tile appears on hover/focus.
+ * No border, glow, shadow or movement.
  */
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action],
 html[data-theme] body table td button.comandos-icon-button {
-    background: transparent !important;
+    --comandos-table-action-color: #94a3b8;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: .38rem !important;
+    border: 0 !important;
     border-color: transparent !important;
+    border-radius: .38rem !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: var(--comandos-table-action-color) !important;
     box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
     transition:
-        color .16s ease,
-        filter .16s ease,
-        text-shadow .16s ease,
-        transform .16s ease !important;
+        background-color .14s ease,
+        color .14s ease !important;
+}
+
+html[data-theme] body table td .comandos-icon-button-edit,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="edit"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="details"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="view"] {
+    --comandos-table-action-color: #94a3b8;
+}
+
+html[data-theme] body table td .comandos-icon-button-success,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="save"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="approve"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="confirm"] {
+    --comandos-table-action-color: #22c55e;
+}
+
+html[data-theme] body table td .comandos-icon-button-danger,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="delete"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="remove"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="cancel"],
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action="reject"] {
+    --comandos-table-action-color: #ef4444;
 }
 
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:focus-visible,
 html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled),
 html[data-theme] body table td button.comandos-icon-button:focus-visible {
-    background: transparent !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
-    color: color-mix(
+    border: 0 !important;
+    outline: 0 !important;
+    background: color-mix(
         in srgb,
-        var(--comandos-table-action-color, currentColor) 72%,
-        #ffffff 28%
+        var(--comandos-table-action-color) 12%,
+        transparent
     ) !important;
-    filter:
-        brightness(1.28)
-        drop-shadow(
-            0 0 .28rem
-            color-mix(
-                in srgb,
-                var(--comandos-table-action-color, currentColor) 74%,
-                transparent
-            )
-        ) !important;
-    text-shadow:
-        0 0 .42rem
-        color-mix(
-            in srgb,
-            var(--comandos-table-action-color, currentColor) 62%,
-            transparent
-        ) !important;
-    transform: translateY(-1px);
+    background-color: color-mix(
+        in srgb,
+        var(--comandos-table-action-color) 12%,
+        transparent
+    ) !important;
+    color: var(--comandos-table-action-color) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
 }
 
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled) svg,
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:focus-visible svg,
 html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled) svg,
 html[data-theme] body table td button.comandos-icon-button:focus-visible svg {
-    filter:
-        brightness(1.32)
-        drop-shadow(
-            0 0 .32rem
-            color-mix(
-                in srgb,
-                var(--comandos-table-action-color, currentColor) 82%,
-                transparent
-            )
-        ) !important;
+    color: inherit !important;
+    stroke: currentColor !important;
+    filter: none !important;
 }
 
 html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled),
 html[data-theme] body table td button.comandos-icon-button:active:not(:disabled) {
-    background: transparent !important;
-    border-color: transparent !important;
+    background: color-mix(
+        in srgb,
+        var(--comandos-table-action-color) 18%,
+        transparent
+    ) !important;
+    color: var(--comandos-table-action-color) !important;
     box-shadow: none !important;
-    filter: brightness(1.12) !important;
-    transform: translateY(0);
+    filter: none !important;
+    transform: none !important;
 }
-
 
 /* PALETTE PAGINATION OUTLINE V9
  * Pagination follows the selected palette.
