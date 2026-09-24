@@ -6408,3 +6408,16 @@ html[data-theme] body .comandos-dialog-action-button svg {
     color: currentColor !important;
     stroke: currentColor !important;
 }
+
+
+/* COMANDOS ACTIVE TAB PALETTE V1 */
+html[data-theme][data-palette] .comandos-tab.is-active,
+html[data-theme][data-palette] .comandos-tab[aria-selected="true"] {
+    color: var(--comandos-accent) !important;
+    border-bottom-color: var(--comandos-accent) !important;
+}
+
+html[data-theme][data-palette] .comandos-tab:hover,
+html[data-theme][data-palette] .comandos-tab:focus-visible {
+    color: var(--comandos-accent) !important;
+}
