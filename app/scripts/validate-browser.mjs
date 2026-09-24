@@ -52,6 +52,7 @@ async function main() {
             'economic-activities',
             'unit-types',
             'person-types',
+            'contact-types',
             'profile-levels',
             'permission-resources',
             'permission-actions'
@@ -158,6 +159,26 @@ async function main() {
         await page.getByRole('dialog').waitFor({ state: 'detached' });
         await page.getByText(`Browser person type ${suffix}`, { exact: false }).waitFor();
         console.log('PASS person types: create and save through registration form');
+
+        const browserContactTypeName = `Browser contact type ${suffix}`;
+        const contactTypeId = await create('core/contact-types', {
+            code: `BROWSER_CONTACT_${suffix}`,
+            name: browserContactTypeName,
+            description: 'Shared contact type validation',
+            addressEnabled: true,
+            phoneEnabled: true,
+            emailEnabled: true,
+            active: true
+        });
+
+        await page.goto(`${appURL}/erp/core?section=people&resource=contact-types`);
+        await page.locator('.comandos-tab-panel #resource-title').waitFor();
+        assert.match(
+            await page.locator('.comandos-tab-panel #resource-title').innerText(),
+            /Contact types|Tipos de contato/i
+        );
+        await page.getByText(browserContactTypeName, { exact: false }).waitFor();
+        console.log('PASS contact types: one shared parameter catalog is available for addresses, phones and e-mails');
 
         await page.goto(`${appURL}/erp/core?section=institutional&resource=organizations`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
