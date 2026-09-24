@@ -1,14 +1,15 @@
 .dashboard {
     --accent: #ff9900;
-    --surface: var(--p-content-background, #ffffff);
-    --border: color-mix(in srgb, currentColor 11%, transparent);
-    --muted: color-mix(in srgb, currentColor 56%, transparent);
-    --soft: color-mix(in srgb, currentColor 3.5%, transparent);
+    --surface: var(--comandos-surface, var(--p-content-background, #ffffff));
+    --border: var(--comandos-border, color-mix(in srgb, currentColor 11%, transparent));
+    --muted: var(--comandos-text-muted, color-mix(in srgb, currentColor 56%, transparent));
+    --soft: var(--comandos-surface-2, color-mix(in srgb, currentColor 3.5%, transparent));
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     width: 100%;
     min-width: 0;
+    color: var(--comandos-text, inherit);
 }
 
 .pageHeader {
@@ -553,4 +554,50 @@
     .months span:nth-child(even) {
         display: none;
     }
+}
+
+
+:global(html[data-theme="dark"]) .dashboard {
+    --surface: var(--comandos-surface, #171717);
+    --border: var(--comandos-border, #303842);
+    --muted: var(--comandos-text-muted, #a9b2bc);
+    --soft: var(--comandos-surface-2, #20262d);
+    color: var(--comandos-text, #f3f5f7);
+}
+
+:global(html[data-theme="dark"]) .metricCard,
+:global(html[data-theme="dark"]) .card,
+:global(html[data-theme="dark"]) .selectControl,
+:global(html[data-theme="dark"]) .refreshButton {
+    background: var(--surface);
+    color: var(--comandos-text, #f3f5f7);
+    border-color: var(--border);
+}
+
+:global(html[data-theme="dark"]) .tableWrap th {
+    background: var(--comandos-surface-2, #20262d);
+    color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .tableWrap tbody tr:hover {
+    background: var(--comandos-surface-2, #20262d);
+}
+
+:global(html[data-theme="dark"]) .selectControl select {
+    color-scheme: dark;
+}
+
+:global(html[data-theme="dark"]) .statusCompleted {
+    color: #86efac;
+    background: rgb(34 197 94 / 16%);
+}
+
+:global(html[data-theme="dark"]) .statusProcessing {
+    color: #7dd3fc;
+    background: rgb(14 165 233 / 16%);
+}
+
+:global(html[data-theme="dark"]) .statusPending {
+    color: #fcd34d;
+    background: rgb(245 158 11 / 16%);
 }
