@@ -775,42 +775,193 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
     service: ErpService; field: ErpField; value: ErpValue; selectedLabel?: string; organizationId: ErpValue;
     excludedId?: number; optionFilter?: (record: ErpRecord) => boolean; modelFamily?: string; onChange: (value: ErpValue) => void;
 }) {
-    const [search, setSearch] = React.useState("");
+    const current = String(value ?? "");
+    const disabled = ["units", "core/units"].includes(field.reference ?? "") && !organizationId;
+    const [search, setSearch] = React.useState(selectedLabel ?? "");
     const [result, setResult] = React.useState<ErpPage | null>(null);
     const [error, setError] = React.useState("");
     const [completedQuery, setCompletedQuery] = React.useState("");
     const [retry, setRetry] = React.useState(0);
-    const queryKey = JSON.stringify([field.reference, search, organizationId, modelFamily, retry]);
-    const loading = completedQuery !== queryKey;
+    const [open, setOpen] = React.useState(false);
+    const [activeIndex, setActiveIndex] = React.useState(-1);
+
     React.useEffect(() => {
+        if (current && selectedLabel && !open) {
+            setSearch(selectedLabel);
+        }
+        if (!current && !open) {
+            setSearch("");
+        }
+    }, [current, selectedLabel, open]);
+
+    const query = open && search.trim() ? search.trim() : "";
+    const queryKey = JSON.stringify([field.reference, query, organizationId, modelFamily, retry]);
+    const loading = Boolean(query) && completedQuery !== queryKey;
+
+    React.useEffect(() => {
+        if (!query || disabled) {
+            setResult(null);
+            setError("");
+            setCompletedQuery(queryKey);
+            return;
+        }
+
         const controller = new AbortController();
         const timer = setTimeout(() => {
-            service.list(field.reference!, search, 0, controller.signal, ["units", "core/units"].includes(field.reference ?? "") ? organizationId : undefined,
-                modelFamily ? { modelFamily } : {}).then(data => {
-                if (!controller.signal.aborted) { setResult(data); setError(""); }
-            }).catch(error => { if (!controller.signal.aborted) { setResult(null); setError(errorMessage(error)); } })
-                .finally(() => { if (!controller.signal.aborted) setCompletedQuery(queryKey); });
+            service.list(
+                field.reference!,
+                query,
+                0,
+                controller.signal,
+                ["units", "core/units"].includes(field.reference ?? "") ? organizationId : undefined,
+                modelFamily ? { modelFamily } : {}
+            ).then(data => {
+                if (!controller.signal.aborted) {
+                    setResult(data);
+                    setError("");
+                }
+            }).catch(error => {
+                if (!controller.signal.aborted) {
+                    setResult(null);
+                    setError(errorMessage(error));
+                }
+            }).finally(() => {
+                if (!controller.signal.aborted) setCompletedQuery(queryKey);
+            });
         }, 250);
-        return () => { clearTimeout(timer); controller.abort(); };
-    }, [field.reference, search, organizationId, service, modelFamily, queryKey]);
-    const options = (loading ? [] : result?.content ?? []).filter(item => (!modelFamily || item.modelFamily === modelFamily) && item.id !== excludedId && (!optionFilter || optionFilter(item)) &&
-        !(["units", "core/units"].includes(field.reference ?? "") && organizationId && String(item.organizationId) !== String(organizationId)));
-    const current = String(value ?? "");
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [field.reference, query, organizationId, service, modelFamily, queryKey, disabled]);
+
+    const options = (loading ? [] : result?.content ?? []).filter(item =>
+        (!modelFamily || item.modelFamily === modelFamily) &&
+        item.id !== excludedId &&
+        (!optionFilter || optionFilter(item)) &&
+        !(["units", "core/units"].includes(field.reference ?? "") &&
+            organizationId &&
+            String(item.organizationId) !== String(organizationId))
+    );
+
+    React.useEffect(() => {
+        setActiveIndex(options.length ? 0 : -1);
+    }, [queryKey, options.length]);
+
+    const selectOption = (option: ErpRecord): void => {
+        onChange(option.id ?? null);
+        setSearch(option.label);
+        setOpen(false);
+        setActiveIndex(-1);
+    };
+
+    const clearSelectionForSearch = (nextSearch: string): void => {
+        setSearch(nextSearch);
+        setOpen(Boolean(nextSearch.trim()));
+        if (current) onChange(null);
+    };
+
     return (
         <div className={styles.reference}>
-            <input type="search" aria-label={`Search ${field.label.toLowerCase()}`} placeholder="Type to find a record"
-                value={search} onChange={event => setSearch(event.target.value)} />
-            <select id={`core-${field.name}`} value={current} required={field.required} disabled={["units", "core/units"].includes(field.reference ?? "") && !organizationId}
-                onChange={event => onChange(event.target.value ? Number(event.target.value) : null)}>
-                <option value="">Select a record</option>
-                {current && !options.some(option => String(option.id) === current) && <option value={current}>{selectedLabel || `#${current}`}</option>}
-                {options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
-            </select>
-            {["units", "core/units"].includes(field.reference ?? "") && !organizationId && <small>Select an organization first.</small>}
-            {loading && <small role="status">Loading models and records...</small>}
-            {!loading && !error && options.length === 0 && <small role="status">{search ? "No matching records. Try another search." : modelFamily ? "No models registered for this equipment type." : "No records available."}</small>}
-            {!loading && result && result.totalElements > result.size && <small>Showing the first {result.size} matches. Refine your search for more records.</small>}
-            {!loading && error && <small role="alert">{error} <button type="button" onClick={() => setRetry(current => current + 1)}>Retry</button></small>}
+            <div className={styles.referenceCombobox}>
+                <input
+                    id={`core-${field.name}`}
+                    type="search"
+                    role="combobox"
+                    autoComplete="off"
+                    aria-label={`Search ${field.label.toLowerCase()}`}
+                    aria-autocomplete="list"
+                    aria-expanded={open && Boolean(query)}
+                    aria-controls={`core-${field.name}-options`}
+                    aria-activedescendant={
+                        open && activeIndex >= 0 && options[activeIndex]
+                            ? `core-${field.name}-option-${options[activeIndex].id}`
+                            : undefined
+                    }
+                    placeholder="Digite para localizar um registro"
+                    value={search}
+                    required={field.required}
+                    disabled={disabled}
+                    onFocus={() => {
+                        if (search.trim() && !current) setOpen(true);
+                    }}
+                    onChange={event => clearSelectionForSearch(event.target.value)}
+                    onKeyDown={event => {
+                        if (event.key === "ArrowDown" && options.length) {
+                            event.preventDefault();
+                            setOpen(true);
+                            setActiveIndex(index => Math.min(index + 1, options.length - 1));
+                        } else if (event.key === "ArrowUp" && options.length) {
+                            event.preventDefault();
+                            setActiveIndex(index => Math.max(index - 1, 0));
+                        } else if (event.key === "Enter" && open && activeIndex >= 0 && options[activeIndex]) {
+                            event.preventDefault();
+                            selectOption(options[activeIndex]);
+                        } else if (event.key === "Escape") {
+                            setOpen(false);
+                            setActiveIndex(-1);
+                        }
+                    }}
+                    onBlur={() => {
+                        window.setTimeout(() => setOpen(false), 100);
+                    }}
+                />
+
+                {open && Boolean(query) && (
+                    <div
+                        id={`core-${field.name}-options`}
+                        role="listbox"
+                        className={styles.referenceOptions}
+                    >
+                        {loading && (
+                            <div className={styles.referenceStatus} role="status">
+                                Localizando registros...
+                            </div>
+                        )}
+
+                        {!loading && !error && options.map((option, index) => (
+                            <button
+                                key={option.id}
+                                id={`core-${field.name}-option-${option.id}`}
+                                type="button"
+                                role="option"
+                                aria-selected={index === activeIndex}
+                                className={index === activeIndex ? styles.referenceOptionActive : styles.referenceOption}
+                                onMouseDown={event => event.preventDefault()}
+                                onMouseEnter={() => setActiveIndex(index)}
+                                onClick={() => selectOption(option)}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+
+                        {!loading && !error && options.length === 0 && (
+                            <div className={styles.referenceStatus} role="status">
+                                Nenhum registro encontrado.
+                            </div>
+                        )}
+
+                        {!loading && error && (
+                            <div className={styles.referenceStatus} role="alert">
+                                {error}
+                                {" "}
+                                <button type="button" onMouseDown={event => event.preventDefault()} onClick={() => setRetry(value => value + 1)}>
+                                    Tentar novamente
+                                </button>
+                            </div>
+                        )}
+
+                        {!loading && result && result.totalElements > result.size && (
+                            <div className={styles.referenceHint}>
+                                Exibindo os primeiros {result.size} resultados. Continue digitando para refinar.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {disabled && <small>Selecione uma organização primeiro.</small>}
         </div>
     );
 }
