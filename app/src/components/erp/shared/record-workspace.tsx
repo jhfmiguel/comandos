@@ -699,6 +699,17 @@ const equipmentModelFamilies: Record<string, string> = {
     "optical-specifications": "OPTICAL",
 };
 
+const selectReferenceResources = new Set([
+    "equipment-set-components",
+    "assets",
+    "lots"
+]);
+
+function usesSelectReference(resourceKey: string, fieldName: string): boolean {
+    if (resourceKey === "locations" && ["organizationId", "unitId"].includes(fieldName)) return true;
+    return selectReferenceResources.has(resourceKey);
+}
+
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
     resource: ErpResource; 
@@ -904,13 +915,18 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                         country: "Brasil",
                                                         complement: manuallyEditedAddressFields.current.has("complement")
                                                             ? current.complement : current.complement || address.complement || "" }))} />
-                                            ) : field.type === "reference" && resource.key === "locations" && ["organizationId", "unitId"].includes(field.name) ? (
+                                            ) : field.type === "reference" && usesSelectReference(resource.key, field.name) ? (
                                                 <ReferenceSelectField
                                                     service={service}
                                                     field={field}
                                                     value={values[field.name]}
                                                     selectedLabel={record?.referenceLabels[field.name]}
                                                     organizationId={values.organizationId}
+                                                    modelFamily={
+                                                        resource.key === "lots" && field.name === "modelId"
+                                                            ? "AMMUNITION"
+                                                            : undefined
+                                                    }
                                                     onChange={value => change(field, value)}
                                                 />
                                             ) : field.type === "reference" ? (
@@ -1020,12 +1036,14 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
     );
 }
 
-function ReferenceSelectField({
+export function ReferenceSelectField({
     service,
     field,
     value,
     selectedLabel,
     organizationId,
+    modelFamily,
+    optionFilter,
     onChange
 }: {
     service: ErpService;
@@ -1033,6 +1051,8 @@ function ReferenceSelectField({
     value: ErpValue;
     selectedLabel?: string;
     organizationId: ErpValue;
+    modelFamily?: string;
+    optionFilter?: (record: ErpRecord) => boolean;
     onChange: (value: ErpValue) => void;
 }) {
     const isUnit = ["units", "core/units"].includes(field.reference ?? "");
@@ -1060,7 +1080,7 @@ function ReferenceSelectField({
             0,
             controller.signal,
             isUnit ? organizationId : undefined,
-            {},
+            modelFamily ? { modelFamily } : {},
             200
         ).then(data => {
             if (controller.signal.aborted) return;
@@ -1068,6 +1088,8 @@ function ReferenceSelectField({
             const records = data.content
                 .filter(option =>
                     option.active !== false
+                    && (!modelFamily || option.modelFamily === modelFamily)
+                    && (!optionFilter || optionFilter(option))
                     && (
                         !isUnit
                         || !organizationId
@@ -1089,7 +1111,7 @@ function ReferenceSelectField({
         });
 
         return () => controller.abort();
-    }, [field.reference, isUnit, organizationId, organizationMissing, service]);
+    }, [field.reference, isUnit, organizationId, organizationMissing, service, modelFamily, optionFilter]);
 
     React.useEffect(() => {
         if (!organizationMissing) setUnitAttempted(false);
