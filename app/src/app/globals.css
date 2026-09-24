@@ -7151,3 +7151,45 @@ select[data-comandos-float-control="true"] {
     top: var(--comandos-float-active-top, .1rem);
     font-size: .66rem;
 }
+
+
+/* COMANDOS FLOAT LABEL SPACING + SEARCH PLACEHOLDERS V3 */
+[data-comandos-float-host="true"]::after {
+    min-height: .9rem;
+    line-height: 1.1;
+}
+
+[data-comandos-float-host="true"][data-comandos-float-active="true"]::after {
+    font-size: .72rem;
+    line-height: 1.1;
+}
+
+[data-comandos-float-control="true"] {
+    min-height: 3.1rem !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: .28rem !important;
+}
+
+select[data-comandos-float-control="true"] {
+    min-height: 3.1rem !important;
+    padding-top: 1.58rem !important;
+    padding-bottom: .22rem !important;
+}
+
+textarea[data-comandos-float-control="true"] {
+    padding-top: 1.65rem !important;
+}
+
+html[data-theme] body input[type="search"]:not([data-comandos-float-control])::placeholder,
+html[data-theme] body .comandos-filter-row input::placeholder,
+html[data-theme] body input[data-comandos-no-float="true"]::placeholder {
+    color: var(--comandos-text-muted, #737373) !important;
+    opacity: .72 !important;
+}
+
+html[data-theme] body
+[data-comandos-float-host="true"][data-comandos-float-focused="true"]
+input[type="search"][data-comandos-float-control="true"]::placeholder {
+    color: var(--comandos-text-muted, #737373) !important;
+    opacity: .58 !important;
+}
