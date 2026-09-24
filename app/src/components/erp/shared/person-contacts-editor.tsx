@@ -119,6 +119,7 @@ function ContactAccordionPanel({
                     id={triggerId}
                     type="button"
                     className={styles.contactAccordionTrigger}
+                    data-comandos-accordion-trigger="true"
                     aria-expanded={open}
                     aria-controls={contentId}
                     onClick={() => onToggle(value)}
