@@ -17,9 +17,11 @@ public class AccessPolicy {
     private final EntityManager em;
     private final boolean enabled;
     private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profile-levels", "core/permission-resources", "core/permission-actions", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
-    private static final Set<String> GLOBAL_PARAMETER_RESOURCES = Set.of(
-        "core/organization-natures",
-        "core/economic-activities"
+    private static final Map<String, String> CORE_PARAMETER_PARENT_RESOURCES = Map.of(
+        "core/organization-natures", "core/organizations",
+        "core/economic-activities", "core/organizations",
+        "core/unit-types", "core/units",
+        "core/person-types", "core/people"
     );
     private static final Set<String> INVENTORY_PARAMETER_PARENT_RESOURCES = Set.of(
         "inventory/item-categories",
@@ -133,15 +135,14 @@ public class AccessPolicy {
 
         String requiredResource = ACCESS_RESOURCES.contains(resource) ? "security/access" :
             Set.of("core/person-addresses", "core/person-phones", "core/person-emails").contains(resource) ? "core/people" :
-            GLOBAL_PARAMETER_RESOURCES.contains(resource) ? "core/organizations" :
-            resource;
+            CORE_PARAMETER_PARENT_RESOURCES.getOrDefault(resource, resource);
 
         var matched = grants().stream().filter(g ->
             (g.resource().equals(requiredResource) || g.resource().equals("*"))
                 && (g.action().equals(requiredAction) || g.action().equals("*"))
         );
 
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource)) {
+        if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource)) {
             return matched.toList();
         }
 
@@ -164,7 +165,7 @@ public class AccessPolicy {
         if (!enabled) return "1 = 1";
         var matching = matching(resource, action, scope);
         if (matching.isEmpty()) denied();
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) return "1 = 1";
+        if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) return "1 = 1";
         if (matching.stream().anyMatch(g -> "SYSTEM".equals(g.scope()))) return "1 = 1";
         // All values below are typed database IDs; callers supply fixed property paths.
         return "(" + String.join(" or ", matching.stream().map(g -> {
@@ -175,7 +176,7 @@ public class AccessPolicy {
     }
 
     public void requireEntity(String resource, String action, CoreEntity entity) {
-        if (GLOBAL_PARAMETER_RESOURCES.contains(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
+        if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
             requireAny(resource, action);
             return;
         }
