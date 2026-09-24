@@ -6324,3 +6324,87 @@ html[data-theme="dark"] .comandos-button-contrast {
         position: static;
     }
 }
+
+
+/* COMANDOS OUTLINED ACTION STATE FIX V3
+ * Final, high-specificity override: no brightness/glow/solid-fill hover.
+ * Border and label stay opaque; only the background tint changes.
+ */
+html[data-theme] body .comandos-action-button,
+html[data-theme] body .registration-yellow-button,
+html[data-theme] body .comandos-secondary-button,
+html[data-theme] body .comandos-red-button,
+html[data-theme] body .comandos-dialog-action-button {
+    background-color: color-mix(in srgb, var(--button-color) 7%, transparent) !important;
+    background-image: none !important;
+    border: 1px solid var(--button-color) !important;
+    color: var(--button-color) !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .registration-yellow-button {
+    --button-color: var(--comandos-accent, #ff9900);
+}
+
+html[data-theme] body .comandos-secondary-button,
+html[data-theme] body .comandos-button-secondary {
+    --button-color: #94a3b8;
+}
+
+html[data-theme] body .comandos-red-button,
+html[data-theme] body .comandos-button-danger {
+    --button-color: #ef4444;
+}
+
+html[data-theme] body .comandos-action-button:hover:not(:disabled),
+html[data-theme] body .registration-yellow-button:hover:not(:disabled),
+html[data-theme] body .comandos-secondary-button:hover:not(:disabled),
+html[data-theme] body .comandos-red-button:hover:not(:disabled),
+html[data-theme] body .comandos-dialog-action-button:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--button-color) 14%, transparent) !important;
+    background-image: none !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-action-button:active:not(:disabled),
+html[data-theme] body .registration-yellow-button:active:not(:disabled),
+html[data-theme] body .comandos-secondary-button:active:not(:disabled),
+html[data-theme] body .comandos-red-button:active:not(:disabled),
+html[data-theme] body .comandos-dialog-action-button:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--button-color) 21%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-action-button:focus-visible,
+html[data-theme] body .registration-yellow-button:focus-visible,
+html[data-theme] body .comandos-secondary-button:focus-visible,
+html[data-theme] body .comandos-red-button:focus-visible,
+html[data-theme] body .comandos-dialog-action-button:focus-visible {
+    background-color: color-mix(in srgb, var(--button-color) 12%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+    outline: 2px solid color-mix(in srgb, var(--button-color) 55%, transparent) !important;
+    outline-offset: 2px !important;
+    filter: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body .comandos-action-button svg,
+html[data-theme] body .registration-yellow-button svg,
+html[data-theme] body .comandos-secondary-button svg,
+html[data-theme] body .comandos-red-button svg,
+html[data-theme] body .comandos-dialog-action-button svg {
+    color: currentColor !important;
+    stroke: currentColor !important;
+}
