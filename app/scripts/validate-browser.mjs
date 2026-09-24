@@ -158,6 +158,36 @@ async function main() {
         }
         console.log('PASS institutional registrations: every tab is clickable and renders CRUD');
 
+        await page.goto(`${appURL}/erp/core?section=institutional&resource=organization-natures`);
+        const editAction = page.locator('table td button.comandos-icon-button-edit').first();
+        const deleteAction = page.locator('table td button.comandos-icon-button-danger').first();
+        await editAction.waitFor();
+        await deleteAction.waitFor();
+
+        const editBefore = await editAction.evaluate(node => getComputedStyle(node).backgroundColor);
+        await editAction.hover();
+        const editHover = await editAction.evaluate(node => ({
+            background: getComputedStyle(node).backgroundColor,
+            boxShadow: getComputedStyle(node).boxShadow,
+            transform: getComputedStyle(node).transform
+        }));
+        assert.notEqual(editHover.background, editBefore, 'Edit action hover must show the reference tile background');
+        assert.equal(editHover.boxShadow, 'none', 'Table action hover must not use glow/shadow');
+        assert.ok(
+            editHover.transform === 'none' || editHover.transform === 'matrix(1, 0, 0, 1, 0, 0)',
+            'Table action hover must not move the icon'
+        );
+
+        const deleteBefore = await deleteAction.evaluate(node => getComputedStyle(node).backgroundColor);
+        await deleteAction.hover();
+        const deleteHover = await deleteAction.evaluate(node => ({
+            background: getComputedStyle(node).backgroundColor,
+            boxShadow: getComputedStyle(node).boxShadow
+        }));
+        assert.notEqual(deleteHover.background, deleteBefore, 'Danger action hover must show its semantic tile background');
+        assert.equal(deleteHover.boxShadow, 'none', 'Danger action hover must not use glow/shadow');
+        console.log('PASS table actions: hover matches the reference video');
+
         await page.goto(`${appURL}/erp/core?section=people&resource=person-types`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
         assert.match(
