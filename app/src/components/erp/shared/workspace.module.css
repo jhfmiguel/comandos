@@ -1304,3 +1304,49 @@
     margin: .2rem auto 0 !important;
 }
 
+/* PERSON CONTACT PRINCIPAL + DELETE ALIGNMENT V4
+ * Telefones/E-mails: Principal empilhado (label + radio) e lixeira
+ * centralizada na coluna vizinha, no mesmo eixo vertical do radio.
+ */
+.phoneTable td:nth-child(5).contactBooleanField,
+.emailTable td:nth-child(3).contactBooleanField {
+    min-height: 4.25rem;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: .45rem !important;
+    padding-top: .45rem !important;
+    text-align: center !important;
+}
+
+.phoneTable td:nth-child(5).contactBooleanField .contactBooleanLabel,
+.emailTable td:nth-child(3).contactBooleanField .contactBooleanLabel {
+    display: block !important;
+    width: 100% !important;
+    min-height: 1rem !important;
+    margin: 0 !important;
+    text-align: center !important;
+    line-height: 1rem !important;
+}
+
+.phoneTable td:nth-child(5).contactBooleanField input[type="radio"],
+.emailTable td:nth-child(3).contactBooleanField input[type="radio"] {
+    display: block !important;
+    margin: .1rem auto 0 !important;
+}
+
+.phoneTable td:nth-child(6).contactActionCell,
+.emailTable td:nth-child(4).contactActionCell {
+    vertical-align: top !important;
+    text-align: center !important;
+    padding-top: 2rem !important;
+}
+
+.phoneTable td:nth-child(6).contactActionCell :global(.comandos-icon-button-danger),
+.emailTable td:nth-child(4).contactActionCell :global(.comandos-icon-button-danger) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+}
+
