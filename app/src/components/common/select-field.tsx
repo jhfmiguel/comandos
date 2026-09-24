@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Combobox } from "@base-ui/react/combobox";
-import { ChevronDown } from "@primeicons/react/chevron-down";
 import styles from "./select-field.module.css";
 
 export type ComandosSelectOption = {
@@ -97,20 +96,13 @@ export function ComandosSelectField({
                     <Combobox.Input
                         id={id}
                         className={styles.input}
+                        data-comandos-no-float="true"
                         placeholder={placeholder}
                         aria-invalid={invalid || undefined}
                         aria-describedby={describedBy}
                         autoComplete="off"
                         onBlur={onBlur}
                     />
-                    <Combobox.Trigger
-                        className={styles.trigger}
-                        aria-label={`Abrir opções de ${label}`}
-                    >
-                        <Combobox.Icon className={styles.indicator}>
-                            <ChevronDown />
-                        </Combobox.Icon>
-                    </Combobox.Trigger>
                 </Combobox.InputGroup>
 
                 <Combobox.Portal>
