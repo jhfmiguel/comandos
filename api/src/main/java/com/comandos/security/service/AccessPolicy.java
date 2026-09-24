@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AccessPolicy {
     private final EntityManager em;
     private final boolean enabled;
-    private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
+    private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profile-levels", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
     private static final Set<String> GLOBAL_PARAMETER_RESOURCES = Set.of(
         "core/organization-natures",
         "core/economic-activities"
