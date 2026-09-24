@@ -324,6 +324,19 @@ public class CoreService {
         if (!Objects.equals(entity.version, version))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This record has changed. Reload before deleting.");
         var before = view(CoreCatalog.get(resource), entity);
+        if (entity instanceof OrganizationNature nature) {
+            long links = em.createQuery(
+                    "select count(o) from Organization o where o.nature.id = :id",
+                    Long.class)
+                .setParameter("id", nature.id)
+                .getSingleResult();
+            if (links > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Organization nature is in use and cannot be deleted."
+                );
+            }
+        }
         if (entity instanceof PersonAddress address) {
             em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
             address.archived = true;
@@ -334,6 +347,26 @@ public class CoreService {
     }
 
     private void validate(CoreEntity entity) {
+        if (entity instanceof OrganizationNature nature) {
+            nature.code = nature.code.toUpperCase(Locale.ROOT);
+            long duplicates = em.createQuery(
+                    "select count(n) from OrganizationNature n where n.code = :code and n.id <> :id",
+                    Long.class)
+                .setParameter("code", nature.code)
+                .setParameter("id", nature.id == null ? -1L : nature.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT)
+                .getSingleResult();
+            if (duplicates > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Organization nature code is already registered."
+                );
+            }
+        }
+        if (entity instanceof Organization organization) {
+            if (organization.nature == null) bad("Nature is required.");
+            organization.legacyNature = organization.nature.name;
+        }
         if (entity instanceof PersonAddress address) {
             if (!address.postalCode.matches("[0-9]{5}-?[0-9]{3}")) bad("CEP inválido. Informe oito dígitos.");
             address.postalCode = address.postalCode.replace("-", "");
@@ -438,6 +471,15 @@ public class CoreService {
             if (value instanceof CoreEntity related) {
                 result.put(field.name(), related.id);
                 labels.put(field.name(), label(CoreCatalog.get(field.reference()), related));
+            } else if (
+                entity instanceof Organization organization
+                && "natureId".equals(field.name())
+                && organization.nature == null
+            ) {
+                result.put(field.name(), null);
+                if (organization.legacyNature != null && !organization.legacyNature.isBlank()) {
+                    labels.put(field.name(), organization.legacyNature);
+                }
             } else result.put(field.name(), value);
         }
         result.put("referenceLabels", labels);
