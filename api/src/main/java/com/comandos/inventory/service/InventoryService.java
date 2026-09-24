@@ -393,6 +393,12 @@ public class InventoryService {
             if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && raw instanceof String text)
                 raw = AssetIdentity.normalize(text);
             Object value = parse(field, raw);
+            if (value instanceof ArmamentParameter parameter && !Boolean.TRUE.equals(parameter.active)) {
+                Object current = id == null ? null : read(entity, field.property());
+                boolean unchanged = current instanceof ArmamentParameter existing
+                    && Objects.equals(existing.id, parameter.id);
+                if (!unchanged) bad("Select an active " + field.label().toLowerCase(Locale.ROOT) + ".");
+            }
             if (value instanceof CoreEntity reference) access.requireEntity(
                 field.reference().startsWith("core/") ? field.reference() : "inventory/" + field.reference(), "READ", reference);
             if (id != null && field.createOnly()) {
