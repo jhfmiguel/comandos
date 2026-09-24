@@ -769,16 +769,16 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
         )) as Record<string, ErpValue>;
 
         if (resource.key === "person-addresses" && !record) {
-            initial.type = "RESIDENTIAL";
+            initial.type = "";
             initial.country = "Brasil";
             initial.foreignAddress = false;
         }
         if (resource.key === "person-phones" && !record) {
-            initial.type = "MOBILE";
+            initial.type = "";
             initial.countryCode = "+55";
         }
         if (resource.key === "person-emails" && !record) {
-            initial.type = "PERSONAL";
+            initial.type = "";
         }
 
         return initial;
