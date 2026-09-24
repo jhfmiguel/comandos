@@ -1003,6 +1003,8 @@ export const translationPairs: TranslationPair[] = [
     ["expiredCompliance", "Conformidades vencidas"],
     ["pendingWorkflows", "Aprovações pendentes"],
     ["inventoryDivergences", "Divergências de inventário"],
+    ["Previous tabs", "Abas anteriores"],
+    ["Next tabs", "Próximas abas"],
 ]
 
 const englishToPortuguese = new Map<string, string>(translationPairs)
@@ -1179,6 +1181,4 @@ export const hasTranslation = (text: string): boolean => {
         replaceDynamic(trimmed, "pt-BR") !== null ||
         replaceDynamic(trimmed, "en-US") !== null
     )
-}    ["Previous tabs", "Abas anteriores"],
-    ["Next tabs", "Próximas abas"],
-
+}
