@@ -81,7 +81,23 @@ async function main() {
             publicOrganization: true,
             active: true
         });
-        const unitId = await create('core/units', { organizationId, code: `UNIT-${suffix}`, name: 'Validation unit', type: 'Unit' });
+        const unitTypeId = await create('core/unit-types', {
+            code: `BROWSER_UNIT_TYPE_${suffix}`,
+            name: `Browser unit type ${suffix}`,
+            description: 'Browser validation organizational unit type',
+            active: true
+        });
+        const unitId = await create('core/units', {
+            organizationId,
+            code: `UNIT-${suffix}`,
+            name: 'Validation unit',
+            unitTypeId,
+            active: true
+        });
+        assert.equal(
+            (await get(`core/units/${unitId}`)).unitTypeId,
+            unitTypeId
+        );
         const recipientId = await create('core/people', { personType: 'INDIVIDUAL', fullName: `Recipient ${suffix}`, active: true });
         const authorizerId = await create('core/people', { personType: 'INDIVIDUAL', fullName: `Authorizer ${suffix}`, active: true });
         const categoryId = await create('inventory/categories', { name: `Optical ${suffix}`, family: 'OPTICAL', serialized: true, lotControlled: false, consumable: false });
