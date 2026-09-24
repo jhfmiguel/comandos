@@ -11,7 +11,6 @@ const primeTokens = [
   "primereact@",
   "@primeui/",
   "@primeuix/",
-  "@primeicons/",
   "primeicons@"
 ];
 
@@ -25,7 +24,7 @@ const directPrime = Object.keys({
   name.startsWith("@primereact/") ||
   name.startsWith("@primeui/") ||
   name.startsWith("@primeuix/") ||
-  name.startsWith("@primeicons/")
+  (name.startsWith("@primeicons/") && name !== "@primeicons/react")
 );
 
 const hasPrimeInLock = primeTokens.some(token =>
@@ -39,6 +38,7 @@ if (directPrime.length || hasPrimeInLock) {
   process.exit(1);
 }
 
-console.log("Prime dependencies: none.");
+console.log("Prime component/theme dependencies: none.");
+console.log("Approved icon dependency: @primeicons/react.");
 
 console.log("Commercial dependency policy: PASS");
