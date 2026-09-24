@@ -1102,7 +1102,7 @@ export function ReferenceSelectField({
             controller.signal,
             isUnit ? organizationId : undefined,
             modelFamily ? { modelFamily } : {},
-            200
+            100
         ).then(data => {
             if (controller.signal.aborted) return;
 
