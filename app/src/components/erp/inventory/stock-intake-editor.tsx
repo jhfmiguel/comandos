@@ -34,6 +34,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
     const [reviewed, setReviewed] = React.useState(false);
     const [, setResults] = React.useState<RowResult[]>([]);
     const [completed, setCompleted] = React.useState<string | null>(null);
+    const [activeTab, setActiveTab] = React.useState<"data" | "items">("data");
     const saving = React.useRef(false);
     const locked = busy || !!pending || reviewed || completed !== null;
     const normalized = rows.map(row => ({ first: row.first.trim(), second: row.second.trim() }));
@@ -44,9 +45,15 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
         ? row.first.length > 0 && row.first.length <= 255 && row.second.length > 0 && row.second.length <= 255
         : whole.test(row.first) && whole.test(row.second));
     const validLoose = /^(0|[1-9][0-9]{0,14})$/.test(looseUnits);
+    const commonValid = fields.every(field => {
+        if (!field.required) return true;
+        const value = values[field.name];
+        if (typeof value === "boolean") return true;
+        return value !== null && value !== undefined && String(value).trim() !== "";
+    });
     const total = assets ? String(rows.length) : validRows && validLoose
         ? normalized.reduce((sum, row) => sum + BigInt(row.first) * BigInt(row.second), BigInt(looseUnits)).toString() : "0";
-    const valid = validRows && !duplicate && (assets || validLoose && total !== "0" && total.length <= 15);
+    const valid = commonValid && validRows && !duplicate && (assets || validLoose && total !== "0" && total.length <= 15);
 
     function update(index: number, column: keyof Pair, value: string) {
         setResults([]);
@@ -160,21 +167,43 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
             disabled={locked}
             onClick={() => { if (!locked) onCancel(); }}
         />
-        <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog}`}>
+        <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog} ${styles.nestedEditorDialog}`}>
             <div className="comandos-native-dialog-header">
-                <h2>{assets ? "Register assets" : "Register stock lot"}</h2>
+                <h2>{assets ? "Cadastrar bens" : "Cadastrar lote de estoque"}</h2>
             </div>
+
+            <div className={styles.recallEditorTabs} role="tablist" aria-label={assets ? "Seções do cadastro de bens" : "Seções do cadastro de lote"}>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "data"}
+                    className={activeTab === "data" ? styles.recallEditorTabActive : styles.recallEditorTab}
+                    onClick={() => setActiveTab("data")}
+                >
+                    {assets ? "Dados dos bens" : "Dados do lote"}
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "items"}
+                    className={activeTab === "items" ? styles.recallEditorTabActive : styles.recallEditorTab}
+                    onClick={() => setActiveTab("items")}
+                >
+                    {assets ? "Identificação dos bens" : "Embalagens e quantidades"}
+                </button>
+            </div>
+
             <div className="comandos-native-dialog-content"><form data-comandos-erp-form="true" className={styles.form} onSubmit={submit}>
-                <p>{assets
-                    ? "Use one row to register a single asset, or add more rows to register a batch. Common data applies to every row."
-                    : "Register the lot in one place. Add one or more box rows, loose rounds, or both; the opening quantity is calculated automatically."}</p>
-                {assets && <Message type="info" text="One row registers one asset. Multiple rows are processed together; if any row is rejected, none are created. Review the rows before confirming." />}
+                {activeTab === "data" && <p>{assets
+                    ? "Os dados desta aba serão aplicados a todos os bens incluídos na segunda aba."
+                    : "Informe os dados gerais do lote. As embalagens e quantidades serão preenchidas na segunda aba."}</p>}
+                {assets && activeTab === "items" && <Message type="info" text="Uma linha cadastra um bem. Várias linhas são processadas em conjunto; se alguma for rejeitada, nenhuma será criada." />}
                 {reviewed && <Message type="info" text="All rows validated. Check the model, location and pairs below, then confirm registration." />}
-                {!assets && <Message type="info" text="This single flow creates the stock lot and its opening balance. Packaging rows describe how the lot entered stock; the total opening quantity is calculated automatically." />}
+                {!assets && activeTab === "items" && <Message type="info" text="Informe uma ou mais linhas de caixas, munições avulsas ou ambos. A quantidade inicial do lote será calculada automaticamente." />}
                 {error && <Message type="error" text={error} />}
                 {completed !== null && <Message type="success" text={`${completed} individual assets registered successfully.`} />}
                 {pending && !busy && <Message type="warn" text="Retry this entry to confirm its result without registering the stock twice." />}
-                <fieldset className={styles.fields} disabled={locked}>
+                <fieldset className={styles.fields} disabled={locked || activeTab !== "data"} hidden={activeTab !== "data"}>
                     {fields.map(field => <div className={styles.field} data-comandos-field="true" key={field.name}>
                         {field.type !== "reference" && field.type !== "choice" && (
                             <label htmlFor={`core-${field.name}`}>{field.label}{field.required ? " *" : ""}</label>
@@ -208,7 +237,7 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                                     onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
                     </div>)}
                 </fieldset>
-                <fieldset disabled={locked}>
+                <fieldset disabled={locked || activeTab !== "items"} hidden={activeTab !== "items"}>
                     {assets && <details><summary>Importar bens para a tabela</summary>
                         <div className={styles.assetImportBlock}>
                             <label className={styles.assetFileImport}>
@@ -249,13 +278,51 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                         <input id="intake-loose-units" type="text" inputMode="numeric" maxLength={15} required value={looseUnits}
                             onChange={event => setLooseUnits(event.target.value)} /></div>}
                 </fieldset>
-                <p role="status">{assets ? "Quantity (serial numbers)" : "Total rounds"}: <strong>{total}</strong></p>
-                {duplicate && <Message type="error" text="Each asset code and serial number must be unique in this list." />}
-                {!assets && (!validRows || total.length > 15) && <small>Enter positive whole quantities; the total can contain at most 15 digits.</small>}
-                {reviewed && !pending && <button type="button" className="registration-yellow-button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Edit batch</button>}
-                {completed !== null ? <button type="button" className="registration-yellow-button" onClick={() => onSaved(completed)}>Done</button> : <div className={styles.actions}><button type="button" className="registration-yellow-button" disabled={locked} onClick={onCancel}>Cancel</button>
-                    <button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
-                        {busy ? "Processing..." : pending ? "Retry entry" : assets ? reviewed ? "Confirm registration" : rows.length === 1 ? "Register asset" : "Register assets" : "Register lot"}</button></div>}
+                {activeTab === "items" && <p role="status">{assets ? "Quantidade de bens" : "Total de munições"}: <strong>{total}</strong></p>}
+                {activeTab === "items" && duplicate && <Message type="error" text="Cada código patrimonial e número de série deve ser único nesta lista." />}
+                {activeTab === "items" && !assets && (!validRows || total.length > 15) && <small>Informe quantidades inteiras positivas; o total pode conter no máximo 15 dígitos.</small>}
+                {activeTab === "items" && reviewed && !pending && <button type="button" className="registration-yellow-button" disabled={busy} onClick={() => { setReviewed(false); setResults([]); }}>Editar lote</button>}
+                {completed !== null ? (
+                    <div className={styles.actions}>
+                        <button type="button" className="registration-yellow-button" onClick={() => onSaved(completed)}>Concluir</button>
+                    </div>
+                ) : activeTab === "data" ? (
+                    <div className={styles.actions}>
+                        <button type="button" className="registration-yellow-button" disabled={locked} onClick={onCancel}>Cancelar</button>
+                        <button
+                            type="button"
+                            className="registration-yellow-button"
+                            disabled={busy || !commonValid}
+                            onClick={() => setActiveTab("items")}
+                        >
+                            Avançar
+                        </button>
+                    </div>
+                ) : (
+                    <div className={styles.actions}>
+                        <button
+                            type="button"
+                            className="registration-yellow-button"
+                            disabled={busy || !!pending || reviewed}
+                            onClick={() => setActiveTab("data")}
+                        >
+                            Voltar
+                        </button>
+                        <button type="submit" className="registration-yellow-button" disabled={busy || !valid}>
+                            {busy
+                                ? "Processando..."
+                                : pending
+                                    ? "Repetir operação"
+                                    : assets
+                                        ? reviewed
+                                            ? "Confirmar cadastro"
+                                            : rows.length === 1
+                                                ? "Cadastrar bem"
+                                                : "Cadastrar bens"
+                                        : "Cadastrar lote"}
+                        </button>
+                    </div>
+                )}
             </form></div>
         </div>
     </div>;
