@@ -6,7 +6,7 @@ import { Trash } from "@primeicons/react";
 
 import { Message } from "components/common/message";
 import { ComandosSelectField, type ComandosSelectOption } from "components/common/select-field";
-import type { ErpField, ErpRecord, ErpValue } from "api/models/erp";
+import type { ErpRecord, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "./workspace.module.css";
 
