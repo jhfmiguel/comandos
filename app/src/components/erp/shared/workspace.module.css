@@ -675,3 +675,94 @@
     color: #ef4444;
     font-size: .78rem;
 }
+
+
+/* ERP IN-LABEL FIRST-PAINT FIX V5
+ * Real labels start inside the control before the JS enhancer runs.
+ * This prevents the visible jump from "label above" to "label inside" on focus.
+ */
+.field:has(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+    select,
+    textarea
+) {
+    position: relative;
+    gap: 0;
+}
+
+.field:has(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+    select,
+    textarea
+) > label {
+    position: absolute;
+    z-index: 9;
+    left: .78rem;
+    top: 1.68rem;
+    max-width: calc(100% - 1.56rem);
+    margin: 0;
+    overflow: hidden;
+    color: var(--comandos-text-muted, var(--p-text-muted-color, #737373));
+    font-size: .84rem;
+    font-weight: 500;
+    line-height: 1.08;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transform-origin: left top;
+    transition:
+        top .16s ease,
+        transform .16s ease,
+        color .16s ease,
+        font-size .16s ease;
+}
+
+.field:has(select) > label,
+.field[data-comandos-float-active="true"] > label[data-comandos-float-label-element="true"] {
+    top: .38rem;
+    font-size: .74rem;
+    transform: translateY(0);
+}
+
+.field[data-comandos-float-focused="true"] > label[data-comandos-float-label-element="true"] {
+    color: var(--comandos-accent, #ff9900);
+}
+
+.field:has(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+    select,
+    textarea
+) > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+.field:has(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+    select,
+    textarea
+) > select,
+.field:has(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+    select,
+    textarea
+) > textarea,
+.field > .referenceSelect select,
+.field > .referenceCombobox input {
+    min-height: 3.35rem !important;
+    padding-top: 1.72rem !important;
+    padding-bottom: .28rem !important;
+}
+
+.field > .referenceSelect,
+.field > .referenceCombobox {
+    width: 100%;
+}
+
+.field > .referenceSelect select {
+    min-height: 3.35rem !important;
+    padding-top: 1.78rem !important;
+    padding-bottom: .22rem !important;
+}
+
+/* When the enhancer can reuse the real label, do not draw a second pseudo-label. */
+[data-comandos-float-host="true"][data-comandos-float-uses-source="true"]::after {
+    content: none !important;
+}
