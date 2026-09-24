@@ -361,7 +361,9 @@ public class InventoryService {
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("inventory/" + resource, action);
         writable(spec);
+        var legacyParameters = legacyParameterFields(resource);
         var allowed = new HashSet<>(spec.fields().stream().filter(f -> !f.readOnly()).map(InventoryCatalog.Field::name).toList());
+        allowed.addAll(legacyParameters.values().stream().map(LegacyParameterField::legacyField).toList());
         allowed.add("version");
         if (!allowed.containsAll(data.keySet())) bad("The form contains unsupported or read-only fields.");
         lockCatalog();
@@ -378,8 +380,17 @@ public class InventoryService {
         }
         Map<String, Object> previous = id == null ? Map.of() : view(spec, entity);
         if (id != null && !Objects.equals(entity.version, integer(data.get("version"), true))) conflict("This record has changed. Reload before saving.");
+
+        applyLegacyParameterFields(entity, spec, legacyParameters, data);
+
         for (var field : spec.fields()) {
             if (field.readOnly()) continue;
+            LegacyParameterField legacyParameter = legacyParameters.get(field.name());
+            if (legacyParameter != null
+                    && !data.containsKey(field.name())
+                    && data.containsKey(legacyParameter.legacyField())) {
+                continue;
+            }
             // Older clients must not erase the optional country on brand updates.
             if (id != null && entity instanceof Brand && field.name().equals("manufacturingCountryCode")
                     && !data.containsKey(field.name())) continue;
@@ -478,6 +489,96 @@ public class InventoryService {
             movement.asset = asset; movement.location = asset.location; movement.quantity = BigDecimal.ONE;
         } else return;
         movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
+    }
+
+    private record LegacyParameterField(String legacyField, String parameterType) {}
+
+    private Map<String, LegacyParameterField> legacyParameterFields(String resource) {
+        return switch (resource) {
+            case "firearm-specifications" -> Map.of(
+                "caliberRefId", new LegacyParameterField("caliber", "CALIBER")
+            );
+            case "ammunition-specifications" -> Map.of(
+                "caliberRefId", new LegacyParameterField("caliber", "CALIBER"),
+                "ammunitionTypeRefId", new LegacyParameterField("ammunitionType", "AMMUNITION_TYPE"),
+                "projectileTypeRefId", new LegacyParameterField("projectileType", "PROJECTILE_TYPE"),
+                "caseTypeRefId", new LegacyParameterField("caseType", "CASE_TYPE"),
+                "primerTypeRefId", new LegacyParameterField("primerType", "PRIMER_TYPE")
+            );
+            case "grenade-specifications" -> Map.of(
+                "grenadeTypeRefId", new LegacyParameterField("grenadeType", "GRENADE_TYPE"),
+                "agentRefId", new LegacyParameterField("agent", "AGENT"),
+                "compositionRefId", new LegacyParameterField("composition", "COMPOSITION")
+            );
+            case "spray-specifications" -> Map.of(
+                "agentRefId", new LegacyParameterField("agent", "AGENT"),
+                "compositionRefId", new LegacyParameterField("composition", "COMPOSITION")
+            );
+            case "ballistic-protection-specifications" -> Map.of(
+                "protectionTypeRefId", new LegacyParameterField("protectionType", "PROTECTION_TYPE"),
+                "protectionLevelRefId", new LegacyParameterField("protectionLevel", "PROTECTION_LEVEL"),
+                "materialRefId", new LegacyParameterField("material", "MATERIAL"),
+                "sizeRefId", new LegacyParameterField("size", "SIZE")
+            );
+            case "electrical-device-specifications" -> Map.of(
+                "cartridgeTypeRefId", new LegacyParameterField("cartridgeType", "CARTRIDGE_TYPE")
+            );
+            case "optical-specifications" -> Map.of(
+                "opticalTypeRefId", new LegacyParameterField("opticalType", "OPTICAL_TYPE")
+            );
+            case "helmet-specifications" -> Map.of(
+                "protectionLevelRefId", new LegacyParameterField("protectionLevel", "PROTECTION_LEVEL"),
+                "materialRefId", new LegacyParameterField("material", "MATERIAL"),
+                "sizeRefId", new LegacyParameterField("size", "SIZE")
+            );
+            case "shield-specifications" -> Map.of(
+                "shieldTypeRefId", new LegacyParameterField("shieldType", "SHIELD_TYPE"),
+                "protectionLevelRefId", new LegacyParameterField("protectionLevel", "PROTECTION_LEVEL"),
+                "materialRefId", new LegacyParameterField("material", "MATERIAL")
+            );
+            case "restraint-specifications" -> Map.of(
+                "materialRefId", new LegacyParameterField("material", "MATERIAL"),
+                "lockingMechanismRefId", new LegacyParameterField("lockingMechanism", "LOCKING_MECHANISM")
+            );
+            case "accessory-component-specifications" -> Map.of(
+                "componentTypeRefId", new LegacyParameterField("componentType", "COMPONENT_TYPE"),
+                "compatibilityRefId", new LegacyParameterField("compatibleWith", "COMPATIBILITY"),
+                "interfaceRefId", new LegacyParameterField("mountingInterface", "INTERFACE")
+            );
+            case "tactical-equipment-specifications" -> Map.of(
+                "materialRefId", new LegacyParameterField("material", "MATERIAL"),
+                "sizeRefId", new LegacyParameterField("size", "SIZE")
+            );
+            default -> Map.of();
+        };
+    }
+
+    private void applyLegacyParameterFields(
+            CoreEntity entity,
+            InventoryCatalog.Resource spec,
+            Map<String, LegacyParameterField> aliases,
+            Map<String, Object> data) {
+        if (aliases.isEmpty()) return;
+
+        for (var entry : aliases.entrySet()) {
+            String referenceFieldName = entry.getKey();
+            LegacyParameterField alias = entry.getValue();
+            if (data.containsKey(referenceFieldName) || !data.containsKey(alias.legacyField())) continue;
+
+            Object raw = data.get(alias.legacyField());
+            String value = raw == null ? null : raw.toString().trim();
+            var referenceField = spec.fields().stream()
+                .filter(field -> field.name().equals(referenceFieldName))
+                .findFirst()
+                .orElseThrow();
+
+            if ((value == null || value.isBlank()) && referenceField.required()) {
+                bad(referenceField.label() + " is required.");
+            }
+
+            write(entity, alias.legacyField(), value == null || value.isBlank() ? null : value);
+            write(entity, referenceField.property(), null);
+        }
     }
 
     private Object parse(InventoryCatalog.Field field, Object raw) {
