@@ -9,7 +9,7 @@ import { httpClient } from "api/http";
 import type { ErpResource, ErpValue } from "api/models/erp";
 import type { ErpService } from "api/services/erp.service";
 import styles from "components/erp/shared/workspace.module.css";
-import { Trash2 } from "lucide-react";
+import { Trash } from "@primeicons/react";
 import { formatBRLValue, isMonetaryField, maskBRLInput, parseBRLValue } from "utils/money";
 
 type RowResult = { row: number; status: string; errors: string[] };
@@ -282,12 +282,12 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                             <td className={styles.actionCell}>
                                 <button
                                     type="button"
-                                    className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                    className="comandos-icon-button comandos-icon-button-danger"
                                     data-comandos-table-action="delete"
                                     aria-label={`Remover linha ${index + 1}`}
                                     onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash />
                                 </button>
                             </td>
                         </tr>)}</tbody></table></div>
