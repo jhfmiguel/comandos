@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { httpClient } from "api/http";
 import axios from "axios";
 
-export function PostalCodeField({ value, onChange, onResolved }: {
+export function PostalCodeField({ id = "core-postalCode", value, required = true, onChange, onResolved }: {
+    id?: string;
     value: string;
+    required?: boolean;
     onChange: (value: string) => void;
     onResolved: (address: Record<string, string>) => void;
 }) {
@@ -41,13 +43,13 @@ export function PostalCodeField({ value, onChange, onResolved }: {
     }, [value, edited, retry]);
 
     return <>
-        <input id="core-postalCode" required inputMode="numeric" maxLength={9} pattern="[0-9]{5}-?[0-9]{3}"
+        <input id={id} required={required} inputMode="numeric" maxLength={9} pattern="[0-9]{5}-?[0-9]{3}"
             value={value} onChange={event => {
                 setEdited(true);
                 setStatus("Aguardando consulta de CEP…");
                 onChange(event.target.value);
             }} />
         <small role="status" aria-live="polite">{status || "Informe o CEP para consultar. Todos os campos podem ser corrigidos manualmente."}</small>
-        <button type="button" onClick={() => { setEdited(true); setRetry(current => current + 1); }}>Consultar novamente</button>
+        <button type="button" className="comandos-secondary-button" onClick={() => { setEdited(true); setRetry(current => current + 1); }}>Consultar novamente</button>
     </>;
 }
