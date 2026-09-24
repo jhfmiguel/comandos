@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus } from "lucide-react";
-import { Trash } from "@primeicons/react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Message } from "components/common/message";
 import type { ErpRecord } from "api/models/erp";
@@ -218,7 +217,7 @@ export function RoleDetailsEditor({
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash />
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 </td>
