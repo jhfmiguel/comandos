@@ -1057,22 +1057,27 @@ export function ReferenceSelectField({
 }) {
     const isUnit = ["units", "core/units"].includes(field.reference ?? "");
     const organizationMissing = isUnit && !organizationId;
-    const [options, setOptions] = React.useState<ErpRecord[]>([]);
-    const [loading, setLoading] = React.useState(false);
-    const [error, setError] = React.useState("");
+    const [resultState, setResultState] = React.useState<{
+        key: string;
+        options: ErpRecord[];
+        error: string;
+    }>({
+        key: "",
+        options: [],
+        error: ""
+    });
     const [unitAttempted, setUnitAttempted] = React.useState(false);
 
+    const requestKey = JSON.stringify([
+        field.reference ?? "",
+        organizationId ?? "",
+        modelFamily ?? ""
+    ]);
+
     React.useEffect(() => {
-        if (!field.reference || organizationMissing) {
-            setOptions([]);
-            setLoading(false);
-            setError("");
-            return;
-        }
+        if (!field.reference || organizationMissing) return;
 
         const controller = new AbortController();
-        setLoading(true);
-        setError("");
 
         service.list(
             field.reference,
@@ -1100,24 +1105,42 @@ export function ReferenceSelectField({
                     String(left.label ?? "").localeCompare(String(right.label ?? ""), "pt-BR")
                 );
 
-            setOptions(records);
+            setResultState({
+                key: requestKey,
+                options: records,
+                error: ""
+            });
         }).catch(error => {
             if (!controller.signal.aborted) {
-                setOptions([]);
-                setError(errorMessage(error));
+                setResultState({
+                    key: requestKey,
+                    options: [],
+                    error: errorMessage(error)
+                });
             }
-        }).finally(() => {
-            if (!controller.signal.aborted) setLoading(false);
         });
 
         return () => controller.abort();
-    }, [field.reference, isUnit, organizationId, organizationMissing, service, modelFamily, optionFilter]);
-
-    React.useEffect(() => {
-        if (!organizationMissing) setUnitAttempted(false);
-    }, [organizationMissing]);
+    }, [
+        field.reference,
+        isUnit,
+        organizationId,
+        organizationMissing,
+        service,
+        modelFamily,
+        optionFilter,
+        requestKey
+    ]);
 
     const current = String(value ?? "");
+    const requestCurrent = resultState.key === requestKey;
+    const options = organizationMissing || !requestCurrent
+        ? []
+        : resultState.options;
+    const loading = Boolean(field.reference)
+        && !organizationMissing
+        && !requestCurrent;
+    const error = requestCurrent ? resultState.error : "";
     const currentKnown = options.some(option => String(option.id ?? "") === current);
 
     return (
