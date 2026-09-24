@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useFormik } from "formik"
-import { Minus, Plus, Trash2 } from "lucide-react"
+import { Minus, Plus } from "lucide-react"
+import { Trash } from "@primeicons/react"
 
 import type { Sale, SaleItem } from "api/models/sales"
 import type { User } from "api/models/users"
@@ -514,7 +515,7 @@ export const SalesForm: React.FC<SalesFormProps> = ({
                                                 disabled={loadingWeapon}
                                                 onClick={() => setItemToDelete(item)}
                                             >
-                                                <Trash2 size={20} />
+                                                <Trash size={20} />
                                             </button>
                                         </td>
                                     </tr>
