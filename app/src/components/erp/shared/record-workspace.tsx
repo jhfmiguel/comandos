@@ -15,6 +15,7 @@ import { convertToIsoDate, formatDate } from "utils/date";
 import axios from "axios";
 
 import {
+    CircleHelp,
     Plus,
     Pencil
 } from "lucide-react";
@@ -42,6 +43,44 @@ type ErpTableFilters = Record<string, string>;
 
 function createErpTableFilters(fields: ErpField[]): ErpTableFilters {
     return Object.fromEntries(fields.map(field => [field.name, ""]));
+}
+
+function FieldHint({ text }: { text: string }) {
+    const [open, setOpen] = React.useState(false);
+    const rootRef = React.useRef<HTMLSpanElement | null>(null);
+
+    React.useEffect(() => {
+        if (!open) return;
+
+        const close = (event: PointerEvent) => {
+            if (!rootRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("pointerdown", close);
+        return () => document.removeEventListener("pointerdown", close);
+    }, [open]);
+
+    return (
+        <span
+            ref={rootRef}
+            className={[styles.fieldHint, open ? styles.fieldHintOpen : ""].filter(Boolean).join(" ")}
+        >
+            <button
+                type="button"
+                className={styles.fieldHintButton}
+                aria-label="Ajuda sobre o campo"
+                aria-expanded={open}
+                onClick={() => setOpen(current => !current)}
+            >
+                <CircleHelp size={16} aria-hidden="true" />
+            </button>
+            <span role="tooltip" className={styles.fieldHintBubble}>
+                {text}
+            </span>
+        </span>
+    );
 }
 
 function errorMessage(error: unknown): string {
@@ -886,7 +925,8 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                 styles.field,
                                                 resource.key === "organizations" && field.name === "taxId" ? styles.organizationTaxField : "",
                                                 resource.key === "organizations" && field.name === "publicOrganization" ? styles.organizationPublicField : "",
-                                                resource.key === "organizations" && field.name === "active" ? styles.organizationActiveField : ""
+                                                resource.key === "organizations" && field.name === "active" ? styles.organizationActiveField : "",
+                                                resource.key === "profiles" && field.name === "levelTypeId" ? styles.fieldWithHint : ""
                                             ].filter(Boolean).join(" ")}
                                             disabled={field.readOnly || Boolean(record && (
                                                 field.createOnly
@@ -899,7 +939,9 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                             {resource.key === "models" && field.name === "manufacturerCode" && (
                                                 <small>{tr("Manufacturer catalog/part code for the model; distinct from serial number and internal SKU.")}</small>
                                             )}
-                                            {resource.key === "profiles" && field.name === "level" && <small>Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.</small>}
+                                            {resource.key === "profiles" && field.name === "levelTypeId" && (
+                                                <FieldHint text={tr("Use SYSTEM (all organizations), ORGANIZATION or UNIT. Other levels do not grant access.")} />
+                                            )}
                                             {resource.key === "permissions" && field.name === "resource" && <small>Use an exact resource code, such as core/people, inventory/assets, sales or security/access. An asterisk grants all resources.</small>}
                                             {resource.key === "permissions" && field.name === "action" && <small>Use READ, CREATE, UPDATE, DELETE, MANAGE (access administration), or *.</small>}
                                             {resource.key === "user-profiles" && field.name === "unitId" && <small>Required for UNIT profiles; leave empty for SYSTEM and ORGANIZATION profiles.</small>}
