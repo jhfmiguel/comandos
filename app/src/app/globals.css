@@ -5539,9 +5539,9 @@ html[data-theme="dark"] .comandos-secondary-button {
 
 .comandos-icon-button:hover:not(:disabled),
 .comandos-icon-button:focus-visible {
-    background: rgba(255, 153, 0, 0.13);
-    color: #ff9900;
-    outline: 1px solid #ff9900;
+    background: transparent;
+    color: inherit;
+    outline: none;
 }
 
 .comandos-icon-button-success:hover:not(:disabled),
@@ -6035,9 +6035,9 @@ textarea.comandos-input:disabled {
 
 .comandos-icon-button:hover:not(:disabled),
 .comandos-icon-button:focus-visible {
-    border-color: #ff9900;
-    background: rgba(255, 153, 0, .08);
-    color: #ff9900;
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
     outline: none;
 }
 
@@ -6258,10 +6258,10 @@ html[data-theme="dark"] .comandos-native-dialog-header {
 
 .comandos-icon-button:hover:not(:disabled),
 .comandos-icon-button:focus-visible {
-    border-color: var(--comandos-accent, #ff9900) !important;
-    background: color-mix(in srgb, var(--comandos-accent, #ff9900) 10%, transparent) !important;
-    color: var(--comandos-accent, #ff9900) !important;
-    box-shadow: 0 0 0 .12rem color-mix(in srgb, var(--comandos-accent, #ff9900) 24%, transparent) !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
 }
 
 .comandos-icon-button-danger {
@@ -6358,9 +6358,9 @@ html[data-theme="dark"] .comandos-button-contrast {
 
 .comandos-icon-button:hover:not(:disabled),
 .comandos-icon-button:focus-visible {
-    background: color-mix(in srgb, var(--comandos-accent, #ff9900) 14%, transparent) !important;
-    border-color: var(--comandos-accent, #ff9900) !important;
-    color: var(--comandos-accent, #ff9900) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    color: inherit !important;
 }
 
 .comandos-icon-button-danger {
@@ -6762,7 +6762,7 @@ html[data-theme] body .comandos-tabs-scroll-button:focus-visible {
 .comandos-native-table td .comandos-icon-button-success:focus-visible {
     color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
     border-color: color-mix(in srgb, var(--comandos-table-action-color) 82%, #000 18%) !important;
-    background: color-mix(in srgb, var(--comandos-table-action-color) 14%, transparent) !important;
+    background: transparent !important;
     box-shadow: none !important;
     filter: none !important;
 }
@@ -7747,236 +7747,41 @@ html[data-theme="dark"] body .comandos-main-content .comandos-pagination {
 }
 
 
-
-/* TABLE ACTIONS — TRANSPARENT V11
- * Every action control rendered inside a table stays unfilled in every state.
- * Semantic icon/label colors remain; no palette-colored tile is allowed.
+/* TABLE ACTION BUTTONS — SINGLE SOURCE OF TRUTH V16
+ * Table actions never receive a filled background.
+ * Delete stays red; icon geometry is left untouched.
  */
-html body table td.comandos-standard-actions-cell button,
-html body table td .comandos-action-button[data-comandos-table-action],
-html body table td button.comandos-icon-button,
-html body table td.comandos-standard-actions-cell button:hover:not(:disabled),
-html body table td.comandos-standard-actions-cell button:focus-visible,
-html body table td.comandos-standard-actions-cell button:active:not(:disabled),
-html body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
-html body table td .comandos-action-button[data-comandos-table-action]:focus-visible,
-html body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled),
-html body table td button.comandos-icon-button:hover:not(:disabled),
-html body table td button.comandos-icon-button:focus-visible,
-html body table td button.comandos-icon-button:active:not(:disabled) {
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button,
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action],
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button:focus-visible,
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button:active:not(:disabled),
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action]:focus-visible,
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled) {
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
-    text-shadow: none !important;
 }
 
-
-/* GLOBAL TRASH BUTTON STANDARD V12
- * Trash actions are always outline-only red icons.
- * No filled tile, border, glow or palette background in any interaction state.
- */
-html body button.comandos-icon-button-danger,
-html body .comandos-action-button[data-comandos-table-action="delete"],
-html body button[data-comandos-contact-delete="true"],
-html body button.comandos-icon-button-danger:hover:not(:disabled),
-html body button.comandos-icon-button-danger:focus-visible,
-html body button.comandos-icon-button-danger:active:not(:disabled),
-html body .comandos-action-button[data-comandos-table-action="delete"]:hover:not(:disabled),
-html body .comandos-action-button[data-comandos-table-action="delete"]:focus-visible,
-html body .comandos-action-button[data-comandos-table-action="delete"]:active:not(:disabled),
-html body button[data-comandos-contact-delete="true"]:hover:not(:disabled),
-html body button[data-comandos-contact-delete="true"]:focus-visible,
-html body button[data-comandos-contact-delete="true"]:active:not(:disabled) {
-    --comandos-table-action-color: #ef4444 !important;
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button-danger,
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action="delete"] {
     color: #ef4444 !important;
-    border: 0 !important;
     border-color: transparent !important;
-    border-radius: 0 !important;
-    outline: 0 !important;
+}
+
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button-danger:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button-danger:focus-visible,
+html[data-theme] body .comandos-main-content table td button.comandos-icon-button-danger:active:not(:disabled),
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action="delete"]:hover:not(:disabled),
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action="delete"]:focus-visible,
+html[data-theme] body .comandos-main-content table td .comandos-action-button[data-comandos-table-action="delete"]:active:not(:disabled) {
+    color: #ef4444 !important;
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    transform: none !important;
-}
-
-html body button.comandos-icon-button-danger svg,
-html body button.comandos-icon-button-danger svg *,
-html body .comandos-action-button[data-comandos-table-action="delete"] svg,
-html body .comandos-action-button[data-comandos-table-action="delete"] svg *,
-html body button[data-comandos-contact-delete="true"] svg,
-html body button[data-comandos-contact-delete="true"] svg * {
-    color: #ef4444 !important;
-    stroke: #ef4444 !important;
-    fill: none !important;
-}
-
-html body .comandos-action-button[data-comandos-table-action="delete"] .comandos-table-action-icon {
-    color: #ef4444 !important;
-}
-
-
-/* TRASH BUTTON — FINAL CASCADE LOCK V13
- * Highest-specificity rule: trash is always a red outline icon only.
- */
-html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger,
-html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:hover:not(:disabled),
-html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:focus-visible,
-html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger:active:not(:disabled),
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger,
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:hover:not(:disabled),
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:focus-visible,
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:active:not(:disabled),
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger:disabled {
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    color: #ef4444 !important;
-    border: 0 !important;
     border-color: transparent !important;
-    border-radius: 0 !important;
-    outline: 0 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
     box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    transform: none !important;
-}
-
-html[data-theme][data-palette] body .comandos-main-content form[data-comandos-erp-form="true"] button.comandos-icon-button.comandos-icon-button-danger svg,
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger svg,
-html[data-theme] body button.comandos-icon-button.comandos-icon-button-danger svg * {
-    color: #ef4444 !important;
-    stroke: #ef4444 !important;
-    fill: none !important;
-}
-
-
-/* TRASH BUTTON ISOLATION V14
- * Dedicated reset so palette/form hover rules can never paint the trash action.
- */
-html body button.comandos-trash-button,
-html body button.comandos-trash-button:hover,
-html body button.comandos-trash-button:focus,
-html body button.comandos-trash-button:focus-visible,
-html body button.comandos-trash-button:active {
-    all: unset !important;
-    box-sizing: border-box !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2.1rem !important;
-    min-width: 2.1rem !important;
-    height: 2.1rem !important;
-    min-height: 2.1rem !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #ef4444 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border: 0 !important;
-    border-color: transparent !important;
-    border-radius: 0 !important;
-    outline: 0 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    transform: none !important;
-    transition: none !important;
-    cursor: pointer !important;
-}
-
-html body button.comandos-trash-button:disabled {
-    all: unset !important;
-    box-sizing: border-box !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2.1rem !important;
-    min-width: 2.1rem !important;
-    height: 2.1rem !important;
-    min-height: 2.1rem !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #ef4444 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border: 0 !important;
-    outline: 0 !important;
-    box-shadow: none !important;
-    opacity: .4 !important;
-    cursor: not-allowed !important;
-}
-
-html body button.comandos-trash-button::before,
-html body button.comandos-trash-button::after,
-html body button.comandos-trash-button:hover::before,
-html body button.comandos-trash-button:hover::after,
-html body button.comandos-trash-button:focus-visible::before,
-html body button.comandos-trash-button:focus-visible::after {
-    content: none !important;
-    display: none !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-}
-
-html body button.comandos-trash-button > *,
-html body button.comandos-trash-button:hover > *,
-html body button.comandos-trash-button:focus-visible > *,
-html body button.comandos-trash-button:active > *,
-html body button.comandos-trash-button .comandos-table-action-icon {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border: 0 !important;
-    box-shadow: none !important;
-}
-
-html body button.comandos-trash-button svg,
-html body button.comandos-trash-button svg *,
-html body button.comandos-trash-button:hover svg,
-html body button.comandos-trash-button:focus-visible svg,
-html body button.comandos-trash-button:active svg {
-    width: 1.125rem !important;
-    height: 1.125rem !important;
-    color: #ef4444 !important;
-    stroke: #ef4444 !important;
-    fill: none !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    filter: none !important;
-}
-
-
-/* TRASH HOVER MUST NOT HIGHLIGHT THE TABLE ROW V15
- * The generic table-row hover paints the cells with the active palette color.
- * When the pointer is on a trash action, keep both the row and its cells neutral.
- */
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover),
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible),
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) {
-    background: transparent !important;
-    background-color: transparent !important;
-}
-
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover) > td,
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible) > td,
-html[data-theme] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) > td {
-    background: transparent !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-}
-
-html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:hover),
-html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:focus-visible),
-html[data-theme="dark"] body .comandos-main-content table tbody tr:has(button.comandos-trash-button:active) {
-    background: transparent !important;
-    background-color: transparent !important;
+    outline: none !important;
 }
