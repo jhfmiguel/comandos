@@ -40,6 +40,9 @@ public class DemoCoverageSeeder implements ApplicationRunner {
     @Value("${comandos.demo.require-full-coverage:false}")
     private boolean requireFullCoverage;
 
+    @Value("${comandos.demo.minimum-rows:3}")
+    private int minimumRows;
+
     public DemoCoverageSeeder(EntityManager entityManager, PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
         this.transactions = new TransactionTemplate(transactionManager);
@@ -81,6 +84,63 @@ public class DemoCoverageSeeder implements ApplicationRunner {
                 throw new IllegalStateException(message);
             }
             log.warn(message);
+        }
+
+        seedAdditionalVolume();
+    }
+
+    private void seedAdditionalVolume() {
+        int target = Math.max(1, Math.min(minimumRows, 10));
+        Map<String, Long> underfilled = new TreeMap<>();
+
+        for (Class<?> type : entityManager.getMetamodel().getEntities().stream()
+                .map(EntityType::getJavaType)
+                .filter(value -> value.getPackageName().startsWith("com.comandos"))
+                .filter(value -> !Modifier.isAbstract(value.getModifiers()))
+                .sorted(Comparator.comparing(Class::getName))
+                .toList()) {
+
+            int attempts = 0;
+            while (count(type) < target && attempts++ < target * 2) {
+                if (!seedAdditionalRow(type)) break;
+            }
+
+            long actual = count(type);
+            if (actual < target) underfilled.put(type.getSimpleName(), actual);
+        }
+
+        if (underfilled.isEmpty()) {
+            log.info("Demo volume seeder reached at least {} rows in every mapped entity.", target);
+        } else {
+            log.info(
+                "Demo volume target is {} rows. Entities kept below the target because of domain/uniqueness constraints: {}",
+                target,
+                underfilled
+            );
+        }
+    }
+
+    private boolean seedAdditionalRow(Class<?> type) {
+        try {
+            Boolean result = transactions.execute(status -> {
+                try {
+                    Object entity = instantiate(type, new LinkedHashSet<>());
+                    if (entity == null) return false;
+
+                    entityManager.persist(entity);
+                    entityManager.flush();
+                    entityManager.clear();
+                    return true;
+                } catch (RuntimeException | ReflectiveOperationException ex) {
+                    status.setRollbackOnly();
+                    log.debug("Unable to add demo volume for {}: {}", type.getSimpleName(), ex.getMessage());
+                    return false;
+                }
+            });
+            return Boolean.TRUE.equals(result);
+        } catch (RuntimeException ex) {
+            log.debug("Unable to commit extra demo row for {}: {}", type.getSimpleName(), ex.getMessage());
+            return false;
         }
     }
 
