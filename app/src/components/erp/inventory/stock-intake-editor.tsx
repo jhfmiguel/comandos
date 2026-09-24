@@ -283,11 +283,10 @@ export function StockIntakeEditor({ resource, service, onCancel, onSaved }: {
                                 <button
                                     type="button"
                                     className="comandos-icon-button comandos-icon-button-danger"
-                                    data-comandos-table-action="delete"
                                     aria-label={`Remover linha ${index + 1}`}
                                     onClick={() => { setResults([]); setRows(current => current.filter((_, i) => i !== index)); }}
                                 >
-                                    <Trash />
+                                    <Trash size={18} />
                                 </button>
                             </td>
                         </tr>)}</tbody></table></div>
