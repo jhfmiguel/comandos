@@ -49,6 +49,15 @@ import { RoleDetailsEditor } from "./nested-core-editors";
 
 type ErpTableFilters = Record<string, string>;
 
+const nestedEditorSections: Record<string, { data: string; children: string }> = {
+    recalls: { data: "Dados do recall", children: "Bens e lotes afetados" },
+    "equipment-sets": { data: "Dados do conjunto", children: "Componentes do conjunto" },
+    categories: { data: "Dados da categoria", children: "Características aplicáveis" },
+    models: { data: "Dados do modelo", children: "Especificações e características" },
+    assets: { data: "Dados do bem", children: "Características do bem" },
+    "person-roles": { data: "Dados do vínculo", children: "Dados complementares" }
+};
+
 function createErpTableFilters(fields: ErpField[]): ErpTableFilters {
     return Object.fromEntries(fields.map(field => [field.name, ""]));
 }
@@ -645,13 +654,13 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                     {!resource.readOnly && (
                                         <td className={styles.actionCell}>
                                             <div className={`${styles.actions} ${styles.tableActions}`}>
-                                                {resource.key === "recalls" && (
+                                                {nestedEditorSections[resource.key] && (
                                                     <button
                                                         type="button"
                                                         className="comandos-icon-button"
                                                         data-comandos-table-action="details"
-                                                        aria-label="Bens e lotes afetados"
-                                                        title="Bens e lotes afetados"
+                                                        aria-label={nestedEditorSections[resource.key].children}
+                                                        title={nestedEditorSections[resource.key].children}
                                                         onClick={() => setEditor({ record, section: "children" })}
                                                     >
                                                         <ListChecks size={18} />
@@ -730,7 +739,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                     ) {
                         setEditor({
                             record: savedRecord,
-                            section: resource.key === "recalls" ? "children" : "data"
+                            section: nestedEditorSections[resource.key] ? "children" : "data"
                         });
                         return;
                     }
@@ -867,12 +876,13 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
     const saving = React.useRef(false);
     const manuallyEditedAddressFields = React.useRef(new Set<string>());
     const [error, setError] = React.useState("");
+    const nestedSections = nestedEditorSections[resource.key];
     const [editorSection, setEditorSection] = React.useState<"data" | "children">(
-        resource.key === "recalls" && record && initialSection === "children"
+        nestedSections && record && initialSection === "children"
             ? "children"
             : "data"
     );
-    const recallItemsView = resource.key === "recalls" && editorSection === "children";
+    const childCollectionView = Boolean(nestedSections && editorSection === "children");
     
     const change = (field: ErpField, value: ErpValue) => {
         if (resource.key === "person-addresses") {
@@ -909,15 +919,15 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             <div
                 role="dialog"
                 aria-modal="true"
-                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""} ${["recalls", "equipment-sets", "categories", "models", "assets"].includes(resource.key) ? styles.nestedEditorDialog : ""}`}
+                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""} ${nestedEditorSections[resource.key] ? styles.nestedEditorDialog : ""}`}
             >
             
                 <div className="comandos-native-dialog-header">
                     <h2>{tr(record ? "Edit" : "New")} · {tr(editorResourceLabel)}</h2>
                 </div>
 
-                {resource.key === "recalls" && (
-                    <div className={styles.recallEditorTabs} role="tablist" aria-label="Seções do recall">
+                {nestedSections && (
+                    <div className={styles.recallEditorTabs} role="tablist" aria-label={`Seções de ${editorResourceLabel}`}>
                         <button
                             type="button"
                             role="tab"
@@ -925,7 +935,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                             className={editorSection === "data" ? styles.recallEditorTabActive : styles.recallEditorTab}
                             onClick={() => setEditorSection("data")}
                         >
-                            Dados do recall
+                            {nestedSections.data}
                         </button>
                         <button
                             type="button"
@@ -935,7 +945,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                             disabled={!record}
                             onClick={() => setEditorSection("children")}
                         >
-                            Bens e lotes afetados
+                            {nestedSections.children}
                         </button>
                     </div>
                 )}
@@ -946,7 +956,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 className={styles.form} 
                                 onSubmit={async event => {
                                     event.preventDefault();
-                                    if (recallItemsView) return;
+                                    if (childCollectionView) return;
                                     if (saving.current) return;
                                     saving.current = true; setBusy(true); setError("");
                                     try {
@@ -998,7 +1008,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 </p>}
                                 <fieldset
                                     disabled={busy}
-                                    hidden={recallItemsView}
+                                    hidden={childCollectionView}
                                     className={styles.fields}
                                     data-comandos-resource={resource.key}
                                 >
@@ -1213,49 +1223,49 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     />
                                 )}
 
-                                {resource.key === "recalls" && record && recallItemsView && (
+                                {resource.key === "recalls" && record && childCollectionView && (
                                     <RecallItemsEditor
                                         recall={record}
                                         service={service}
                                     />
                                 )}
 
-                                {resource.key === "recalls" && !record && (
+                                {resource.key === "recalls" && !record && editorSection === "data" && (
                                     <Message
                                         type="info"
                                         text="Salve o recall. Em seguida, a seção Bens e lotes afetados será aberta automaticamente."
                                     />
                                 )}
 
-                                {resource.key === "equipment-sets" && record && (
+                                {resource.key === "equipment-sets" && record && childCollectionView && (
                                     <EquipmentSetComponentsEditor
                                         equipmentSet={record}
                                         service={service}
                                     />
                                 )}
 
-                                {resource.key === "equipment-sets" && !record && (
+                                {resource.key === "equipment-sets" && !record && editorSection === "data" && (
                                     <Message
                                         type="info"
                                         text="Salve primeiro o conjunto. Depois adicione os componentes e, quando estiver completo, marque-o como ativo."
                                     />
                                 )}
 
-                                {resource.key === "categories" && record && (
+                                {resource.key === "categories" && record && childCollectionView && (
                                     <CategoryCharacteristicsEditor
                                         category={record}
                                         service={service}
                                     />
                                 )}
 
-                                {resource.key === "categories" && !record && (
+                                {resource.key === "categories" && !record && editorSection === "data" && (
                                     <Message
                                         type="info"
                                         text="Salve a categoria para definir as características técnicas aplicáveis."
                                     />
                                 )}
 
-                                {resource.key === "models" && record && (
+                                {resource.key === "models" && record && childCollectionView && (
                                     <>
                                         <ModelSpecificationEditor
                                             model={record}
@@ -1269,14 +1279,14 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     </>
                                 )}
 
-                                {resource.key === "models" && !record && (
+                                {resource.key === "models" && !record && editorSection === "data" && (
                                     <Message
                                         type="info"
                                         text="Salve o modelo para preencher os valores das características definidas na categoria."
                                     />
                                 )}
 
-                                {resource.key === "assets" && record && (
+                                {resource.key === "assets" && record && childCollectionView && (
                                     <CharacteristicValuesEditor
                                         owner={record}
                                         ownerType="asset"
@@ -1284,14 +1294,14 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     />
                                 )}
 
-                                {resource.key === "person-roles" && record && (
+                                {resource.key === "person-roles" && record && childCollectionView && (
                                     <RoleDetailsEditor
                                         assignment={record}
                                         service={service}
                                     />
                                 )}
 
-                                {resource.key === "person-roles" && !record && (
+                                {resource.key === "person-roles" && !record && editorSection === "data" && (
                                     <Message
                                         type="info"
                                         text="Salve o vínculo para adicionar seus dados complementares."
@@ -1299,7 +1309,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 )}
 
                                 <div className={styles.actions}>
-                                    {recallItemsView ? (
+                                    {childCollectionView ? (
                                         <button
                                             type="button"
                                             className="registration-yellow-button"
