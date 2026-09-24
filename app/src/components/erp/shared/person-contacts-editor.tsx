@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronDown, Plus } from "lucide-react";
 import { Trash } from "@primeicons/react";
+import { ComandosSelectField } from "components/common/select-field";
 import { PostalCodeField } from "components/erp/core/postal-code-field";
 import styles from "./workspace.module.css";
 
@@ -241,17 +242,19 @@ export function PersonContactsEditor({
                                 return (
                                     <tr key={prefix}>
                                         <td>
-                                            <select
-                                                aria-label={`Tipo do endereço ${index + 1}`}
+                                            <ComandosSelectField
+                                                id={`person-address-type-${index}`}
+                                                label="Tipo"
                                                 required
                                                 value={address.type}
-                                                onChange={event => updateAddress(index, { type: event.target.value })}
-                                            >
-                                                <option value="RESIDENTIAL">Residencial</option>
-                                                <option value="BUSINESS">Comercial</option>
-                                                <option value="MAILING">Correspondência</option>
-                                                <option value="OTHER">Outro</option>
-                                            </select>
+                                                options={[
+                                                    { value: "RESIDENTIAL", label: "Residencial" },
+                                                    { value: "BUSINESS", label: "Comercial" },
+                                                    { value: "MAILING", label: "Correspondência" },
+                                                    { value: "OTHER", label: "Outro" }
+                                                ]}
+                                                onChange={value => updateAddress(index, { type: value })}
+                                            />
                                         </td>
                                         <td className={`${styles.contactBooleanCell} ${styles.contactBooleanField}`}>
                                             <span className={styles.contactBooleanLabel}>Exterior</span>
@@ -415,18 +418,20 @@ export function PersonContactsEditor({
                             {phones.map((phone, index) => (
                                 <tr key={`person-phone-${index}`}>
                                     <td>
-                                        <select
-                                            aria-label={`Tipo do telefone ${index + 1}`}
+                                        <ComandosSelectField
+                                            id={`person-phone-type-${index}`}
+                                            label="Tipo"
                                             required
                                             value={phone.type}
-                                            onChange={event => updatePhone(index, { type: event.target.value })}
-                                        >
-                                            <option value="MOBILE">Celular</option>
-                                            <option value="WHATSAPP">WhatsApp</option>
-                                            <option value="HOME">Residencial</option>
-                                            <option value="WORK">Comercial</option>
-                                            <option value="OTHER">Outro</option>
-                                        </select>
+                                            options={[
+                                                { value: "MOBILE", label: "Celular" },
+                                                { value: "WHATSAPP", label: "WhatsApp" },
+                                                { value: "HOME", label: "Residencial" },
+                                                { value: "WORK", label: "Comercial" },
+                                                { value: "OTHER", label: "Outro" }
+                                            ]}
+                                            onChange={value => updatePhone(index, { type: value })}
+                                        />
                                     </td>
                                     <td>
                                         <input
@@ -534,16 +539,18 @@ export function PersonContactsEditor({
                             {emails.map((email, index) => (
                                 <tr key={`person-email-${index}`}>
                                     <td>
-                                        <select
-                                            aria-label={`Tipo do e-mail ${index + 1}`}
+                                        <ComandosSelectField
+                                            id={`person-email-type-${index}`}
+                                            label="Tipo"
                                             required
                                             value={email.type}
-                                            onChange={event => updateEmail(index, { type: event.target.value })}
-                                        >
-                                            <option value="PERSONAL">Pessoal</option>
-                                            <option value="WORK">Profissional</option>
-                                            <option value="OTHER">Outro</option>
-                                        </select>
+                                            options={[
+                                                { value: "PERSONAL", label: "Pessoal" },
+                                                { value: "WORK", label: "Profissional" },
+                                                { value: "OTHER", label: "Outro" }
+                                            ]}
+                                            onChange={value => updateEmail(index, { type: value })}
+                                        />
                                     </td>
                                     <td>
                                         <input
