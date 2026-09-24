@@ -166,12 +166,12 @@ export const UsersList: React.FC = () => {
                             </tr>
                             <tr className="comandos-filter-row">
                                 <th />
-                                <th><input className="comandos-input" value={filters.name} onChange={e=>changeFilter("name",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.cpf} onChange={e=>changeFilter("cpf",formatCPF(e.target.value))} /></th>
-                                <th><input className="comandos-input" value={filters.birth} onChange={e=>changeFilter("birth",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.address} onChange={e=>changeFilter("address",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.email} onChange={e=>changeFilter("email",e.target.value)} /></th>
-                                <th><input className="comandos-input" value={filters.phone} onChange={e=>changeFilter("phone",formatPhone(e.target.value))} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar nome..." value={filters.name} onChange={e=>changeFilter("name",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar CPF..." value={filters.cpf} onChange={e=>changeFilter("cpf",formatCPF(e.target.value))} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar nascimento..." value={filters.birth} onChange={e=>changeFilter("birth",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar endereço..." value={filters.address} onChange={e=>changeFilter("address",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar e-mail..." value={filters.email} onChange={e=>changeFilter("email",e.target.value)} /></th>
+                                <th><input className="comandos-input" placeholder="Pesquisar telefone..." value={filters.phone} onChange={e=>changeFilter("phone",formatPhone(e.target.value))} /></th>
                                 <th />
                             </tr>
                         </thead>
