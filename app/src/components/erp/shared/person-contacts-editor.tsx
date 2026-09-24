@@ -260,7 +260,7 @@ export function PersonContactsEditor({
                     <small>Edite diretamente na tabela e marque um endereço principal.</small>
                     <button
                         type="button"
-                        className="registration-yellow-button"
+                        className={`registration-yellow-button ${styles.contactAddButton}`}
                         onClick={() => setAddresses(current => [...current, newAddress(current.length === 0)])}
                     >
                         <Plus size={16} />
@@ -408,6 +408,7 @@ export function PersonContactsEditor({
                                             <button
                                                 type="button"
                                                 className="comandos-icon-button comandos-icon-button-danger"
+                                                data-comandos-contact-delete="true"
                                                 data-severity="danger"
                                                 aria-label={`Remover endereço ${index + 1}`}
                                                 onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
@@ -440,7 +441,7 @@ export function PersonContactsEditor({
                     <small>Edite diretamente na tabela, indique WhatsApp e selecione o telefone principal.</small>
                     <button
                         type="button"
-                        className="registration-yellow-button"
+                        className={`registration-yellow-button ${styles.contactAddButton}`}
                         onClick={() => setPhones(current => [...current, newPhone(current.length === 0)])}
                     >
                         <Plus size={16} />
@@ -527,6 +528,7 @@ export function PersonContactsEditor({
                                         <button
                                             type="button"
                                             className="comandos-icon-button comandos-icon-button-danger"
+                                            data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover telefone ${index + 1}`}
                                             onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
@@ -558,7 +560,7 @@ export function PersonContactsEditor({
                     <small>Edite diretamente na tabela e selecione o e-mail principal.</small>
                     <button
                         type="button"
-                        className="registration-yellow-button"
+                        className={`registration-yellow-button ${styles.contactAddButton}`}
                         onClick={() => setEmails(current => [...current, newEmail(current.length === 0)])}
                     >
                         <Plus size={16} />
@@ -613,6 +615,7 @@ export function PersonContactsEditor({
                                         <button
                                             type="button"
                                             className="comandos-icon-button comandos-icon-button-danger"
+                                            data-comandos-contact-delete="true"
                                             data-severity="danger"
                                             aria-label={`Remover e-mail ${index + 1}`}
                                             onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
