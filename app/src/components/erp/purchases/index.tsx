@@ -3,6 +3,7 @@
 import * as React from "react";
 import axios from "axios";
 import { Button } from "components/common/button";
+import { ComandosSelectField } from "components/common/select-field";
 
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
@@ -209,11 +210,17 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                         </small>
                     </div>
                     <div className={styles.field}>
-                        <label htmlFor="acquisition-type">Tipo de aquisição *</label>
-                        <select id="acquisition-type" value={acquisitionType} onChange={event => setAcquisitionType(event.target.value as AcquisitionType)}>
-                            <option value="ONEROUS">Onerosa / compra</option>
-                            <option value="FREE">Gratuita</option>
-                        </select>
+                        <ComandosSelectField
+                            id="acquisition-type"
+                            label="Tipo de aquisição"
+                            required
+                            value={acquisitionType}
+                            options={[
+                                { value: "ONEROUS", label: "Onerosa / compra" },
+                                { value: "FREE", label: "Gratuita" }
+                            ]}
+                            onChange={value => setAcquisitionType(value as AcquisitionType)}
+                        />
                     </div>
                     <div className={styles.field}>
                         <label htmlFor="origin-description">Origin complement</label>
@@ -308,29 +315,33 @@ function PurchaseForm({ onNew }: { onNew: () => void }) {
                                 {documents.map((doc, index) => (
                                     <tr key={index}>
                                         <td>
-                                            <select
+                                            <ComandosSelectField
+                                                id={`purchase-document-type-${index}`}
+                                                label="Tipo de documento"
+                                                required
                                                 value={doc.documentType}
-                                                onChange={event =>
+                                                options={[
+                                                    { value: "CONTRACT", label: "Contrato" },
+                                                    { value: "BUDGET_COMMITMENT", label: "Empenho" },
+                                                    { value: "INVOICE", label: "Nota fiscal" },
+                                                    { value: "PROCUREMENT_PROCESS", label: "Processo" },
+                                                    { value: "BIDDING_NOTICE", label: "Edital" },
+                                                    { value: "DIRECT_CONTRACTING_ACT", label: "Ato de contratação direta" },
+                                                    { value: "FREE_ACQUISITION_TERM", label: "Termo de aquisição gratuita" },
+                                                    { value: "DONATION_TERM", label: "Termo de doação" },
+                                                    { value: "TRANSFER_TERM", label: "Termo de transferência" },
+                                                    { value: "AUTHORIZATION", label: "Autorização" },
+                                                    { value: "DELIVERY_DOCUMENT", label: "Documento de entrega" },
+                                                    { value: "OTHER", label: "Outro" }
+                                                ]}
+                                                onChange={value =>
                                                     setDocuments(documents.map((item, itemIndex) =>
                                                         itemIndex === index
-                                                            ? { ...item, documentType: event.target.value as AcquisitionDocumentType }
+                                                            ? { ...item, documentType: value as AcquisitionDocumentType }
                                                             : item
                                                     ))
                                                 }
-                                            >
-                                                <option value="CONTRACT">Contrato</option>
-                                                <option value="BUDGET_COMMITMENT">Empenho</option>
-                                                <option value="INVOICE">Nota fiscal</option>
-                                                <option value="PROCUREMENT_PROCESS">Processo</option>
-                                                <option value="BIDDING_NOTICE">Edital</option>
-                                                <option value="DIRECT_CONTRACTING_ACT">Ato de contratação direta</option>
-                                                <option value="FREE_ACQUISITION_TERM">Termo de aquisição gratuita</option>
-                                                <option value="DONATION_TERM">Termo de doação</option>
-                                                <option value="TRANSFER_TERM">Termo de transferência</option>
-                                                <option value="AUTHORIZATION">Autorização</option>
-                                                <option value="DELIVERY_DOCUMENT">Documento de entrega</option>
-                                                <option value="OTHER">Outro</option>
-                                            </select>
+                                            />
                                         </td>
                                         <td>
                                             <input
@@ -655,16 +666,18 @@ function ProcurementSection({
             <form data-comandos-erp-form="true" onSubmit={save}>
                 <fieldset className={styles.fields} disabled={busy}>
                     <div className={styles.field}>
-                        <label htmlFor="procurement-method">Method *</label>
-                        <select
+                        <ComandosSelectField
                             id="procurement-method"
+                            label="Method"
+                            required
                             value={method}
-                            onChange={event => setMethod(event.target.value as ProcurementMethod)}
-                        >
-                            <option value="NOT_REQUIRED">Not required</option>
-                            <option value="BIDDING">Bidding</option>
-                            <option value="DIRECT_CONTRACTING">Direct contracting</option>
-                        </select>
+                            options={[
+                                { value: "NOT_REQUIRED", label: "Not required" },
+                                { value: "BIDDING", label: "Bidding" },
+                                { value: "DIRECT_CONTRACTING", label: "Direct contracting" }
+                            ]}
+                            onChange={value => setMethod(value as ProcurementMethod)}
+                        />
                     </div>
 
                     {method !== "NOT_REQUIRED" && (
@@ -693,32 +706,36 @@ function ProcurementSection({
 
                     {method === "BIDDING" && (
                         <div className={styles.field}>
-                            <label htmlFor="bidding-modality">Bidding modality *</label>
-                            <select
+                            <ComandosSelectField
                                 id="bidding-modality"
+                                label="Bidding modality"
+                                required
                                 value={modality}
-                                onChange={event => setModality(event.target.value as BiddingModality)}
-                            >
-                                <option value="PREGAO">Pregão</option>
-                                <option value="CONCORRENCIA">Concorrência</option>
-                                <option value="CONCURSO">Concurso</option>
-                                <option value="LEILAO">Leilão</option>
-                                <option value="DIALOGO_COMPETITIVO">Diálogo competitivo</option>
-                            </select>
+                                options={[
+                                    { value: "PREGAO", label: "Pregão" },
+                                    { value: "CONCORRENCIA", label: "Concorrência" },
+                                    { value: "CONCURSO", label: "Concurso" },
+                                    { value: "LEILAO", label: "Leilão" },
+                                    { value: "DIALOGO_COMPETITIVO", label: "Diálogo competitivo" }
+                                ]}
+                                onChange={value => setModality(value as BiddingModality)}
+                            />
                         </div>
                     )}
 
                     {method === "DIRECT_CONTRACTING" && (
                         <div className={styles.field}>
-                            <label htmlFor="direct-type">Direct contracting *</label>
-                            <select
+                            <ComandosSelectField
                                 id="direct-type"
+                                label="Direct contracting"
+                                required
                                 value={directType}
-                                onChange={event => setDirectType(event.target.value as DirectContractingType)}
-                            >
-                                <option value="DISPENSA">Dispensa</option>
-                                <option value="INEXIGIBILIDADE">Inexigibilidade</option>
-                            </select>
+                                options={[
+                                    { value: "DISPENSA", label: "Dispensa" },
+                                    { value: "INEXIGIBILIDADE", label: "Inexigibilidade" }
+                                ]}
+                                onChange={value => setDirectType(value as DirectContractingType)}
+                            />
                         </div>
                     )}
 
