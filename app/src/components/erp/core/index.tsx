@@ -28,7 +28,7 @@ const sectionTabs: Record<
             label: "Organizations"
         },
         {
-            resource: "organizational-units",
+            resource: "units",
             label: "Organizational units"
         }
     ],
@@ -36,18 +36,6 @@ const sectionTabs: Record<
         {
             resource: "people",
             label: "People"
-        },
-        {
-            resource: "person-addresses",
-            label: "Endereços"
-        },
-        {
-            resource: "person-phones",
-            label: "Telefones"
-        },
-        {
-            resource: "person-emails",
-            label: "E-mails"
         },
         {
             resource: "person-roles",
