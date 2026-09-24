@@ -6042,3 +6042,43 @@ html[data-theme="dark"] .comandos-native-dialog-header {
 .comandos-sidebar[data-state="collapsed"] .comandos-sidebar-logo {
     transform: translateY(.75rem) !important;
 }
+
+
+/* COMANDOS COLLAPSED MENU USABILITY V4 */
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-content {
+    padding-top: 2.25rem !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-menu-item {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-popup {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-menu-item:hover > .comandos-sidebar-popup,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-menu-item:focus-within > .comandos-sidebar-popup {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-popup-link {
+    display: block;
+    min-height: 2.4rem;
+    padding: .55rem .7rem;
+    border-radius: .375rem;
+}
+
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-popup-link:hover,
+.comandos-sidebar[data-state="collapsed"] .comandos-sidebar-popup-link:focus-visible {
+    background: var(--comandos-menu-hover, rgba(255, 153, 0, .12)) !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    outline: none !important;
+}
