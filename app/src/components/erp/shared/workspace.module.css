@@ -766,3 +766,30 @@
 [data-comandos-float-host="true"][data-comandos-float-uses-source="true"]::after {
     content: none !important;
 }
+
+
+/* Organization editor layout */
+.organizationTaxField {
+    grid-column: 1 / -1;
+}
+
+.organizationPublicField {
+    grid-column: 1;
+}
+
+.organizationActiveField {
+    grid-column: 2;
+}
+
+.organizationPublicField,
+.organizationActiveField {
+    align-self: start;
+}
+
+@media (max-width: 550px) {
+    .organizationTaxField,
+    .organizationPublicField,
+    .organizationActiveField {
+        grid-column: 1;
+    }
+}
