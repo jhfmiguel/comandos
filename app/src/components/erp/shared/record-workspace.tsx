@@ -679,7 +679,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="comandos-icon-button comandos-icon-button-danger"
+                                                    className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                                     aria-label={`${tr("Delete")} ${record.label}`}
                                                     disabled={!allowed("DELETE")}
                                                     onClick={() => setDeleting(record)}
@@ -1634,7 +1634,7 @@ function RecallItemsEditor({
                                             </button>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger"
+                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
                                                 data-comandos-table-action="delete"
                                                 aria-label="Remover item do recall"
                                                 title="Remover"
