@@ -52,6 +52,19 @@ export function createErpService(module: ErpModule) {
             id == null
                 ? (await httpClient.post<ErpRecord>(path(resource), values)).data
                 : (await httpClient.put<ErpRecord>(`${path(resource)}/${id}`, values)).data,
+
+        savePersonWithContacts: async (payload: {
+            person: Record<string, ErpValue>;
+            addresses: Array<Record<string, ErpValue>>;
+            phones: Array<Record<string, ErpValue>>;
+            emails: Array<Record<string, ErpValue>>;
+        }) =>
+            (
+                await httpClient.post<ErpRecord>(
+                    "/api/erp/core/people/with-contacts",
+                    payload
+                )
+            ).data,
        
         remove: async (resource: string, record: ErpRecord) => {
             await httpClient.delete(`${path(resource)}/${record.id}`, { params: { version: record.version } });
