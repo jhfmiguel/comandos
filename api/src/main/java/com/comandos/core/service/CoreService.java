@@ -258,6 +258,11 @@ public class CoreService {
         if (spec.entity() == Person.class) {
             normalizeLegacyPersonInput(input);
         }
+        if (spec.entity() == PersonAddress.class
+                || spec.entity() == PersonPhone.class
+                || spec.entity() == PersonEmail.class) {
+            normalizeLegacyContactTypeInput(spec.entity(), input);
+        }
         if (spec.entity() == OrganizationalUnit.class) {
             normalizeLegacyOrganizationalUnitInput(input);
         }
@@ -334,6 +339,15 @@ public class CoreService {
         }
         if (entity instanceof Person person && person.personTypeRef != null) {
             person.personType = person.personTypeRef.code;
+        }
+        if (entity instanceof PersonAddress address && address.contactType != null) {
+            address.type = address.contactType.code;
+        }
+        if (entity instanceof PersonPhone phone && phone.contactType != null) {
+            phone.type = phone.contactType.code;
+        }
+        if (entity instanceof PersonEmail email && email.contactType != null) {
+            email.type = email.contactType.code;
         }
         if (entity instanceof AccessProfile profile && profile.levelType != null) {
             profile.level = profile.levelType.code;
@@ -486,6 +500,55 @@ public class CoreService {
         }
 
         input.put("unitTypeId", type.id);
+    }
+
+    private void normalizeLegacyContactTypeInput(
+            Class<? extends CoreEntity> entityType,
+            Map<String, Object> input) {
+
+        if (input.containsKey("contactTypeId")) {
+            input.remove("type");
+            return;
+        }
+
+        Object legacyType = input.remove("type");
+        String raw = legacyType == null ? "" : legacyType.toString().trim();
+        if (raw.isEmpty()) return;
+
+        String code = raw
+            .toUpperCase(Locale.ROOT)
+            .replaceAll("[^A-Z0-9]+", "_")
+            .replaceAll("^_+|_+$", "");
+
+        if (code.isBlank()) code = "OTHER";
+
+        var existing = em.createQuery(
+                "select t from PersonContactType t where upper(t.code) = :code",
+                PersonContactType.class)
+            .setParameter("code", code)
+            .setMaxResults(1)
+            .getResultList();
+
+        PersonContactType type;
+        if (!existing.isEmpty()) {
+            type = existing.getFirst();
+        } else {
+            type = new PersonContactType();
+            type.code = code;
+            type.name = raw;
+            type.description = "Migrado automaticamente do tipo de contato legado";
+            type.active = true;
+            type.addressEnabled = false;
+            type.phoneEnabled = false;
+            type.emailEnabled = false;
+            em.persist(type);
+        }
+
+        if (entityType == PersonAddress.class) type.addressEnabled = true;
+        if (entityType == PersonPhone.class) type.phoneEnabled = true;
+        if (entityType == PersonEmail.class) type.emailEnabled = true;
+
+        input.put("contactTypeId", type.id);
     }
 
     private void normalizeLegacyPersonInput(Map<String, Object> input) {
@@ -662,6 +725,29 @@ public class CoreService {
                 );
             }
         }
+        if (entity instanceof PersonContactType contactType) {
+            long addressLinks = em.createQuery(
+                    "select count(a) from PersonAddress a where a.contactType.id = :id",
+                    Long.class)
+                .setParameter("id", contactType.id)
+                .getSingleResult();
+            long phoneLinks = em.createQuery(
+                    "select count(p) from PersonPhone p where p.contactType.id = :id",
+                    Long.class)
+                .setParameter("id", contactType.id)
+                .getSingleResult();
+            long emailLinks = em.createQuery(
+                    "select count(e) from PersonEmail e where e.contactType.id = :id",
+                    Long.class)
+                .setParameter("id", contactType.id)
+                .getSingleResult();
+            if (addressLinks + phoneLinks + emailLinks > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Contact type is in use and cannot be deleted."
+                );
+            }
+        }
         if (entity instanceof PersonAddress address) {
             em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
             address.archived = true;
@@ -686,6 +772,42 @@ public class CoreService {
                     HttpStatus.CONFLICT,
                     "Organization nature code is already registered."
                 );
+            }
+        }
+        if (entity instanceof PersonContactType contactType) {
+            contactType.code = contactType.code.toUpperCase(Locale.ROOT);
+            if (!Boolean.TRUE.equals(contactType.addressEnabled)
+                    && !Boolean.TRUE.equals(contactType.phoneEnabled)
+                    && !Boolean.TRUE.equals(contactType.emailEnabled)) {
+                bad("Enable the contact type for at least one use: address, phone or e-mail.");
+            }
+            long duplicates = em.createQuery(
+                    "select count(t) from PersonContactType t where t.code = :code and t.id <> :id",
+                    Long.class)
+                .setParameter("code", contactType.code)
+                .setParameter("id", contactType.id == null ? -1L : contactType.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT)
+                .getSingleResult();
+            if (duplicates > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Contact type code is already registered."
+                );
+            }
+        }
+        if (entity instanceof PersonAddress address) {
+            if (address.contactType == null || !Boolean.TRUE.equals(address.contactType.addressEnabled)) {
+                bad("Selected contact type is not enabled for addresses.");
+            }
+        }
+        if (entity instanceof PersonPhone phone) {
+            if (phone.contactType == null || !Boolean.TRUE.equals(phone.contactType.phoneEnabled)) {
+                bad("Selected contact type is not enabled for phones.");
+            }
+        }
+        if (entity instanceof PersonEmail email) {
+            if (email.contactType == null || !Boolean.TRUE.equals(email.contactType.emailEnabled)) {
+                bad("Selected contact type is not enabled for e-mails.");
             }
         }
         if (entity instanceof EconomicActivity activity) {
