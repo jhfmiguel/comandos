@@ -874,3 +874,38 @@
         transform: translateY(0);
     }
 }
+
+
+/* CONTACT DELETE ICON OUTLINE V4
+ * Contact-row delete actions are icon-only: red outline glyph, no tile/background.
+ */
+.contactActionCell :global(.comandos-icon-button-danger) {
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-height: 2.1rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: #ef4444 !important;
+}
+
+.contactActionCell :global(.comandos-icon-button-danger:hover:not(:disabled)),
+.contactActionCell :global(.comandos-icon-button-danger:focus-visible) {
+    border: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: #f87171 !important;
+    filter: brightness(1.18) drop-shadow(0 0 .22rem rgba(239, 68, 68, .45)) !important;
+}
+
+.contactActionCell :global(.comandos-icon-button-danger svg) {
+    display: block;
+    color: inherit !important;
+    fill: none !important;
+}
