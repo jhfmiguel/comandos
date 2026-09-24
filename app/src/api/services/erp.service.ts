@@ -19,7 +19,8 @@ export function createErpService(module: ErpModule) {
             page = 0,
             signal?: AbortSignal,
             organizationId?: ErpValue,
-            filters: Record<string, string> = {}
+            filters: Record<string, string> = {},
+            size = 10
         ) =>
             (
                 await httpClient.get<ErpPage>(
@@ -28,7 +29,7 @@ export function createErpService(module: ErpModule) {
                         params: {
                             search,
                             page,
-                            size: 10,
+                            size,
                             organizationId:
                                 organizationId ||
                                 undefined,
