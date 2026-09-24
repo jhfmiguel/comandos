@@ -1,10 +1,34 @@
 "use client"
 
 import { RecordWorkspace } from "components/erp/shared/record-workspace"
+import type { ErpResource } from "api/models/erp"
 
 interface CoreWorkspaceProps {
     initialResource?: string
     section?: string
+}
+
+const organizationNatureResource: ErpResource = {
+    key: "organization-natures",
+    label: "Organization natures",
+    group: "Institutional",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
+const economicActivityResource: ErpResource = {
+    key: "economic-activities",
+    label: "Economic activities",
+    group: "Institutional",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Economic activity description", type: "text", required: true, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
 }
 
 const sectionTabs: Record<
@@ -12,16 +36,19 @@ const sectionTabs: Record<
     Array<{
         resource: string
         label: string
+        definition?: ErpResource
     }>
 > = {
     institutional: [
         {
             resource: "organization-natures",
-            label: "Organization natures"
+            label: "Organization natures",
+            definition: organizationNatureResource
         },
         {
             resource: "economic-activities",
-            label: "Economic activities"
+            label: "Economic activities",
+            definition: economicActivityResource
         },
         {
             resource: "organizations",
