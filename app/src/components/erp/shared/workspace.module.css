@@ -1036,3 +1036,16 @@
     }
 }
 
+.roleDataInlineActions {
+    min-height: 3.35rem;
+    align-self: end;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+@media (max-width: 550px) {
+    .roleDataInlineActions {
+        justify-content: flex-end;
+    }
+}
+
