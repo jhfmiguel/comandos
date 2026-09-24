@@ -137,7 +137,7 @@ export const WeaponsList: React.FC = () => {
                                     <td><div className="comandos-row-actions">
                                         {editing ? <>
                                             <button className="comandos-icon-button comandos-icon-button-success" type="button" aria-label="Save changes" onClick={()=>void saveEdit(weapon)}><Check size={19}/></button>
-                                            <button className="comandos-icon-button" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
+                                            <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
                                         </> : <>
                                             <button className="comandos-icon-button" type="button" aria-label="Edit weapon" onClick={()=>startEdit(weapon)}><Pencil size={19}/></button>
                                             <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete weapon" onClick={()=>weapon.id!=null&&setDeleteId(String(weapon.id))}><Trash size={19}/></button>
