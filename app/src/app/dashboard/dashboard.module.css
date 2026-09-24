@@ -1,10 +1,11 @@
 ﻿.dashboard {
     --accent: #ff9900;
-    --border: color-mix(in srgb, currentColor 14%, transparent);
+    --border: var(--comandos-border, color-mix(in srgb, currentColor 14%, transparent));
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
     width: 100%;
+    color: var(--comandos-text, inherit);
 }
 
 .hero {
@@ -61,7 +62,7 @@
 .card {
     border: 1px solid var(--border);
     border-radius: 1rem;
-    background: var(--p-content-background, #fff);
+    background: var(--comandos-surface, var(--p-content-background, #fff));
 }
 
 .kpi {
@@ -254,7 +255,7 @@
     width: 62%;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--p-content-background, #fff);
+    background: var(--comandos-surface, var(--p-content-background, #fff));
 }
 
 .donut > div {
@@ -347,4 +348,28 @@
     .readiness {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+
+:global(html[data-theme="dark"]) .dashboard {
+    --border: var(--comandos-border, #303842);
+    color: var(--comandos-text, #f3f5f7);
+}
+
+:global(html[data-theme="dark"]) .kpi,
+:global(html[data-theme="dark"]) .card,
+:global(html[data-theme="dark"]) .live,
+:global(html[data-theme="dark"]) .period,
+:global(html[data-theme="dark"]) .readiness div {
+    background: var(--comandos-surface, #171717);
+    color: var(--comandos-text, #f3f5f7);
+    border-color: var(--border);
+}
+
+:global(html[data-theme="dark"]) .donut::after {
+    background: var(--comandos-surface, #171717);
+}
+
+:global(html[data-theme="dark"]) .track {
+    background: var(--comandos-surface-3, #272e36);
 }
