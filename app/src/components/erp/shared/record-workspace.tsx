@@ -163,6 +163,40 @@ export function RecordWorkspace({
         startX: 0,
         scrollLeft: 0
     });
+    const tabsListRef = React.useRef<HTMLDivElement | null>(null);
+    const [tabScrollState, setTabScrollState] = React.useState({
+        overflow: false,
+        canPrevious: false,
+        canNext: false
+    });
+
+    const syncTabScroll = React.useCallback((element?: HTMLDivElement | null) => {
+        const target = element ?? tabsListRef.current;
+        if (!target) return;
+        const maxScroll = Math.max(target.scrollWidth - target.clientWidth, 0);
+        setTabScrollState({
+            overflow: maxScroll > 2,
+            canPrevious: target.scrollLeft > 2,
+            canNext: target.scrollLeft < maxScroll - 2
+        });
+    }, []);
+
+    const setTabsListElement = React.useCallback((element: HTMLDivElement | null) => {
+        tabsListRef.current = element;
+        if (element) {
+            requestAnimationFrame(() => syncTabScroll(element));
+        }
+    }, [syncTabScroll]);
+
+    const scrollTabs = React.useCallback((direction: -1 | 1) => {
+        const element = tabsListRef.current;
+        if (!element) return;
+        element.scrollBy({
+            left: direction * Math.max(element.clientWidth * 0.72, 220),
+            behavior: "smooth"
+        });
+        window.setTimeout(() => syncTabScroll(element), 220);
+    }, [syncTabScroll]);
 
     return (
 
@@ -252,51 +286,67 @@ export function RecordWorkspace({
 
                         {!!workspaceTabs.length ? (
                             <div className="comandos-tabs">
-                                <div
-                                    className="comandos-tabs-list"
-                                    role="tablist"
-                                    aria-label={tr(title)}
-                                    onWheel={event => {
-                                        const element = event.currentTarget;
-                                        if (element.scrollWidth <= element.clientWidth) return;
-                                        const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
-                                            ? event.deltaX
-                                            : event.deltaY;
-                                        if (!delta) return;
-                                        event.preventDefault();
-                                        element.scrollLeft += delta;
-                                    }}
-                                    onPointerDown={event => {
-                                        if (event.pointerType !== "mouse" || event.button !== 0) return;
-                                        const element = event.currentTarget;
-                                        tabsDragRef.current = {
-                                            active: true,
-                                            moved: false,
-                                            startX: event.clientX,
-                                            scrollLeft: element.scrollLeft
-                                        };
-                                        element.setPointerCapture(event.pointerId);
-                                        element.classList.add("is-dragging");
-                                    }}
-                                    onPointerMove={event => {
-                                        if (!tabsDragRef.current.active || event.pointerType !== "mouse") return;
-                                        const distance = event.clientX - tabsDragRef.current.startX;
-                                        if (Math.abs(distance) > 3) tabsDragRef.current.moved = true;
-                                        event.currentTarget.scrollLeft = tabsDragRef.current.scrollLeft - distance;
-                                    }}
-                                    onPointerUp={event => {
-                                        if (!tabsDragRef.current.active) return;
-                                        tabsDragRef.current.active = false;
-                                        event.currentTarget.classList.remove("is-dragging");
-                                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                                            event.currentTarget.releasePointerCapture(event.pointerId);
-                                        }
-                                    }}
-                                    onPointerCancel={event => {
-                                        tabsDragRef.current.active = false;
-                                        event.currentTarget.classList.remove("is-dragging");
-                                    }}
-                                >
+                                <div className="comandos-tabs-scroll-shell">
+                                    <button
+                                        type="button"
+                                        className={`comandos-tabs-scroll-button comandos-tabs-scroll-button-prev ${tabScrollState.overflow ? "is-visible" : ""}`}
+                                        aria-label={tr("Previous tabs")}
+                                        disabled={!tabScrollState.canPrevious}
+                                        onClick={() => scrollTabs(-1)}
+                                    >
+                                        <ChevronLeft size={18} />
+                                    </button>
+                                    <div
+                                        ref={setTabsListElement}
+                                        className="comandos-tabs-list"
+                                        role="tablist"
+                                        aria-label={tr(title)}
+                                        onScroll={event => syncTabScroll(event.currentTarget)}
+                                        onWheel={event => {
+                                            const element = event.currentTarget;
+                                            if (element.scrollWidth <= element.clientWidth) return;
+                                            const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+                                                ? event.deltaX
+                                                : event.deltaY;
+                                            if (!delta) return;
+                                            event.preventDefault();
+                                            element.scrollLeft += delta;
+                                            syncTabScroll(element);
+                                        }}
+                                        onPointerDown={event => {
+                                            if (event.pointerType !== "mouse" || event.button !== 0) return;
+                                            const element = event.currentTarget;
+                                            tabsDragRef.current = {
+                                                active: true,
+                                                moved: false,
+                                                startX: event.clientX,
+                                                scrollLeft: element.scrollLeft
+                                            };
+                                            element.setPointerCapture(event.pointerId);
+                                            element.classList.add("is-dragging");
+                                        }}
+                                        onPointerMove={event => {
+                                            if (!tabsDragRef.current.active || event.pointerType !== "mouse") return;
+                                            const distance = event.clientX - tabsDragRef.current.startX;
+                                            if (Math.abs(distance) > 3) tabsDragRef.current.moved = true;
+                                            event.currentTarget.scrollLeft = tabsDragRef.current.scrollLeft - distance;
+                                            syncTabScroll(event.currentTarget);
+                                        }}
+                                        onPointerUp={event => {
+                                            if (!tabsDragRef.current.active) return;
+                                            tabsDragRef.current.active = false;
+                                            event.currentTarget.classList.remove("is-dragging");
+                                            syncTabScroll(event.currentTarget);
+                                            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                                                event.currentTarget.releasePointerCapture(event.pointerId);
+                                            }
+                                        }}
+                                        onPointerCancel={event => {
+                                            tabsDragRef.current.active = false;
+                                            event.currentTarget.classList.remove("is-dragging");
+                                            syncTabScroll(event.currentTarget);
+                                        }}
+                                    >
                                     {workspaceTabs.map((tab) => {
                                         const tabResource = catalog.find(
                                             (item) =>
@@ -331,6 +381,16 @@ export function RecordWorkspace({
                                             </button>
                                         );
                                     })}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={`comandos-tabs-scroll-button comandos-tabs-scroll-button-next ${tabScrollState.overflow ? "is-visible" : ""}`}
+                                        aria-label={tr("Next tabs")}
+                                        disabled={!tabScrollState.canNext}
+                                        onClick={() => scrollTabs(1)}
+                                    >
+                                        <ChevronRight size={18} />
+                                    </button>
                                 </div>
                                 {workspaceTabs.map((tab) => {
                                     if (resolvedActiveTab !== tab.resource) return null;
