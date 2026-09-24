@@ -250,35 +250,41 @@ public class CoreService {
         var spec = CoreCatalog.get(resource);
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("core/" + resource, action);
+
+        Map<String, Object> input = new LinkedHashMap<>(data);
+        if (spec.entity() == Organization.class) {
+            normalizeLegacyOrganizationInput(input);
+        }
+
         Set<String> allowed = new HashSet<>(spec.fields().stream().map(CoreCatalog.Field::name).toList());
         allowed.add("version");
-        if (!allowed.containsAll(data.keySet())) bad("The form contains unsupported fields.");
-        lockScope(spec, id, data);
+        if (!allowed.containsAll(input.keySet())) bad("The form contains unsupported fields.");
+        lockScope(spec, id, input);
         CoreEntity entity;
         try {
             entity = id == null ? spec.entity().getConstructor().newInstance() : find(spec, id);
         } catch (ReflectiveOperationException ex) { throw new IllegalStateException(ex); }
         if (id != null) access.requireEntity("core/" + resource, action, entity);
-        if (id != null && !Objects.equals(entity.version, positiveLong(data.get("version"), "Version", true))) {
+        if (id != null && !Objects.equals(entity.version, positiveLong(input.get("version"), "Version", true))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This record has changed. Reload before saving.");
         }
         Map<String, Object> before = id == null ? null : view(spec, entity);
         if (entity instanceof PersonAddress address && id != null
-                && !Objects.equals(address.person.id, positiveLong(data.get("personId"), "Person", false)))
+                && !Objects.equals(address.person.id, positiveLong(input.get("personId"), "Person", false)))
             bad("An address cannot be transferred to another person.");
         if (entity instanceof PersonPhone phone && id != null
-                && !Objects.equals(phone.person.id, positiveLong(data.get("personId"), "Person", false)))
+                && !Objects.equals(phone.person.id, positiveLong(input.get("personId"), "Person", false)))
             bad("A phone cannot be transferred to another person.");
         if (entity instanceof PersonEmail email && id != null
-                && !Objects.equals(email.person.id, positiveLong(data.get("personId"), "Person", false)))
+                && !Objects.equals(email.person.id, positiveLong(input.get("personId"), "Person", false)))
             bad("An email cannot be transferred to another person.");
         for (var field : spec.fields()) {
-            boolean supplied = data.containsKey(field.name());
+            boolean supplied = input.containsKey(field.name());
             if (!supplied) {
                 if (field.required() && id == null) bad(field.label() + " is required.");
                 continue;
             }
-            Object raw = data.get(field.name());
+            Object raw = input.get(field.name());
             if (field.type().equals("password")) {
                 if (id != null && (raw == null || "".equals(raw))) continue;
                 if (!(raw instanceof String)) bad("Enter a password.");
@@ -317,7 +323,7 @@ public class CoreService {
         em.flush();
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
-        if (entity instanceof SystemUser && data.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
+        if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
         audit.record("core/" + resource, entity.id, action, before, auditResult);
         return result;
     }
@@ -581,7 +587,7 @@ public class CoreService {
         if (spec.entity() == PersonAddress.class
                 || spec.entity() == PersonPhone.class
                 || spec.entity() == PersonEmail.class) {
-            var person = em.find(Person.class, positiveLong(data.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
+            var person = em.find(Person.class, positiveLong(input.get("personId"), "Person", false), LockModeType.PESSIMISTIC_WRITE);
             if (person == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found.");
             access.requireEntity("core/people", "READ", person);
             return;
