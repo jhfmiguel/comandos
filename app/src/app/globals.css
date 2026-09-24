@@ -1289,7 +1289,7 @@ form[data-comandos-erp-form="true"] textarea[readonly] {
  * Botoes normais de formulario seguem Save/Back de /registrations/users.
  * Botoes explicitamente danger ficam preservados para nao perder semantica.
  */
-form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]) {
+form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):not(.comandos-icon-button):not([data-comandos-table-action]) {
     background-color: #ff9900 !important;
     border-color: #ff9900 !important;
     color: #1f1f1f !important;
@@ -1300,19 +1300,19 @@ form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-sever
         box-shadow 0.2s ease !important;
 }
 
-form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):hover:not(:disabled) {
+form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):not(.comandos-icon-button):not([data-comandos-table-action]):hover:not(:disabled) {
     background-color: #e68a00 !important;
     border-color: #e68a00 !important;
     color: #1f1f1f !important;
 }
 
-form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):active:not(:disabled) {
+form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):not(.comandos-icon-button):not([data-comandos-table-action]):active:not(:disabled) {
     background-color: #cc7a00 !important;
     border-color: #cc7a00 !important;
     color: #1f1f1f !important;
 }
 
-form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):focus-visible {
+form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):not(.comandos-icon-button):not([data-comandos-table-action]):focus-visible {
     background-color: #ff9900 !important;
     border-color: #ff9900 !important;
     color: #1f1f1f !important;
@@ -1320,7 +1320,7 @@ form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-sever
     outline: none !important;
 }
 
-form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):disabled {
+form[data-comandos-erp-form="true"] button:not(.p-button-danger):not([data-severity="danger"]):not(.comandos-icon-button):not([data-comandos-table-action]):disabled {
     background-color: #ff9900 !important;
     border-color: #ff9900 !important;
     color: #1f1f1f !important;
