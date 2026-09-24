@@ -2,6 +2,7 @@ package com.comandos.demo;
 
 import com.comandos.core.model.EconomicActivity;
 import com.comandos.core.model.OrganizationNature;
+import com.comandos.core.model.OrganizationalUnitType;
 import com.comandos.inventory.model.ArmamentParameter;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,14 @@ public class ReferenceDataDemoSeeder implements ApplicationRunner {
         economicActivity("PUBLIC_ADMIN", "Administração pública em geral");
         economicActivity("SECURITY_SERVICES", "Atividades de segurança e proteção");
         economicActivity("EQUIPMENT_TRADE", "Comércio especializado de equipamentos");
+
+        unitType("DIRETORIA", "Diretoria", "Unidade organizacional de nível diretivo");
+        unitType("GERENCIA", "Gerência", "Unidade organizacional de nível gerencial");
+        unitType("COORDENACAO", "Coordenação", "Unidade organizacional de coordenação");
+        unitType("CENTRO", "Centro", "Centro especializado ou de treinamento");
+        unitType("NUCLEO", "Núcleo", "Núcleo técnico ou operacional");
+        unitType("SETOR", "Setor", "Setor administrativo ou operacional");
+        unitType("UNIDADE", "Unidade", "Unidade organizacional genérica");
 
         parameter("CALIBER", "9X19", "9x19 mm", "Calibre de demonstração");
         parameter("CALIBER", "40SW", ".40 S&W", "Calibre alternativo de demonstração");
@@ -122,6 +131,16 @@ public class ReferenceDataDemoSeeder implements ApplicationRunner {
         if (count("select count(a) from EconomicActivity a where a.code = :code", code) > 0) return;
         EconomicActivity value = new EconomicActivity();
         value.code = code;
+        value.description = description;
+        value.active = true;
+        entityManager.persist(value);
+    }
+
+    private void unitType(String code, String name, String description) {
+        if (count("select count(t) from OrganizationalUnitType t where t.code = :code", code) > 0) return;
+        OrganizationalUnitType value = new OrganizationalUnitType();
+        value.code = code;
+        value.name = name;
         value.description = description;
         value.active = true;
         entityManager.persist(value);
