@@ -14,10 +14,6 @@ import { convertToIsoDate, formatDate } from "utils/date";
 import axios from "axios";
 
 import {
-    ChevronsLeft,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsRight,
     Plus,
     Pencil,
     Trash2
@@ -26,6 +22,7 @@ import {
 import { Layout } from "components/layout";
 import { StockIntakeEditor } from "components/erp/inventory/stock-intake-editor";
 import { Message } from "components/common/message";
+import { Pagination } from "platform/components/pagination";
 import { useSession } from "components/auth/session-provider";
 import { useComandosPreferences } from "components/settings/preferences-provider";
 import type { ErpField, ErpPage, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
@@ -575,7 +572,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                             <div className={`${styles.actions} ${styles.tableActions}`}>
                                                 <button
                                                     type="button"
-                                                    className="comandos-icon-button"
+                                                    className="comandos-icon-button comandos-icon-button-edit"
                                                     aria-label={`${tr("Edit")} ${record.label}`}
                                                     disabled={!allowed("UPDATE")}
                                                     onClick={() => setEditor({ record })}
@@ -600,53 +597,23 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                     </table>
                 </div>
 
-                <div className="comandos-pagination">
-                    <div className="comandos-pagination-controls">
-                        <button
-                            type="button"
-                            className="comandos-icon-button"
-                            aria-label="First page"
-                            disabled={page === 0}
-                            onClick={() => { setLoading(true); setPage(0); }}
-                        >
-                            <ChevronsLeft size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            className="comandos-icon-button"
-                            aria-label="Previous page"
-                            disabled={page === 0}
-                            onClick={() => { setLoading(true); setPage(value => Math.max(0, value - 1)); }}
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                        <span>
-                            {tr("Page")} {page + 1} / {Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
-                        </span>
-                        <button
-                            type="button"
-                            className="comandos-icon-button"
-                            aria-label="Next page"
-                            disabled={page + 1 >= Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
-                            onClick={() => { setLoading(true); setPage(value => value + 1); }}
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            className="comandos-icon-button"
-                            aria-label="Last page"
-                            disabled={page + 1 >= Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)), 1)}
-                            onClick={() => {
-                                setLoading(true);
-                                setPage(Math.max(Math.ceil((result?.totalElements ?? 0) / (result?.size ?? 10)) - 1, 0));
-                            }}
-                        >
-                            <ChevronsRight size={18} />
-                        </button>
-                    </div>
-                    <span>Total records: {result?.totalElements ?? 0}</span>
-                </div>
+                <Pagination
+                    page={page}
+                    totalElements={result?.totalElements ?? 0}
+                    pageSize={result?.size ?? 10}
+                    disabled={loading}
+                    onPageChange={(nextPage) => {
+                        setLoading(true);
+                        setPage(nextPage);
+                    }}
+                    labels={{
+                        totalRecords: tr("Total records"),
+                        first: tr("First page"),
+                        previous: tr("Previous page"),
+                        next: tr("Next page"),
+                        last: tr("Last page")
+                    }}
+                />
 
                 {loading && <p role="status">Loading recordsâ€¦</p>}
 
