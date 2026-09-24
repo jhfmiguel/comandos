@@ -18,7 +18,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     const [sidebarOpen, setSidebarOpen] = useState(true)
 
     return (
-        <div className="min-h-screen">
+        <div className="comandos-app-layout min-h-screen">
             <Menu open={sidebarOpen} onOpenChange={setSidebarOpen} />
 
             <main className="comandos-sidebar-main pt-0">
