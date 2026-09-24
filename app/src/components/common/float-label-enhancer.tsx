@@ -67,8 +67,23 @@ const resolveLabel = (control: FloatControl): {
 };
 
 const chooseHost = (control: FloatControl): HTMLElement | null => {
+    const explicit = control.closest("[data-comandos-field]") as HTMLElement | null;
+    if (explicit && explicit.querySelectorAll(CONTROL_SELECTOR).length <= 1) {
+        return explicit;
+    }
+
+    const linkedLabel = control.labels?.[0] ?? null;
+    const labelParent = linkedLabel?.parentElement ?? null;
+    if (
+        labelParent
+        && labelParent.contains(control)
+        && labelParent.querySelectorAll(CONTROL_SELECTOR).length <= 1
+    ) {
+        return labelParent;
+    }
+
     const preferred = control.closest(
-        ".field, .registration-field, [data-comandos-field], .comandos-field, td, th"
+        ".field, .registration-field, .comandos-field, td, th"
     ) as HTMLElement | null;
 
     if (preferred) {
