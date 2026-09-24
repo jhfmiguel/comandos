@@ -448,7 +448,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
+                <div className={`comandos-native-table-container ${styles.contactTableScroll} ${styles.phoneTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.phoneTable}`}>
                         <thead>
                             <tr>
@@ -566,7 +566,7 @@ export function PersonContactsEditor({
                     </button>
                 </div>
 
-                <div className={`comandos-native-table-container ${styles.contactTableScroll}`}>
+                <div className={`comandos-native-table-container ${styles.contactTableScroll} ${styles.emailTableScroll}`}>
                     <table className={`comandos-native-table ${styles.contactTable} ${styles.emailTable}`}>
                         <thead>
                             <tr>
