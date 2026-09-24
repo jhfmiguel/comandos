@@ -36,7 +36,7 @@ export type EmailDraft = {
 };
 
 const newAddress = (primary: boolean): AddressDraft => ({
-    type: "RESIDENTIAL",
+    type: "",
     foreignAddress: false,
     country: "Brasil",
     postalCode: "",
@@ -50,7 +50,7 @@ const newAddress = (primary: boolean): AddressDraft => ({
 });
 
 const newPhone = (primary: boolean): PhoneDraft => ({
-    type: "MOBILE",
+    type: "",
     countryCode: "+55",
     number: "",
     whatsapp: false,
@@ -58,7 +58,7 @@ const newPhone = (primary: boolean): PhoneDraft => ({
 });
 
 const newEmail = (primary: boolean): EmailDraft => ({
-    type: "PERSONAL",
+    type: "",
     email: "",
     primaryEmail: primary
 });
