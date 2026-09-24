@@ -997,3 +997,42 @@
     }
 }
 
+.contactTypeError {
+    display: block;
+    margin: 0 0 .5rem;
+    color: #ef4444;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+/* One shared parameter catalog controls address, phone and e-mail types. */
+.fields[data-comandos-resource="contact-types"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="code"],
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="name"] {
+    grid-column: span 2;
+}
+
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="description"] {
+    grid-column: 1 / -1;
+}
+
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="addressEnabled"],
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="phoneEnabled"],
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="emailEnabled"],
+.fields[data-comandos-resource="contact-types"] .field[data-comandos-field-name="active"] {
+    grid-column: span 1;
+}
+
+@media (max-width: 700px) {
+    .fields[data-comandos-resource="contact-types"] {
+        grid-template-columns: 1fr;
+    }
+
+    .fields[data-comandos-resource="contact-types"] .field {
+        grid-column: 1 / -1 !important;
+    }
+}
+
