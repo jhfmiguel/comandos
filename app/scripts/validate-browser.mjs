@@ -157,7 +157,18 @@ async function main() {
 
         await assertSelectLabelInside('core-natureId');
         await assertSelectLabelInside('core-economicActivityId');
-        console.log('PASS organization select labels: Nature and Economic activity stay inside before/after click');
+
+        const natureBox = await page.locator('#core-natureId').boundingBox();
+        const activityBox = await page.locator('#core-economicActivityId').boundingBox();
+        const nameBox = await page.locator('#core-name').boundingBox();
+        assert.ok(natureBox && activityBox && nameBox, 'Organization fields must be visible');
+        assert.ok(
+            Math.abs(natureBox.height - activityBox.height) <= 1
+            && Math.abs(natureBox.height - nameBox.height) <= 1,
+            `Organization field heights must match: nature=${natureBox.height}, activity=${activityBox.height}, name=${nameBox.height}`
+        );
+
+        console.log('PASS organization select labels and heights: select fields match regular inputs');
 
         await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
 
