@@ -7361,3 +7361,77 @@ form[data-comandos-erp-form="true"] .comandos-composed-select:focus-within > .co
     color: var(--comandos-accent, #ff9900) !important;
     font-size: .72rem !important;
 }
+
+
+/* TABLE ACTION ICON HOVER — BRIGHT GLOW V8
+ * Action buttons remain icon-only. Hover/focus brightens the semantic color
+ * and adds a soft glow; it never darkens or draws a box/background.
+ */
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action],
+html[data-theme] body table td button.comandos-icon-button {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    transition:
+        color .16s ease,
+        filter .16s ease,
+        text-shadow .16s ease,
+        transform .16s ease !important;
+}
+
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled),
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:focus-visible,
+html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled),
+html[data-theme] body table td button.comandos-icon-button:focus-visible {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: color-mix(
+        in srgb,
+        var(--comandos-table-action-color, currentColor) 72%,
+        #ffffff 28%
+    ) !important;
+    filter:
+        brightness(1.28)
+        drop-shadow(
+            0 0 .28rem
+            color-mix(
+                in srgb,
+                var(--comandos-table-action-color, currentColor) 74%,
+                transparent
+            )
+        ) !important;
+    text-shadow:
+        0 0 .42rem
+        color-mix(
+            in srgb,
+            var(--comandos-table-action-color, currentColor) 62%,
+            transparent
+        ) !important;
+    transform: translateY(-1px);
+}
+
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:hover:not(:disabled) svg,
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:focus-visible svg,
+html[data-theme] body table td button.comandos-icon-button:hover:not(:disabled) svg,
+html[data-theme] body table td button.comandos-icon-button:focus-visible svg {
+    filter:
+        brightness(1.32)
+        drop-shadow(
+            0 0 .32rem
+            color-mix(
+                in srgb,
+                var(--comandos-table-action-color, currentColor) 82%,
+                transparent
+            )
+        ) !important;
+}
+
+html[data-theme] body table td .comandos-action-button[data-comandos-table-action]:active:not(:disabled),
+html[data-theme] body table td button.comandos-icon-button:active:not(:disabled) {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    filter: brightness(1.12) !important;
+    transform: translateY(0);
+}
