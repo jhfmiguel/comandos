@@ -689,16 +689,23 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                 onSaved={quantity => { setIntake(false); setNotice({ type: "success", text: resource.key === "assets"
                     ? `${quantity} individual assets registered successfully.` : `${quantity} rounds received successfully.` }); refresh(); }} />}
             {editor &&
-            <RecordEditor 
-                resource={resource} 
-                service={service} 
-                record={editor.record} 
-                onCancel={() => setEditor(null)} 
-                onSaved={() => {
-                    setEditor(null); 
-                    setNotice({ type: "success", text: "Record saved successfully." }); 
+            <RecordEditor
+                key={editor.record?.id ?? "new"}
+                resource={resource}
+                service={service}
+                record={editor.record}
+                onCancel={() => setEditor(null)}
+                onSaved={(savedRecord) => {
+                    setNotice({ type: "success", text: "Record saved successfully." });
                     refresh();
-                }} 
+
+                    if (resource.key === "recalls" && !editor.record && savedRecord) {
+                        setEditor({ record: savedRecord });
+                        return;
+                    }
+
+                    setEditor(null);
+                }}
             />
             }
             
@@ -764,11 +771,11 @@ const equipmentModelFamilies: Record<string, string> = {
 
 function RecordEditor({ resource, service, record, onCancel, onSaved }: {
 
-    resource: ErpResource; 
-    service: ErpService; 
-    record?: ErpRecord; 
-    onCancel: () => void; 
-    onSaved: () => void;
+    resource: ErpResource;
+    service: ErpService;
+    record?: ErpRecord;
+    onCancel: () => void;
+    onSaved: (savedRecord?: ErpRecord) => void;
 
 }) {
 
@@ -861,7 +868,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
             <div
                 role="dialog"
                 aria-modal="true"
-                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""}`}
+                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""} ${resource.key === "recalls" ? styles.recallDialog : ""}`}
             >
             
                 <div className="comandos-native-dialog-header">
@@ -897,21 +904,22 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                                     return [field.name, value];
                                                 })
                                         );
+                                        let savedRecord: ErpRecord;
                                         if (isNewPerson) {
-                                            await service.savePersonWithContacts({
+                                            savedRecord = await service.savePersonWithContacts({
                                                 person: payload,
                                                 addresses: personAddresses as unknown as Array<Record<string, ErpValue>>,
                                                 phones: personPhones as unknown as Array<Record<string, ErpValue>>,
                                                 emails: personEmails as unknown as Array<Record<string, ErpValue>>
                                             });
                                         } else {
-                                            await service.save(
+                                            savedRecord = await service.save(
                                                 resource.key,
                                                 { ...payload, ...(record ? { version: record.version } : {}) },
                                                 record?.id
                                             );
                                         }
-                                        onSaved();
+                                        onSaved(savedRecord);
                                     } catch (error) { setError(errorMessage(error)); }
                                     finally { saving.current = false; setBusy(false); }
                             }}>
@@ -1134,6 +1142,20 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                         setPhones={setPersonPhones}
                                         emails={personEmails}
                                         setEmails={setPersonEmails}
+                                    />
+                                )}
+
+                                {resource.key === "recalls" && record && (
+                                    <RecallItemsEditor
+                                        recall={record}
+                                        service={service}
+                                    />
+                                )}
+
+                                {resource.key === "recalls" && !record && (
+                                    <Message
+                                        type="info"
+                                        text="Salve o recall para adicionar os bens e lotes afetados. O formulário continuará aberto após o primeiro salvamento."
                                     />
                                 )}
 
