@@ -383,6 +383,19 @@ public class CoreService {
                 );
             }
         }
+        if (entity instanceof EconomicActivity activity) {
+            long links = em.createQuery(
+                    "select count(o) from Organization o where o.economicActivity.id = :id",
+                    Long.class)
+                .setParameter("id", activity.id)
+                .getSingleResult();
+            if (links > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Economic activity is in use and cannot be deleted."
+                );
+            }
+        }
         if (entity instanceof PersonAddress address) {
             em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
             address.archived = true;
@@ -409,8 +422,25 @@ public class CoreService {
                 );
             }
         }
+        if (entity instanceof EconomicActivity activity) {
+            activity.code = activity.code.toUpperCase(Locale.ROOT);
+            long duplicates = em.createQuery(
+                    "select count(a) from EconomicActivity a where a.code = :code and a.id <> :id",
+                    Long.class)
+                .setParameter("code", activity.code)
+                .setParameter("id", activity.id == null ? -1L : activity.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT)
+                .getSingleResult();
+            if (duplicates > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Economic activity code is already registered."
+                );
+            }
+        }
         if (entity instanceof Organization organization) {
             if (organization.nature == null) bad("Nature is required.");
+            if (organization.economicActivity == null) bad("Economic activity is required.");
             organization.legacyNature = organization.nature.name;
         }
         if (entity instanceof PersonAddress address) {
@@ -594,6 +624,8 @@ public class CoreService {
     }
 
     private String label(CoreCatalog.Resource spec, CoreEntity entity) {
+        if (entity instanceof EconomicActivity activity)
+            return activity.code + " - " + activity.description + " (#" + entity.id + ")";
         if (entity instanceof Permission permission) return permission.resource + " / " + permission.action + " (#" + entity.id + ")";
         if (entity instanceof UserProfile assignment) return assignment.user.login + " / " + assignment.profile.name + " (#" + entity.id + ")";
         if (entity instanceof ProfilePermission assignment) return assignment.profile.name + " / " + assignment.permission.resource + " / " + assignment.permission.action + " (#" + entity.id + ")";
