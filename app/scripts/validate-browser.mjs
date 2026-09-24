@@ -641,6 +641,30 @@ async function main() {
         }
         console.log('PASS recalls: affected assets and lots are a visible recall section');
 
+        const nestedEditorTabs = [
+            ['/erp/inventory?section=inventory&resource=equipment-sets', /Dados do conjunto/i, /Componentes do conjunto/i],
+            ['/erp/inventory?section=catalog&resource=item-categories', /Dados da categoria/i, /Características aplicáveis/i],
+            ['/erp/inventory?section=catalog&resource=item-models', /Dados do modelo/i, /Especificações e características/i],
+            ['/erp/inventory?section=inventory&resource=individual-assets', /Dados do bem/i, /Características do bem/i],
+            ['/erp/core?section=people&resource=person-roles', /Dados do vínculo/i, /Dados complementares/i]
+        ];
+
+        for (const [path, dataTab, childTab] of nestedEditorTabs) {
+            await page.goto(`${appURL}${path}`);
+            const firstEdit = page.locator('table tbody tr button.comandos-icon-button-edit').first();
+            if (await firstEdit.count()) {
+                await firstEdit.click();
+                await page.getByRole('tab', { name: dataTab }).waitFor();
+                assert.equal(
+                    await page.getByRole('tab', { name: childTab }).count(),
+                    1,
+                    `${path}: nested child content must be exposed as the second editor tab`
+                );
+                await page.getByRole('button', { name: /Cancel|Cancelar|Close|Fechar/i }).first().click();
+            }
+        }
+        console.log('PASS nested editors: parent and child data use the two-tab pattern');
+
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
             ['/erp/sales', 'Inventory sales'], ['/erp/ammunition-consumption', 'Ammunition consumption'],
