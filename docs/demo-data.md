@@ -97,9 +97,32 @@ Ao iniciar a API com `scripts/start-with-demo-data.ps1`, a carga ativa também:
 - manutenção;
 - auditoria e entidades auxiliares restantes por cobertura automática.
 
-Depois de todos os seeders curados, o `DemoCoverageSeeder` percorre todas as entidades JPA do pacote `com.comandos`. Para qualquer entidade ainda sem registros, ele tenta criar um exemplo didático. Se alguma entidade continuar vazia, a inicialização falha e informa explicitamente quais tabelas/entidades ainda precisam de tratamento.
+Depois de todos os seeders curados, o `DemoCoverageSeeder` percorre todas as entidades JPA do pacote `com.comandos`. Para qualquer entidade ainda sem registros, ele tenta criar um exemplo didático. Em seguida, tenta elevar cada entidade para pelo menos 3 registros quando as regras de unicidade e relacionamentos permitem. Tabelas que representam relações estritamente 1:1 podem permanecer com menos registros, mas nunca vazias.
+
+O `DemoCoverageVerifier` roda por último. Se qualquer entidade JPA funcional continuar sem registro, a inicialização falha e informa explicitamente quais tabelas/entidades ainda precisam de tratamento.
 
 Isso transforma a ausência de dados em erro visível durante a carga de demonstração, em vez de deixar telas vazias silenciosamente.
+
+## Dashboard alimentado pelo banco
+
+O dashboard consulta `GET /api/dashboard` e não usa mais números fixos no frontend.
+
+Os indicadores e gráficos são calculados a partir das tabelas reais do ERP:
+
+- bens totais e disponíveis;
+- cautelas ativas;
+- ordens de manutenção abertas;
+- lotes e saldos;
+- evolução mensal de movimentações e cautelas;
+- bens por categoria;
+- situação dos bens;
+- valor patrimonial por categoria;
+- composição do estoque entre disponível, reservado e bloqueado;
+- distribuição por local;
+- volume por operação;
+- lotes por faixa de validade.
+
+A carga demo inclui histórico distribuído pelos últimos 12 meses e lotes em diferentes faixas de validade para que os gráficos possam ser testados visualmente logo após a inicialização.
 
 ## Dados reais x dados fictícios
 
