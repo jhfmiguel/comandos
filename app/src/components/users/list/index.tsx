@@ -2,7 +2,8 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react"
+import { Trash } from "@primeicons/react"
 
 import { Layout, Loader } from "components"
 import type { User } from "api/models/users"
@@ -193,7 +194,7 @@ export const UsersList: React.FC = () => {
                                                 <button className="comandos-icon-button" type="button" aria-label="Cancel editing" onClick={cancelEdit}><X size={19}/></button>
                                             </> : <>
                                                 <button className="comandos-icon-button" type="button" aria-label="Edit user" onClick={()=>startEdit(user)}><Pencil size={19}/></button>
-                                                <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete user" onClick={()=>user.id!=null&&setDeleteId(user.id)}><Trash2 size={19}/></button>
+                                                <button className="comandos-icon-button comandos-icon-button-danger" type="button" aria-label="Delete user" onClick={()=>user.id!=null&&setDeleteId(user.id)}><Trash size={19}/></button>
                                             </>}
                                         </div>
                                     </td>
