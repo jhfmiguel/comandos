@@ -44,6 +44,19 @@ const organizationalUnitTypeResource: ErpResource = {
     ]
 }
 
+
+const personTypeResource: ErpResource = {
+    key: "person-types",
+    label: "Person types",
+    group: "People",
+    fields: [
+        { name: "code", label: "Code", type: "text", required: true, reference: null, choices: [] },
+        { name: "name", label: "Name", type: "text", required: true, reference: null, choices: [] },
+        { name: "description", label: "Description", type: "text", required: false, reference: null, choices: [] },
+        { name: "active", label: "Active", type: "boolean", required: true, reference: null, choices: [] }
+    ]
+}
+
 const sectionTabs: Record<
     string,
     Array<{
@@ -84,7 +97,8 @@ const sectionTabs: Record<
         },
         {
             resource: "person-types",
-            label: "Person types"
+            label: "Person types",
+            definition: personTypeResource
         },
         {
             resource: "roles",
