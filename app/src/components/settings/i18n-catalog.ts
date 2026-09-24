@@ -28,6 +28,7 @@ export const translationPairs: TranslationPair[] = [
     ["Access", "Acesso"],
     ["System users", "Usuários do sistema"],
     ["Access profiles", "Perfis de acesso"],
+    ["Access profile levels", "Níveis de perfil de acesso"],
     ["Permissions", "Permissões"],
     ["User profiles", "Perfis de usuário"],
     ["Profile permissions", "Permissões de perfil"],
