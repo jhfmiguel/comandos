@@ -142,7 +142,35 @@
 }
 
 .addressTable {
-    min-width: 104rem;
+    min-width: 96rem;
+}
+
+.addressPostalCell {
+    width: 9rem;
+    min-width: 9rem;
+    max-width: 9rem;
+}
+
+.addressNumberCell {
+    width: 6.25rem;
+    min-width: 6.25rem;
+    max-width: 6.25rem;
+}
+
+.addressStateCell {
+    width: 6.75rem;
+    min-width: 6.75rem;
+    max-width: 6.75rem;
+}
+
+.addressPostalCell input,
+.addressPostalCell select,
+.addressNumberCell input,
+.addressNumberCell select,
+.addressStateCell input,
+.addressStateCell select {
+    min-width: 0 !important;
+    width: 100% !important;
 }
 
 .phoneTable {
