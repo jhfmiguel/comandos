@@ -329,6 +329,7 @@ public class InventoryService {
         var spec = InventoryCatalog.get(resource);
         access.requireAny("inventory/" + resource, "READ");
         var entity = find(spec.entity(), id);
+        requireResourceDiscriminator(spec, entity);
         access.requireEntity("inventory/" + resource, "READ", entity);
         return view(spec, entity);
     }
