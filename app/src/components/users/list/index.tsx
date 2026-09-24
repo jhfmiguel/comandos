@@ -2,10 +2,11 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { Check, ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react"
+import { Check, Pencil, Plus, X } from "lucide-react"
 import { Trash } from "@primeicons/react"
 
 import { Layout, Loader } from "components"
+import { Pagination } from "platform/components/pagination"
 import type { User } from "api/models/users"
 import { useUserService } from "api/services/user.service"
 
@@ -205,17 +206,27 @@ export const UsersList: React.FC = () => {
                     </table>
                 </div>
 
-                <div className="comandos-pagination">
-                    <div className="comandos-pagination-controls">
-                        <button className="comandos-icon-button" type="button" disabled={page===0} onClick={()=>{setPage(page-1);void load(filters,page-1,rows)}}><ChevronLeft size={18}/></button>
-                        <span>Page {page+1} of {totalPages}</span>
-                        <button className="comandos-icon-button" type="button" disabled={page+1>=totalPages} onClick={()=>{setPage(page+1);void load(filters,page+1,rows)}}><ChevronRight size={18}/></button>
-                        <select className="comandos-input comandos-page-size" value={rows} onChange={e=>{const next=Number(e.target.value);setRows(next);setPage(0);void load(filters,0,next)}}>
-                            {[10,20,50,100].map(size=><option key={size} value={size}>{size}</option>)}
-                        </select>
-                    </div>
-                    <span>Total records: {totalRecords}</span>
-                </div>
+                <Pagination
+                    page={page}
+                    totalElements={totalRecords}
+                    pageSize={rows}
+                    onPageChange={(nextPage) => {
+                        setPage(nextPage)
+                        void load(filters, nextPage, rows)
+                    }}
+                    onPageSizeChange={(nextRows) => {
+                        setRows(nextRows)
+                        setPage(0)
+                        void load(filters, 0, nextRows)
+                    }}
+                    labels={{
+                        totalRecords: "registros",
+                        first: "Primeira página",
+                        previous: "Página anterior",
+                        next: "Próxima página",
+                        last: "Última página"
+                    }}
+                />
             </div>
 
             {deleteId !== null && <div className="comandos-dialog-layer">
