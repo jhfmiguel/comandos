@@ -55,6 +55,10 @@ const sectionTabs: Record<
             label: "Organizations"
         },
         {
+            resource: "unit-types",
+            label: "Organizational unit types"
+        },
+        {
             resource: "units",
             label: "Organizational units"
         }
