@@ -49,6 +49,11 @@ public class InventoryService {
         List<String> clauses = new ArrayList<>();
         Map<String, Object> parameters = new LinkedHashMap<>();
 
+        if (spec.discriminator() != null) {
+            clauses.add("e.parameterType = :resourceDiscriminator");
+            parameters.put("resourceDiscriminator", spec.discriminator());
+        }
+
         // Assets inherit their organizational unit from their current location.
         String unit = requestParams.get("filter.unit");
         if ("assets".equals(resource) && unit != null && !unit.isBlank()) {
@@ -363,7 +368,13 @@ public class InventoryService {
         CoreEntity entity;
         try { entity = id == null ? spec.entity().getConstructor().newInstance() : find(spec.entity(), id); }
         catch (ReflectiveOperationException ex) { throw new IllegalStateException(ex); }
-        if (id != null) access.requireEntity("inventory/" + resource, action, entity);
+        if (id != null) {
+            requireResourceDiscriminator(spec, entity);
+            access.requireEntity("inventory/" + resource, action, entity);
+        }
+        if (id == null && entity instanceof ArmamentParameter parameter && spec.discriminator() != null) {
+            parameter.parameterType = spec.discriminator();
+        }
         Map<String, Object> previous = id == null ? Map.of() : view(spec, entity);
         if (id != null && !Objects.equals(entity.version, integer(data.get("version"), true))) conflict("This record has changed. Reload before saving.");
         for (var field : spec.fields()) {
@@ -422,6 +433,7 @@ public class InventoryService {
         writable(spec);
         lockCatalog();
         var entity = find(spec.entity(), id);
+        requireResourceDiscriminator(spec, entity);
         access.requireEntity("inventory/" + resource, "DELETE", entity);
         if (!Objects.equals(entity.version, version)) conflict("This record has changed. Reload before deleting.");
         rules.beforeDelete(entity);
@@ -439,6 +451,8 @@ public class InventoryService {
         // Serialize schema and asset writes before reading related category rows.
         // This also prevents concurrent parent changes from creating a cycle.
         em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        em.createQuery("select p from ArmamentParameter p order by p.id", ArmamentParameter.class)
             .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
     }
 
@@ -465,7 +479,7 @@ public class InventoryService {
             if (field.required()) bad(field.label() + " is required.");
             return null;
         }
-        if (field.reference() != null) return find(referenceClass(field.reference()), integer(raw, false));
+        if (field.reference() != null) return findReference(field.reference(), integer(raw, false));
         if (field.type().equals("boolean")) {
             if (!(raw instanceof Boolean)) bad(field.label() + " must be true or false.");
             return raw;
@@ -495,6 +509,24 @@ public class InventoryService {
 
     private Class<? extends CoreEntity> referenceClass(String reference) {
         return reference.startsWith("core/") ? CoreCatalog.get(reference.substring(5)).entity() : InventoryCatalog.get(reference).entity();
+    }
+
+    private CoreEntity findReference(String reference, long id) {
+        if (reference.startsWith("core/")) {
+            return find(referenceClass(reference), id);
+        }
+        var target = InventoryCatalog.get(reference);
+        var entity = find(target.entity(), id);
+        requireResourceDiscriminator(target, entity);
+        return entity;
+    }
+
+    private void requireResourceDiscriminator(InventoryCatalog.Resource spec, CoreEntity entity) {
+        if (spec.discriminator() == null) return;
+        if (!(entity instanceof ArmamentParameter parameter)
+                || !Objects.equals(spec.discriminator(), parameter.parameterType)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Referenced record not found.");
+        }
     }
 
     private CoreEntity find(Class<? extends CoreEntity> type, long id) {
@@ -549,6 +581,7 @@ public class InventoryService {
         if (entity instanceof CertificationRecord certification) name = certification.type + " / " + certification.number;
         if (entity instanceof Recall recall) name = recall.number;
         if (entity instanceof RecallItem item) name = item.recall.number + " / " + (item.asset == null ? item.lot.lotNumber : item.asset.assetCode);
+        if (entity instanceof ArmamentParameter parameter) name = parameter.code + " / " + parameter.name;
         if (entity instanceof ReservationStatusType status) name = status.code + " / " + status.name;
         if (entity instanceof InventoryCountStatusType status) name = status.code + " / " + status.name;
         if (entity instanceof InventoryCountResultType result) name = result.code + " / " + result.name;
