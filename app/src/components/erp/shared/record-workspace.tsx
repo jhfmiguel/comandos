@@ -17,7 +17,8 @@ import axios from "axios";
 import {
     CircleHelp,
     Plus,
-    Pencil
+    Pencil,
+    ListChecks
 } from "lucide-react";
 import { Trash } from "@primeicons/react";
 
@@ -489,7 +490,10 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
     const [loading, setLoading] = React.useState(true);
     const [revision, setRevision] = React.useState(0);
     const [notice, setNotice] = React.useState<{ type: string; text: string } | null>(null);
-    const [editor, setEditor] = React.useState<{ record?: ErpRecord } | null>(null);
+    const [editor, setEditor] = React.useState<{
+        record?: ErpRecord;
+        section?: "data" | "children";
+    } | null>(null);
     const [intake, setIntake] = React.useState(false);
     const [deleting, setDeleting] = React.useState<ErpRecord | null>(null);
     const [busy, setBusy] = React.useState(false);
@@ -641,12 +645,24 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                                     {!resource.readOnly && (
                                         <td className={styles.actionCell}>
                                             <div className={`${styles.actions} ${styles.tableActions}`}>
+                                                {resource.key === "recalls" && (
+                                                    <button
+                                                        type="button"
+                                                        className="comandos-icon-button"
+                                                        data-comandos-table-action="details"
+                                                        aria-label="Bens e lotes afetados"
+                                                        title="Bens e lotes afetados"
+                                                        onClick={() => setEditor({ record, section: "children" })}
+                                                    >
+                                                        <ListChecks size={18} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
                                                     className="comandos-icon-button comandos-icon-button-edit"
                                                     aria-label={`${tr("Edit")} ${record.label}`}
                                                     disabled={!allowed("UPDATE")}
-                                                    onClick={() => setEditor({ record })}
+                                                    onClick={() => setEditor({ record, section: "data" })}
                                                 >
                                                     <Pencil size={18} />
                                                 </button>
@@ -701,6 +717,7 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                 resource={resource}
                 service={service}
                 record={editor.record}
+                initialSection={editor.section}
                 onCancel={() => setEditor(null)}
                 onSaved={(savedRecord) => {
                     setNotice({ type: "success", text: "Record saved successfully." });
@@ -711,7 +728,10 @@ function ResourcePanel({ resource, service }: { resource: ErpResource; service: 
                         && !editor.record
                         && savedRecord
                     ) {
-                        setEditor({ record: savedRecord });
+                        setEditor({
+                            record: savedRecord,
+                            section: resource.key === "recalls" ? "children" : "data"
+                        });
                         return;
                     }
 
@@ -780,11 +800,12 @@ const equipmentModelFamilies: Record<string, string> = {
     "optical-specifications": "OPTICAL",
 };
 
-function RecordEditor({ resource, service, record, onCancel, onSaved }: {
+function RecordEditor({ resource, service, record, initialSection, onCancel, onSaved }: {
 
     resource: ErpResource;
     service: ErpService;
     record?: ErpRecord;
+    initialSection?: "data" | "children";
     onCancel: () => void;
     onSaved: (savedRecord?: ErpRecord) => void;
 
@@ -846,6 +867,12 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
     const saving = React.useRef(false);
     const manuallyEditedAddressFields = React.useRef(new Set<string>());
     const [error, setError] = React.useState("");
+    const [editorSection, setEditorSection] = React.useState<"data" | "children">(
+        resource.key === "recalls" && record && initialSection === "children"
+            ? "children"
+            : "data"
+    );
+    const recallItemsView = resource.key === "recalls" && editorSection === "children";
     
     const change = (field: ErpField, value: ErpValue) => {
         if (resource.key === "person-addresses") {
@@ -888,12 +915,38 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                 <div className="comandos-native-dialog-header">
                     <h2>{tr(record ? "Edit" : "New")} · {tr(editorResourceLabel)}</h2>
                 </div>
+
+                {resource.key === "recalls" && (
+                    <div className={styles.recallEditorTabs} role="tablist" aria-label="Seções do recall">
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={editorSection === "data"}
+                            className={editorSection === "data" ? styles.recallEditorTabActive : styles.recallEditorTab}
+                            onClick={() => setEditorSection("data")}
+                        >
+                            Dados do recall
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={editorSection === "children"}
+                            className={editorSection === "children" ? styles.recallEditorTabActive : styles.recallEditorTab}
+                            disabled={!record}
+                            onClick={() => setEditorSection("children")}
+                        >
+                            Bens e lotes afetados
+                        </button>
+                    </div>
+                )}
+
                 <div className="comandos-native-dialog-content">
                             
                             <form data-comandos-erp-form="true" 
                                 className={styles.form} 
                                 onSubmit={async event => {
                                     event.preventDefault();
+                                    if (recallItemsView) return;
                                     if (saving.current) return;
                                     saving.current = true; setBusy(true); setError("");
                                     try {
@@ -945,6 +998,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 </p>}
                                 <fieldset
                                     disabled={busy}
+                                    hidden={recallItemsView}
                                     className={styles.fields}
                                     data-comandos-resource={resource.key}
                                 >
@@ -1159,7 +1213,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                     />
                                 )}
 
-                                {resource.key === "recalls" && record && (
+                                {resource.key === "recalls" && record && recallItemsView && (
                                     <RecallItemsEditor
                                         recall={record}
                                         service={service}
@@ -1169,7 +1223,7 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 {resource.key === "recalls" && !record && (
                                     <Message
                                         type="info"
-                                        text="Salve o recall para adicionar os bens e lotes afetados. O formulário continuará aberto após o primeiro salvamento."
+                                        text="Salve o recall. Em seguida, a seção Bens e lotes afetados será aberta automaticamente."
                                     />
                                 )}
 
@@ -1245,8 +1299,21 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                                 )}
 
                                 <div className={styles.actions}>
-                                    <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
-                                    <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                    {recallItemsView ? (
+                                        <button
+                                            type="button"
+                                            className="registration-yellow-button"
+                                            disabled={busy}
+                                            onClick={onCancel}
+                                        >
+                                            Fechar
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button type="button" className="registration-yellow-button" disabled={busy} onClick={onCancel}>Cancel</button>
+                                            <button type="submit" className="registration-yellow-button" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                                        </>
+                                    )}
                                 </div>
                             </form>
                 </div>
