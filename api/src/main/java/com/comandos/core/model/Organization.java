@@ -17,6 +17,10 @@ public class Organization extends CoreEntity {
      */
     @Column(name = "nature", nullable = false, length = 255)
     public String legacyNature;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "economic_activity_id")
+    public EconomicActivity economicActivity;
     
 	@Column(name = "name", nullable = false, length = 255)
     public String name;
