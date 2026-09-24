@@ -255,6 +255,9 @@ public class CoreService {
         if (spec.entity() == Organization.class) {
             normalizeLegacyOrganizationInput(input);
         }
+        if (spec.entity() == Person.class) {
+            normalizeLegacyPersonInput(input);
+        }
 
         Set<String> allowed = new HashSet<>(spec.fields().stream().map(CoreCatalog.Field::name).toList());
         allowed.add("version");
@@ -320,6 +323,9 @@ public class CoreService {
         if (entity instanceof OrganizationalUnit unit && unit.unitType != null) {
             unit.type = unit.unitType.name;
         }
+        if (entity instanceof Person person && person.personTypeRef != null) {
+            person.personType = person.personTypeRef.code;
+        }
         access.requireEntity("core/" + resource, action, entity);
         validate(entity);
         if (id == null) em.persist(entity);
@@ -329,6 +335,30 @@ public class CoreService {
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
         audit.record("core/" + resource, entity.id, action, before, auditResult);
         return result;
+    }
+
+    private void normalizeLegacyPersonInput(Map<String, Object> input) {
+        boolean legacyTypeSupplied = input.containsKey("personType");
+        Object legacyType = input.remove("personType");
+
+        if (legacyTypeSupplied && !input.containsKey("personTypeRefId")) {
+            String code = legacyType == null
+                ? ""
+                : legacyType.toString().trim().toUpperCase(Locale.ROOT);
+
+            if (!code.isEmpty()) {
+                var existing = em.createQuery(
+                        "select t from PersonType t where t.code = :code",
+                        PersonType.class)
+                    .setParameter("code", code)
+                    .setMaxResults(1)
+                    .getResultList();
+
+                if (!existing.isEmpty()) {
+                    input.put("personTypeRefId", existing.getFirst().id);
+                }
+            }
+        }
     }
 
     private void normalizeLegacyOrganizationInput(Map<String, Object> input) {
@@ -456,6 +486,19 @@ public class CoreService {
                 );
             }
         }
+        if (entity instanceof PersonType personType) {
+            long links = em.createQuery(
+                    "select count(p) from Person p where p.personTypeRef.id = :id",
+                    Long.class)
+                .setParameter("id", personType.id)
+                .getSingleResult();
+            if (links > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Person type is in use and cannot be deleted."
+                );
+            }
+        }
         if (entity instanceof PersonAddress address) {
             em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
             address.archived = true;
@@ -495,6 +538,22 @@ public class CoreService {
                 throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Economic activity code is already registered."
+                );
+            }
+        }
+        if (entity instanceof PersonType personType) {
+            personType.code = personType.code.toUpperCase(Locale.ROOT);
+            long duplicates = em.createQuery(
+                    "select count(t) from PersonType t where t.code = :code and t.id <> :id",
+                    Long.class)
+                .setParameter("code", personType.code)
+                .setParameter("id", personType.id == null ? -1L : personType.id)
+                .setFlushMode(jakarta.persistence.FlushModeType.COMMIT)
+                .getSingleResult();
+            if (duplicates > 0) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Person type code is already registered."
                 );
             }
         }
@@ -581,16 +640,22 @@ public class CoreService {
             }
         }
         if (entity instanceof Person person) {
+            String personTypeCode = person.personTypeRef == null
+                ? Objects.toString(person.personType, "")
+                : person.personTypeRef.code;
+
             if (person.birthDate != null && person.birthDate.isAfter(LocalDate.now())) bad("Birth date cannot be in the future.");
-            if ("LEGAL_ENTITY".equals(person.personType) && person.birthDate != null) bad("Legal entities cannot have a birth date.");
+            if ("LEGAL_ENTITY".equals(personTypeCode) && person.birthDate != null) bad("Legal entities cannot have a birth date.");
 
             if (person.taxId != null && !person.taxId.isBlank()) {
                 String digits = person.taxId.replaceAll("\\D", "");
-                int expectedLength = "LEGAL_ENTITY".equals(person.personType) ? 14 : 11;
-                String documentName = "LEGAL_ENTITY".equals(person.personType) ? "CNPJ" : "CPF";
 
-                if (digits.length() != expectedLength) {
-                    bad(documentName + " inválido. Informe " + expectedLength + " dígitos.");
+                if ("INDIVIDUAL".equals(personTypeCode) && digits.length() != 11) {
+                    bad("CPF inválido. Informe 11 dígitos.");
+                }
+
+                if ("LEGAL_ENTITY".equals(personTypeCode) && digits.length() != 14) {
+                    bad("CNPJ inválido. Informe 14 dígitos.");
                 }
 
                 person.taxId = digits;
@@ -690,6 +755,15 @@ public class CoreService {
                     labels.put(field.name(), organization.legacyNature);
                 }
             } else if (
+                entity instanceof Person person
+                && "personTypeRefId".equals(field.name())
+                && person.personTypeRef == null
+            ) {
+                result.put(field.name(), null);
+                if (person.personType != null && !person.personType.isBlank()) {
+                    labels.put(field.name(), person.personType);
+                }
+            } else if (
                 entity instanceof OrganizationalUnit unit
                 && "typeId".equals(field.name())
                 && unit.unitType == null
@@ -699,6 +773,14 @@ public class CoreService {
                     labels.put(field.name(), unit.type);
                 }
             } else result.put(field.name(), value);
+        }
+        if (entity instanceof Person person) {
+            result.put(
+                "personTypeCode",
+                person.personTypeRef == null
+                    ? person.personType
+                    : person.personTypeRef.code
+            );
         }
         result.put("referenceLabels", labels);
         return result;
