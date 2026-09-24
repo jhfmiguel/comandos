@@ -10,6 +10,10 @@ public class PersonEmail extends CoreEntity {
     @JoinColumn(name = "person_id", nullable = false, updatable = false)
     public Person person;
 
+    @ManyToOne
+    @JoinColumn(name = "contact_type_id")
+    public PersonContactType contactType;
+
     @Column(name = "email_type", nullable = false, length = 40)
     public String type;
 
