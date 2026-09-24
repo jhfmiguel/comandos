@@ -14,7 +14,9 @@ const sectionTabs = {
         { resource: "sale-return-reason-types", label: "Sale return reason" },
         { resource: "inventory-count-status-types", label: "Inventory count status" },
         { resource: "inventory-count-result-types", label: "Inventory count result" },
-        { resource: "reservation-status-types", label: "Reservation status" },
+        { resource: "reservation-status-types", label: "Reservation status" }
+    ],
+    "technical-parameters": [
         { resource: "calibers", label: "Calibers" },
         { resource: "ammunition-types", label: "Ammunition types" },
         { resource: "projectile-types", label: "Projectile types" },
