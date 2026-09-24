@@ -7306,3 +7306,58 @@ label:has(+ .comandos-reference-select) {
 label:empty {
     display: none !important;
 }
+
+
+/* COMPOSED SELECT TRUE IN-LABEL LOCK V7
+ * The generic ERP form label rule must never move composed-select labels.
+ * The label stays inside the trigger from first paint through focus/open/value states.
+ */
+form[data-comandos-erp-form="true"] .comandos-composed-select {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+form[data-comandos-erp-form="true"] .comandos-composed-select > .comandos-composed-select-label,
+.comandos-composed-select > .comandos-composed-select-label {
+    position: absolute !important;
+    z-index: 12 !important;
+    display: block !important;
+    left: .78rem !important;
+    top: .42rem !important;
+    width: auto !important;
+    max-width: calc(100% - 3rem) !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+    color: var(--comandos-text-muted, #737373) !important;
+    font-size: .72rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    transform: none !important;
+}
+
+form[data-comandos-erp-form="true"] .comandos-composed-select > .comandos-composed-select-trigger,
+.comandos-composed-select > .comandos-composed-select-trigger {
+    width: 100% !important;
+    min-height: 3.35rem !important;
+    box-sizing: border-box !important;
+    padding: 1.55rem .78rem .38rem !important;
+}
+
+form[data-comandos-erp-form="true"] .comandos-composed-select:focus-within > .comandos-composed-select-label,
+.comandos-composed-select:focus-within > .comandos-composed-select-label {
+    top: .42rem !important;
+    margin: 0 !important;
+    transform: none !important;
+    color: var(--comandos-accent, #ff9900) !important;
+    font-size: .72rem !important;
+}
