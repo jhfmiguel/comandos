@@ -8,8 +8,7 @@ import {
     RefreshCw,
     RotateCcw,
     Search,
-    X,
-    type LucideIcon
+    X
 } from "lucide-react"
 import { Trash } from "@primeicons/react"
 
