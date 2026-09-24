@@ -3,7 +3,7 @@
 import * as React from "react";
 
 const CONTROL_SELECTOR = [
-    'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="search"])',
+    'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"])',
     "select",
     "textarea"
 ].join(",");
@@ -104,7 +104,7 @@ const positionLabel = (control: FloatControl, host: HTMLElement): void => {
 
     host.style.setProperty("--comandos-float-left", `${left}px`);
     host.style.setProperty("--comandos-float-idle-top", `${top + controlRect.height / 2}px`);
-    const activeTop = control instanceof HTMLSelectElement ? top + 1 : top + 5;
+    const activeTop = control instanceof HTMLSelectElement ? top : top + 2;
     host.style.setProperty("--comandos-float-active-top", `${activeTop}px`);
     host.style.setProperty("--comandos-float-width", `${width}px`);
 };
@@ -120,10 +120,23 @@ const updateState = (control: FloatControl): void => {
 };
 
 const enhanceControl = (control: FloatControl): void => {
+    const isReferenceCombobox =
+        control instanceof HTMLInputElement
+        && control.type === "search"
+        && (
+            control.dataset.comandosFloatForce === "true"
+            || control.getAttribute("role") === "combobox"
+        );
+
     if (
         control.dataset.comandosNoFloat === "true"
         || control.closest(".comandos-filter-row")
         || control.closest("[role='search']")
+        || (
+            control instanceof HTMLInputElement
+            && control.type === "search"
+            && !isReferenceCombobox
+        )
     ) return;
 
     const { text, source } = resolveLabel(control);
@@ -199,6 +212,7 @@ export function FloatLabelEnhancer() {
         document.addEventListener("input", syncFromEvent);
         document.addEventListener("change", syncFromEvent);
         document.addEventListener("click", refresh);
+        document.addEventListener("comandos:float-label-refresh", refresh);
         window.addEventListener("resize", refresh);
 
         return () => {
@@ -208,6 +222,7 @@ export function FloatLabelEnhancer() {
             document.removeEventListener("input", syncFromEvent);
             document.removeEventListener("change", syncFromEvent);
             document.removeEventListener("click", refresh);
+            document.removeEventListener("comandos:float-label-refresh", refresh);
             window.removeEventListener("resize", refresh);
         };
     }, []);
