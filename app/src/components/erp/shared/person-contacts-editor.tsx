@@ -115,14 +115,20 @@ function ContactAccordionPanel({
             data-open={open ? "true" : "false"}
         >
             <h3 className={styles.contactAccordionHeading}>
-                <button
+                <div
                     id={triggerId}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     className={styles.contactAccordionTrigger}
-                    data-comandos-accordion-trigger="true"
                     aria-expanded={open}
                     aria-controls={contentId}
                     onClick={() => onToggle(value)}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onToggle(value);
+                        }
+                    }}
                 >
                     <span>{title}</span>
                     <ChevronDown
@@ -130,7 +136,7 @@ function ContactAccordionPanel({
                         aria-hidden="true"
                         className={styles.contactAccordionChevron}
                     />
-                </button>
+                </div>
             </h3>
 
             <div
@@ -402,6 +408,7 @@ export function PersonContactsEditor({
                                             <button
                                                 type="button"
                                                 className="comandos-icon-button comandos-icon-button-danger"
+                                                data-severity="danger"
                                                 aria-label={`Remover endereço ${index + 1}`}
                                                 onClick={() => setAddresses(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                             >
@@ -520,6 +527,7 @@ export function PersonContactsEditor({
                                         <button
                                             type="button"
                                             className="comandos-icon-button comandos-icon-button-danger"
+                                            data-severity="danger"
                                             aria-label={`Remover telefone ${index + 1}`}
                                             onClick={() => setPhones(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
@@ -605,6 +613,7 @@ export function PersonContactsEditor({
                                         <button
                                             type="button"
                                             className="comandos-icon-button comandos-icon-button-danger"
+                                            data-severity="danger"
                                             aria-label={`Remover e-mail ${index + 1}`}
                                             onClick={() => setEmails(current => current.filter((_, itemIndex) => itemIndex !== index))}
                                         >
