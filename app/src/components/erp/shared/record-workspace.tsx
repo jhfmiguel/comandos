@@ -1104,6 +1104,7 @@ export function ReferenceField({ service, field, value, selectedLabel, organizat
                     id={`core-${field.name}`}
                     type="search"
                     role="combobox"
+                    data-comandos-float-force="true"
                     autoComplete="off"
                     aria-label={`Search ${field.label.toLowerCase()}`}
                     aria-autocomplete="list"
