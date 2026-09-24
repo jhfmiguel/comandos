@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import { Trash } from "@primeicons/react";
 
 import { Message } from "components/common/message";
 import { ComandosSelectField, type ComandosSelectOption } from "components/common/select-field";
@@ -314,14 +315,14 @@ export function EquipmentSetComponentsEditor({
                                             </button>
                                             <button
                                                 type="button"
-                                                className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                                className="comandos-icon-button comandos-icon-button-danger"
                                                 data-comandos-table-action="delete"
                                                 aria-label="Remover componente"
                                                 title="Remover"
                                                 disabled={busy || !editable}
                                                 onClick={() => void remove(item)}
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash />
                                             </button>
                                         </div>
                                     </td>
@@ -545,14 +546,14 @@ export function CategoryCharacteristicsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
                                             data-comandos-table-action="delete"
                                             aria-label="Remover característica da categoria"
                                             title="Remover"
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash />
                                         </button>
                                     </div>
                                 </td>
@@ -829,14 +830,14 @@ export function CharacteristicValuesEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                                            className="comandos-icon-button comandos-icon-button-danger"
                                             data-comandos-table-action="delete"
                                             aria-label="Remover valor da característica"
                                             title="Remover"
                                             disabled={busy}
                                             onClick={() => void remove(item)}
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash />
                                         </button>
                                     </div>
                                 </td>
@@ -1111,14 +1112,14 @@ export function ModelSpecificationEditor({
                 {specification && (
                     <button
                         type="button"
-                        className="comandos-icon-button comandos-icon-button-danger comandos-trash-button"
+                        className="comandos-icon-button comandos-icon-button-danger"
                         data-comandos-table-action="delete"
                         aria-label="Remover especificação técnica"
                         title="Remover especificação"
                         disabled={busy}
                         onClick={() => void remove()}
                     >
-                        <Trash2 size={18} />
+                        <Trash />
                     </button>
                 )}
             </div>
