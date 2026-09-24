@@ -74,3 +74,49 @@ Os registros curados usam nomes/códigos fáceis de reconhecer, por exemplo:
 - `CBC-DEMO-2026-001`.
 
 Assim é possível distinguir dados fictícios dos registros inseridos manualmente.
+
+## Cobertura completa das tabelas
+
+Ao iniciar a API com `scripts/start-with-demo-data.ps1`, a carga ativa também:
+
+- `COMANDOS_DEMO_REQUIRE_FULL_COVERAGE=true`;
+- cenários curados de acesso e permissões;
+- planejamento de compra, contratação, compra, recebimento, inspeção e incorporação;
+- reserva de estoque;
+- transferência interna;
+- inventário físico e divergência;
+- cautela e devolução;
+- consumo de lote;
+- venda e devolução;
+- doação;
+- desfazimento e destruição;
+- governança e workflow de aprovação;
+- inspeção periódica;
+- ocorrência de ciclo de vida;
+- anexos;
+- manutenção;
+- auditoria e entidades auxiliares restantes por cobertura automática.
+
+Depois de todos os seeders curados, o `DemoCoverageSeeder` percorre todas as entidades JPA do pacote `com.comandos`. Para qualquer entidade ainda sem registros, ele tenta criar um exemplo didático. Se alguma entidade continuar vazia, a inicialização falha e informa explicitamente quais tabelas/entidades ainda precisam de tratamento.
+
+Isso transforma a ausência de dados em erro visível durante a carga de demonstração, em vez de deixar telas vazias silenciosamente.
+
+## Dados reais x dados fictícios
+
+Os nomes de fabricantes e modelos comerciais usados no catálogo podem ser reais, por exemplo Beretta, Glock, Taurus, IMBEL, CBC e Point Blank.
+
+Já os seguintes dados são deliberadamente fictícios e identificáveis como demonstração:
+
+- pessoas;
+- CPF/CNPJ;
+- usuários e logins;
+- patrimônios e números de série;
+- processos administrativos;
+- notas fiscais;
+- termos;
+- documentos e referências SEI;
+- valores de operações;
+- movimentações, cautelas, compras, vendas, doações e desfazimentos.
+
+O objetivo é demonstrar o funcionamento do sistema sem misturar registros operacionais reais com a base de testes.
+
