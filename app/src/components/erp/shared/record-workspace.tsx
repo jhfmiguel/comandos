@@ -94,6 +94,7 @@ export function RecordWorkspace({
         resource: string;
         label: string;
         content?: React.ReactNode;
+        definition?: ErpResource;
     }>;
 }) {
 
@@ -231,7 +232,7 @@ export function RecordWorkspace({
                     />
                 )}
 
-                {!!catalog.length && (
+                {!!catalog.length || workspaceTabs.some(tab => tab.definition) ? (
 
                     <div
                         className={
@@ -294,7 +295,7 @@ export function RecordWorkspace({
                                         disabled={!tabScrollState.canPrevious}
                                         onClick={() => scrollTabs(-1)}
                                     >
-                                        <ChevronLeft size={18} />
+                                        <span aria-hidden="true">&lt;</span>
                                     </button>
                                     <div
                                         ref={setTabsListElement}
@@ -352,7 +353,7 @@ export function RecordWorkspace({
                                             (item) =>
                                                 item.key === tab.resource ||
                                                 normalizeResourceName(item.label) === tab.resource
-                                        );
+                                        ) ?? tab.definition;
                                         return (
                                             <button
                                                 key={tab.resource}
@@ -389,7 +390,7 @@ export function RecordWorkspace({
                                         disabled={!tabScrollState.canNext}
                                         onClick={() => scrollTabs(1)}
                                     >
-                                        <ChevronRight size={18} />
+                                        <span aria-hidden="true">&gt;</span>
                                     </button>
                                 </div>
                                 {workspaceTabs.map((tab) => {
@@ -398,7 +399,7 @@ export function RecordWorkspace({
                                         (item) =>
                                             item.key === tab.resource ||
                                             normalizeResourceName(item.label) === tab.resource
-                                    );
+                                    ) ?? tab.definition;
                                     return (
                                         <div key={tab.resource} role="tabpanel" className="comandos-tab-panel">
                                             {tab.content ?? (
