@@ -1,14 +1,22 @@
 package com.comandos.core.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "erp_organization")
 public class Organization extends CoreEntity {
    
-	@Column(name = "nature", nullable = false, length = 255)
-    public String nature;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "nature_id")
+    public OrganizationNature nature;
+
+    /**
+     * Compatibilidade com a coluna historica "nature".
+     * Novos cadastros usam nature_id; este texto continua sincronizado
+     * para preservar bancos existentes durante a transicao.
+     */
+    @Column(name = "nature", nullable = false, length = 255)
+    public String legacyNature;
     
 	@Column(name = "name", nullable = false, length = 255)
     public String name;
