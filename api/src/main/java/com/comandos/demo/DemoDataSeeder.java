@@ -4,6 +4,7 @@ import com.comandos.core.model.EconomicActivity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationNature;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.model.OrganizationalUnitType;
 import com.comandos.core.model.Person;
 import com.comandos.core.model.PersonAddress;
 import com.comandos.core.model.PersonEmail;
@@ -257,7 +258,13 @@ public class DemoDataSeeder implements ApplicationRunner {
         value.parentUnit = parent;
         value.code = code;
         value.name = name;
-        value.type = type;
+        value.unitType = entityManager.createQuery(
+                "select t from OrganizationalUnitType t where t.code = :code",
+                OrganizationalUnitType.class)
+            .setParameter("code", type)
+            .setMaxResults(1)
+            .getSingleResult();
+        value.type = value.unitType.name;
         entityManager.persist(value);
         return value;
     }
