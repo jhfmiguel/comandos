@@ -121,6 +121,46 @@ async function main() {
             await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
         }
         console.log('PASS institutional registrations: every tab is clickable and renders CRUD');
+        await page.getByRole('tab', { name: /Organizations|Organizações/i }).click();
+        await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+        await page.getByRole('dialog').waitFor();
+
+        async function assertSelectLabelInside(triggerId) {
+            const trigger = page.locator(`#${triggerId}`);
+            const label = page.locator(`label[for="${triggerId}"]`);
+            await trigger.waitFor();
+            await label.waitFor();
+
+            const beforeTrigger = await trigger.boundingBox();
+            const beforeLabel = await label.boundingBox();
+            assert.ok(beforeTrigger && beforeLabel, `${triggerId}: trigger/label must be visible`);
+            assert.ok(
+                beforeLabel.y >= beforeTrigger.y
+                && beforeLabel.y + beforeLabel.height <= beforeTrigger.y + beforeTrigger.height,
+                `${triggerId}: label must start inside select before interaction`
+            );
+
+            await trigger.click();
+            await page.waitForTimeout(80);
+
+            const afterTrigger = await trigger.boundingBox();
+            const afterLabel = await label.boundingBox();
+            assert.ok(afterTrigger && afterLabel, `${triggerId}: trigger/label must remain visible`);
+            assert.ok(
+                afterLabel.y >= afterTrigger.y
+                && afterLabel.y + afterLabel.height <= afterTrigger.y + afterTrigger.height,
+                `${triggerId}: label must remain inside select after interaction`
+            );
+
+            await page.keyboard.press('Escape');
+        }
+
+        await assertSelectLabelInside('core-natureId');
+        await assertSelectLabelInside('core-economicActivityId');
+        console.log('PASS organization select labels: Nature and Economic activity stay inside before/after click');
+
+        await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+
 
         await page.goto(`${appURL}/erp/inventory?section=technical-parameters&resource=calibers`);
         await page.locator('.comandos-tab-panel #resource-title').waitFor();
