@@ -31,6 +31,7 @@ import { useComandosPreferences } from "components/settings/preferences-provider
 import type { ErpField, ErpPage, ErpRecord, ErpResource, ErpValue } from "api/models/erp";
 import { createErpService, type ErpService, type ErpModule } from "api/services/erp.service";
 import styles from "./workspace.module.css";
+import { PersonContactsEditor } from "./person-contacts-editor";
 
 
 type ErpTableFilters = Record<string, string>;
@@ -712,7 +713,11 @@ const [values, setValues] = React.useState<Record<string, ErpValue>>(() => {
                 disabled={busy}
                 onClick={() => { if (!busy) onCancel(); }}
             />
-            <div role="dialog" aria-modal="true" className={`comandos-native-dialog ${styles.dialog}`}>
+            <div
+                role="dialog"
+                aria-modal="true"
+                className={`comandos-native-dialog ${styles.dialog} ${isNewPerson ? styles.personDialog : ""}`}
+            >
             
                 <div className="comandos-native-dialog-header">
                     <h2>{record ? "Edit" : "New"} · {resource.label}</h2>
