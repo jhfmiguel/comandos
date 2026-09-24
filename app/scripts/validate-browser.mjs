@@ -364,6 +364,84 @@ async function main() {
         await page.getByRole('button', { name: /New record|Novo registro/i }).waitFor();
         console.log('PASS technical registrations: tabs clickable, scrollable and arrows are transparent symbols');
 
+        await page.goto(`${appURL}/erp/transactions`);
+        const acquisitionType = page.locator('#acquisition-type');
+        await acquisitionType.waitFor();
+        assert.equal(
+            await acquisitionType.inputValue(),
+            'Onerosa / compra',
+            'Fixed selects must render the translated option label instead of the internal value'
+        );
+        await acquisitionType.click();
+        await page.getByText('Onerosa / compra', { exact: true }).waitFor();
+        await page.getByText('Gratuita', { exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+
+        await page.getByRole('tab', { name: /Custody|Cautela/i }).click();
+        const recipientType = page.locator('#custody-recipient-type');
+        await recipientType.waitFor();
+        assert.equal(
+            await recipientType.inputValue(),
+            'Pessoa',
+            'Custody recipient type must render Pessoa instead of PERSON'
+        );
+        await recipientType.click();
+        await page.getByText('Pessoa', { exact: true }).waitFor();
+        await page.getByText(/Organizational unit|Unidade organizacional/i, { exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+        console.log('PASS transactions: fixed selects render localized labels and open without typing');
+
+        async function assertReferenceDataLayout(resource, horizontalFlags) {
+            await page.goto(`${appURL}/erp/inventory?section=reference-data&resource=${resource}`);
+            await page.getByRole('button', { name: /New record|Novo registro/i }).click();
+            const dialog = page.getByRole('dialog');
+            await dialog.waitFor();
+
+            const description = dialog.locator('[data-comandos-field-name="description"]');
+            const displayOrder = dialog.locator('[data-comandos-field-name="displayOrder"]');
+            const descriptionBox = await description.boundingBox();
+            const displayOrderBox = await displayOrder.boundingBox();
+            assert.ok(descriptionBox && displayOrderBox, `${resource}: description/displayOrder fields must be visible`);
+            assert.ok(
+                Math.abs(descriptionBox.y - displayOrderBox.y) <= 3 && displayOrderBox.x > descriptionBox.x,
+                `${resource}: display order must occupy the former Active position beside Description`
+            );
+
+            const flagBoxes = [];
+            for (const fieldName of horizontalFlags) {
+                const box = await dialog.locator(`[data-comandos-field-name="${fieldName}"]`).boundingBox();
+                assert.ok(box, `${resource}: ${fieldName} must be visible`);
+                flagBoxes.push(box);
+            }
+            const flagTop = flagBoxes[0].y;
+            assert.ok(
+                flagBoxes.every(box => Math.abs(box.y - flagTop) <= 3),
+                `${resource}: boolean flags must stay on the same horizontal row`
+            );
+            for (let index = 1; index < flagBoxes.length; index += 1) {
+                assert.ok(
+                    flagBoxes[index].x > flagBoxes[index - 1].x,
+                    `${resource}: boolean flags must keep left-to-right order`
+                );
+            }
+
+            await page.getByRole('button', { name: /Cancel|Cancelar/i }).click();
+        }
+
+        await assertReferenceDataLayout(
+            'custody-return-condition-types',
+            ['active', 'blocksAvailability', 'systemProtected']
+        );
+        await assertReferenceDataLayout(
+            'sale-return-reason-types',
+            ['active', 'systemProtected']
+        );
+        await assertReferenceDataLayout(
+            'inventory-count-status-types',
+            ['active', 'terminal', 'systemProtected']
+        );
+        console.log('PASS reference data forms: display order and boolean flag alignment');
+
         const routes = [
             ['/erp/core', 'Institutional core'], ['/erp/inventory', 'Assets and inventory'],
             ['/erp/sales', 'Inventory sales'], ['/erp/ammunition-consumption', 'Ammunition consumption'],
