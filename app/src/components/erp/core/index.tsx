@@ -38,15 +38,15 @@ const sectionTabs: Record<
             label: "People"
         },
         {
-            resource: "person-roles",
+            resource: "roles",
             label: "Person roles"
         },
         {
-            resource: "person-role-assignments",
+            resource: "person-roles",
             label: "Person role assignments"
         },
         {
-            resource: "role-details",
+            resource: "role-data",
             label: "Role details"
         },
         {
@@ -60,11 +60,11 @@ const sectionTabs: Record<
     ],
     access: [
         {
-            resource: "system-users",
+            resource: "users",
             label: "System users"
         },
         {
-            resource: "access-profiles",
+            resource: "profiles",
             label: "Access profiles"
         },
         {
