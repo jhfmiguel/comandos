@@ -6214,3 +6214,84 @@ html[data-theme="dark"] .comandos-secondary-button {
 html[data-theme="dark"] .comandos-button-contrast {
     --button-color: #f8fafc;
 }
+
+
+/* COMANDOS OUTLINED BUTTON TRANSPARENCY V2
+ * Keeps border and label fully opaque; only the background receives color transparency.
+ */
+.comandos-action-button,
+.registration-yellow-button,
+.comandos-secondary-button,
+.comandos-red-button,
+.comandos-dialog-action-button {
+    background: color-mix(in srgb, var(--button-color) 8%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+}
+
+.comandos-action-button:hover:not(:disabled),
+.registration-yellow-button:hover:not(:disabled),
+.comandos-secondary-button:hover:not(:disabled),
+.comandos-red-button:hover:not(:disabled),
+.comandos-dialog-action-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 16%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+}
+
+.comandos-action-button:active:not(:disabled),
+.registration-yellow-button:active:not(:disabled),
+.comandos-secondary-button:active:not(:disabled),
+.comandos-red-button:active:not(:disabled),
+.comandos-dialog-action-button:active:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 24%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+}
+
+.comandos-action-button:focus-visible,
+.registration-yellow-button:focus-visible,
+.comandos-secondary-button:focus-visible,
+.comandos-red-button:focus-visible,
+.comandos-dialog-action-button:focus-visible {
+    background: color-mix(in srgb, var(--button-color) 14%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+}
+
+.comandos-button-outlined {
+    background: color-mix(in srgb, var(--button-color) 8%, transparent) !important;
+    border-color: var(--button-color) !important;
+    color: var(--button-color) !important;
+}
+
+.comandos-button-outlined:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 16%, transparent) !important;
+}
+
+.comandos-button-outlined:active:not(:disabled) {
+    background: color-mix(in srgb, var(--button-color) 24%, transparent) !important;
+}
+
+.comandos-icon-button {
+    background: color-mix(in srgb, currentColor 5%, transparent) !important;
+    color: inherit;
+}
+
+.comandos-icon-button:hover:not(:disabled),
+.comandos-icon-button:focus-visible {
+    background: color-mix(in srgb, var(--comandos-accent, #ff9900) 14%, transparent) !important;
+    border-color: var(--comandos-accent, #ff9900) !important;
+    color: var(--comandos-accent, #ff9900) !important;
+}
+
+.comandos-icon-button-danger {
+    background: rgb(239 68 68 / 7%) !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+
+.comandos-icon-button-danger:hover:not(:disabled),
+.comandos-icon-button-danger:focus-visible {
+    background: rgb(239 68 68 / 16%) !important;
+}
