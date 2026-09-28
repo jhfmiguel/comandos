@@ -53,18 +53,16 @@ public class InventoryTransfer extends CoreEntity {
     public String status = "PENDING_ACCEPTANCE";
 
     /**
-     * Explicit physical/logistical state. It is nullable at schema level so an
-     * existing installation can add the column without invalidating historical
-     * rows; every new transfer is persisted with a concrete state.
+     * Explicit physical/logistical state. Historical rows may be null and are
+     * interpreted from the legacy workflow status. New transfers always set it.
      */
     @Column(name = "transit_state", length = 30)
-    public String transitState = "IN_TRANSIT";
+    public String transitState;
 
     /** Legacy dispatch timestamp kept for API/database compatibility. */
     @Column(nullable = false)
     public LocalDateTime sentAt;
 
-    /** Explicit dispatch metadata for the transit lifecycle. */
     @Column(name = "dispatched_at")
     public LocalDateTime dispatchedAt;
 
