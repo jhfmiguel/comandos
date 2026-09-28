@@ -109,6 +109,14 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
 
         Long firstReceivingId = first.id();
         Long firstItemId = first.items().getFirst().id();
+
+        assertBlocked(
+            () -> incorporations.create(incorporationRequest(
+                firstReceivingId, firstItemId, location.id, "REC-FLOW-A-PREMATURE", "1"
+            )),
+            "Incorporation must be blocked before definitive receiving acceptance."
+        );
+
         inspections.create(firstReceivingId, inspectionRequest(firstItemId, "30", "10",
             "Ten units rejected due to delivery divergence."));
         first = receivings.get(firstReceivingId);
@@ -122,6 +130,13 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
                 .compareTo(new BigDecimal("30")) == 0,
             "Rejected quantity must reopen acquisition pending balance.");
 
+        assertBlocked(
+            () -> incorporations.create(incorporationRequest(
+                firstReceivingId, firstItemId, location.id, "REC-FLOW-A-OVER", "31"
+            )),
+            "Rejected quantity must never be available for incorporation."
+        );
+
         EquipmentReceivingContract.View second = receivings.create(receivingRequest(
             acquisitionId, buyer.id, acquisitionItemId, model.id, "70", "REC-FLOW-B", "ROM-REC-002"
         ));
@@ -130,6 +145,14 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
 
         Long secondReceivingId = second.id();
         Long secondItemId = second.items().getFirst().id();
+
+        assertBlocked(
+            () -> incorporations.create(incorporationRequest(
+                secondReceivingId, secondItemId, location.id, "REC-FLOW-B-PREMATURE", "1"
+            )),
+            "A physically received item must not be incorporated before definitive acceptance."
+        );
+
         inspections.create(secondReceivingId, inspectionRequest(secondItemId, "70", "0", null));
         second = receivings.get(secondReceivingId);
         require(second.status() == ReceivingStatus.DEFINITIVELY_ACCEPTED,
@@ -141,8 +164,33 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
         require(completed.items().getFirst().receivedQuantity().compareTo(new BigDecimal("100")) == 0,
             "Acquisition fulfilled quantity must equal acquired quantity.");
 
-        incorporations.create(incorporationRequest(firstReceivingId, firstItemId, location.id, "REC-FLOW-A", "30"));
-        incorporations.create(incorporationRequest(secondReceivingId, secondItemId, location.id, "REC-FLOW-B", "70"));
+        ReceivingIncorporationContract.CreateRequest firstIncorporation = incorporationRequest(
+            firstReceivingId, firstItemId, location.id, "REC-FLOW-A", "30"
+        );
+        ReceivingIncorporationContract.CreateRequest secondIncorporation = incorporationRequest(
+            secondReceivingId, secondItemId, location.id, "REC-FLOW-B", "70"
+        );
+
+        ReceivingIncorporationContract.View firstCreated = incorporations.create(firstIncorporation);
+        ReceivingIncorporationContract.View secondCreated = incorporations.create(secondIncorporation);
+
+        require(firstCreated.receivingId().equals(firstReceivingId)
+                && firstCreated.receivingItemId().equals(firstItemId),
+            "First incorporation lost receiving provenance.");
+        require(secondCreated.receivingId().equals(secondReceivingId)
+                && secondCreated.receivingItemId().equals(secondItemId),
+            "Second incorporation lost receiving provenance.");
+        require(firstCreated.inventoryRecordId() != null && secondCreated.inventoryRecordId() != null,
+            "Every incorporation must create a concrete inventory record.");
+
+        assertBlocked(
+            () -> incorporations.create(firstIncorporation),
+            "A fully incorporated receiving item must not be incorporated twice."
+        );
+        assertBlocked(
+            () -> incorporations.create(secondIncorporation),
+            "A second incorporation of the same accepted balance must be blocked."
+        );
 
         List<EquipmentReceivingContract.View> linked = receivings.list(acquisitionId);
         require(linked.size() == 2, "Acquisition must expose exactly two linked receivings in integration scenario.");
@@ -153,12 +201,24 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
                 "Receiving item lost acquisition-item link.");
         }
 
-        BigDecimal incorporated = incorporations.list(null).stream()
+        List<ReceivingIncorporationContract.View> flowIncorporations = incorporations.list(null).stream()
             .filter(row -> firstReceivingId.equals(row.receivingId()) || secondReceivingId.equals(row.receivingId()))
+            .toList();
+        require(flowIncorporations.size() == 2,
+            "Integrated receiving flow must create exactly two incorporation records.");
+
+        BigDecimal incorporated = flowIncorporations.stream()
             .map(ReceivingIncorporationContract.View::quantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         require(incorporated.compareTo(new BigDecimal("100")) == 0,
-            "Integrated receiving incorporation quantity must total 100.");
+            "Integrated receiving incorporation quantity must total exactly accepted quantity.");
+
+        long distinctInventoryRecords = flowIncorporations.stream()
+            .map(row -> row.inventoryResource() + ":" + row.inventoryRecordId())
+            .distinct()
+            .count();
+        require(distinctInventoryRecords == flowIncorporations.size(),
+            "Each incorporation must own a distinct inventory destination record.");
 
         boolean extraReceivingBlocked = false;
         try {
@@ -273,6 +333,16 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
             .orElseThrow(() -> new IllegalStateException(
                 "Required demo reference not found: " + type.getSimpleName() + "." + field + "=" + value
             ));
+    }
+
+    private static void assertBlocked(Runnable operation, String message) {
+        boolean blocked = false;
+        try {
+            operation.run();
+        } catch (IllegalStateException | IllegalArgumentException expected) {
+            blocked = true;
+        }
+        require(blocked, message);
     }
 
     private static void require(boolean condition, String message) {
