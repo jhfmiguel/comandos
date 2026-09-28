@@ -30,11 +30,14 @@ export const Input: React.FC<InputProps> = ({
     size,
     ...inputProps
 }) => {
+    const { locale } = useComandosPreferences()
+
     const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let value = event.target.value
         const name = event.target.name
 
         if (onlyNumbers) value = value.replace(/\D/g, "")
+        if (currency) value = formatReal(value, locale)
         const formattedValue = (formatter && formatter(value)) || value
 
         if (onChange) {
@@ -50,7 +53,7 @@ export const Input: React.FC<InputProps> = ({
     }
 
     const onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!onlyNumbers) return
+        if (!onlyNumbers && !currency) return
 
         const allowedKeys = [
             "Backspace", "Delete", "Tab", "Escape", "Enter",
@@ -68,6 +71,7 @@ export const Input: React.FC<InputProps> = ({
             className={`comandos-input ${size ? `comandos-input-${size} ` : ""}${currency ? "comandos-currency-value " : ""}w-full`}
             id={id}
             value={inputProps.value ?? ""}
+            inputMode={currency ? "numeric" : inputProps.inputMode}
             onChange={onInputChange}
             onKeyDown={onInputKeyDown}
         />
