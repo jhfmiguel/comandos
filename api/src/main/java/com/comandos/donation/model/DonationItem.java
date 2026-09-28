@@ -4,6 +4,7 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.Locale;
 
 @Entity @Table(name="erp_donation_item")
 public class DonationItem extends CoreEntity {
@@ -23,4 +24,21 @@ public class DonationItem extends CoreEntity {
     @Column(name="previous_owner_name",nullable=false,length=255) public String previousOwnerName;
     @Column(name="new_owner_type",nullable=false,length=30) public String newOwnerType;
     @Column(name="new_owner_name",nullable=false,length=255) public String newOwnerName;
+
+    @PrePersist
+    void ownershipDefaults() {
+        if (donation == null) return;
+        String direction = donation.direction == null ? "OUTGOING" : donation.direction.trim().toUpperCase(Locale.ROOT);
+        if ("INCOMING".equals(direction)) {
+            if (previousOwnerType == null) previousOwnerType = "DONOR";
+            if (previousOwnerName == null) previousOwnerName = donation.donorName;
+            if (newOwnerType == null) newOwnerType = "ORGANIZATION";
+            if (newOwnerName == null) newOwnerName = donation.organizationName;
+        } else {
+            if (previousOwnerType == null) previousOwnerType = "ORGANIZATION";
+            if (previousOwnerName == null) previousOwnerName = donation.organizationName;
+            if (newOwnerType == null) newOwnerType = "DONEE";
+            if (newOwnerName == null) newOwnerName = donation.doneeName;
+        }
+    }
 }
