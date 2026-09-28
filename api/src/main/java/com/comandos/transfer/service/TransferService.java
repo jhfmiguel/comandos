@@ -85,7 +85,7 @@ public class TransferService {
                 .setParameter("today", LocalDate.now()).setParameter("search", term);
         }
         List<StockOption> content = query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream()
-            .map(row -> stockOption(row)).toList();
+            .map(this::stockOption).toList();
         return new Page<>(content, count.getSingleResult(), page, PAGE_SIZE);
     }
 
@@ -129,12 +129,21 @@ public class TransferService {
         transfer.destinationUnitName = destinationUnit.name;
         transfer.destinationLocationName = destinationLocation.name;
         transfer.purpose = request.purpose().trim();
-        transfer.transferType = request.transferType() == null || request.transferType().isBlank() ? "INTERNAL" : request.transferType().trim().toUpperCase(Locale.ROOT);
-        transfer.legalInstrument = request.legalInstrument() == null || request.legalInstrument().isBlank() ? null : request.legalInstrument().trim();
-        transfer.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
-        transfer.status = "PENDING_ACCEPTANCE";
-        transfer.sentAt = LocalDateTime.now();
+        transfer.transferType = request.transferType() == null || request.transferType().isBlank()
+            ? "INTERNAL" : request.transferType().trim().toUpperCase(Locale.ROOT);
+        transfer.legalInstrument = request.legalInstrument() == null || request.legalInstrument().isBlank()
+            ? null : request.legalInstrument().trim();
+        transfer.documentReference = request.documentReference() == null || request.documentReference().isBlank()
+            ? null : request.documentReference().trim();
+
         var actor = audit.actor();
+        LocalDateTime dispatchedAt = LocalDateTime.now();
+        transfer.status = "PENDING_ACCEPTANCE";
+        transfer.transitState = "IN_TRANSIT";
+        transfer.sentAt = dispatchedAt;
+        transfer.dispatchedAt = dispatchedAt;
+        transfer.dispatchedById = actor.id();
+        transfer.dispatchedByLogin = actor.login();
         transfer.finalizedById = actor.id();
         transfer.finalizedByLogin = actor.login();
         transfer.requestId = request.requestId();
@@ -148,7 +157,8 @@ public class TransferService {
         }
         em.flush();
         TransferView result = view(transfer);
-        audit.record("transfers", transfer.id, "FINALIZE", null, Map.of("transfer", result, "stockChanges", changes));
+        audit.record("transfers", transfer.id, "FINALIZE", null,
+            Map.of("transfer", result, "transitTransition", "DISPATCHED_TO_IN_TRANSIT", "stockChanges", changes));
         return result;
     }
 
@@ -159,27 +169,32 @@ public class TransferService {
 
         InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
-
         access.requireScope("transfers", "ACCEPT", transfer.organization.id, transfer.destinationUnit.id);
 
         if ("ACCEPTED".equals(transfer.status)) return view(transfer);
-        if (!"PENDING_ACCEPTANCE".equals(transfer.status)) {
-            conflict("Transfer is not pending acceptance.");
+        if (!"PENDING_ACCEPTANCE".equals(transfer.status) || !"IN_TRANSIT".equals(effectiveTransitState(transfer))) {
+            conflict("Transfer is not in transit awaiting destination receipt.");
         }
 
         var actor = audit.actor();
         var before = view(transfer);
         releaseAtDestination(transfer);
 
+        LocalDateTime receivedAt = LocalDateTime.now();
         transfer.status = "ACCEPTED";
+        transfer.transitState = "RECEIVED";
+        transfer.receivedAt = receivedAt;
+        transfer.receivedById = actor.id();
+        transfer.receivedByLogin = actor.login();
+        transfer.transitClosedAt = receivedAt;
         transfer.approvedById = actor.id();
         transfer.approvedByLogin = actor.login();
-        transfer.approvedAt = LocalDateTime.now();
+        transfer.approvedAt = receivedAt;
 
         em.flush();
-
         var result = view(transfer);
-        audit.record("transfers", transfer.id, "ACCEPT", before, Map.of("transfer", result));
+        audit.record("transfers", transfer.id, "ACCEPT", before,
+            Map.of("transfer", result, "transitTransition", "IN_TRANSIT_TO_RECEIVED"));
         return result;
     }
 
@@ -197,21 +212,27 @@ public class TransferService {
         access.requireScope("transfers", "REJECT", transfer.organization.id, transfer.destinationUnit.id);
 
         if ("REJECTED".equals(transfer.status)) return view(transfer);
-        if (!"PENDING_ACCEPTANCE".equals(transfer.status)) conflict("Transfer is not pending acceptance.");
+        if (!"PENDING_ACCEPTANCE".equals(transfer.status) || !"IN_TRANSIT".equals(effectiveTransitState(transfer))) {
+            conflict("Transfer is not in transit awaiting destination receipt.");
+        }
 
         var before = view(transfer);
         returnToSource(transfer);
 
         var actor = audit.actor();
+        LocalDateTime rejectedAt = LocalDateTime.now();
         transfer.status = "REJECTED";
+        transfer.transitState = "RETURNED_TO_SOURCE";
+        transfer.transitClosedAt = rejectedAt;
         transfer.rejectedById = actor.id();
         transfer.rejectedByLogin = actor.login();
-        transfer.rejectedAt = LocalDateTime.now();
+        transfer.rejectedAt = rejectedAt;
         transfer.rejectionReason = reason;
         em.flush();
 
         var result = view(transfer);
-        audit.record("transfers", transfer.id, "REJECT", before, Map.of("transfer", result));
+        audit.record("transfers", transfer.id, "REJECT", before,
+            Map.of("transfer", result, "transitTransition", "IN_TRANSIT_TO_RETURNED_TO_SOURCE"));
         return result;
     }
 
@@ -247,9 +268,12 @@ public class TransferService {
         notExpired(asset.validUntil);
         if (line.quantity().compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
         StockLocation source = asset.location;
-        StockMovement out = movement(asset, null, source, StockMovementNature.TRANSFER_OUT.name(), BigDecimal.ONE.negate(), transfer.sentAt, transfer.id);
-        StockMovement in = movement(asset, null, destination, StockMovementNature.TRANSFER_IN.name(), BigDecimal.ONE, transfer.sentAt, transfer.id);
-        InventoryTransferItem item = item(transfer, asset.model, source, destination, asset.assetCode, line.quantity(), out, in);
+        StockMovement out = movement(asset, null, source, StockMovementNature.TRANSFER_OUT.name(),
+            BigDecimal.ONE.negate(), transfer.sentAt, transfer.id);
+        StockMovement in = movement(asset, null, destination, StockMovementNature.TRANSFER_IN.name(),
+            BigDecimal.ONE, transfer.sentAt, transfer.id);
+        InventoryTransferItem item = item(transfer, asset.model, source, destination, asset.assetCode,
+            line.quantity(), out, in);
         item.asset = asset;
         em.persist(item);
         changes.add(change("inventory/assets", asset.id, source.name, destination.name));
@@ -272,8 +296,10 @@ public class TransferService {
         BigDecimal destinationBlockedBefore = destinationBalance.blocked;
         sourceBalance.available = sourceBefore.subtract(line.quantity());
         destinationBalance.blocked = destinationBlockedBefore.add(line.quantity());
-        StockMovement out = movement(null, lot, sourceBalance.location, StockMovementNature.TRANSFER_OUT.name(), line.quantity().negate(), transfer.sentAt, transfer.id);
-        StockMovement in = movement(null, lot, destination, StockMovementNature.TRANSFER_IN.name(), line.quantity(), transfer.sentAt, transfer.id);
+        StockMovement out = movement(null, lot, sourceBalance.location, StockMovementNature.TRANSFER_OUT.name(),
+            line.quantity().negate(), transfer.sentAt, transfer.id);
+        StockMovement in = movement(null, lot, destination, StockMovementNature.TRANSFER_IN.name(),
+            line.quantity(), transfer.sentAt, transfer.id);
         InventoryTransferItem item = item(transfer, lot.model, sourceBalance.location, destination, lot.lotNumber,
             line.quantity(), out, in);
         item.lot = lot;
@@ -300,7 +326,8 @@ public class TransferService {
         for (var item : items) {
             if (item.asset != null) {
                 var asset = locked(AssetItem.class, item.asset.id);
-                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status)
+                        || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
                 asset.status = AssetStatus.AVAILABLE.name();
@@ -323,11 +350,14 @@ public class TransferService {
         for (var item : items) {
             if (item.asset != null) {
                 var asset = locked(AssetItem.class, item.asset.id);
-                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status) || !asset.location.id.equals(item.destinationLocation.id)) {
+                if (!AssetStatus.TRANSFER_PENDING.name().equals(asset.status)
+                        || !asset.location.id.equals(item.destinationLocation.id)) {
                     conflict("Transferred asset is no longer pending at the destination.");
                 }
-                movement(asset, null, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), BigDecimal.ONE.negate(), now, transfer.id);
-                movement(asset, null, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), BigDecimal.ONE, now, transfer.id);
+                movement(asset, null, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(),
+                    BigDecimal.ONE.negate(), now, transfer.id);
+                movement(asset, null, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(),
+                    BigDecimal.ONE, now, transfer.id);
                 asset.location = item.sourceLocation;
                 asset.status = AssetStatus.AVAILABLE.name();
             } else {
@@ -338,8 +368,10 @@ public class TransferService {
                 }
                 destination.blocked = destination.blocked.subtract(item.quantity);
                 source.available = source.available.add(item.quantity);
-                movement(null, item.lot, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(), item.quantity.negate(), now, transfer.id);
-                movement(null, item.lot, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(), item.quantity, now, transfer.id);
+                movement(null, item.lot, item.destinationLocation, StockMovementNature.TRANSFER_REJECT_OUT.name(),
+                    item.quantity.negate(), now, transfer.id);
+                movement(null, item.lot, item.sourceLocation, StockMovementNature.TRANSFER_REJECT_RETURN.name(),
+                    item.quantity, now, transfer.id);
             }
         }
     }
@@ -388,24 +420,75 @@ public class TransferService {
         movement.referenceId = transferId;
         movement.quantity = quantity;
         movement.movedAt = movedAt;
-        movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
+        movement.operatorLogin = audit.actor().login();
+        movement.operatorId = audit.actor().id();
+        em.persist(movement);
         return movement;
     }
 
     private TransferView view(InventoryTransfer transfer) {
         List<LineView> items = em.createQuery(
                 "select i from InventoryTransferItem i where i.transfer.id=:id order by i.id", InventoryTransferItem.class)
-            .setParameter("id", transfer.id).getResultList().stream().map(item -> new LineView(item.id,
-                item.asset == null ? null : item.asset.id, item.lot == null ? null : item.lot.id, item.modelName,
-                item.sku, item.stockCode, item.sourceLocationName, item.destinationLocationName, item.unitOfMeasure,
-                decimal(item.quantity), item.outMovement.id, item.inMovement.id)).toList();
-        return new TransferView(transfer.id, transfer.organization.id, transfer.organizationName, transfer.sourceUnit.id,
-            transfer.sourceUnitName, transfer.destinationUnit.id, transfer.destinationUnitName,
-            transfer.destinationLocation.id, transfer.destinationLocationName, transfer.purpose, transfer.status,
-            transfer.sentAt.toString(), transfer.finalizedById, transfer.finalizedByLogin,
-            transfer.approvedById, transfer.approvedByLogin, transfer.approvedAt == null ? null : transfer.approvedAt.toString(),
-            transfer.rejectedById, transfer.rejectedByLogin, transfer.rejectedAt == null ? null : transfer.rejectedAt.toString(),
-            transfer.rejectionReason, items);
+            .setParameter("id", transfer.id).getResultList().stream().map(item -> new LineView(
+                item.id,
+                item.asset == null ? null : item.asset.id,
+                item.lot == null ? null : item.lot.id,
+                item.modelName,
+                item.sku,
+                item.stockCode,
+                item.sourceLocationName,
+                item.destinationLocationName,
+                item.unitOfMeasure,
+                decimal(item.quantity),
+                item.outMovement.id,
+                item.inMovement.id
+            )).toList();
+
+        LocalDateTime dispatchedAt = transfer.dispatchedAt == null ? transfer.sentAt : transfer.dispatchedAt;
+        LocalDateTime receivedAt = transfer.receivedAt == null && "ACCEPTED".equals(transfer.status)
+            ? transfer.approvedAt : transfer.receivedAt;
+        LocalDateTime closedAt = transfer.transitClosedAt != null ? transfer.transitClosedAt
+            : receivedAt != null ? receivedAt : transfer.rejectedAt;
+
+        return new TransferView(
+            transfer.id,
+            transfer.organization.id,
+            transfer.organizationName,
+            transfer.sourceUnit.id,
+            transfer.sourceUnitName,
+            transfer.destinationUnit.id,
+            transfer.destinationUnitName,
+            transfer.destinationLocation.id,
+            transfer.destinationLocationName,
+            transfer.purpose,
+            transfer.status,
+            effectiveTransitState(transfer),
+            transfer.sentAt.toString(),
+            text(dispatchedAt),
+            transfer.dispatchedById == null ? transfer.finalizedById : transfer.dispatchedById,
+            transfer.dispatchedByLogin == null ? transfer.finalizedByLogin : transfer.dispatchedByLogin,
+            text(receivedAt),
+            transfer.receivedById == null && "ACCEPTED".equals(transfer.status) ? transfer.approvedById : transfer.receivedById,
+            transfer.receivedByLogin == null && "ACCEPTED".equals(transfer.status) ? transfer.approvedByLogin : transfer.receivedByLogin,
+            text(closedAt),
+            transfer.finalizedById,
+            transfer.finalizedByLogin,
+            transfer.approvedById,
+            transfer.approvedByLogin,
+            text(transfer.approvedAt),
+            transfer.rejectedById,
+            transfer.rejectedByLogin,
+            text(transfer.rejectedAt),
+            transfer.rejectionReason,
+            items
+        );
+    }
+
+    private static String effectiveTransitState(InventoryTransfer transfer) {
+        if (transfer.transitState != null && !transfer.transitState.isBlank()) return transfer.transitState;
+        if ("ACCEPTED".equals(transfer.status)) return "RECEIVED";
+        if ("REJECTED".equals(transfer.status)) return "RETURNED_TO_SOURCE";
+        return "IN_TRANSIT";
     }
 
     private void requireTransferRead(InventoryTransfer transfer) {
@@ -458,7 +541,8 @@ public class TransferService {
 
     private static List<LineRequest> sorted(List<LineRequest> items) {
         return items.stream().sorted(Comparator.comparing(line -> line.assetId() != null
-            ? "A" + String.format("%020d", line.assetId()) : "B" + String.format("%020d", line.balanceId()))).toList();
+            ? "A" + String.format("%020d", line.assetId())
+            : "B" + String.format("%020d", line.balanceId()))).toList();
     }
 
     private static String fingerprint(FinalizeRequest request) {
@@ -469,8 +553,10 @@ public class TransferService {
     }
 
     private StockOption stockOption(Object row) {
-        if (row instanceof AssetItem asset) return new StockOption("ASSET", asset.id, asset.assetCode,
-            asset.model.name, asset.model.sku, asset.location.name, asset.model.unitOfMeasure, "1");
+        if (row instanceof AssetItem asset) {
+            return new StockOption("ASSET", asset.id, asset.assetCode, asset.model.name, asset.model.sku,
+                asset.location.name, asset.model.unitOfMeasure, "1");
+        }
         StockBalance balance = (StockBalance) row;
         return new StockOption("LOT", balance.id, balance.lot.lotNumber, balance.lot.model.name,
             balance.lot.model.sku, balance.location.name, balance.lot.model.unitOfMeasure, decimal(balance.available));
@@ -527,6 +613,10 @@ public class TransferService {
 
     private static String decimal(BigDecimal value) {
         return value.setScale(4, RoundingMode.UNNECESSARY).toPlainString();
+    }
+
+    private static String text(LocalDateTime value) {
+        return value == null ? null : value.toString();
     }
 
     private static void pagination(int page) {
