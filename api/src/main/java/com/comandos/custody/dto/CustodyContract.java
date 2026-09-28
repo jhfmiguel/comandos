@@ -6,6 +6,13 @@ public final class CustodyContract {
     private CustodyContract() {}
     public record IssueRequest(String requestId, Long organizationId, Long unitId, Long recipientId,
         Long authorizerId, String purpose, String dueAt, List<Long> assetIds, List<Long> equipmentSetIds, Long recipientUnitId, String recipientType, String custodyScope, String durationType, String teamOperation, String responsibilityTerm, String deliveryCondition, String accessories) {}
+    public record InstitutionalIssueRequest(String requestId, Long organizationId, Long unitId, Long recipientUnitId,
+        Long responsiblePersonId, Long responsibilityRoleAssignmentId, Long authorizerId, String purpose, String dueAt,
+        List<Long> assetIds, List<Long> equipmentSetIds, String custodyScope, String durationType, String teamOperation,
+        String responsibilityTerm, String deliveryCondition, String accessories) {}
+    public record CustodyResponsibilityView(long custodyId, long responsiblePersonId, String responsiblePersonName,
+        long responsibilityRoleAssignmentId, String roleCode, String roleName, String organizationName, String unitName,
+        String recordedAt) {}
     public record ReturnRequest(String requestId, List<Long> itemIds, Long conditionTypeId, String inspectionNotes) {}
     public record StockOption(long assetId, String assetCode, String serialNumber, String modelName, String locationName) {}
     public record EquipmentSetOption(long equipmentSetId, String code, String name, int componentCount) {}
