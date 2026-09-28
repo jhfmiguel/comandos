@@ -1,13 +1,19 @@
 import React from "react"
 import {
     Check,
+    Clipboard,
+    Download,
     Eye,
+    Lock,
     Pencil,
     Play,
     Plus,
+    Printer,
     RefreshCw,
     RotateCcw,
     Search,
+    Unlock,
+    Upload,
     X
 } from "lucide-react"
 import { Trash } from "@primeicons/react"
@@ -17,13 +23,19 @@ type ComandosButtonVariant = "text" | "outlined" | "link" | "contained"
 type TableAction =
     | "add"
     | "analyze"
+    | "block"
     | "cancel"
+    | "copy"
     | "delete"
+    | "download"
     | "edit"
     | "execute"
+    | "print"
     | "refresh"
     | "return"
     | "success"
+    | "unblock"
+    | "upload"
     | "view"
 
 interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
@@ -56,6 +68,12 @@ const resolveTableAction = (value: React.ReactNode): TableAction | null => {
     if (/^(execute|executar)(\b|$)/.test(text)) return "execute"
     if (/^(return|retornar|devolver)(\b|$)/.test(text)) return "return"
     if (/^(refresh|atualizar|recarregar)(\b|$)/.test(text)) return "refresh"
+    if (/^(block|bloquear)(\b|$)/.test(text)) return "block"
+    if (/^(unblock|desbloquear)(\b|$)/.test(text)) return "unblock"
+    if (/^(download|baixar|exportar)(\b|$)/.test(text)) return "download"
+    if (/^(upload|enviar|importar)(\b|$)/.test(text)) return "upload"
+    if (/^(print|imprimir)(\b|$)/.test(text)) return "print"
+    if (/^(copy|copiar)(\b|$)/.test(text)) return "copy"
     if (/^(cancel|cancelar|no|nao|reject|rejeitar|recusar)(\b|$)/.test(text)) return "cancel"
     if (/^(save|salvar|yes|sim|approve|aprovar|authorize|autorizar|accept|aceitar|conclude|concluir|confirm|confirmar)(\b|$)/.test(text)) return "success"
 
@@ -65,13 +83,19 @@ const resolveTableAction = (value: React.ReactNode): TableAction | null => {
 const tableActionIcon: Record<TableAction, React.ElementType> = {
     add: Plus,
     analyze: Search,
+    block: Lock,
     cancel: X,
+    copy: Clipboard,
     delete: Trash,
+    download: Download,
     edit: Pencil,
     execute: Play,
+    print: Printer,
     refresh: RefreshCw,
     return: RotateCcw,
     success: Check,
+    unblock: Unlock,
+    upload: Upload,
     view: Eye
 }
 
