@@ -96,62 +96,65 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
         acquisition = purchases.authorize(acquisition.id());
         require(acquisition.status() == PurchaseStatus.AUTHORIZED, "Acquisition was not authorized.");
 
+        Long acquisitionId = acquisition.id();
         Long acquisitionItemId = acquisition.items().getFirst().id();
 
         EquipmentReceivingContract.View first = receivings.create(receivingRequest(
-            acquisition.id(), buyer.id, acquisitionItemId, model.id, "40", "REC-FLOW-A", "ROM-REC-001"
+            acquisitionId, buyer.id, acquisitionItemId, model.id, "40", "REC-FLOW-A", "ROM-REC-001"
         ));
         require(first.status() == ReceivingStatus.PARTIALLY_RECEIVED,
             "First delivery must leave acquisition partially received.");
-        require(purchases.get(acquisition.id()).status() == PurchaseStatus.PARTIALLY_RECEIVED,
+        require(purchases.get(acquisitionId).status() == PurchaseStatus.PARTIALLY_RECEIVED,
             "Acquisition must be partially received after first delivery.");
 
+        Long firstReceivingId = first.id();
         Long firstItemId = first.items().getFirst().id();
-        inspections.create(first.id(), inspectionRequest(firstItemId, "30", "10",
+        inspections.create(firstReceivingId, inspectionRequest(firstItemId, "30", "10",
             "Ten units rejected due to delivery divergence."));
-        first = receivings.get(first.id());
+        first = receivings.get(firstReceivingId);
         require(first.status() == ReceivingStatus.DEFINITIVELY_PARTIALLY_ACCEPTED,
             "First receiving must be definitively partially accepted.");
         require(first.items().getFirst().acceptedQuantity().compareTo(new BigDecimal("30")) == 0,
             "First receiving accepted quantity mismatch.");
         require(first.items().getFirst().rejectedQuantity().compareTo(new BigDecimal("10")) == 0,
             "First receiving rejected quantity mismatch.");
-        require(purchases.get(acquisition.id()).items().getFirst().receivedQuantity()
+        require(purchases.get(acquisitionId).items().getFirst().receivedQuantity()
                 .compareTo(new BigDecimal("30")) == 0,
             "Rejected quantity must reopen acquisition pending balance.");
 
         EquipmentReceivingContract.View second = receivings.create(receivingRequest(
-            acquisition.id(), buyer.id, acquisitionItemId, model.id, "70", "REC-FLOW-B", "ROM-REC-002"
+            acquisitionId, buyer.id, acquisitionItemId, model.id, "70", "REC-FLOW-B", "ROM-REC-002"
         ));
         require(second.status() == ReceivingStatus.RECEIVED,
             "Second delivery must complete acquisition quantity before inspection.");
 
+        Long secondReceivingId = second.id();
         Long secondItemId = second.items().getFirst().id();
-        inspections.create(second.id(), inspectionRequest(secondItemId, "70", "0", null));
-        second = receivings.get(second.id());
+        inspections.create(secondReceivingId, inspectionRequest(secondItemId, "70", "0", null));
+        second = receivings.get(secondReceivingId);
         require(second.status() == ReceivingStatus.DEFINITIVELY_ACCEPTED,
             "Second receiving must be definitively accepted.");
 
-        PurchaseContract.PurchaseView completed = purchases.get(acquisition.id());
+        PurchaseContract.PurchaseView completed = purchases.get(acquisitionId);
         require(completed.status() == PurchaseStatus.RECEIVED,
             "Acquisition must be fully received after replacement delivery.");
         require(completed.items().getFirst().receivedQuantity().compareTo(new BigDecimal("100")) == 0,
             "Acquisition fulfilled quantity must equal acquired quantity.");
 
-        incorporations.create(incorporationRequest(first.id(), firstItemId, location.id, "REC-FLOW-A", "30"));
-        incorporations.create(incorporationRequest(second.id(), secondItemId, location.id, "REC-FLOW-B", "70"));
+        incorporations.create(incorporationRequest(firstReceivingId, firstItemId, location.id, "REC-FLOW-A", "30"));
+        incorporations.create(incorporationRequest(secondReceivingId, secondItemId, location.id, "REC-FLOW-B", "70"));
 
-        List<EquipmentReceivingContract.View> linked = receivings.list(acquisition.id());
+        List<EquipmentReceivingContract.View> linked = receivings.list(acquisitionId);
         require(linked.size() == 2, "Acquisition must expose exactly two linked receivings in integration scenario.");
         for (EquipmentReceivingContract.View receiving : linked) {
-            require(acquisition.id().equals(receiving.acquisitionId()), "Receiving lost acquisition link.");
+            require(acquisitionId.equals(receiving.acquisitionId()), "Receiving lost acquisition link.");
             require(receiving.items().size() == 1, "Receiving integration scenario must keep one linked item.");
             require(acquisitionItemId.equals(receiving.items().getFirst().acquisitionItemId()),
                 "Receiving item lost acquisition-item link.");
         }
 
         BigDecimal incorporated = incorporations.list(null).stream()
-            .filter(row -> first.id().equals(row.receivingId()) || second.id().equals(row.receivingId()))
+            .filter(row -> firstReceivingId.equals(row.receivingId()) || secondReceivingId.equals(row.receivingId()))
             .map(ReceivingIncorporationContract.View::quantity)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         require(incorporated.compareTo(new BigDecimal("100")) == 0,
@@ -160,7 +163,7 @@ public class ReceivingIntegrationDemoVerifier implements ApplicationRunner {
         boolean extraReceivingBlocked = false;
         try {
             receivings.create(receivingRequest(
-                acquisition.id(), buyer.id, acquisitionItemId, model.id, "1", "REC-FLOW-C", "ROM-REC-003"
+                acquisitionId, buyer.id, acquisitionItemId, model.id, "1", "REC-FLOW-C", "ROM-REC-003"
             ));
         } catch (IllegalStateException | IllegalArgumentException expected) {
             extraReceivingBlocked = true;
