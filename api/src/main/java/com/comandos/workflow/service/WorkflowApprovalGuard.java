@@ -41,21 +41,21 @@ public class WorkflowApprovalGuard {
             WorkflowPolicy.CONCLUDED);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ApprovalWorkflow requireAuthorized(String operationType, String resource, long recordId,
             long organizationId, Long unitId) {
         return requireStateByRecord(operationType, resource, recordId, organizationId, unitId,
             List.of(WorkflowPolicy.AUTHORIZED));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ApprovalWorkflow requireExecuted(String operationType, String resource, long recordId,
             long organizationId, Long unitId) {
         return requireStateByRecord(operationType, resource, recordId, organizationId, unitId,
             List.of(WorkflowPolicy.EXECUTED));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ApprovalWorkflow requireConcluded(String operationType, String resource, long recordId,
             long organizationId, Long unitId) {
         return requireStateByRecord(operationType, resource, recordId, organizationId, unitId,
@@ -102,6 +102,7 @@ public class WorkflowApprovalGuard {
             .setParameter("record", recordId)
             .setParameter("organization", organizationId)
             .setParameter("states", acceptedStates)
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .setMaxResults(1);
         if (unitId != null) {
             query.setParameter("unit", unitId);
