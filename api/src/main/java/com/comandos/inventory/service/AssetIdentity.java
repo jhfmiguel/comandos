@@ -16,12 +16,17 @@ final class AssetIdentity {
 
     static List<String> conflicts(List<AssetItem> assets, String code, String serial, String internalCode) {
         List<String> errors = new ArrayList<>();
+        String normalizedCode = normalize(code);
+        String normalizedSerial = normalize(serial);
+        String normalizedInternalCode = normalize(internalCode);
         for (var asset : assets) {
             String related = " Individual asset (#" + asset.id + ").";
-            if (!normalize(code).isEmpty() && normalize(code).equals(normalize(asset.assetCode)))
+            if (!normalizedCode.isEmpty() && normalizedCode.equals(normalize(asset.assetCode)))
                 errors.add("Asset code is already registered." + related);
-            if (!normalize(serial).isEmpty() && normalize(serial).equals(normalize(asset.serialNumber)))
+            if (!normalizedSerial.isEmpty() && normalizedSerial.equals(normalize(asset.serialNumber)))
                 errors.add("Serial number is already registered." + related);
+            if (!normalizedInternalCode.isEmpty() && normalizedInternalCode.equals(normalize(asset.internalCode)))
+                errors.add("Internal code is already registered." + related);
         }
         return errors;
     }
