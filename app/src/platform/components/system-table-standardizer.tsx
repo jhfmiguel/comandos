@@ -57,13 +57,18 @@ function markActionCells(table: HTMLTableElement) {
     if (!columns.length) return;
 
     const header = table.tHead?.rows.item(0);
-    columns.forEach(index => header?.cells.item(index)?.classList.add("comandos-standard-actions-header"));
+    columns.forEach(index => {
+        const cell = header?.cells.item(index);
+        cell?.classList.add("comandos-standard-actions-header");
+        if (cell) cell.style.textAlign = "left";
+    });
 
     tableRows(table).forEach(row => {
         columns.forEach(index => {
             const cell = row.cells.item(index);
             if (!cell) return;
             cell.classList.add("comandos-standard-actions-cell");
+            cell.style.textAlign = "left";
 
             const directContainer = Array.from(cell.children).find(
                 child => child instanceof HTMLElement && child.tagName !== "BUTTON"
@@ -71,6 +76,8 @@ function markActionCells(table: HTMLTableElement) {
 
             if (directContainer) {
                 directContainer.classList.add("comandos-row-actions");
+            } else if (cell.querySelector(":scope > button, :scope > a")) {
+                cell.classList.add("comandos-row-actions");
             }
         });
     });
@@ -94,9 +101,6 @@ function shouldCreateFilterRow(table: HTMLTableElement): boolean {
     if (table.dataset.comandosTableFilter === "off") return false;
     if (table.dataset.comandosTableFilter === "on") return true;
 
-    // Cadastro/operational tables must not receive automatic search inputs.
-    // Treat a table as a listing only when it is outside an ERP form and its
-    // body does not contain editable controls.
     if (table.closest('form[data-comandos-erp-form="true"]')) return false;
     if (table.tBodies.item(0)?.querySelector("input, select, textarea")) return false;
 
@@ -110,7 +114,6 @@ function createFilterRow(table: HTMLTableElement, apply: () => void) {
         return;
     }
 
-    
     const header = head?.rows.item(0);
     if (!head || !header) return;
     if (head.querySelector(".comandos-filter-row")) return;
@@ -135,6 +138,7 @@ function createFilterRow(table: HTMLTableElement, apply: () => void) {
         input.placeholder = `Pesquisar ${label.toLowerCase()}...`;
         input.setAttribute("aria-label", `Pesquisar ${label}`);
         input.dataset.comandosColumnFilter = String(index);
+        input.dataset.comandosNoFloat = "true";
         input.addEventListener("input", apply);
         filterCell.appendChild(input);
         row.appendChild(filterCell);
@@ -156,6 +160,8 @@ function createPagination(table: HTMLTableElement, state: TableState, apply: () 
     const controls = document.createElement("nav");
     controls.className = "comandos-pagination-controls";
     controls.setAttribute("aria-label", "Paginação");
+    controls.style.justifyContent = "center";
+    controls.style.width = "100%";
 
     const first = document.createElement("button");
     const previous = document.createElement("button");
@@ -180,6 +186,9 @@ function createPagination(table: HTMLTableElement, state: TableState, apply: () 
     current.className = "comandos-pagination-page is-active";
     current.setAttribute("aria-current", "page");
     current.disabled = true;
+    current.style.background = "transparent";
+    current.style.borderColor = "var(--comandos-accent, #ff9900)";
+    current.style.color = "var(--comandos-accent, #ff9900)";
 
     first.addEventListener("click", () => {
         state.page = 0;
@@ -259,9 +268,14 @@ function applyTable(table: HTMLTableElement) {
         row.style.display = show ? "" : "none";
     });
 
+    state.pagination.hidden = totalPages <= 1;
+
     const buttons = state.pagination.querySelectorAll<HTMLButtonElement>("button");
     const [first, previous, current, next, last] = Array.from(buttons);
-    if (current) current.textContent = String(state.page + 1);
+    if (current) {
+        current.textContent = String(state.page + 1);
+        current.setAttribute("aria-label", `Página ${state.page + 1} de ${totalPages}`);
+    }
     if (first) first.disabled = state.page === 0;
     if (previous) previous.disabled = state.page === 0;
     if (next) next.disabled = state.page + 1 >= totalPages;
@@ -294,9 +308,7 @@ function enhanceTable(table: HTMLTableElement) {
     };
 
     createFilterRow(table, apply);
-
     createPagination(table, state, () => applyTable(table));
-
     applyTable(table);
 }
 
