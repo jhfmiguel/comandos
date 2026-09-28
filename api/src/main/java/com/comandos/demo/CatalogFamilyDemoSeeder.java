@@ -31,6 +31,10 @@ public class CatalogFamilyDemoSeeder implements ApplicationRunner {
         ItemCategory shield = category("Escudos", "SHIELD", true, false, false);
         ItemCategory spray = category("Espargidores", "SPRAY", false, true, true);
         ItemCategory electrical = category("Dispositivos elétricos", "ELECTRICAL_DEVICE", true, false, false);
+        ItemCategory optical = category("Ópticos", "OPTICAL", true, false, false);
+        ItemCategory restraint = category("Algemas e restrição", "RESTRAINT", true, false, false);
+        ItemCategory tactical = category("Equipamentos táticos", "TACTICAL_EQUIPMENT", true, false, false);
+        ItemCategory accessory = category("Acessórios e componentes", "ACCESSORY_COMPONENT", true, false, false);
 
         ItemModel grenadeModel = catalogItem(
             grenade, demo,
@@ -71,6 +75,38 @@ public class CatalogFamilyDemoSeeder implements ApplicationRunner {
             "DEMO-CEW-01", "Dispositivo elétrico de demonstração", "EA", "9800.00"
         );
         electricalSpecification(electricalModel);
+
+        ItemModel opticalModel = catalogItem(
+            optical, demo,
+            "OPTICAL_SIGHT", "Mira óptica", "Dispositivo óptico de pontaria",
+            "OPTICAL_RED_DOT", "Red dot", "Mira reflexiva sem ampliação",
+            "DEMO-OPTICAL-RD-01", "Mira red dot de demonstração", "EA", "1800.00"
+        );
+        opticalSpecification(opticalModel);
+
+        ItemModel restraintModel = catalogItem(
+            restraint, demo,
+            "HANDCUFF", "Algema", "Dispositivo de restrição individual",
+            "HANDCUFF_DOUBLE_LOCK", "Trava dupla", "Algema com mecanismo de trava dupla",
+            "DEMO-HANDCUFF-DL-01", "Algema de trava dupla de demonstração", "EA", "320.00"
+        );
+        restraintSpecification(restraintModel);
+
+        ItemModel tacticalModel = catalogItem(
+            tactical, demo,
+            "TACTICAL_GEAR", "Equipamento tático", "Equipamento de apoio operacional",
+            "TACTICAL_CARRIER", "Porta-equipamento", "Equipamento tático de transporte individual",
+            "DEMO-TACTICAL-01", "Equipamento tático de demonstração", "EA", "650.00"
+        );
+        tacticalSpecification(tacticalModel);
+
+        ItemModel accessoryModel = catalogItem(
+            accessory, demo,
+            "WEAPON_COMPONENT", "Componente de arma", "Componente ou acessório controlado",
+            "COMPONENT_MAGAZINE", "Carregador", "Carregador compatível com plataforma demonstrativa",
+            "DEMO-COMPONENT-MAG-01", "Carregador de demonstração", "EA", "280.00"
+        );
+        accessorySpecification(accessoryModel);
     }
 
     private ItemModel catalogItem(
@@ -186,6 +222,63 @@ public class CatalogFamilyDemoSeeder implements ApplicationRunner {
         s.cycles = 5;
         s.cartridgeTypeRef = parameter("CARTRIDGE_TYPE", "STANDARD");
         s.cartridgeType = s.cartridgeTypeRef.name;
+        em.persist(s);
+    }
+
+    private void opticalSpecification(ItemModel model) {
+        if (hasSpec(OpticalSpecification.class, model.id)) return;
+        OpticalSpecification s = new OpticalSpecification();
+        s.model = model;
+        s.opticalTypeRef = parameter("OPTICAL_TYPE", "RED_DOT");
+        s.opticalType = s.opticalTypeRef.name;
+        s.minimumMagnification = BigDecimal.ONE;
+        s.maximumMagnification = BigDecimal.ONE;
+        s.objectiveDiameterMm = new BigDecimal("25");
+        s.reticle = "DOT 2 MOA";
+        s.fieldOfView = "Unlimited eye relief";
+        s.nightVision = true;
+        s.thermalVision = false;
+        em.persist(s);
+    }
+
+    private void restraintSpecification(ItemModel model) {
+        if (hasSpec(RestraintSpecification.class, model.id)) return;
+        RestraintSpecification s = new RestraintSpecification();
+        s.model = model;
+        s.restraintType = "HANDCUFF";
+        s.materialRef = parameter("MATERIAL", "STEEL");
+        s.material = s.materialRef.name;
+        s.lockingMechanismRef = parameter("LOCKING_MECHANISM", "DOUBLE_LOCK");
+        s.lockingMechanism = s.lockingMechanismRef.name;
+        s.doubleLock = true;
+        em.persist(s);
+    }
+
+    private void tacticalSpecification(ItemModel model) {
+        if (hasSpec(TacticalEquipmentSpecification.class, model.id)) return;
+        TacticalEquipmentSpecification s = new TacticalEquipmentSpecification();
+        s.model = model;
+        s.equipmentType = "TACTICAL_CARRIER";
+        s.materialRef = parameter("MATERIAL", "POLYMER");
+        s.material = s.materialRef.name;
+        s.sizeRef = parameter("SIZE", "M");
+        s.size = s.sizeRef.name;
+        s.weightGrams = new BigDecimal("850");
+        s.operationalNotes = "Demo tactical support equipment.";
+        em.persist(s);
+    }
+
+    private void accessorySpecification(ItemModel model) {
+        if (hasSpec(AccessoryComponentSpecification.class, model.id)) return;
+        AccessoryComponentSpecification s = new AccessoryComponentSpecification();
+        s.model = model;
+        s.componentTypeRef = parameter("COMPONENT_TYPE", "MAGAZINE");
+        s.componentType = s.componentTypeRef.name;
+        s.compatibilityRef = parameter("COMPATIBILITY", "APX");
+        s.compatibleWith = s.compatibilityRef.name;
+        s.interfaceRef = parameter("INTERFACE", "PICATINNY");
+        s.mountingInterface = s.interfaceRef.name;
+        s.controlledComponent = true;
         em.persist(s);
     }
 
