@@ -2,7 +2,7 @@ package com.comandos.documents.model;
 
 import com.comandos.core.model.CoreEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "erp_process_attachment", indexes = {
@@ -43,11 +43,11 @@ public class ProcessAttachment extends CoreEntity {
     @Column(name = "current_version", nullable = false)
     public boolean currentVersion = true;
     @Column(name = "uploaded_at", nullable = false)
-    public LocalDateTime uploadedAt;
+    public Instant uploadedAt;
     @Column(name = "uploaded_by_id")
     public Long uploadedById;
     @Column(name = "uploaded_by_login", length = 255)
     public String uploadedByLogin;
     @Column(name = "retired_at")
-    public LocalDateTime retiredAt;
+    public Instant retiredAt;
 }
