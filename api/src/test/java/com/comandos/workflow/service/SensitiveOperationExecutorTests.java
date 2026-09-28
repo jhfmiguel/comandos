@@ -15,11 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 class SensitiveOperationExecutorTests {
 
     @Test
-    void executesBusinessOperationBetweenExecutedAndConcludedAndBindsLateRecordId() {
+    void executesBusinessOperationOnlyAfterExecutedAndBindsLateRecordIdBeforeConclusion() {
         var calls = new ArrayList<String>();
         var guard = new GuardSpy(calls);
         var workflows = new WorkflowSpy(calls);
@@ -31,7 +32,10 @@ class SensitiveOperationExecutorTests {
         });
 
         assertEquals("ok", result);
-        assertEquals(List.of("AUTHORIZED", "EXECUTED", "BUSINESS", "BIND:777", "CONCLUDED"), calls);
+        assertEquals(
+            List.of("AUTHORIZED", "EXECUTED", "EXECUTED_GUARD", "BUSINESS", "BIND:777", "CONCLUDED"),
+            calls
+        );
     }
 
     @Test
@@ -42,11 +46,11 @@ class SensitiveOperationExecutorTests {
         String result = executor.execute(command(), () -> SensitiveOperationResult.of("no-record-yet"));
 
         assertEquals("no-record-yet", result);
-        assertEquals(List.of("AUTHORIZED", "EXECUTED", "CONCLUDED"), calls);
+        assertEquals(List.of("AUTHORIZED", "EXECUTED", "EXECUTED_GUARD", "CONCLUDED"), calls);
     }
 
     @Test
-    void businessFailureStopsBeforeConclusion() {
+    void businessFailureStopsBeforeRecordBindingAndConclusion() {
         var calls = new ArrayList<String>();
         var executor = new SensitiveOperationExecutor(new GuardSpy(calls), new WorkflowSpy(calls));
 
@@ -56,7 +60,40 @@ class SensitiveOperationExecutorTests {
         }));
 
         assertEquals("business failure", error.getMessage());
-        assertEquals(List.of("AUTHORIZED", "EXECUTED", "BUSINESS"), calls);
+        assertEquals(List.of("AUTHORIZED", "EXECUTED", "EXECUTED_GUARD", "BUSINESS"), calls);
+    }
+
+    @Test
+    void nullBusinessResultStopsBeforeRecordBindingAndConclusion() {
+        var calls = new ArrayList<String>();
+        var executor = new SensitiveOperationExecutor(new GuardSpy(calls), new WorkflowSpy(calls));
+
+        var error = assertThrows(IllegalStateException.class, () -> executor.execute(command(), () -> {
+            calls.add("BUSINESS");
+            return null;
+        }));
+
+        assertEquals("Sensitive operation must return an execution result.", error.getMessage());
+        assertEquals(List.of("AUTHORIZED", "EXECUTED", "EXECUTED_GUARD", "BUSINESS"), calls);
+    }
+
+    @Test
+    void invalidCommandIsRejectedBeforeWorkflowMutation() {
+        var calls = new ArrayList<String>();
+        var executor = new SensitiveOperationExecutor(new GuardSpy(calls), new WorkflowSpy(calls));
+        var invalid = new SensitiveOperationCommand(
+            100L,
+            "TRANSFER",
+            "inventory/assets",
+            10L,
+            0L,
+            "Execute authorized transfer",
+            "Transfer completed successfully"
+        );
+
+        assertThrows(ResponseStatusException.class,
+            () -> executor.execute(invalid, () -> SensitiveOperationResult.of("should-not-run")));
+        assertTrue(calls.isEmpty());
     }
 
     @Test
@@ -93,6 +130,13 @@ class SensitiveOperationExecutorTests {
         public ApprovalWorkflow requireAuthorized(long workflowId, String operationType, String resource,
                 long organizationId, Long unitId) {
             calls.add("AUTHORIZED");
+            return new ApprovalWorkflow();
+        }
+
+        @Override
+        public ApprovalWorkflow requireExecuted(long workflowId, String operationType, String resource,
+                long organizationId, Long unitId) {
+            calls.add("EXECUTED_GUARD");
             return new ApprovalWorkflow();
         }
     }
