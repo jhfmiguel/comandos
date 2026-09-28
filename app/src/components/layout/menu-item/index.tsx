@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import * as React from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useComandosPreferences } from "components/settings/preferences-provider"
 
 interface SubMenuItem {
     href?: string
@@ -35,6 +36,7 @@ interface MenuItemProps {
 export const MenuItem: React.FC<MenuItemProps> = (props) => {
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    const { tr } = useComandosPreferences()
     const Icon = props.icon
 
     const isCurrentRoute = React.useCallback((href?: string): boolean => {
@@ -87,7 +89,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                                 setOpenGroups(itemOpen ? {} : { [itemKey]: true })
                             }}
                         >
-                            <span>{item.label}</span>
+                            <span>{tr(item.label)}</span>
                             {itemOpen ? <ChevronDown className="ml-auto" size={16} /> : <ChevronRight className="ml-auto" size={16} />}
                         </button>
                         {itemOpen && (
@@ -111,7 +113,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                             : "comandos-sidebar-menu-button"}
                         onClick={() => select(props.menuKey)}
                     >
-                        <span>{item.label}</span>
+                        <span>{tr(item.label)}</span>
                     </Link>
                 </div>
             )
@@ -129,7 +131,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                     onClick={() => select(submenuOpen ? null : props.menuKey)}
                 >
                     <Icon size={18} />
-                    <span>{props.label}</span>
+                    <span>{tr(props.label)}</span>
                     {!props.collapsed && (
                         submenuOpen
                             ? <ChevronDown className="ml-auto" size={16} />
@@ -145,7 +147,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
 
                 {props.collapsed && (
                     <div className="comandos-sidebar-popup">
-                        <div className="comandos-sidebar-popup-title">{props.label}</div>
+                        <div className="comandos-sidebar-popup-title">{tr(props.label)}</div>
                         {props.subItems?.map((item, index) => item.href ? (
                             <Link
                                 key={`${props.menuKey}-popup-${index}`}
@@ -155,7 +157,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                                     : "comandos-sidebar-popup-link"}
                                 onClick={() => select(props.menuKey)}
                             >
-                                {item.label}
+                                {tr(item.label)}
                             </Link>
                         ) : null)}
                     </div>
@@ -175,7 +177,7 @@ export const MenuItem: React.FC<MenuItemProps> = (props) => {
                 onClick={() => select(props.menuKey)}
             >
                 <Icon size={18} />
-                <span>{props.label}</span>
+                <span>{tr(props.label)}</span>
             </Link>
         </div>
     )
