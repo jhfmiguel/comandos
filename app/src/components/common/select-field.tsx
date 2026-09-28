@@ -113,6 +113,7 @@ export function ComandosSelectField({
                 <Combobox.InputGroup
                     className={styles.inputGroup}
                     data-disabled={disabled ? "true" : undefined}
+                    data-popup-open={open ? "true" : undefined}
                 >
                     <Combobox.Input
                         id={id}
