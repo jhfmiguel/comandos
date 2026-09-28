@@ -71,10 +71,6 @@ export function ComandosSelectField({
         ? (hasUserTyped ? effectiveOptions : [])
         : effectiveOptions;
 
-    // Keep the complete option set registered with Base UI so a selected
-    // internal value (for example PERSON or ONEROUS) is always rendered
-    // using its human-readable label. Searchable reference fields still
-    // keep their popup hidden until the user types.
     const items = React.useMemo(
         () => Combobox.createItems(effectiveOptions, {
             getValue: option => option.value,
@@ -91,6 +87,7 @@ export function ComandosSelectField({
             data-active={open || value !== "" ? "true" : "false"}
             data-filled={value !== "" ? "true" : "false"}
             data-invalid={invalid ? "true" : "false"}
+            data-disabled={disabled ? "true" : "false"}
             onPointerDownCapture={() => {
                 if (disabled) onDisabledAttempt?.();
             }}
@@ -113,12 +110,16 @@ export function ComandosSelectField({
                 name={name}
                 disabled={disabled}
             >
-                <Combobox.InputGroup className={styles.inputGroup}>
+                <Combobox.InputGroup
+                    className={styles.inputGroup}
+                    data-disabled={disabled ? "true" : undefined}
+                >
                     <Combobox.Input
                         id={id}
                         className={styles.input}
                         data-comandos-no-float="true"
                         placeholder={placeholder}
+                        aria-required={required || undefined}
                         aria-invalid={invalid || undefined}
                         aria-describedby={describedBy}
                         autoComplete="off"
@@ -141,7 +142,7 @@ export function ComandosSelectField({
                     >
                         <Combobox.Popup className={styles.popup}>
                             <Combobox.Empty className={styles.empty}>
-                                Nenhuma opção encontrada.
+                                {tr("Nenhuma opção encontrada.")}
                             </Combobox.Empty>
                             <Combobox.List className={styles.list}>
                                 {visibleOptions.map(option => (
