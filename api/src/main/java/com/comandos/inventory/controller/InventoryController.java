@@ -1,5 +1,6 @@
 package com.comandos.inventory.controller;
 
+import com.comandos.inventory.service.AmmunitionBoxService;
 import com.comandos.inventory.service.InventoryCatalog;
 import com.comandos.inventory.service.InventoryService;
 import com.comandos.security.service.AccessPolicy;
@@ -15,8 +16,15 @@ public class InventoryController {
     private final InventoryService service;
     private final AccessPolicy access;
     private final com.comandos.inventory.service.StockIntakeService intake;
-    public InventoryController(InventoryService service, AccessPolicy access, com.comandos.inventory.service.StockIntakeService intake) {
-        this.service = service; this.access = access; this.intake = intake;
+    private final AmmunitionBoxService ammunitionBoxes;
+
+    public InventoryController(InventoryService service, AccessPolicy access,
+                               com.comandos.inventory.service.StockIntakeService intake,
+                               AmmunitionBoxService ammunitionBoxes) {
+        this.service = service;
+        this.access = access;
+        this.intake = intake;
+        this.ammunitionBoxes = ammunitionBoxes;
     }
 
     @PostMapping("/assets/batch")
@@ -34,7 +42,9 @@ public class InventoryController {
     private org.springframework.http.ResponseEntity<Map<String, Object>> batchResponse(
             com.comandos.inventory.service.StockIntakeService.AssetResult result) {
         Map<String, Object> body = new java.util.LinkedHashMap<>();
-        body.put("accepted", result.accepted()); body.put("detail", result.detail()); body.put("rows", result.rows());
+        body.put("accepted", result.accepted());
+        body.put("detail", result.detail());
+        body.put("rows", result.rows());
         body.put("quantity", result.receipt() == null ? "0" : result.receipt().quantity());
         body.put("recordIds", result.receipt() == null ? List.of() : result.receipt().recordIds());
         if (result.receipt() != null) body.put("id", result.receipt().id());
@@ -45,6 +55,22 @@ public class InventoryController {
     public com.comandos.inventory.service.StockIntakeService.Receipt receiveBoxes(
             @RequestBody com.comandos.inventory.service.StockIntakeService.BoxesRequest request) {
         return intake.boxes(request);
+    }
+
+    @GetMapping("/ammunition-boxes")
+    public AmmunitionBoxService.PageResult ammunitionBoxes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long organizationId,
+            @RequestParam(required = false) Long lotId,
+            @RequestParam(required = false) String intakeRequestId,
+            @RequestParam(required = false) String status) {
+        return ammunitionBoxes.list(page, size, organizationId, lotId, intakeRequestId, status);
+    }
+
+    @GetMapping("/ammunition-boxes/{id}")
+    public Map<String, Object> ammunitionBox(@PathVariable long id) {
+        return ammunitionBoxes.get(id);
     }
 
     @GetMapping("/catalog")
