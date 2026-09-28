@@ -99,6 +99,9 @@ export const Button: React.FC<ButtonProps> = ({
     const content = label ?? children
     const tableAction = resolveTableAction(content)
     const TableActionIcon = tableAction ? tableActionIcon[tableAction] : null
+    const submitLayoutClass = type === "submit" && !iconOnly
+        ? "w-full min-h-[3.35rem] justify-center"
+        : ""
 
     return (
         <button
@@ -109,6 +112,7 @@ export const Button: React.FC<ButtonProps> = ({
                 `comandos-button-${severity}`,
                 iconOnly ? "comandos-button-icon-only" : "",
                 fluid ? "w-full" : "",
+                submitLayoutClass,
                 columnClasses ?? "",
                 className ?? ""
             ].filter(Boolean).join(" ")}
