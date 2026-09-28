@@ -28,9 +28,11 @@ export const Input: React.FC<InputProps> = ({
     currency = false,
     onlyNumbers = false,
     size,
+    required,
     ...inputProps
 }) => {
     const { locale } = useComandosPreferences()
+    const errorId = error ? `${id}-error` : undefined
 
     const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let value = event.target.value
@@ -70,6 +72,10 @@ export const Input: React.FC<InputProps> = ({
             {...inputProps}
             className={`comandos-input ${size ? `comandos-input-${size} ` : ""}${currency ? "comandos-currency-value " : ""}w-full`}
             id={id}
+            required={required}
+            aria-required={required || undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={errorId ?? inputProps["aria-describedby"]}
             value={inputProps.value ?? ""}
             inputMode={currency ? "numeric" : inputProps.inputMode}
             onChange={onInputChange}
@@ -78,9 +84,9 @@ export const Input: React.FC<InputProps> = ({
     )
 
     return (
-        <div className={`field ${columnClasses ?? ""}`}>
+        <div className={`field ${columnClasses ?? ""}`} data-invalid={error ? "true" : "false"}>
             <label className="block font-semibold mb-2" htmlFor={id}>
-                {label}
+                {label}{required ? " *" : ""}
             </label>
 
             {currency ? (
@@ -92,15 +98,16 @@ export const Input: React.FC<InputProps> = ({
                 <div className="w-full">{control}</div>
             )}
 
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p id={errorId} className="text-red-500 text-sm mt-1" role="alert">{error}</p>}
         </div>
     )
 }
 
 export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
-    const { value, onChange, name, id, label, columnClasses, error, size, ...restProps } = props
+    const { value, onChange, name, id, label, columnClasses, error, size, required, ...restProps } = props
     const safeValue = typeof value === "object" ? "" : (value ?? "")
     const { locale } = useComandosPreferences()
+    const errorId = error ? `${id}-error` : undefined
 
     const onMoneyChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
         const input = event.currentTarget
@@ -119,9 +126,9 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
     }
 
     return (
-        <div className={`field ${columnClasses ?? ""}`}>
+        <div className={`field ${columnClasses ?? ""}`} data-invalid={error ? "true" : "false"}>
             <label className="block font-semibold mb-2" htmlFor={id}>
-                {label}
+                {label}{required ? " *" : ""}
             </label>
 
             <div className="comandos-currency-input w-full">
@@ -132,13 +139,17 @@ export const InputMoney: React.FC<Omit<InputProps, "currency">> = (props) => {
                     id={id}
                     name={name}
                     type="text"
+                    required={required}
+                    aria-required={required || undefined}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={errorId ?? restProps["aria-describedby"]}
                     value={safeValue}
                     inputMode="numeric"
                     onChange={onMoneyChange}
                 />
             </div>
 
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p id={errorId} className="text-red-500 text-sm mt-1" role="alert">{error}</p>}
         </div>
     )
 }
