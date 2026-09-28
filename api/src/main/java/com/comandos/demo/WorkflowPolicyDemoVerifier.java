@@ -4,6 +4,7 @@ import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.workflow.model.ApprovalWorkflowEvent;
 import com.comandos.workflow.service.WorkflowPolicy;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
@@ -17,14 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "comandos.demo.seed", havingValue = "true")
 @Order(1960)
 public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
-    private static final List<String> MAIN_PATH = List.of(
-        WorkflowPolicy.REQUESTED,
-        WorkflowPolicy.ANALYZED,
-        WorkflowPolicy.AUTHORIZED,
-        WorkflowPolicy.EXECUTED,
-        WorkflowPolicy.CONCLUDED
-    );
-
     private final EntityManager em;
     private final WorkflowPolicy policy;
 
@@ -63,6 +56,7 @@ public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
             if (blank(workflow.resource)) fail("workflow without permission resource: " + workflow.id);
             if (blank(workflow.justification)) fail("workflow without justification: " + workflow.id);
             if (workflow.requestedAt == null) fail("workflow without request timestamp: " + workflow.id);
+            if (blank(workflow.requestedByLogin)) fail("workflow without requester actor: " + workflow.id);
             verifyEvents(workflow);
             verifyMilestones(workflow);
         }
@@ -73,25 +67,37 @@ public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
             "select e from ApprovalWorkflowEvent e where e.workflow.id=:id order by e.id",
             ApprovalWorkflowEvent.class).setParameter("id", workflow.id).getResultList();
         if (events.isEmpty()) fail("workflow without event history: " + workflow.id);
-        if (!"NONE".equals(events.getFirst().fromStatus) || !WorkflowPolicy.REQUESTED.equals(events.getFirst().toStatus))
+
+        var first = events.getFirst();
+        if (!"NONE".equals(first.fromStatus) || !WorkflowPolicy.REQUESTED.equals(first.toStatus))
             fail("workflow must start at REQUESTED: " + workflow.id);
-        String previous = WorkflowPolicy.REQUESTED;
+        if (blank(first.justification)) fail("request event without justification for workflow " + workflow.id);
+        if (first.occurredAt == null) fail("request event without timestamp for workflow " + workflow.id);
+        if (blank(first.actorLogin)) fail("request event without actor for workflow " + workflow.id);
+        if (first.occurredAt.isBefore(workflow.requestedAt)) fail("request event before workflow request: " + workflow.id);
+
+        String previousStatus = WorkflowPolicy.REQUESTED;
+        LocalDateTime previousTimestamp = first.occurredAt;
         for (int i = 1; i < events.size(); i++) {
             var event = events.get(i);
-            if (!previous.equals(event.fromStatus)) fail("broken event chain for workflow " + workflow.id);
+            if (!previousStatus.equals(event.fromStatus)) fail("broken event chain for workflow " + workflow.id);
             if (blank(event.justification)) fail("event without justification for workflow " + workflow.id);
             if (event.occurredAt == null) fail("event without timestamp for workflow " + workflow.id);
+            if (blank(event.actorLogin)) fail("event without actor for workflow " + workflow.id);
+            if (event.occurredAt.isBefore(previousTimestamp)) fail("non-monotonic event timestamp for workflow " + workflow.id);
+
             if (WorkflowPolicy.CANCELLED.equals(event.toStatus)) {
-                if (WorkflowPolicy.CONCLUDED.equals(event.fromStatus) || WorkflowPolicy.CANCELLED.equals(event.fromStatus))
+                if (policy.terminal(event.fromStatus))
                     fail("invalid cancellation origin for workflow " + workflow.id);
             } else {
-                int from = MAIN_PATH.indexOf(event.fromStatus);
-                int to = MAIN_PATH.indexOf(event.toStatus);
+                int from = WorkflowPolicy.MAIN_PATH.indexOf(event.fromStatus);
+                int to = WorkflowPolicy.MAIN_PATH.indexOf(event.toStatus);
                 if (from < 0 || to != from + 1) fail("invalid workflow transition for " + workflow.id);
             }
-            previous = event.toStatus;
+            previousStatus = event.toStatus;
+            previousTimestamp = event.occurredAt;
         }
-        if (!workflow.status.equals(previous)) fail("workflow status diverges from event history: " + workflow.id);
+        if (!workflow.status.equals(previousStatus)) fail("workflow status diverges from event history: " + workflow.id);
     }
 
     private void verifyMilestones(ApprovalWorkflow workflow) {
@@ -111,6 +117,7 @@ public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
         if (workflow.authorizedAt != null && workflow.authorizedAt.isBefore(workflow.requestedAt)) fail("authorization before request");
         if (workflow.executedAt != null && workflow.authorizedAt != null && workflow.executedAt.isBefore(workflow.authorizedAt)) fail("execution before authorization");
         if (workflow.concludedAt != null && workflow.executedAt != null && workflow.concludedAt.isBefore(workflow.executedAt)) fail("conclusion before execution");
+        if (workflow.cancelledAt != null && workflow.cancelledAt.isBefore(workflow.requestedAt)) fail("cancellation before request");
     }
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }
