@@ -9,7 +9,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "erp_asset_item", uniqueConstraints = {@UniqueConstraint(columnNames = {"asset_code"}), @UniqueConstraint(columnNames = {"internal_code"}), @UniqueConstraint(columnNames = {"model_id", "serial_number"})})
+@Table(name = "erp_asset_item", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_asset_item_asset_code", columnNames = {"asset_code"}),
+    @UniqueConstraint(name = "uk_asset_item_internal_code", columnNames = {"internal_code"}),
+    @UniqueConstraint(name = "uk_asset_item_serial_number", columnNames = {"serial_number"})
+})
 public class AssetItem extends CoreEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "model_id", nullable = false)
