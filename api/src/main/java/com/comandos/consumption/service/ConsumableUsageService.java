@@ -94,15 +94,27 @@ public class ConsumableUsageService {
             item.modelName=lot.model.name; item.sku=lot.model.sku; item.lotNumber=lot.lotNumber; item.locationName=balance.location.name;
             item.unitOfMeasure=lot.model.unitOfMeasure; item.deliveredQuantity=delivered; item.usedQuantity=used; item.returnedQuantity=returned;
             item.usedAt=now; item.returnedAt=returned.signum()>0?now:null; item.result=line.result().trim(); em.persist(item);
-            changes.add(Map.of("balanceId",balance.id,"family",item.family,"delivered",delivered,"used",used,"returned",returned,
-                "before",beforeBalance,"after",balance.available));
+            changes.add(Map.ofEntries(
+                Map.entry("balanceId", balance.id),
+                Map.entry("family", item.family),
+                Map.entry("delivered", delivered),
+                Map.entry("used", used),
+                Map.entry("returned", returned),
+                Map.entry("before", beforeBalance),
+                Map.entry("after", balance.available)
+            ));
         }
         em.flush(); var result=view(usage);
         audit.record("consumable-usages",usage.id,"CLOSE",null,Map.of("usage",result,"stockChanges",changes));
         return result;
     }
 
-    public UsageView get(long id) { var u=em.find(ConsumableUsage.class,id); if(u==null)notFound(); return view(u); }
+    public UsageView get(long id) {
+        access.requireAny("ammunition-consumptions", "READ");
+        var u=em.find(ConsumableUsage.class,id);
+        if(u==null)notFound();
+        return view(u);
+    }
     public Page<UsageView> list(long organizationId,Long unitId,int page) {
         access.requireScope("ammunition-consumptions","READ",organizationId,unitId); selectedUnit(organizationId,unitId); pagination(page);
         String from=" from ConsumableUsage u where u.organization.id=:organization"+(unitId==null?"":" and u.unit.id=:unit");
