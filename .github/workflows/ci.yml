@@ -98,11 +98,11 @@ jobs:
         run: |
           chmod +x mvnw
           nohup ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo,oracle -Dspring-boot.run.arguments=--server.port=8180 > /tmp/comandos-api.log 2>&1 &
-      - name: Wait for API and acquisition flow verification
+      - name: Wait for API and Oracle business regression verification
         run: |
           for i in {1..120}; do
             if curl -fsS http://localhost:8180/actuator/health; then
-              echo "Oracle demo API is healthy and purchase flow verifier completed."
+              echo "Oracle demo API is healthy and all startup business regression verifiers completed."
               exit 0
             fi
             sleep 2
