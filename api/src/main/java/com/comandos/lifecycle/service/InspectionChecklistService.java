@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -83,8 +84,7 @@ public class InspectionChecklistService {
         }
 
         for (PeriodicInspectionItem removed : byCode.values()) {
-            long photos = photoCount(removed.id);
-            if (photos > 0) conflict("Checklist items with photos cannot be removed.");
+            if (photoCount(removed.id) > 0) conflict("Checklist items with photos cannot be removed.");
             em.remove(removed);
         }
 
@@ -93,23 +93,18 @@ public class InspectionChecklistService {
             inspection.asset.status = "BLOCKED";
             if (Boolean.TRUE.equals(request.generateMaintenance()) && inspection.generatedWorkOrderId == null) {
                 var workOrder = maintenance.open(new OpenRequest(
-                    UUID.randomUUID().toString(),
-                    inspection.organization.id,
-                    inspection.unit == null ? null : inspection.unit.id,
-                    null,
-                    inspection.asset.id,
-                    "Periodic inspection checklist contains reproved item(s).",
-                    null,
-                    "CORRECTIVE",
-                    null,
-                    null
-                ));
+                    UUID.randomUUID().toString(), inspection.organization.id,
+                    inspection.unit == null ? null : inspection.unit.id, null, inspection.asset.id,
+                    "Periodic inspection checklist contains reproved item(s).", null, "CORRECTIVE", null, null));
                 inspection.generatedWorkOrderId = workOrder.id();
             }
         }
         em.flush();
         List<InspectionItemView> result = views(inspectionId);
-        audit.record("periodic-inspections", inspection.id, "CHECKLIST", null, Map.of("items", result, "generatedWorkOrderId", inspection.generatedWorkOrderId));
+        Map<String,Object> change = new LinkedHashMap<>();
+        change.put("items", result);
+        change.put("generatedWorkOrderId", inspection.generatedWorkOrderId);
+        audit.record("periodic-inspections", inspection.id, "CHECKLIST", null, change);
         return result;
     }
 
