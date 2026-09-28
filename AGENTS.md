@@ -19,7 +19,7 @@ Do not add speculative complexity without a concrete use case, but avoid domain 
 - Prefer one principal responsibility per commit.
 
 ## Architecture
-- Backend: Java 25, Spring Boot, PostgreSQL, Spring Modulith.
+- Backend: Java 25, Spring Boot, Oracle Database, Spring Modulith.
 - Frontend: Next.js, React, TypeScript.
 - Reusable platform code belongs to Platform Core only when it is domain-neutral.
 - Business domains depend on Platform Core, never the reverse.
