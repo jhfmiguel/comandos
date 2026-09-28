@@ -1,10 +1,14 @@
 package com.comandos.lifecycle.controller;
-import com.comandos.lifecycle.dto.LifecycleContract.*;import com.comandos.lifecycle.service.LifecycleService;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;import java.util.*;
+import com.comandos.lifecycle.dto.LifecycleContract.*;import com.comandos.lifecycle.service.InspectionChecklistService;import com.comandos.lifecycle.service.LifecycleService;import org.springframework.http.*;import org.springframework.web.bind.annotation.*;import java.util.*;
 @RestController@RequestMapping("/api/erp/lifecycle")public class LifecycleController{
- private final LifecycleService service;public LifecycleController(LifecycleService service){this.service=service;}
+ private final LifecycleService service;private final InspectionChecklistService checklist;
+ public LifecycleController(LifecycleService service,InspectionChecklistService checklist){this.service=service;this.checklist=checklist;}
  @PostMapping("/inspections")@ResponseStatus(HttpStatus.CREATED)public InspectionView inspect(@RequestBody InspectionRequest r){return service.inspect(r);}
  @PostMapping("/inspections/{id}/approve")public InspectionView approve(@PathVariable long id){return service.approve(id);}
  @GetMapping("/inspections")public Page<InspectionView> inspections(@RequestParam long organizationId,@RequestParam(required=false)Long unitId,@RequestParam(defaultValue="0")int page){return service.inspections(organizationId,unitId,page);}
+ @PutMapping("/inspections/{id}/checklist")public List<InspectionItemView> checklist(@PathVariable long id,@RequestBody InspectionChecklistRequest r){return checklist.save(id,r);}
+ @GetMapping("/inspections/{id}/checklist")public List<InspectionItemView> checklist(@PathVariable long id){return checklist.get(id);}
+ @PostMapping("/inspections/{id}/checklist/{itemId}/photos")@ResponseStatus(HttpStatus.CREATED)public AttachmentView checklistPhoto(@PathVariable long id,@PathVariable long itemId,@RequestBody AttachmentRequest r){return checklist.addPhoto(id,itemId,r);}
  @PostMapping("/occurrences")@ResponseStatus(HttpStatus.CREATED)public OccurrenceView occur(@RequestBody OccurrenceRequest r){return service.occur(r);}
  @PostMapping("/occurrences/{id}/resolve")public OccurrenceView resolve(@PathVariable long id,@RequestBody(required=false)ResolveRequest r){return service.resolve(id,r);}
  @GetMapping("/occurrences")public Page<OccurrenceView> occurrences(@RequestParam long organizationId,@RequestParam(required=false)Long unitId,@RequestParam(defaultValue="0")int page){return service.occurrences(organizationId,unitId,page);}
