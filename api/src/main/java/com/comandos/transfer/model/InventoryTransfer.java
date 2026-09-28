@@ -48,26 +48,24 @@ public class InventoryTransfer extends CoreEntity {
     @Column(name = "document_reference", length = 500)
     public String documentReference;
 
-    /**
-     * Backward-compatible workflow status used by existing clients.
-     * PENDING_ACCEPTANCE -> ACCEPTED | REJECTED.
-     */
+    /** Backward-compatible workflow state used by existing clients. */
     @Column(nullable = false, length = 30)
     public String status = "PENDING_ACCEPTANCE";
 
     /**
-     * Explicit physical/logistical state of the material while the workflow status
-     * remains backward compatible.
-     * IN_TRANSIT -> RECEIVED | RETURNED_TO_SOURCE.
+     * Explicit physical/logistical state. It is nullable at schema level so an
+     * existing installation can add the column without invalidating historical
+     * rows; every new transfer is persisted with a concrete state.
      */
-    @Column(name = "transit_state", nullable = false, length = 30)
+    @Column(name = "transit_state", length = 30)
     public String transitState = "IN_TRANSIT";
 
     /** Legacy dispatch timestamp kept for API/database compatibility. */
     @Column(nullable = false)
     public LocalDateTime sentAt;
 
-    @Column(name = "dispatched_at", nullable = false)
+    /** Explicit dispatch metadata for the transit lifecycle. */
+    @Column(name = "dispatched_at")
     public LocalDateTime dispatchedAt;
 
     @Column(name = "dispatched_by_id")
