@@ -2,7 +2,7 @@ package com.comandos.documents.model;
 
 import com.comandos.core.model.CoreEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "erp_stored_document_blob", uniqueConstraints = {
@@ -20,7 +20,7 @@ public class StoredDocumentBlob extends CoreEntity {
     @Column(name = "checksum", nullable = false, updatable = false, length = 64)
     public String checksum;
     @Column(name = "created_at", nullable = false, updatable = false)
-    public LocalDateTime createdAt;
+    public Instant createdAt;
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "content_bytes", nullable = false, updatable = false)
