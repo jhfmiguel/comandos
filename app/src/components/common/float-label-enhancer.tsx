@@ -115,7 +115,9 @@ const chooseHost = (control: FloatControl): HTMLElement | null => {
 };
 
 const hasValue = (control: FloatControl): boolean => {
-    if (control instanceof HTMLSelectElement) return true;
+    if (control instanceof HTMLSelectElement) {
+        return control.value.trim() !== "";
+    }
 
     if (
         control instanceof HTMLInputElement
