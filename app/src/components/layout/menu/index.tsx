@@ -108,9 +108,12 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     selectedMenu={selectedMenu}
                                     onSelect={handleSelect}
                                     subItems={[
-                                        { href: "/erp/core?section=institutional&resource=organization-natures", label: "Cadastros" },
-                                        { href: "/erp/core?section=people", label: "People" },
-                                        { href: "/erp/core?section=access", label: "Access" }
+                                        { href: "/erp/core?section=institutional&resource=organization-natures", label: "Naturezas das organizações" },
+                                        { href: "/erp/core?section=institutional&resource=economic-activities", label: "Atividades econômicas" },
+                                        { href: "/erp/core?section=people&resource=person-types", label: "Tipos de pessoas" },
+                                        { href: "/erp/core?section=institutional&resource=organizations", label: "Organizações" },
+                                        { href: "/erp/core?section=people&resource=people", label: "Pessoas" },
+                                        { href: "/erp/core?section=access", label: "Acesso" }
                                     ]}
                                 />
 
