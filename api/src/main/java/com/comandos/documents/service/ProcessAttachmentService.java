@@ -7,8 +7,9 @@ import com.comandos.documents.model.ProcessAttachment;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class ProcessAttachmentService {
         policy.validateFile(contentType, bytes.length);
         String cleanTitle = clean(title, 255, "Attachment title");
         String cleanFileName = cleanFileName(fileName);
-        var stored = storage.store(cleanFileName, contentType, bytes);
+        var stored = storage.store(cleanFileName, contentType, new ByteArrayInputStream(bytes), bytes.length);
         var actor = audit.actor();
         var attachment = new ProcessAttachment();
         attachment.processType = type;
@@ -66,9 +67,9 @@ public class ProcessAttachmentService {
         attachment.title = cleanTitle;
         attachment.fileName = stored.fileName();
         attachment.contentType = stored.contentType();
-        attachment.fileSize = stored.fileSize();
+        attachment.fileSize = stored.size();
         attachment.checksum = stored.checksum();
-        attachment.storageId = stored.storageId();
+        attachment.storageId = stored.id();
         attachment.versionNumber = 1;
         attachment.currentVersion = true;
         attachment.uploadedAt = stored.createdAt();
@@ -91,11 +92,10 @@ public class ProcessAttachmentService {
         policy.validateFile(contentType, bytes.length);
         String cleanTitle = title == null || title.isBlank() ? current.title : clean(title, 255, "Attachment title");
         String cleanFileName = cleanFileName(fileName);
-        var stored = storage.store(cleanFileName, contentType, bytes);
+        var stored = storage.store(cleanFileName, contentType, new ByteArrayInputStream(bytes), bytes.length);
         var actor = audit.actor();
-        var now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         current.currentVersion = false;
-        current.retiredAt = now;
+        current.retiredAt = Instant.now();
         var next = new ProcessAttachment();
         next.processType = current.processType;
         next.recordId = current.recordId;
@@ -105,9 +105,9 @@ public class ProcessAttachmentService {
         next.title = cleanTitle;
         next.fileName = stored.fileName();
         next.contentType = stored.contentType();
-        next.fileSize = stored.fileSize();
+        next.fileSize = stored.size();
         next.checksum = stored.checksum();
-        next.storageId = stored.storageId();
+        next.storageId = stored.id();
         next.versionNumber = current.versionNumber + 1;
         next.supersedes = current;
         next.currentVersion = true;
@@ -140,8 +140,10 @@ public class ProcessAttachmentService {
         if (attachment == null) notFound();
         var rule = policy.rule(attachment.processType);
         access.requireScope(rule.permissionResource(), "READ", attachment.organizationId, attachment.unitId);
-        byte[] content = storage.read(attachment.storageId);
+        byte[] content = read(attachment.storageId);
         if (content.length != attachment.fileSize) throw new IllegalStateException("Stored attachment size mismatch.");
+        String checksum = sha256(content);
+        if (!checksum.equals(attachment.checksum)) throw new IllegalStateException("Stored attachment checksum mismatch.");
         return new Download(attachment.fileName, attachment.contentType, content);
     }
 
@@ -168,11 +170,27 @@ public class ProcessAttachmentService {
         return value;
     }
 
+    private byte[] read(String storageId) {
+        try (var input = storage.open(storageId)) {
+            return input.readAllBytes();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read stored attachment.", exception);
+        }
+    }
+
     private AttachmentView view(ProcessAttachment value) {
         return new AttachmentView(value.id, value.processType, value.recordId, value.organizationId, value.unitId,
             value.documentType, value.title, value.fileName, value.contentType, value.fileSize, value.checksum,
             value.versionNumber, value.supersedes == null ? null : value.supersedes.id, value.currentVersion,
             value.uploadedAt.toString(), value.uploadedById, value.uploadedByLogin);
+    }
+
+    private static String sha256(byte[] content) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(content));
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     private static void validateTarget(long recordId, long organizationId) {
