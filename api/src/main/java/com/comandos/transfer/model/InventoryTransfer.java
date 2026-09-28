@@ -52,10 +52,7 @@ public class InventoryTransfer extends CoreEntity {
     @Column(nullable = false, length = 30)
     public String status = "PENDING_ACCEPTANCE";
 
-    /**
-     * Explicit physical/logistical state. Historical rows may be null and are
-     * interpreted from the legacy workflow status. New transfers always set it.
-     */
+    /** Explicit physical/logistical state. Historical rows may initially be null. */
     @Column(name = "transit_state", length = 30)
     public String transitState;
 
@@ -117,4 +114,26 @@ public class InventoryTransfer extends CoreEntity {
 
     @Column(nullable = false, length = 64)
     public String requestFingerprint;
+
+    @PrePersist
+    @PreUpdate
+    void normalizeTransitLifecycle() {
+        if (sentAt != null && dispatchedAt == null) dispatchedAt = sentAt;
+        if (dispatchedById == null) dispatchedById = finalizedById;
+        if (dispatchedByLogin == null) dispatchedByLogin = finalizedByLogin;
+
+        if ("ACCEPTED".equals(status)) {
+            transitState = TransferTransitState.RECEIVED.name();
+            if (receivedAt == null) receivedAt = approvedAt;
+            if (receivedById == null) receivedById = approvedById;
+            if (receivedByLogin == null) receivedByLogin = approvedByLogin;
+            if (transitClosedAt == null) transitClosedAt = receivedAt;
+        } else if ("REJECTED".equals(status)) {
+            transitState = TransferTransitState.RETURNED_TO_SOURCE.name();
+            if (transitClosedAt == null) transitClosedAt = rejectedAt;
+        } else if ("PENDING_ACCEPTANCE".equals(status) || "SENT".equals(status)) {
+            transitState = TransferTransitState.IN_TRANSIT.name();
+            transitClosedAt = null;
+        }
+    }
 }
