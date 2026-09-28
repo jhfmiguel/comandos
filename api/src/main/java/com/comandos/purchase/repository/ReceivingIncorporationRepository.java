@@ -9,6 +9,7 @@ public interface ReceivingIncorporationRepository extends JpaRepository<Receivin
     boolean existsByReceivingId(Long id);
     boolean existsByReceivingItemId(Long id);
     boolean existsByReceivingSerialId(Long id);
+    boolean existsByInventoryResourceAndInventoryRecordId(String inventoryResource, Long inventoryRecordId);
     List<ReceivingIncorporation> findByReceivingIdOrderByCreatedAtAsc(Long id);
     List<ReceivingIncorporation> findByReceivingItemIdOrderByCreatedAtAsc(Long id);
 }
