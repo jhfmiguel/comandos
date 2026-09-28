@@ -26,4 +26,22 @@ public class InventorySaleItem extends CoreEntity {
     @Column(nullable = false, precision = 19, scale = 4) public BigDecimal quantity;
     @Column(nullable = false, precision = 19, scale = 4) public BigDecimal unitPrice;
     @Column(nullable = false, precision = 19, scale = 4) public BigDecimal subtotal;
+    @Column(name="previous_owner_type", nullable=false, length=30) public String previousOwnerType = "ORGANIZATION";
+    @Column(name="previous_owner_name", nullable=false, length=255) public String previousOwnerName;
+    @Column(name="new_owner_type", nullable=false, length=30) public String newOwnerType = "BUYER";
+    @Column(name="new_owner_name", nullable=false, length=255) public String newOwnerName;
+
+    @PrePersist
+    @PreUpdate
+    void snapshotOwnership() {
+        if (sale != null) {
+            if (previousOwnerName == null || previousOwnerName.isBlank()) previousOwnerName = sale.organizationName;
+            if (newOwnerName == null || newOwnerName.isBlank()) newOwnerName = sale.buyerName;
+        }
+        if (asset != null && lot != null) throw new IllegalStateException("Sale item cannot reference asset and lot simultaneously.");
+        if (asset == null && lot == null) throw new IllegalStateException("Sale item must reference an asset or lot.");
+        if (movement == null || movement.quantity == null || movement.quantity.signum() >= 0) {
+            throw new IllegalStateException("Sale item requires a negative stock movement.");
+        }
+    }
 }
