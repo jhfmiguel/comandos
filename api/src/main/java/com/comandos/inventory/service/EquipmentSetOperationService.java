@@ -8,6 +8,7 @@ import com.comandos.inventory.dto.EquipmentSetOperationContract.*;
 import com.comandos.inventory.model.EquipmentSet;
 import com.comandos.inventory.model.EquipmentSetComponent;
 import com.comandos.inventory.model.EquipmentSetOperation;
+import com.comandos.inventory.model.EquipmentSetOperationComponent;
 import com.comandos.inventory.model.StockBalance;
 import com.comandos.maintenance.service.MaintenanceService;
 import jakarta.persistence.EntityManager;
@@ -19,9 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HexFormat;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,9 +61,9 @@ public class EquipmentSetOperationService {
         var replay = replay(request.requestId(), fingerprint);
         if (replay != null) return replay;
         var set = lockedSet(request.equipmentSetId(), request.organizationId(), request.unitId());
-        var components = components(set);
-        requireSize(components);
-        var lines = components.stream().map(component -> {
+        var selected = components(set);
+        requireSize(selected);
+        var lines = selected.stream().map(component -> {
             validateComponent(component);
             return component.asset != null
                 ? new com.comandos.donation.dto.DonationContract.LineRequest(component.asset.id, null, BigDecimal.ONE)
@@ -73,7 +72,7 @@ public class EquipmentSetOperationService {
         var result = donations.finalize(new com.comandos.donation.dto.DonationContract.FinalizeRequest(
             request.requestId(), request.organizationId(), request.unitId(), request.donorId(), request.doneeId(),
             request.term(), lines, "OUTGOING", request.documentReference()));
-        return record(set, "DONATION", "donations", List.of(result.id()), components.size(), request.requestId(), fingerprint);
+        return record(set, selected, "DONATION", "donations", List.of(result.id()), request.requestId(), fingerprint);
     }
 
     @Transactional
@@ -86,9 +85,9 @@ public class EquipmentSetOperationService {
         var replay = replay(request.requestId(), fingerprint);
         if (replay != null) return replay;
         var set = lockedSet(request.equipmentSetId(), request.organizationId(), request.unitId());
-        var components = components(set);
-        requireSize(components);
-        var lines = components.stream().map(component -> {
+        var selected = components(set);
+        requireSize(selected);
+        var lines = selected.stream().map(component -> {
             validateComponent(component);
             return component.asset != null
                 ? new com.comandos.disposal.dto.DisposalContract.LineRequest(component.asset.id, null, BigDecimal.ONE)
@@ -97,7 +96,7 @@ public class EquipmentSetOperationService {
         var result = disposals.finalize(new com.comandos.disposal.dto.DisposalContract.FinalizeRequest(
             request.requestId(), request.organizationId(), request.unitId(), request.processNumber(), request.reason(),
             request.destructionMethod(), request.destroyedAt(), request.destructionCertificate(), lines, request.confirmed()));
-        return record(set, "DISPOSAL", "disposals", List.of(result.id()), components.size(), request.requestId(), fingerprint);
+        return record(set, selected, "DISPOSAL", "disposals", List.of(result.id()), request.requestId(), fingerprint);
     }
 
     @Transactional
@@ -130,7 +129,7 @@ public class EquipmentSetOperationService {
         var result = consumptions.finalizeUsage(new com.comandos.consumption.dto.ConsumableUsageContract.FinalizeRequest(
             request.requestId(), request.organizationId(), request.unitId(), request.responsibleId(), request.authorizerId(),
             request.purpose(), request.activityType(), request.operationTraining(), lines));
-        return record(set, "CONSUMPTION", "consumable-usages", List.of(result.id()), selected.size(), request.requestId(), fingerprint);
+        return record(set, selected, "CONSUMPTION", "consumable-usages", List.of(result.id()), request.requestId(), fingerprint);
     }
 
     @Transactional
@@ -155,13 +154,7 @@ public class EquipmentSetOperationService {
                 request.reason(), null, request.maintenanceType(), request.workshop(), request.gunsmith()));
             orderIds.add(order.id());
         }
-        return record(set, "MAINTENANCE", "maintenance/work-orders", orderIds, selected.size(), request.requestId(), fingerprint);
-    }
-
-    public AggregateOperationView get(long id) {
-        var operation = em.find(EquipmentSetOperation.class, id);
-        if (operation == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipment set operation not found.");
-        return view(operation);
+        return record(set, selected, "MAINTENANCE", "maintenance/work-orders", orderIds, request.requestId(), fingerprint);
     }
 
     private EquipmentSet lockedSet(Long id, Long organizationId, Long unitId) {
@@ -175,10 +168,10 @@ public class EquipmentSetOperationService {
     }
 
     private List<EquipmentSetComponent> components(EquipmentSet set) {
-        var components = em.createQuery("select c from EquipmentSetComponent c where c.equipmentSet.id=:id order by c.id", EquipmentSetComponent.class)
+        var result = em.createQuery("select c from EquipmentSetComponent c where c.equipmentSet.id=:id order by c.id", EquipmentSetComponent.class)
             .setParameter("id", set.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
-        if (components.isEmpty()) bad("Equipment set has no components.");
-        return components;
+        if (result.isEmpty()) bad("Equipment set has no components.");
+        return result;
     }
 
     private static void validateComponent(EquipmentSetComponent component) {
@@ -200,8 +193,8 @@ public class EquipmentSetOperationService {
         return view(existing.get());
     }
 
-    private AggregateOperationView record(EquipmentSet set, String operationType, String resource, List<Long> recordIds,
-            int componentCount, String requestId, String fingerprint) {
+    private AggregateOperationView record(EquipmentSet set, List<EquipmentSetComponent> selected, String operationType,
+            String resource, List<Long> recordIds, String requestId, String fingerprint) {
         var actor = audit.actor();
         var operation = new EquipmentSetOperation();
         operation.equipmentSet = set;
@@ -212,13 +205,23 @@ public class EquipmentSetOperationService {
         operation.operationType = operationType;
         operation.aggregateResource = resource;
         operation.aggregateRecordIds = recordIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        operation.componentCount = componentCount;
+        operation.componentCount = selected.size();
         operation.executedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
         operation.operatorId = actor.id();
         operation.operatorLogin = actor.login();
         operation.requestId = requestId;
         operation.requestFingerprint = fingerprint;
         em.persist(operation);
+        for (var source : selected) {
+            var snapshot = new EquipmentSetOperationComponent();
+            snapshot.operation = operation;
+            snapshot.sourceComponentId = source.id;
+            snapshot.componentKind = source.asset != null ? "ASSET" : "BALANCE";
+            snapshot.stockRecordId = source.asset != null ? source.asset.id : source.balance.id;
+            snapshot.role = source.role;
+            snapshot.quantity = source.quantity;
+            em.persist(snapshot);
+        }
         em.flush();
         var result = view(operation);
         audit.record("equipment-sets/operations", operation.id, operationType, null, result);
