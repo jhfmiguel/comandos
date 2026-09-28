@@ -111,10 +111,15 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                         { href: "/erp/core?section=institutional&resource=organization-natures", label: "Naturezas das organizações" },
                                         { href: "/erp/core?section=institutional&resource=economic-activities", label: "Atividades econômicas" },
                                         { href: "/erp/core?section=institutional&resource=unit-types", label: "Tipos de unidades organizacionais" },
+                                        { href: "/erp/core?section=institutional&resource=organizations", label: "Organizações" },
+                                        { href: "/erp/core?section=institutional&resource=units", label: "Unidades organizacionais" },
                                         { href: "/erp/core?section=people&resource=person-types", label: "Tipos de pessoas" },
                                         { href: "/erp/core?section=people&resource=contact-types", label: "Tipos de contato" },
-                                        { href: "/erp/core?section=institutional&resource=organizations", label: "Organizações" },
+                                        { href: "/erp/core?section=people&resource=roles", label: "Tipos de vínculos" },
                                         { href: "/erp/core?section=people&resource=people", label: "Pessoas" },
+                                        { href: "/erp/core?section=access&resource=profile-levels", label: "Níveis de perfil de acesso" },
+                                        { href: "/erp/core?section=access&resource=permission-resources", label: "Recursos de permissão" },
+                                        { href: "/erp/core?section=access&resource=permission-actions", label: "Ações de permissão" },
                                         { href: "/erp/core?section=access", label: "Acesso" }
                                     ]}
                                 />
