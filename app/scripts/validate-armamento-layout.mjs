@@ -10,6 +10,7 @@ const frontend = process.env.COMANDOS_APP_URL || 'http://localhost:3000';
 const backend = process.env.COMANDOS_API_URL || 'http://localhost:8180';
 
 const routes = [
+  'purchases',
   'inventory',
   'receivings',
   'receiving-inspections',
