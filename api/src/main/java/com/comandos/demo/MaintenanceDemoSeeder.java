@@ -1,16 +1,20 @@
 package com.comandos.demo;
 
 import com.comandos.inventory.model.AssetItem;
+import com.comandos.inventory.model.AssetStatus;
 import com.comandos.inventory.model.StockMovement;
 import com.comandos.inventory.model.StockMovementNature;
+import com.comandos.inventory.model.StockMovementReferenceType;
 import com.comandos.maintenance.model.Diagnosis;
 import com.comandos.maintenance.model.ExecutedService;
 import com.comandos.maintenance.model.FunctionalTest;
 import com.comandos.maintenance.model.MaintenancePart;
+import com.comandos.maintenance.model.MaintenancePlan;
 import com.comandos.maintenance.model.WorkOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.boot.ApplicationArguments;
@@ -33,85 +37,113 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        WorkOrder workOrder = firstWorkOrder();
+        if (firstWorkOrder() != null) return;
 
-        if (workOrder == null) {
-            AssetItem asset = firstAsset();
-            if (asset == null) return;
+        AssetItem asset = firstAsset();
+        if (asset == null) return;
 
-            StockMovement issue = new StockMovement();
-            issue.asset = asset;
-            issue.location = asset.location;
-            issue.nature = StockMovementNature.MAINTENANCE_ISSUE.name();
-            issue.quantity = BigDecimal.ONE;
-            issue.movedAt = LocalDateTime.now().minusHours(2);
-            issue.operatorLogin = "demo.seed";
-            issue.notes = "Movimento fictício para validação de manutenção";
-            entityManager.persist(issue);
+        LocalDateTime openedAt = LocalDateTime.now().minusHours(2);
+        LocalDateTime completedAt = LocalDateTime.now().minusMinutes(30);
 
-            workOrder = new WorkOrder();
-            workOrder.organization = asset.location.organization;
-            workOrder.unit = asset.location.unit;
-            workOrder.asset = asset;
-            workOrder.issueMovement = issue;
-            workOrder.organizationName = asset.location.organization.name;
-            workOrder.unitName = asset.location.unit == null ? null : asset.location.unit.name;
-            workOrder.assetCode = asset.assetCode;
-            workOrder.modelName = asset.model.name;
-            workOrder.locationName = asset.location.name;
-            workOrder.reason = "Manutenção preventiva de demonstração";
-            workOrder.maintenanceType = "PREVENTIVE";
-            workOrder.workshop = "Oficina Demo";
-            workOrder.gunsmith = "Armeiro Demo";
-            workOrder.sentAt = LocalDateTime.now().minusHours(2);
-            workOrder.nextMaintenanceAt = LocalDateTime.now().plusMonths(6);
-            workOrder.totalCost = new BigDecimal("250.00");
-            workOrder.status = "OPEN";
-            workOrder.openedAt = LocalDateTime.now().minusHours(2);
-            workOrder.openedByLogin = "demo.seed";
-            workOrder.requestId = UUID.randomUUID().toString();
-            workOrder.requestFingerprint = "demo-maintenance-" + UUID.randomUUID();
-            entityManager.persist(workOrder);
+        MaintenancePlan plan = new MaintenancePlan();
+        plan.organization = asset.location.organization;
+        plan.unit = asset.location.unit;
+        plan.name = "Plano preventivo demo";
+        plan.type = "PREVENTIVE";
+        plan.periodicityDays = 180;
+        plan.active = true;
+        entityManager.persist(plan);
 
-            asset.status = "IN_MAINTENANCE";
-        }
+        StockMovement issue = new StockMovement();
+        issue.asset = asset;
+        issue.location = asset.location;
+        issue.nature = StockMovementNature.MAINTENANCE_ISSUE.name();
+        issue.referenceType = StockMovementReferenceType.MAINTENANCE.name();
+        issue.quantity = BigDecimal.ONE.negate();
+        issue.movedAt = openedAt;
+        issue.operatorLogin = "demo.seed";
+        issue.notes = "Saída fictícia para manutenção preventiva";
+        entityManager.persist(issue);
 
-        final WorkOrder target = workOrder;
-        if (count("Diagnosis") == 0) {
-            Diagnosis diagnosis = new Diagnosis();
-            diagnosis.workOrder = target;
-            diagnosis.defect = "Desgaste preventivo de demonstração";
-            diagnosis.cause = "Uso operacional simulado";
-            diagnosis.opinion = "Recomendada limpeza, inspeção e substituição preventiva de componente.";
-            entityManager.persist(diagnosis);
-        }
+        WorkOrder workOrder = new WorkOrder();
+        workOrder.organization = asset.location.organization;
+        workOrder.unit = asset.location.unit;
+        workOrder.plan = plan;
+        workOrder.asset = asset;
+        workOrder.issueMovement = issue;
+        workOrder.organizationName = asset.location.organization.name;
+        workOrder.unitName = asset.location.unit == null ? null : asset.location.unit.name;
+        workOrder.assetCode = asset.assetCode;
+        workOrder.modelName = asset.model.name;
+        workOrder.locationName = asset.location.name;
+        workOrder.reason = "Manutenção preventiva de demonstração";
+        workOrder.maintenanceType = "PREVENTIVE";
+        workOrder.workshop = "Oficina Demo";
+        workOrder.gunsmith = "Armeiro Demo";
+        workOrder.sentAt = openedAt;
+        workOrder.openedAt = openedAt;
+        workOrder.openedByLogin = "demo.seed";
+        workOrder.requestId = UUID.randomUUID().toString();
+        workOrder.requestFingerprint = demoFingerprint();
+        workOrder.status = "OPEN";
+        entityManager.persist(workOrder);
+        entityManager.flush();
+        issue.referenceId = workOrder.id;
 
-        if (count("ExecutedService") == 0) {
-            ExecutedService service = new ExecutedService();
-            service.workOrder = target;
-            service.description = "Limpeza técnica e revisão preventiva de demonstração";
-            service.cost = new BigDecimal("150.00");
-            entityManager.persist(service);
-        }
+        asset.status = AssetStatus.IN_MAINTENANCE.name();
 
-        if (count("MaintenancePart") == 0) {
-            MaintenancePart part = new MaintenancePart();
-            part.workOrder = target;
-            part.description = "Componente de reposição fictício";
-            part.quantity = BigDecimal.ONE;
-            part.unitCost = new BigDecimal("100.00");
-            part.partNumber = "DEMO-PART-001";
-            entityManager.persist(part);
-        }
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.workOrder = workOrder;
+        diagnosis.defect = "Desgaste preventivo de demonstração";
+        diagnosis.cause = "Uso operacional simulado";
+        diagnosis.opinion = "Recomendada limpeza, inspeção e substituição preventiva de componente.";
+        entityManager.persist(diagnosis);
 
-        if (count("FunctionalTest") == 0) {
-            FunctionalTest test = new FunctionalTest();
-            test.workOrder = target;
-            test.testedAt = LocalDateTime.now().minusMinutes(30);
-            test.result = "PASSED";
-            test.notes = "Teste funcional fictício concluído sem anormalidades.";
-            entityManager.persist(test);
-        }
+        ExecutedService service = new ExecutedService();
+        service.workOrder = workOrder;
+        service.description = "Limpeza técnica e revisão preventiva de demonstração";
+        service.cost = new BigDecimal("150.00");
+        entityManager.persist(service);
+
+        MaintenancePart part = new MaintenancePart();
+        part.workOrder = workOrder;
+        part.description = "Componente de reposição fictício";
+        part.quantity = BigDecimal.ONE;
+        part.unitCost = new BigDecimal("100.00");
+        part.partNumber = "DEMO-PART-001";
+        entityManager.persist(part);
+
+        FunctionalTest test = new FunctionalTest();
+        test.workOrder = workOrder;
+        test.testedAt = completedAt;
+        test.result = "APPROVED";
+        test.notes = "Teste funcional fictício aprovado sem anormalidades.";
+        entityManager.persist(test);
+
+        StockMovement returned = new StockMovement();
+        returned.asset = asset;
+        returned.location = asset.location;
+        returned.nature = StockMovementNature.MAINTENANCE_RETURN.name();
+        returned.referenceType = StockMovementReferenceType.MAINTENANCE.name();
+        returned.referenceId = workOrder.id;
+        returned.quantity = BigDecimal.ONE;
+        returned.movedAt = completedAt;
+        returned.operatorLogin = "demo.seed";
+        returned.notes = "Retorno fictício após manutenção preventiva";
+        entityManager.persist(returned);
+
+        workOrder.returnMovement = returned;
+        workOrder.totalCost = new BigDecimal("250.00");
+        workOrder.completedAt = completedAt;
+        workOrder.returnedAt = completedAt;
+        workOrder.nextMaintenanceAt = completedAt.plusDays(plan.periodicityDays);
+        workOrder.status = "COMPLETED";
+        workOrder.completedByLogin = "demo.seed";
+        workOrder.completionRequestId = UUID.randomUUID().toString();
+        workOrder.completionFingerprint = demoFingerprint();
+        asset.status = asset.validUntil == null || !asset.validUntil.isBefore(LocalDate.now())
+            ? AssetStatus.AVAILABLE.name()
+            : AssetStatus.BLOCKED.name();
 
         entityManager.flush();
     }
@@ -126,7 +158,7 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
     }
 
     private AssetItem firstAsset() {
-        return entityManager.createQuery("select a from AssetItem a order by a.id", AssetItem.class)
+        return entityManager.createQuery("select a from AssetItem a where a.status in ('AVAILABLE','BLOCKED') order by a.id", AssetItem.class)
             .setMaxResults(1)
             .getResultList()
             .stream()
@@ -134,8 +166,7 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
             .orElse(null);
     }
 
-    private long count(String entityName) {
-        return entityManager.createQuery("select count(e) from " + entityName + " e", Long.class)
-            .getSingleResult();
+    private static String demoFingerprint() {
+        return UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
     }
 }
