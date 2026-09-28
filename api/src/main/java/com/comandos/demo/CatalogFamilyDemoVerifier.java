@@ -29,12 +29,16 @@ public class CatalogFamilyDemoVerifier implements ApplicationRunner {
         Map<String, Class<?>> families = new LinkedHashMap<>();
         families.put("FIREARM", FirearmSpecification.class);
         families.put("AMMUNITION", AmmunitionSpecification.class);
-        families.put("GRENADE", GrenadeSpecification.class);
         families.put("BALLISTIC_PROTECTION", BallisticProtectionSpecification.class);
-        families.put("HELMET", HelmetSpecification.class);
-        families.put("SHIELD", ShieldSpecification.class);
+        families.put("GRENADE", GrenadeSpecification.class);
         families.put("SPRAY", SpraySpecification.class);
         families.put("ELECTRICAL_DEVICE", ElectricalDeviceSpecification.class);
+        families.put("OPTICAL", OpticalSpecification.class);
+        families.put("HELMET", HelmetSpecification.class);
+        families.put("SHIELD", ShieldSpecification.class);
+        families.put("RESTRAINT", RestraintSpecification.class);
+        families.put("TACTICAL_EQUIPMENT", TacticalEquipmentSpecification.class);
+        families.put("ACCESSORY_COMPONENT", AccessoryComponentSpecification.class);
 
         for (Map.Entry<String, Class<?>> entry : families.entrySet()) {
             verifyFamily(entry.getKey(), entry.getValue());
@@ -105,42 +109,80 @@ public class CatalogFamilyDemoVerifier implements ApplicationRunner {
         switch (family) {
             case "FIREARM" -> {
                 FirearmSpecification s = (FirearmSpecification) spec;
-                require(s.caliberRef != null && !blank(s.operatingMechanism) && positive(s.capacity)
-                    && positive(s.barrelLength), family);
+                require(s.caliberRef != null && !blank(s.caliber) && !blank(s.operatingMechanism)
+                    && positive(s.capacity) && positive(s.barrelLength), family);
             }
             case "AMMUNITION" -> {
                 AmmunitionSpecification s = (AmmunitionSpecification) spec;
                 require(s.caliberRef != null && s.ammunitionTypeRef != null && s.projectileTypeRef != null
-                    && s.caseTypeRef != null && s.primerTypeRef != null && !blank(s.lethalityClassification), family);
-            }
-            case "GRENADE" -> {
-                GrenadeSpecification s = (GrenadeSpecification) spec;
-                require(s.grenadeTypeRef != null && s.agentRef != null && s.compositionRef != null
-                    && positive(s.shelfLifeMonths) && positive(s.delaySeconds) && positive(s.safetyRadius), family);
+                    && s.caseTypeRef != null && s.primerTypeRef != null && !blank(s.caliber)
+                    && !blank(s.ammunitionType) && !blank(s.projectileType) && !blank(s.caseType)
+                    && !blank(s.primerType) && !blank(s.lethalityClassification), family);
             }
             case "BALLISTIC_PROTECTION" -> {
                 BallisticProtectionSpecification s = (BallisticProtectionSpecification) spec;
                 require(s.protectionTypeRef != null && s.protectionLevelRef != null && s.materialRef != null
-                    && s.sizeRef != null && positive(s.serviceLifeMonths) && !blank(s.certification), family);
+                    && s.sizeRef != null && !blank(s.protectionType) && !blank(s.protectionLevel)
+                    && !blank(s.material) && !blank(s.size) && positive(s.serviceLifeMonths)
+                    && !blank(s.certification), family);
+            }
+            case "GRENADE" -> {
+                GrenadeSpecification s = (GrenadeSpecification) spec;
+                require(s.grenadeTypeRef != null && s.agentRef != null && s.compositionRef != null
+                    && !blank(s.grenadeType) && !blank(s.agent) && !blank(s.composition)
+                    && positive(s.shelfLifeMonths) && positive(s.delaySeconds) && positive(s.safetyRadius), family);
+            }
+            case "SPRAY" -> {
+                SpraySpecification s = (SpraySpecification) spec;
+                require(s.agentRef != null && s.compositionRef != null && !blank(s.agent) && !blank(s.composition)
+                    && positive(s.shelfLifeMonths) && positive(s.concentration)
+                    && positive(s.volumeMl) && positive(s.rangeMeters), family);
+            }
+            case "ELECTRICAL_DEVICE" -> {
+                ElectricalDeviceSpecification s = (ElectricalDeviceSpecification) spec;
+                require(positive(s.voltage) && positive(s.cycles) && s.cartridgeTypeRef != null
+                    && !blank(s.cartridgeType), family);
+            }
+            case "OPTICAL" -> {
+                OpticalSpecification s = (OpticalSpecification) spec;
+                require(s.opticalTypeRef != null && !blank(s.opticalType)
+                    && positiveOrOne(s.minimumMagnification) && positiveOrOne(s.maximumMagnification)
+                    && s.maximumMagnification.compareTo(s.minimumMagnification) >= 0
+                    && !blank(s.reticle) && s.nightVision != null && s.thermalVision != null, family);
             }
             case "HELMET" -> {
                 HelmetSpecification s = (HelmetSpecification) spec;
                 require(s.protectionLevelRef != null && s.materialRef != null && s.sizeRef != null
+                    && !blank(s.protectionLevel) && !blank(s.material) && !blank(s.size)
                     && positive(s.weightGrams) && !blank(s.certification), family);
             }
             case "SHIELD" -> {
                 ShieldSpecification s = (ShieldSpecification) spec;
-                require(s.shieldTypeRef != null && s.materialRef != null && positive(s.heightMm)
+                boolean ballisticRequiresLevel = s.shieldTypeRef != null
+                    && "BALLISTIC".equalsIgnoreCase(s.shieldTypeRef.code)
+                    ? s.protectionLevelRef != null && !blank(s.protectionLevel)
+                    : true;
+                require(s.shieldTypeRef != null && s.materialRef != null && !blank(s.shieldType)
+                    && !blank(s.material) && ballisticRequiresLevel && positive(s.heightMm)
                     && positive(s.widthMm) && positive(s.weightGrams), family);
             }
-            case "SPRAY" -> {
-                SpraySpecification s = (SpraySpecification) spec;
-                require(s.agentRef != null && s.compositionRef != null && positive(s.shelfLifeMonths)
-                    && positive(s.concentration) && positive(s.volumeMl) && positive(s.rangeMeters), family);
+            case "RESTRAINT" -> {
+                RestraintSpecification s = (RestraintSpecification) spec;
+                require(!blank(s.restraintType) && s.materialRef != null && !blank(s.material)
+                    && s.lockingMechanismRef != null && !blank(s.lockingMechanism)
+                    && s.doubleLock != null, family);
             }
-            case "ELECTRICAL_DEVICE" -> {
-                ElectricalDeviceSpecification s = (ElectricalDeviceSpecification) spec;
-                require(positive(s.voltage) && positive(s.cycles) && s.cartridgeTypeRef != null, family);
+            case "TACTICAL_EQUIPMENT" -> {
+                TacticalEquipmentSpecification s = (TacticalEquipmentSpecification) spec;
+                require(!blank(s.equipmentType) && s.materialRef != null && !blank(s.material)
+                    && s.sizeRef != null && !blank(s.size) && positive(s.weightGrams), family);
+            }
+            case "ACCESSORY_COMPONENT" -> {
+                AccessoryComponentSpecification s = (AccessoryComponentSpecification) spec;
+                require(s.componentTypeRef != null && !blank(s.componentType)
+                    && s.compatibilityRef != null && !blank(s.compatibleWith)
+                    && s.interfaceRef != null && !blank(s.mountingInterface)
+                    && s.controlledComponent != null, family);
             }
             default -> throw new IllegalStateException("Unsupported catalog family verifier: " + family);
         }
@@ -156,6 +198,10 @@ public class CatalogFamilyDemoVerifier implements ApplicationRunner {
 
     private static boolean positive(BigDecimal value) {
         return value != null && value.signum() > 0;
+    }
+
+    private static boolean positiveOrOne(BigDecimal value) {
+        return value != null && value.compareTo(BigDecimal.ONE) >= 0;
     }
 
     private static boolean blank(String value) {
