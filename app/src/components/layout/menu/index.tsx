@@ -88,7 +88,7 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
 
                     <div className="comandos-sidebar-content">
                         <div>
-                            <div className="comandos-sidebar-label">Navigation</div>
+                            <div className="comandos-sidebar-label">{tr("Navigation")}</div>
                             <nav>
                                 <MenuItem
                                     menuKey="dashboard"
@@ -110,7 +110,9 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     subItems={[
                                         { href: "/erp/core?section=institutional&resource=organization-natures", label: "Naturezas das organizações" },
                                         { href: "/erp/core?section=institutional&resource=economic-activities", label: "Atividades econômicas" },
+                                        { href: "/erp/core?section=institutional&resource=unit-types", label: "Tipos de unidades organizacionais" },
                                         { href: "/erp/core?section=people&resource=person-types", label: "Tipos de pessoas" },
+                                        { href: "/erp/core?section=people&resource=contact-types", label: "Tipos de contato" },
                                         { href: "/erp/core?section=institutional&resource=organizations", label: "Organizações" },
                                         { href: "/erp/core?section=people&resource=people", label: "Pessoas" },
                                         { href: "/erp/core?section=access", label: "Acesso" }
