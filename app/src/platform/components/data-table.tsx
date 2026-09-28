@@ -6,6 +6,7 @@ export interface DataTableColumn<T> {
     render: (row: T, index: number) => React.ReactNode
     className?: string
     headerClassName?: string
+    align?: "left" | "center" | "right"
 }
 
 interface DataTableProps<T> {
@@ -14,6 +15,7 @@ interface DataTableProps<T> {
     rowKey: (row: T, index: number) => React.Key
     emptyText?: React.ReactNode
     caption?: React.ReactNode
+    ariaLabel?: string
     minWidth?: string
     className?: string
 }
@@ -24,11 +26,17 @@ export function DataTable<T>({
     rowKey,
     emptyText = "No records found.",
     caption,
+    ariaLabel,
     minWidth = "48rem",
     className = ""
 }: DataTableProps<T>) {
     return (
-        <div className="comandos-native-table-container">
+        <div
+            className="comandos-native-table-container"
+            role="region"
+            aria-label={ariaLabel}
+            tabIndex={0}
+        >
             <table
                 className={`comandos-native-table ${className}`.trim()}
                 style={{ minWidth }}
@@ -40,7 +48,9 @@ export function DataTable<T>({
                         {columns.map((column) => (
                             <th
                                 key={column.key}
+                                scope="col"
                                 className={column.headerClassName}
+                                style={{ textAlign: column.align }}
                             >
                                 {column.header}
                             </th>
@@ -55,6 +65,7 @@ export function DataTable<T>({
                                 <td
                                     key={column.key}
                                     className={column.className}
+                                    style={{ textAlign: column.align }}
                                 >
                                     {column.render(row, index)}
                                 </td>
@@ -67,6 +78,7 @@ export function DataTable<T>({
                             <td
                                 colSpan={Math.max(columns.length, 1)}
                                 className="text-center"
+                                role="status"
                             >
                                 {emptyText}
                             </td>
