@@ -36,6 +36,17 @@ public class SensitiveOperationExecutor {
             new WorkflowTransition(command.executionJustification().trim())
         );
 
+        // The business callback is never allowed to run merely because the
+        // transition method was invoked. Re-check the protected context and
+        // the exact state inside the same transaction before releasing control.
+        guard.requireExecuted(
+            command.workflowId(),
+            command.operationType(),
+            command.resource(),
+            command.organizationId(),
+            command.unitId()
+        );
+
         SensitiveOperationResult<T> result = operation.execute();
         if (result == null) {
             throw new IllegalStateException("Sensitive operation must return an execution result.");
@@ -61,6 +72,9 @@ public class SensitiveOperationExecutor {
         }
         if (command.workflowId() <= 0 || command.organizationId() <= 0) {
             bad("Workflow and organization are required for sensitive operation execution.");
+        }
+        if (command.unitId() != null && command.unitId() <= 0) {
+            bad("Unit must be a positive identifier when supplied.");
         }
         WorkflowPolicy.normalize(command.operationType());
         WorkflowPolicy.normalizeResource(command.resource());
