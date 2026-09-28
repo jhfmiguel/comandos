@@ -20,6 +20,7 @@ public class EquipmentReceivingService {
     private final EquipmentReceivingRepository receivingRepository;
     private final EquipmentReceivingItemRepository itemRepository;
     private final ReceivingSerialRepository serialRepository;
+    private final ReceivingIncorporationRepository incorporationRepository;
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
@@ -28,6 +29,7 @@ public class EquipmentReceivingService {
         EquipmentReceivingRepository receivingRepository,
         EquipmentReceivingItemRepository itemRepository,
         ReceivingSerialRepository serialRepository,
+        ReceivingIncorporationRepository incorporationRepository,
         PurchaseRepository purchaseRepository,
         PurchaseItemRepository purchaseItemRepository,
         EntityManager em
@@ -35,6 +37,7 @@ public class EquipmentReceivingService {
         this.receivingRepository = receivingRepository;
         this.itemRepository = itemRepository;
         this.serialRepository = serialRepository;
+        this.incorporationRepository = incorporationRepository;
         this.purchaseRepository = purchaseRepository;
         this.purchaseItemRepository = purchaseItemRepository;
         this.em = em;
@@ -263,9 +266,16 @@ public class EquipmentReceivingService {
         if (request == null || request.status() == null) {
             throw new IllegalArgumentException("Status is required.");
         }
+        if (incorporationRepository.existsByReceivingId(id)) {
+            throw new IllegalStateException(
+                "Receiving with incorporated inventory cannot change status."
+            );
+        }
 
         if (request.status() == ReceivingStatus.PROVISIONALLY_ACCEPTED
             || request.status() == ReceivingStatus.DEFINITIVELY_ACCEPTED
+            || request.status() == ReceivingStatus.DEFINITIVELY_PARTIALLY_ACCEPTED
+            || request.status() == ReceivingStatus.PROVISIONALLY_PARTIALLY_ACCEPTED
             || request.status() == ReceivingStatus.PARTIALLY_REJECTED
             || request.status() == ReceivingStatus.REJECTED) {
             throw new IllegalArgumentException(
