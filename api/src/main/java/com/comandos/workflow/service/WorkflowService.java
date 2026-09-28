@@ -13,7 +13,6 @@ import com.comandos.workflow.model.ApprovalWorkflowEvent;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
-import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +60,7 @@ public class WorkflowService implements WorkflowGateway {
         w.operationType = operationType;
         w.resource = resource;
         w.recordId = r.recordId();
+        w.status = WorkflowPolicy.REQUESTED;
         w.justification = requiredJustification(r.justification());
         w.requestedAt = LocalDateTime.now();
         CurrentActor actor = requiredActor();
@@ -240,9 +240,9 @@ public class WorkflowService implements WorkflowGateway {
 
     private CurrentActor requiredActor() {
         CurrentActor actor = actors.current();
-        if (actor == null || blank(actor.login())) {
+        if (actor == null || !actor.authenticated() || blank(actor.login())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                "An identified actor is required for workflow transitions.");
+                "An authenticated and identified actor is required for workflow transitions.");
         }
         return actor;
     }
