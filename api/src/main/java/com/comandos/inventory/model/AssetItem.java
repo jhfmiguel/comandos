@@ -21,11 +21,11 @@ public class AssetItem extends CoreEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "location_id", nullable = false)
     public StockLocation location;
-    @Column(name = "asset_code", nullable = false, length = 255)
+    @Column(name = "asset_code", nullable = false, updatable = false, length = 255)
     public String assetCode;
-    @Column(name = "serial_number", nullable = true, length = 255)
+    @Column(name = "serial_number", nullable = true, updatable = false, length = 255)
     public String serialNumber;
-    @Column(name = "internal_code", nullable = true, length = 255)
+    @Column(name = "internal_code", nullable = true, updatable = false, length = 255)
     public String internalCode;
     @Column(name = "condition", nullable = false, length = 255)
     public String condition;
