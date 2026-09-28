@@ -18,6 +18,9 @@ interface PaginationProps {
         previous?: string
         next?: string
         last?: string
+        pageSize?: string
+        rows?: string
+        pagination?: string
     }
 }
 
@@ -65,21 +68,29 @@ export function Pagination({
     disabled = false,
     labels
 }: PaginationProps) {
-    const totalPages = Math.max(Math.ceil(totalElements / Math.max(pageSize, 1)), 1)
+    const safePageSize = Math.max(pageSize, 1)
+    const totalPages = Math.max(Math.ceil(Math.max(totalElements, 0) / safePageSize), 1)
     const currentPage = Math.min(Math.max(page, 0), totalPages - 1)
     const tokens = pageTokens(currentPage, totalPages)
 
     const text = {
+        page: labels?.page ?? "Page",
+        of: labels?.of ?? "of",
         totalRecords: labels?.totalRecords ?? "Total records",
         first: labels?.first ?? "First page",
         previous: labels?.previous ?? "Previous page",
         next: labels?.next ?? "Next page",
-        last: labels?.last ?? "Last page"
+        last: labels?.last ?? "Last page",
+        pageSize: labels?.pageSize ?? "Page size",
+        rows: labels?.rows ?? "rows",
+        pagination: labels?.pagination ?? "Pagination"
     }
 
+    const pageDescription = `${text.page} ${currentPage + 1} ${text.of} ${totalPages}`
+
     return (
-        <div className="comandos-pagination">
-            <nav className="comandos-pagination-controls" aria-label="Pagination">
+        <div className="comandos-pagination" data-disabled={disabled ? "true" : "false"}>
+            <nav className="comandos-pagination-controls" aria-label={text.pagination}>
                 <button
                     type="button"
                     className="comandos-pagination-nav"
@@ -87,7 +98,7 @@ export function Pagination({
                     disabled={disabled || currentPage === 0}
                     onClick={() => onPageChange(0)}
                 >
-                    <ChevronsLeft size={17} />
+                    <ChevronsLeft size={17} aria-hidden="true" />
                 </button>
 
                 <button
@@ -97,7 +108,7 @@ export function Pagination({
                     disabled={disabled || currentPage === 0}
                     onClick={() => onPageChange(Math.max(0, currentPage - 1))}
                 >
-                    <ChevronLeft size={17} />
+                    <ChevronLeft size={17} aria-hidden="true" />
                 </button>
 
                 {tokens.map((token) =>
@@ -110,8 +121,14 @@ export function Pagination({
                                     ? "comandos-pagination-page is-active"
                                     : "comandos-pagination-page"
                             }
+                            aria-label={`${text.page} ${token + 1}`}
                             aria-current={token === currentPage ? "page" : undefined}
                             disabled={disabled}
+                            style={token === currentPage ? {
+                                background: "transparent",
+                                borderColor: "var(--comandos-accent, #ff9900)",
+                                color: "var(--comandos-accent, #ff9900)"
+                            } : undefined}
                             onClick={() => onPageChange(token)}
                         >
                             {token + 1}
@@ -134,7 +151,7 @@ export function Pagination({
                     disabled={disabled || currentPage + 1 >= totalPages}
                     onClick={() => onPageChange(Math.min(totalPages - 1, currentPage + 1))}
                 >
-                    <ChevronRight size={17} />
+                    <ChevronRight size={17} aria-hidden="true" />
                 </button>
 
                 <button
@@ -144,26 +161,31 @@ export function Pagination({
                     disabled={disabled || currentPage + 1 >= totalPages}
                     onClick={() => onPageChange(totalPages - 1)}
                 >
-                    <ChevronsRight size={17} />
+                    <ChevronsRight size={17} aria-hidden="true" />
                 </button>
             </nav>
+
+            <span className="sr-only" role="status" aria-live="polite">
+                {pageDescription}
+            </span>
 
             {onPageSizeChange && (
                 <div className="comandos-pagination-meta">
                     <select
                         className="comandos-input comandos-page-size"
-                        aria-label="Page size"
+                        aria-label={text.pageSize}
                         value={pageSize}
                         disabled={disabled}
+                        data-comandos-no-float="true"
                         onChange={(event) => onPageSizeChange(Number(event.target.value))}
                     >
                         {pageSizeOptions.map((size) => (
                             <option key={size} value={size}>
-                                {size} rows
+                                {size} {text.rows}
                             </option>
                         ))}
                     </select>
-                    <span>{totalElements} {text.totalRecords.toLowerCase()}</span>
+                    <span>{Math.max(totalElements, 0)} {text.totalRecords.toLowerCase()}</span>
                 </div>
             )}
         </div>
