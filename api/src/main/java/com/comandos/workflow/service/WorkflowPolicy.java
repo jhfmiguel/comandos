@@ -19,7 +19,7 @@ public class WorkflowPolicy {
 
     public record Rule(String operationType, boolean approvalRequired, boolean analysisRequired) {}
 
-    private static final Map<String, Rule> RULES = rules();
+    private static final Map<String, Rule> RULES = buildRules();
     private static final Set<String> TERMINAL = Set.of(CONCLUDED, CANCELLED);
 
     public Rule rule(String operationType) {
@@ -69,7 +69,7 @@ public class WorkflowPolicy {
         return value.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
     }
 
-    private static Map<String, Rule> rules() {
+    private static Map<String, Rule> buildRules() {
         Map<String, Rule> values = new LinkedHashMap<>();
         sensitive(values, "ACQUISITION");
         sensitive(values, "RECEIVING");
