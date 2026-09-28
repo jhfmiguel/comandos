@@ -43,5 +43,9 @@ public class InventorySaleItem extends CoreEntity {
         if (movement == null || movement.quantity == null || movement.quantity.signum() >= 0) {
             throw new IllegalStateException("Sale item requires a negative stock movement.");
         }
+        if ("SALE_OUT".equals(movement.nature)) movement.nature = StockMovementNature.SALE.name();
+        if (!StockMovementNature.SALE.name().equals(movement.nature)) {
+            throw new IllegalStateException("Sale item requires SALE stock movement.");
+        }
     }
 }
