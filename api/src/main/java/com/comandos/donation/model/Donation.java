@@ -3,6 +3,7 @@ package com.comandos.donation.model;
 import com.comandos.core.model.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Entity @Table(name = "erp_donation")
 public class Donation extends CoreEntity {
@@ -32,4 +33,21 @@ public class Donation extends CoreEntity {
     @Column public String finalizedByLogin;
     @Column(nullable=false, unique=true, length=36) public String requestId;
     @Column(nullable=false, length=64) public String requestFingerprint;
+
+    @PrePersist
+    void lifecycleDefaults() {
+        direction = direction == null || direction.isBlank() ? "OUTGOING" : direction.trim().toUpperCase(Locale.ROOT);
+        if ("INCOMING".equals(direction)) {
+            eventType = "RECEIVED";
+            titleTransferState = "TRANSFERRED_TO_ORGANIZATION";
+            if (receivedAt == null) receivedAt = finalizedAt;
+        } else {
+            direction = "OUTGOING";
+            eventType = "REALIZED";
+            titleTransferState = "TRANSFERRED_TO_DONEE";
+            if (realizedAt == null) realizedAt = finalizedAt;
+        }
+        termConfirmed = term != null && !term.isBlank();
+        if (titleTransferredAt == null) titleTransferredAt = finalizedAt;
+    }
 }
