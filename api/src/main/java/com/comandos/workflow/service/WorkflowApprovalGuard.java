@@ -22,7 +22,7 @@ public class WorkflowApprovalGuard {
     public ApprovalWorkflow requireAuthorized(String operationType, String resource, long recordId,
             long organizationId, Long unitId) {
         return requireState(operationType, resource, recordId, organizationId, unitId,
-            List.of(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.EXECUTED));
+            List.of(WorkflowPolicy.AUTHORIZED));
     }
 
     public ApprovalWorkflow requireExecuted(String operationType, String resource, long recordId,
