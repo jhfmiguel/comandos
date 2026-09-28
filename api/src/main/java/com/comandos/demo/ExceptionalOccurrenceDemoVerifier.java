@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class ExceptionalOccurrenceDemoVerifier implements ApplicationRunner {
     private static final Set<String> MISSING = Set.of("LOSS", "LOST", "THEFT", "ROBBERY");
     private static final Set<String> BLOCKING = Set.of("SEIZURE", "DAMAGE", "ACCIDENT", "RECALL", "BLOCK");
-    private static final Set<String> RECOVERY = Set.of("RECOVERY", "RECOVERED");
+    private static final Set<String> RECOVERY_TYPES = Set.of("RECOVERY", "RECOVERED");
     private static final Set<String> CANONICAL_MATRIX = Set.of(
         "LOSS", "THEFT", "ROBBERY", "SEIZURE", "RECOVERY", "DAMAGE", "ACCIDENT", "RECALL", "INVESTIGATION"
     );
@@ -45,7 +45,6 @@ public class ExceptionalOccurrenceDemoVerifier implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         require(PORTUGUESE_MATRIX.size() == 9, "Exceptional occurrence matrix must cover all nine homologated concepts.");
         require(PORTUGUESE_MATRIX.values().containsAll(CANONICAL_MATRIX), "Exceptional occurrence matrix is incomplete.");
-
         var occurrences = em.createQuery("select x from ExceptionOccurrence x order by x.id", ExceptionOccurrence.class).getResultList();
         for (ExceptionOccurrence occurrence : occurrences) verify(occurrence);
     }
@@ -67,13 +66,18 @@ public class ExceptionalOccurrenceDemoVerifier implements ApplicationRunner {
         }
 
         if (MISSING.contains(occurrence.type)) {
-            if (occurrence.asset != null) require(AssetStatus.MISSING.name().equals(occurrence.resultingItemStatus) || RECOVERY.containsRelated(occurrence), "Loss/theft/robbery must preserve missing state until recovery.");
-            else require(AssetStatus.BLOCKED.name().equals(occurrence.resultingItemStatus), "Lot loss/theft/robbery must block the lot.");
+            if (occurrence.asset != null) {
+                boolean stillMissing = AssetStatus.MISSING.name().equals(occurrence.resultingItemStatus);
+                boolean recovered = "RESOLVED".equals(occurrence.status) && AssetStatus.AVAILABLE.name().equals(occurrence.resultingItemStatus) && hasRecoveryFor(occurrence.id);
+                require(stillMissing || recovered, "Loss/theft/robbery must preserve missing state until a linked recovery resolves it.");
+            } else {
+                require(AssetStatus.BLOCKED.name().equals(occurrence.resultingItemStatus), "Lot loss/theft/robbery must block the lot.");
+            }
         }
         if (BLOCKING.contains(occurrence.type)) {
             require(AssetStatus.BLOCKED.name().equals(occurrence.resultingItemStatus), "Seizure/damage/accident/recall must block the item.");
         }
-        if (RECOVERY.contains(occurrence.type)) {
+        if (RECOVERY_TYPES.contains(occurrence.type)) {
             require(occurrence.asset != null, "Recovery requires an individually identified asset.");
             require(occurrence.relatedOccurrence != null, "Recovery must reference the original missing occurrence.");
             require(MISSING.contains(occurrence.relatedOccurrence.type), "Recovery must reference loss, theft or robbery.");
@@ -89,16 +93,15 @@ public class ExceptionalOccurrenceDemoVerifier implements ApplicationRunner {
             require(notBlank(occurrence.documentReference), "Legal exceptional occurrence requires document reference.");
         }
         if (occurrence.asset != null && AssetStatus.terminalCodes().contains(occurrence.asset.status)) {
-            require(!RECOVERY.contains(occurrence.type), "Recovery cannot reactivate a terminal asset.");
+            require(!RECOVERY_TYPES.contains(occurrence.type), "Recovery cannot reactivate a terminal asset.");
         }
+    }
+
+    private boolean hasRecoveryFor(Long occurrenceId) {
+        return em.createQuery("select count(x) from ExceptionOccurrence x where x.relatedOccurrence.id=:id and x.type in ('RECOVERY','RECOVERED') and x.status='RESOLVED'", Long.class)
+            .setParameter("id", occurrenceId).getSingleResult() > 0;
     }
 
     private static boolean notBlank(String value) { return value != null && !value.isBlank(); }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
-
-    private static final class RECOVERY {
-        private static boolean containsRelated(ExceptionOccurrence occurrence) {
-            return occurrence.relatedOccurrence != null && Set.of("RECOVERY", "RECOVERED").contains(occurrence.relatedOccurrence.type);
-        }
-    }
 }
