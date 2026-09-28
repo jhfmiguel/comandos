@@ -19,4 +19,8 @@ public class DonationItem extends CoreEntity {
     @Column(nullable=false) public String locationName;
     @Column(nullable=false) public String unitOfMeasure;
     @Column(nullable=false, precision=19, scale=4) public BigDecimal quantity;
+    @Column(name="previous_owner_type",nullable=false,length=30) public String previousOwnerType;
+    @Column(name="previous_owner_name",nullable=false,length=255) public String previousOwnerName;
+    @Column(name="new_owner_type",nullable=false,length=30) public String newOwnerType;
+    @Column(name="new_owner_name",nullable=false,length=255) public String newOwnerName;
 }
