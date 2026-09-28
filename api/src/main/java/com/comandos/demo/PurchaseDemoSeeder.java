@@ -39,7 +39,7 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         StockLot lot = one(StockLot.class, "lotNumber", "CBC-DEMO-2026-001");
         if (buyer == null || supplier == null || origin == null || model == null || location == null || lot == null) return;
 
-        PurchasePlanning planning = seedPlanning(buyer);
+        seedPlanning(buyer);
         ProcurementProcess process = seedProcurement(buyer);
         Purchase purchase = seedPurchase(buyer, supplier, origin, process, model);
         PurchaseItem item = first(PurchaseItem.class);
@@ -236,28 +236,20 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         item.notes = "Item de recebimento didático.";
         em.persist(item);
 
-        ReceivingSerial serial = new ReceivingSerial();
-        serial.receivingItem = item;
-        serial.serialNumber = "SERIE-DEMO-CAIXA-001";
-        serial.manufacturerCode = "CBC-DEMO";
-        serial.assetCode = "NAO-SERIALIZADO";
-        serial.accepted = true;
-        em.persist(serial);
-
         ReceivingInspection inspection = new ReceivingInspection();
         inspection.receiving = receiving;
         inspection.inspectedAt = LocalDateTime.now().minusDays(4);
         inspection.inspector = "maria.armeira.demo";
-        inspection.provisionalReceipt = true;
+        inspection.provisionalReceipt = false;
         inspection.definitiveReceipt = true;
         inspection.approved = true;
-        inspection.decisionNotes = "Recebimento aprovado no cenário didático.";
+        inspection.decisionNotes = "Recebimento aprovado definitivamente no cenário didático.";
         em.persist(inspection);
 
         ReceivingIncorporation incorporation = new ReceivingIncorporation();
         incorporation.receiving = receiving;
         incorporation.receivingItem = item;
-        incorporation.receivingSerial = serial;
+        incorporation.receivingSerial = null;
         incorporation.stockLocationId = location.id;
         incorporation.lotNumber = lot.lotNumber;
         incorporation.quantity = new BigDecimal("10000");
