@@ -1,14 +1,26 @@
 {
   "schemaVersion": 1,
-  "product": "COMANDOS",
+  "id": "comandos",
   "role": "product-consumer",
+  "repository": "jhfmiguel/comandos",
   "sharedFoundation": "jhfmiguel/faria-miguel",
+  "sharedCapabilityOwnership": "faria-miguel",
   "directProductDependenciesAllowed": false,
+  "productSourceImportsAllowed": false,
   "sourceCopyingAllowed": false,
   "backendArtifacts": [
     "com.fariamiguel:faria-miguel-platform",
     "com.fariamiguel:faria-miguel-enterprise"
   ],
+  "allowedIntegrationChannels": [
+    "versioned-maven-artifacts",
+    "versioned-npm-artifacts",
+    "rest-api",
+    "domain-events",
+    "integration-events",
+    "published-contracts"
+  ],
+  "forbiddenSiblingProducts": ["arnold", "digital-experience", "trator", "tubarao"],
   "productOwns": [
     "armamento",
     "transporte",
@@ -25,5 +37,12 @@
     "notifications",
     "integrations",
     "security"
+  ],
+  "rules": [
+    "COMANDOS owns only product-specific public/private security capabilities.",
+    "Shared capabilities are canonically owned by jhfmiguel/faria-miguel.",
+    "No new shared implementation may be copied into COMANDOS.",
+    "COMANDOS cannot depend on sibling product artifacts or source code.",
+    "Temporary legacy shared runtime is migration debt and may only shrink."
   ]
 }
