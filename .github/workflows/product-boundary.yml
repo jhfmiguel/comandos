@@ -1,0 +1,14 @@
+name: Product boundary
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate product boundary
+        run: bash scripts/validate-product-boundary.sh
