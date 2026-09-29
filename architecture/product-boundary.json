@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "product": "COMANDOS",
+  "role": "product-consumer",
+  "sharedFoundation": "jhfmiguel/faria-miguel",
+  "directProductDependenciesAllowed": false,
+  "sourceCopyingAllowed": false,
+  "backendArtifacts": [
+    "com.fariamiguel:faria-miguel-platform",
+    "com.fariamiguel:faria-miguel-enterprise"
+  ],
+  "productOwns": [
+    "armamento",
+    "transporte",
+    "escolta",
+    "inteligencia",
+    "operacoes",
+    "security-public-private-specifics"
+  ],
+  "legacySharedRuntimeTemporary": [
+    "core",
+    "audit",
+    "documents",
+    "workflow",
+    "notifications",
+    "integrations",
+    "security"
+  ]
+}
