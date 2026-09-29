@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "comandos",
+  "role": "product-consumer",
+  "repository": "jhfmiguel/comandos",
+  "sharedFoundation": "jhfmiguel/faria-miguel",
+  "directProductDependenciesAllowed": false,
+  "productSourceImportsAllowed": false,
+  "sharedCapabilityOwnership": "faria-miguel",
+  "allowedIntegrationChannels": [
+    "versioned-maven-artifacts",
+    "versioned-npm-artifacts",
+    "rest-api",
+    "domain-events",
+    "integration-events",
+    "published-contracts"
+  ],
+  "forbiddenSiblingProducts": [
+    "digital-experience",
+    "trator",
+    "tubarao"
+  ],
+  "rules": [
+    "COMANDOS owns only its product-specific security/public-safety capabilities.",
+    "Shared platform, enterprise, commerce, builder and infrastructure capabilities are consumed from faria-miguel.",
+    "COMANDOS cannot import source code or artifacts owned by a sibling product.",
+    "Cross-product integration must use published APIs, events or versioned contracts."
+  ]
+}
