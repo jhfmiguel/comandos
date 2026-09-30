@@ -8,28 +8,31 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Clone Faria Miguel foundation
-        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Install canonical shared artifacts
-        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
       - name: Validate product-consumer boundary
         run: bash scripts/validate-product-boundary.sh
-      - name: Verify API against Faria Miguel
+      - name: Verify API against published Faria Miguel artifacts
         working-directory: api
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x mvnw
-          ./mvnw verify
+          ./mvnw -U verify
 
   frontend:
     runs-on: ubuntu-latest
@@ -76,15 +79,14 @@ jobs:
           --health-retries 30
     steps:
       - uses: actions/checkout@v5
-      - name: Clone Faria Miguel foundation
-        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Install canonical shared artifacts
-        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
       - uses: actions/setup-node@v5
         with:
           node-version: "24"
@@ -99,6 +101,8 @@ jobs:
       - name: Start demo API on Oracle
         working-directory: api
         env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORACLE_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
           ORACLE_USERNAME: comandos
           ORACLE_PASSWORD: comandos
@@ -107,7 +111,7 @@ jobs:
           SPRING_SQL_INIT_MODE: never
         run: |
           chmod +x mvnw
-          nohup ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo,oracle -Dspring-boot.run.arguments=--server.port=8180 > /tmp/comandos-api.log 2>&1 &
+          nohup ./mvnw -U spring-boot:run -Dspring-boot.run.profiles=demo,oracle -Dspring-boot.run.arguments=--server.port=8180 > /tmp/comandos-api.log 2>&1 &
       - name: Wait for API and Oracle business regression verification
         run: |
           for i in {1..120}; do
@@ -148,15 +152,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Clone Faria Miguel foundation
-        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Install canonical shared artifacts
-        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
       - uses: actions/setup-node@v5
         with:
           node-version: "24"
@@ -172,9 +175,12 @@ jobs:
           npx --yes @cyclonedx/cyclonedx-npm@6.0.1 --output-format JSON --output-file ../artifacts/frontend-bom.json
       - name: Generate backend CycloneDX SBOM
         working-directory: api
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x mvnw
-          ./mvnw org.cyclonedx:cyclonedx-maven-plugin:2.9.2:makeBom -Dcyclonedx.outputFormat=json
+          ./mvnw -U org.cyclonedx:cyclonedx-maven-plugin:2.9.2:makeBom -Dcyclonedx.outputFormat=json
           cp target/bom.json ../artifacts/backend-bom.json
       - name: Audit SBOM licenses
         run: node scripts/check-sbom-licenses.mjs artifacts/frontend-bom.json artifacts/backend-bom.json
