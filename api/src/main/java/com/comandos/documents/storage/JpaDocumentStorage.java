@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Component
 @Transactional(readOnly = true)
-public class JpaDocumentStorage implements DocumentStorage {
+public class JpaDocumentStorage implements DocumentStorage, com.fariamiguel.documents.api.DocumentStorage {
     private final EntityManager entityManager;
 
     public JpaDocumentStorage(EntityManager entityManager) {
@@ -50,6 +50,26 @@ public class JpaDocumentStorage implements DocumentStorage {
         return reference(value);
     }
 
+    /** Canonical Faria Miguel document contract. */
+    @Override
+    @Transactional
+    public com.fariamiguel.documents.api.DocumentReference store(com.fariamiguel.documents.api.DocumentWrite document) {
+        DocumentReference stored = store(document.fileName(), document.contentType(), document.content(), document.size());
+        if (document.checksum() != null && !document.checksum().isBlank()
+                && !document.checksum().equalsIgnoreCase(stored.checksum())) {
+            delete(stored.id());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Declared document checksum does not match the received content.");
+        }
+        UUID id = UUID.fromString(stored.id());
+        return new com.fariamiguel.documents.api.DocumentReference(
+                id,
+                stored.fileName(),
+                stored.contentType(),
+                stored.size(),
+                stored.checksum(),
+                stored.id());
+    }
+
     @Override
     public Optional<DocumentReference> metadata(String id) {
         return find(id).map(this::reference);
@@ -65,6 +85,12 @@ public class JpaDocumentStorage implements DocumentStorage {
     }
 
     @Override
+    public InputStream open(UUID documentId) {
+        if (documentId == null) throw new IllegalArgumentException("documentId is required");
+        return open(documentId.toString());
+    }
+
+    @Override
     @Transactional
     public void delete(String id) {
         var value = find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stored document not found."));
@@ -75,6 +101,13 @@ public class JpaDocumentStorage implements DocumentStorage {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Stored document is preserved by process attachment history.");
         entityManager.remove(value);
         entityManager.flush();
+    }
+
+    @Override
+    @Transactional
+    public void delete(UUID documentId) {
+        if (documentId == null) throw new IllegalArgumentException("documentId is required");
+        delete(documentId.toString());
     }
 
     private Optional<StoredDocumentBlob> find(String id) {
