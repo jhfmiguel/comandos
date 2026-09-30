@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "comandos",
   "role": "product-consumer",
   "repository": "jhfmiguel/comandos",
@@ -10,8 +10,34 @@
   "sourceCopyingAllowed": false,
   "backendArtifacts": [
     "com.fariamiguel:faria-miguel-platform",
-    "com.fariamiguel:faria-miguel-enterprise"
+    "com.fariamiguel:faria-miguel-platform-migrations",
+    "com.fariamiguel:faria-miguel-tenancy",
+    "com.fariamiguel:faria-miguel-enterprise",
+    "com.fariamiguel:faria-miguel-enterprise-persistence-jpa",
+    "com.fariamiguel:faria-miguel-commerce"
   ],
+  "sharedCapabilities": {
+    "core": "faria-miguel-platform",
+    "people": "faria-miguel-enterprise",
+    "organizations": "faria-miguel-enterprise",
+    "organizational-units": "faria-miguel-enterprise",
+    "contacts": "faria-miguel-enterprise",
+    "customers": "faria-miguel-enterprise:party-role",
+    "suppliers": "faria-miguel-enterprise:party-role",
+    "security": "faria-miguel-platform",
+    "audit": "faria-miguel-platform",
+    "documents": "faria-miguel-platform",
+    "workflow": "faria-miguel-platform",
+    "notifications": "faria-miguel-platform",
+    "persistence": "faria-miguel-enterprise-persistence-jpa",
+    "purchases": "faria-miguel-enterprise:procurement",
+    "sales": "faria-miguel-enterprise:sales",
+    "finance": "faria-miguel-enterprise:finance",
+    "contracts": "faria-miguel-enterprise:contracts",
+    "products": "faria-miguel-enterprise:catalog",
+    "inventory": "faria-miguel-enterprise:inventory",
+    "commerce": "faria-miguel-commerce"
+  },
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
     "versioned-npm-artifacts",
@@ -23,13 +49,19 @@
   "forbiddenSiblingProducts": ["arnold", "digital-experience", "trator", "tubarao"],
   "productOwns": [
     "armamento",
+    "municoes",
+    "custodia",
+    "transferencias",
+    "manutencao-de-armamento",
+    "descarte-de-armamento",
+    "doacao-de-armamento",
     "transporte",
     "escolta",
     "inteligencia",
     "operacoes",
     "security-public-private-specifics"
   ],
-  "legacySharedRuntimeTemporary": [
+  "compatibilityAdaptersOnly": [
     "core",
     "audit",
     "documents",
@@ -43,6 +75,7 @@
     "Shared capabilities are canonically owned by jhfmiguel/faria-miguel.",
     "No new shared implementation may be copied into COMANDOS.",
     "COMANDOS cannot depend on sibling product artifacts or source code.",
-    "Temporary legacy shared runtime is migration debt and may only shrink."
+    "Compatibility packages may adapt legacy COMANDOS callers, but cannot introduce new generic domain behavior.",
+    "Purchasing, sales, finance, contracts, catalog and inventory primitives must use Faria Miguel canonical contracts; COMANDOS may add only security-domain overlays."
   ]
 }
