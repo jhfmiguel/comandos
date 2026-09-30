@@ -31,6 +31,7 @@
 	</dependencyManagement>
 
 	<dependencies>
+		<!-- Faria Miguel is the canonical owner of every reusable/shared capability. -->
 		<dependency>
 			<groupId>com.fariamiguel</groupId>
 			<artifactId>faria-miguel-platform</artifactId>
@@ -38,9 +39,31 @@
 		</dependency>
 		<dependency>
 			<groupId>com.fariamiguel</groupId>
+			<artifactId>faria-miguel-platform-migrations</artifactId>
+			<version>${faria-miguel.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fariamiguel</groupId>
+			<artifactId>faria-miguel-tenancy</artifactId>
+			<version>${faria-miguel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fariamiguel</groupId>
 			<artifactId>faria-miguel-enterprise</artifactId>
 			<version>${faria-miguel.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fariamiguel</groupId>
+			<artifactId>faria-miguel-enterprise-persistence-jpa</artifactId>
+			<version>${faria-miguel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fariamiguel</groupId>
+			<artifactId>faria-miguel-commerce</artifactId>
+			<version>${faria-miguel.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
