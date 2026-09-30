@@ -1,7 +1,6 @@
 package com.comandos.workflow.service;
 
-import com.comandos.audit.api.AuditRecorder;
-import com.comandos.core.api.PlatformPage;
+import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.security.api.AuthorizationService;
@@ -10,6 +9,7 @@ import com.comandos.security.api.CurrentActorProvider;
 import com.comandos.workflow.api.*;
 import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.workflow.model.ApprovalWorkflowEvent;
+import com.fariamiguel.core.api.PlatformPage;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -23,11 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class WorkflowService implements WorkflowGateway {
     private final EntityManager em;
     private final AuthorizationService access;
-    private final AuditRecorder audit;
+    private final AuditService audit;
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
 
-    public WorkflowService(EntityManager em, AuthorizationService access, AuditRecorder audit,
+    public WorkflowService(EntityManager em, AuthorizationService access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy) {
         this.em = em;
         this.access = access;
@@ -103,17 +103,13 @@ public class WorkflowService implements WorkflowGateway {
 
     @Transactional
     public WorkflowView bindRecordId(long id, long recordId) {
-        if (recordId <= 0) {
-            bad("Record id must be positive.");
-        }
+        if (recordId <= 0) bad("Record id must be positive.");
         var w = locked(id);
         if (!WorkflowPolicy.EXECUTED.equals(w.status)) {
             conflict("Record can only be linked while workflow is EXECUTED.");
         }
         if (w.recordId != null) {
-            if (w.recordId == recordId) {
-                return view(w);
-            }
+            if (w.recordId == recordId) return view(w);
             conflict("Workflow is already linked to another record.");
         }
 
@@ -174,15 +170,9 @@ public class WorkflowService implements WorkflowGateway {
             w.authorityLogin = actor.login();
             w.authorizedAt = now;
         }
-        if (WorkflowPolicy.EXECUTED.equals(target)) {
-            w.executedAt = now;
-        }
-        if (WorkflowPolicy.CONCLUDED.equals(target)) {
-            w.concludedAt = now;
-        }
-        if (WorkflowPolicy.CANCELLED.equals(target)) {
-            w.cancelledAt = now;
-        }
+        if (WorkflowPolicy.EXECUTED.equals(target)) w.executedAt = now;
+        if (WorkflowPolicy.CONCLUDED.equals(target)) w.concludedAt = now;
+        if (WorkflowPolicy.CANCELLED.equals(target)) w.cancelledAt = now;
 
         event(w, from, target, reason, actor, now);
         em.flush();
@@ -220,21 +210,15 @@ public class WorkflowService implements WorkflowGateway {
     }
 
     private ApprovalWorkflow locked(long id) {
-        if (id <= 0) {
-            bad("Workflow id must be positive.");
-        }
+        if (id <= 0) bad("Workflow id must be positive.");
         var w = em.find(ApprovalWorkflow.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (w == null) {
-            notFound();
-        }
+        if (w == null) notFound();
         return w;
     }
 
     private <T> T find(Class<T> type, long id) {
         var value = em.find(type, id);
-        if (value == null) {
-            notFound();
-        }
+        if (value == null) notFound();
         return value;
     }
 
@@ -255,13 +239,9 @@ public class WorkflowService implements WorkflowGateway {
     }
 
     private static String requiredJustification(String value) {
-        if (blank(value)) {
-            bad("Justification is required.");
-        }
+        if (blank(value)) bad("Justification is required.");
         String justification = value.trim();
-        if (justification.length() > 2000) {
-            bad("Justification must contain at most 2000 characters.");
-        }
+        if (justification.length() > 2000) bad("Justification must contain at most 2000 characters.");
         return justification;
     }
 

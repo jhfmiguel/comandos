@@ -2,7 +2,6 @@ package com.comandos.audit.service;
 
 import com.comandos.audit.model.AuditRecord;
 import com.comandos.audit.model.AuditReference;
-import com.comandos.audit.api.AuditRecorder;
 import com.comandos.inventory.model.StockLocation;
 import com.comandos.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
@@ -19,7 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional(readOnly = true)
-public class AuditService implements AuditRecorder {
+public class AuditService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final CurrentActorProvider actors;
@@ -47,7 +46,6 @@ public class AuditService implements AuditRecorder {
             : new Actor(null, null, "UNAUTHENTICATED");
     }
 
-    @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void record(String resource, long recordId, String action, Object before, Object after) {
         var actor = actor();
@@ -61,7 +59,6 @@ public class AuditService implements AuditRecorder {
         add(references, resource, recordId);
         collect(event.beforeJson == null ? null : json.readTree(event.beforeJson), references, resource);
         collect(event.afterJson == null ? null : json.readTree(event.afterJson), references, resource);
-        // Resolve only at write time: moving/deleting an item cannot rewrite its history.
         for (var reference : List.copyOf(references)) {
             if (!reference.kind().equals("inventory/locations")) continue;
             var location = em.find(StockLocation.class, reference.id());

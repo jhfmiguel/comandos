@@ -1,9 +1,10 @@
 package com.comandos.documents.storage;
 
-import com.comandos.documents.api.DocumentReference;
-import com.comandos.documents.api.DocumentStorage;
 import com.comandos.documents.model.ProcessAttachment;
 import com.comandos.documents.model.StoredDocumentBlob;
+import com.fariamiguel.documents.api.DocumentReference;
+import com.fariamiguel.documents.api.DocumentStorage;
+import com.fariamiguel.documents.api.DocumentWrite;
 import jakarta.persistence.EntityManager;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Component
 @Transactional(readOnly = true)
-public class JpaDocumentStorage implements DocumentStorage, com.fariamiguel.documents.api.DocumentStorage {
+public class JpaDocumentStorage implements DocumentStorage {
     private final EntityManager entityManager;
 
     public JpaDocumentStorage(EntityManager entityManager) {
@@ -31,69 +32,55 @@ public class JpaDocumentStorage implements DocumentStorage, com.fariamiguel.docu
 
     @Override
     @Transactional
-    public DocumentReference store(String fileName, String contentType, InputStream content, long size) {
-        if (fileName == null || fileName.isBlank() || contentType == null || contentType.isBlank() || content == null || size <= 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name, content type, content and a positive size are required.");
-        byte[] bytes = readAll(content);
-        if (bytes.length != size)
+    public DocumentReference store(DocumentWrite document) {
+        if (document == null) throw new IllegalArgumentException("document is required");
+        String fileName = document.fileName();
+        String contentType = document.contentType();
+        if (contentType == null || contentType.isBlank() || document.size() <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content type and a positive size are required.");
+
+        byte[] bytes = readAll(document.content());
+        if (bytes.length != document.size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Declared document size does not match the received content.");
+
+        String checksum = sha256(bytes);
+        if (document.checksum() != null && !document.checksum().isBlank()
+                && !document.checksum().equalsIgnoreCase(checksum))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Declared document checksum does not match the received content.");
+
+        UUID id = UUID.randomUUID();
         var value = new StoredDocumentBlob();
-        value.storageId = UUID.randomUUID().toString();
+        value.storageId = id.toString();
         value.fileName = fileName.trim();
         value.contentType = contentType.trim().toLowerCase(Locale.ROOT);
         value.fileSize = bytes.length;
-        value.checksum = sha256(bytes);
+        value.checksum = checksum;
         value.createdAt = Instant.now();
         value.content = bytes.clone();
         entityManager.persist(value);
         entityManager.flush();
-        return reference(value);
-    }
 
-    /** Canonical Faria Miguel document contract. */
-    @Override
-    @Transactional
-    public com.fariamiguel.documents.api.DocumentReference store(com.fariamiguel.documents.api.DocumentWrite document) {
-        DocumentReference stored = store(document.fileName(), document.contentType(), document.content(), document.size());
-        if (document.checksum() != null && !document.checksum().isBlank()
-                && !document.checksum().equalsIgnoreCase(stored.checksum())) {
-            delete(stored.id());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Declared document checksum does not match the received content.");
-        }
-        UUID id = UUID.fromString(stored.id());
-        return new com.fariamiguel.documents.api.DocumentReference(
-                id,
-                stored.fileName(),
-                stored.contentType(),
-                stored.size(),
-                stored.checksum(),
-                stored.id());
-    }
-
-    @Override
-    public Optional<DocumentReference> metadata(String id) {
-        return find(id).map(this::reference);
-    }
-
-    @Override
-    public InputStream open(String id) {
-        var value = find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stored document not found."));
-        byte[] bytes = value.content == null ? new byte[0] : value.content.clone();
-        if (bytes.length != value.fileSize || !sha256(bytes).equals(value.checksum))
-            throw new IllegalStateException("Stored document integrity check failed for " + id);
-        return new ByteArrayInputStream(bytes);
+        return new DocumentReference(id, value.fileName, value.contentType, value.fileSize, value.checksum, value.storageId);
     }
 
     @Override
     public InputStream open(UUID documentId) {
         if (documentId == null) throw new IllegalArgumentException("documentId is required");
-        return open(documentId.toString());
+        var value = find(documentId.toString())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stored document not found."));
+        byte[] bytes = value.content == null ? new byte[0] : value.content.clone();
+        if (bytes.length != value.fileSize || !sha256(bytes).equals(value.checksum))
+            throw new IllegalStateException("Stored document integrity check failed for " + documentId);
+        return new ByteArrayInputStream(bytes);
     }
 
     @Override
     @Transactional
-    public void delete(String id) {
-        var value = find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stored document not found."));
+    public void delete(UUID documentId) {
+        if (documentId == null) throw new IllegalArgumentException("documentId is required");
+        String id = documentId.toString();
+        var value = find(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stored document not found."));
         long references = entityManager.createQuery(
                 "select count(a) from ProcessAttachment a where a.storageId=:id", Long.class)
             .setParameter("id", id).getSingleResult();
@@ -103,23 +90,11 @@ public class JpaDocumentStorage implements DocumentStorage, com.fariamiguel.docu
         entityManager.flush();
     }
 
-    @Override
-    @Transactional
-    public void delete(UUID documentId) {
-        if (documentId == null) throw new IllegalArgumentException("documentId is required");
-        delete(documentId.toString());
-    }
-
     private Optional<StoredDocumentBlob> find(String id) {
         if (id == null || id.isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Storage ID is required.");
         return entityManager.createQuery("select d from StoredDocumentBlob d where d.storageId=:id", StoredDocumentBlob.class)
             .setParameter("id", id).getResultStream().findFirst();
-    }
-
-    private DocumentReference reference(StoredDocumentBlob value) {
-        return new DocumentReference(value.storageId, value.fileName, value.contentType,
-            value.fileSize, value.checksum, value.createdAt);
     }
 
     private static byte[] readAll(InputStream content) {

@@ -1,6 +1,6 @@
 package com.comandos.core.service;
 
-import com.comandos.core.api.PlatformClock;
+import com.fariamiguel.core.api.PlatformClock;
 import java.time.Instant;
 import org.springframework.stereotype.Component;
 

@@ -53,10 +53,28 @@ if [[ -d "$ROOT_DIR/app" ]] && grep -RInE --exclude-dir=node_modules --exclude-d
   fail "frontend source imports sibling-product code"
 fi
 
-# Shared platform/domain modules cannot be reintroduced as COMANDOS-owned roots.
-for shared in tenancy productcontrol builders commerce; do
+# Shared platform/domain modules that have completed cutover cannot be reintroduced as COMANDOS-owned roots.
+for shared in tenancy productcontrol builders commerce notifications; do
   [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$shared" ]] || fail "shared capability '$shared' must live in jhfmiguel/faria-miguel"
 done
+
+# Generic contracts already cut over to Faria Miguel must never be recreated locally.
+forbidden_local_contracts=(
+  "api/src/main/java/com/comandos/core/api/IdGenerator.java"
+  "api/src/main/java/com/comandos/core/api/PlatformClock.java"
+  "api/src/main/java/com/comandos/core/api/PlatformPage.java"
+  "api/src/main/java/com/comandos/audit/api/AuditRecorder.java"
+  "api/src/main/java/com/comandos/documents/api/DocumentStorage.java"
+  "api/src/main/java/com/comandos/documents/api/DocumentReference.java"
+  "api/src/main/java/com/comandos/notifications/api/NotificationSender.java"
+  "api/src/main/java/com/comandos/notifications/api/NotificationMessage.java"
+)
+for contract in "${forbidden_local_contracts[@]}"; do
+  [[ ! -e "$ROOT_DIR/$contract" ]] || fail "generic contract '$contract' must be consumed from Faria Miguel"
+done
+
+grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.(core\.api\.(IdGenerator|PlatformClock|PlatformPage)|audit\.api\.AuditRecorder|documents\.api\.(DocumentStorage|DocumentReference)|notifications\.api\.(NotificationSender|NotificationMessage));' "$ROOT_DIR/api/src" \
+  && fail "source still imports a removed COMANDOS-owned generic contract" || true
 
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
@@ -69,11 +87,12 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow notifications integrations security; do
+for capability in core audit documents workflow integrations security; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
+printf 'Completed cutovers are guarded: id generation, platform clock/page, audit recorder, document storage/reference and notifications cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'

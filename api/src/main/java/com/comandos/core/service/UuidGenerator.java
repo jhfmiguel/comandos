@@ -1,6 +1,6 @@
 package com.comandos.core.service;
 
-import com.comandos.core.api.IdGenerator;
+import com.fariamiguel.core.api.IdGenerator;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 

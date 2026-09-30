@@ -20,7 +20,7 @@
     "core": "faria-miguel-platform",
     "people": "faria-miguel-enterprise",
     "organizations": "faria-miguel-enterprise",
-    "organizational-units": "faria-miguel-enterprise",
+    "organizational-units": "faria-miguel-tenancy",
     "contacts": "faria-miguel-enterprise",
     "customers": "faria-miguel-enterprise:party-role",
     "suppliers": "faria-miguel-enterprise:party-role",
@@ -38,6 +38,13 @@
     "inventory": "faria-miguel-enterprise:inventory",
     "commerce": "faria-miguel-commerce"
   },
+  "completedDirectCutovers": [
+    "id-generation",
+    "platform-clock",
+    "pagination",
+    "documents-contracts",
+    "notifications-contracts"
+  ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
     "versioned-npm-artifacts",
@@ -64,9 +71,7 @@
   "compatibilityAdaptersOnly": [
     "core",
     "audit",
-    "documents",
     "workflow",
-    "notifications",
     "integrations",
     "security"
   ],
@@ -76,6 +81,7 @@
     "No new shared implementation may be copied into COMANDOS.",
     "COMANDOS cannot depend on sibling product artifacts or source code.",
     "Compatibility packages may adapt legacy COMANDOS callers, but cannot introduce new generic domain behavior.",
+    "Documents and notifications consume Faria Miguel contracts directly and cannot reintroduce COMANDOS-owned contracts.",
     "Purchasing, sales, finance, contracts, catalog and inventory primitives must use Faria Miguel canonical contracts; COMANDOS may add only security-domain overlays."
   ]
 }

@@ -1,6 +1,6 @@
 package com.comandos.workflow.api;
 
-import com.comandos.core.api.PlatformPage;
+import com.fariamiguel.core.api.PlatformPage;
 
 public interface WorkflowGateway {
 
