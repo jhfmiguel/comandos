@@ -40,7 +40,7 @@ done
 
 for f in "$POM" "$ROOT_DIR/app/package.json"; do
   [[ -f "$f" ]] || continue
-  if grep -nE '(com\.trator|com\.tubarao|digital[-_.]?experience|com\.arnold|@(?:trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold))' "$f"; then
+  if grep -nE '(com\.trator|com\.tubarao|digital[-_.]?experience|com\.arnold|@(trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold))' "$f"; then
     fail "sibling-product dependency declared in ${f#$ROOT_DIR/}"
   fi
 done
@@ -49,21 +49,31 @@ if [[ -d "$ROOT_DIR/api/src" ]] && grep -RInE --include='*.java' '^[[:space:]]*(
   fail "Java source references sibling-product code"
 fi
 
-if [[ -d "$ROOT_DIR/app" ]] && grep -RInE --exclude-dir=node_modules --exclude-dir=.next --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' "(from[[:space:]]+['\"](@(?:trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold)|.*(trator|tubarao|digital-experience|arnold)/src)|require\\(['\"](@(?:trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold)))" "$ROOT_DIR/app"; then
+if [[ -d "$ROOT_DIR/app" ]] && grep -RInE --exclude-dir=node_modules --exclude-dir=.next --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' "(from[[:space:]]+['\"](@(trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold)|.*(trator|tubarao|digital-experience|arnold)/src)|require\\(['\"](@(trator|tubarao|arnold)/|@fariamiguel/(trator|tubarao|digital-experience|arnold)))" "$ROOT_DIR/app"; then
   fail "frontend source imports sibling-product code"
 fi
 
-# Shared platform/domain modules cannot be reintroduced as new COMANDOS-owned roots.
-for shared in enterprise tenancy productcontrol builders commerce; do
+# Shared platform/domain modules cannot be reintroduced as COMANDOS-owned roots.
+for shared in tenancy productcontrol builders commerce; do
   [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$shared" ]] || fail "shared capability '$shared' must live in jhfmiguel/faria-miguel"
 done
 
-# Product-owned domains remain in COMANDOS; generic behavior in these roots must be expressed
-# through Faria Miguel contracts and only security-specific overlays may remain locally.
+# COMANDOS already had a catalog compatibility layer before extraction. Until its callers
+# are fully moved, no other Enterprise subdomain is allowed to exist locally.
+enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
+if [[ -d "$enterprise_root" ]]; then
+  while IFS= read -r entry; do
+    base="$(basename "$entry")"
+    [[ "$base" == "catalog" || "$base" == "package-info.java" ]] || fail "unexpected local Enterprise capability '$base'; use Faria Miguel instead"
+  done < <(find "$enterprise_root" -mindepth 1 -maxdepth 1 -print)
+fi
+
+# Transitional roots may contain product adapters only; ownership remains Faria Miguel.
 for capability in core audit documents workflow notifications integrations security; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
+printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
