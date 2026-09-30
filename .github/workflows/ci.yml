@@ -13,12 +13,9 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Checkout Faria Miguel foundation
-        uses: actions/checkout@v4
-        with:
-          repository: jhfmiguel/faria-miguel
-          path: .shared/faria-miguel
+      - uses: actions/checkout@v5
+      - name: Clone Faria Miguel foundation
+        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -37,8 +34,8 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
           cache: yarn
@@ -78,12 +75,9 @@ jobs:
           --health-timeout 5s
           --health-retries 30
     steps:
-      - uses: actions/checkout@v4
-      - name: Checkout Faria Miguel foundation
-        uses: actions/checkout@v4
-        with:
-          repository: jhfmiguel/faria-miguel
-          path: .shared/faria-miguel
+      - uses: actions/checkout@v5
+      - name: Clone Faria Miguel foundation
+        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -91,7 +85,7 @@ jobs:
           cache: maven
       - name: Install canonical shared artifacts
         run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
           cache: yarn
@@ -153,12 +147,9 @@ jobs:
   software-composition:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Checkout Faria Miguel foundation
-        uses: actions/checkout@v4
-        with:
-          repository: jhfmiguel/faria-miguel
-          path: .shared/faria-miguel
+      - uses: actions/checkout@v5
+      - name: Clone Faria Miguel foundation
+        run: git clone --depth 1 https://github.com/jhfmiguel/faria-miguel.git .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -166,7 +157,7 @@ jobs:
           cache: maven
       - name: Install canonical shared artifacts
         run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
           cache: yarn
