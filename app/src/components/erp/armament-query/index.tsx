@@ -179,7 +179,14 @@ function Query() {
                                 value={params.get("status") || ""}
                                 placeholder="Todos"
                                 options={statuses.map(status => ({ value: status, label: status }))}
-                                onChange={() => {}}
+                                onChange={value => {
+                                    const next = new URLSearchParams(query);
+                                    if (value) next.set("status", value);
+                                    else next.delete("status");
+                                    next.delete("page");
+                                    next.delete("asset");
+                                    navigate(next);
+                                }}
                             />
                         </div>
                     </div>
