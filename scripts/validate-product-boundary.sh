@@ -15,9 +15,28 @@ grep -q '"directProductDependenciesAllowed": false' "$MANIFEST" || fail "direct 
 
 test -f "$POM" || fail "api/pom.xml is missing"
 grep -q '<faria-miguel.version>0.1.0-SNAPSHOT</faria-miguel.version>' "$POM" || fail "backend must pin the canonical Faria Miguel version"
-grep -q '<groupId>com.fariamiguel</groupId>' "$POM" || fail "backend must consume com.fariamiguel artifacts"
-grep -q '<artifactId>faria-miguel-platform</artifactId>' "$POM" || fail "backend must consume faria-miguel-platform"
-grep -q '<artifactId>faria-miguel-enterprise</artifactId>' "$POM" || fail "backend must consume faria-miguel-enterprise"
+
+required_artifacts=(
+  faria-miguel-platform
+  faria-miguel-platform-migrations
+  faria-miguel-tenancy
+  faria-miguel-enterprise
+  faria-miguel-enterprise-persistence-jpa
+  faria-miguel-commerce
+)
+for artifact in "${required_artifacts[@]}"; do
+  grep -q "<artifactId>${artifact}</artifactId>" "$POM" || fail "backend must consume ${artifact}"
+  grep -q "\"com.fariamiguel:${artifact}\"" "$MANIFEST" || fail "product boundary must declare ${artifact}"
+done
+
+required_capabilities=(
+  core people organizations organizational-units contacts customers suppliers
+  security audit documents workflow notifications persistence purchases sales
+  finance contracts products inventory commerce
+)
+for capability in "${required_capabilities[@]}"; do
+  grep -q "\"${capability}\"" "$MANIFEST" || fail "missing shared ownership mapping for ${capability}"
+done
 
 for f in "$POM" "$ROOT_DIR/app/package.json"; do
   [[ -f "$f" ]] || continue
@@ -34,10 +53,17 @@ if [[ -d "$ROOT_DIR/app" ]] && grep -RInE --exclude-dir=node_modules --exclude-d
   fail "frontend source imports sibling-product code"
 fi
 
-# Existing roots below are migration debt only. New generic capabilities must start in Faria Miguel.
+# Shared platform/domain modules cannot be reintroduced as new COMANDOS-owned roots.
 for shared in enterprise tenancy productcontrol builders commerce; do
   [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$shared" ]] || fail "shared capability '$shared' must live in jhfmiguel/faria-miguel"
 done
 
-printf 'COMANDOS shared legacy runtime allowed only for migration: core/audit/documents/workflow/notifications/integrations/security.\n'
+# Product-owned domains remain in COMANDOS; generic behavior in these roots must be expressed
+# through Faria Miguel contracts and only security-specific overlays may remain locally.
+for capability in core audit documents workflow notifications integrations security; do
+  grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
+done
+
+printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
+printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
