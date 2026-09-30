@@ -14,16 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout Faria Miguel foundation
+        uses: actions/checkout@v4
+        with:
+          repository: jhfmiguel/faria-miguel
+          path: .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Test API
+      - name: Install canonical shared artifacts
+        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
+      - name: Validate product-consumer boundary
+        run: bash scripts/validate-product-boundary.sh
+      - name: Verify API against Faria Miguel
         working-directory: api
         run: |
           chmod +x mvnw
-          ./mvnw test
+          ./mvnw verify
 
   frontend:
     runs-on: ubuntu-latest
@@ -70,11 +79,18 @@ jobs:
           --health-retries 30
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout Faria Miguel foundation
+        uses: actions/checkout@v4
+        with:
+          repository: jhfmiguel/faria-miguel
+          path: .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Install canonical shared artifacts
+        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -138,11 +154,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout Faria Miguel foundation
+        uses: actions/checkout@v4
+        with:
+          repository: jhfmiguel/faria-miguel
+          path: .shared/faria-miguel
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Install canonical shared artifacts
+        run: mvn -B -ntp -f .shared/faria-miguel/pom.xml -DskipTests install
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
