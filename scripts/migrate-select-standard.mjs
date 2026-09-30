@@ -19,27 +19,38 @@ function optionSource(options) {
 
 const queryPath = "app/src/components/erp/armament-query/index.tsx";
 let query = ensureImport(fs.readFileSync(queryPath, "utf8"));
-const queryPattern = /<select id="query-status" name="status" defaultValue=\{params\.get\("status"\) \|\| ""\}>[\s\S]*?<\/select>/;
-if (!queryPattern.test(query)) throw new Error("armament-query status select not found");
-query = query.replace(queryPattern, `<ComandosSelectField
+const queryNativePattern = /<select id="query-status" name="status" defaultValue=\{params\.get\("status"\) \|\| ""\}>[\s\S]*?<\/select>/;
+const querySharedPattern = /<ComandosSelectField\s+id="query-status"[\s\S]*?\/>/;
+const queryReplacement = `<ComandosSelectField
                                 id="query-status"
                                 name="status"
                                 label="Situação"
                                 value={params.get("status") || ""}
                                 placeholder="Todos"
                                 options={statuses.map(status => ({ value: status, label: status }))}
-                                onChange={() => {}}
-                            />`);
+                                onChange={value => {
+                                    const next = new URLSearchParams(query);
+                                    if (value) next.set("status", value);
+                                    else next.delete("status");
+                                    next.delete("page");
+                                    next.delete("asset");
+                                    navigate(next);
+                                }}
+                            />`;
+if (queryNativePattern.test(query)) query = query.replace(queryNativePattern, queryReplacement);
+else if (querySharedPattern.test(query)) query = query.replace(querySharedPattern, queryReplacement);
+else throw new Error("armament-query status selector not found");
 fs.writeFileSync(queryPath, query);
 
 const purchasePath = "app/src/components/erp/purchases/index.tsx";
 let purchase = fs.readFileSync(purchasePath, "utf8");
-const purchasePattern = /<select aria-label="Next procurement status" disabled=\{statusBusy\}[\s\S]*?<\/select>/;
-const purchaseMatch = purchase.match(purchasePattern);
-if (!purchaseMatch) throw new Error("purchase procurement select not found");
-const options = parseOptions(purchaseMatch[0]).filter(option => option.value !== "");
-if (!options.length) throw new Error("purchase procurement options not found");
-purchase = purchase.replace(purchasePattern, `<ComandosSelectField
+const purchaseNativePattern = /<select aria-label="Next procurement status" disabled=\{statusBusy\}[\s\S]*?<\/select>/;
+const purchaseSharedPattern = /<ComandosSelectField\s+id="next-procurement-status"[\s\S]*?\/>/;
+const purchaseMatch = purchase.match(purchaseNativePattern);
+if (purchaseMatch) {
+  const options = parseOptions(purchaseMatch[0]).filter(option => option.value !== "");
+  if (!options.length) throw new Error("purchase procurement options not found");
+  purchase = purchase.replace(purchaseNativePattern, `<ComandosSelectField
                         id="next-procurement-status"
                         label="Next procurement status"
                         disabled={statusBusy}
@@ -52,6 +63,9 @@ purchase = purchase.replace(purchasePattern, `<ComandosSelectField
                             if (value) void advanceStatus(value as ProcurementStatus);
                         }}
                     />`);
+} else if (!purchaseSharedPattern.test(purchase)) {
+  throw new Error("purchase procurement selector not found");
+}
 fs.writeFileSync(purchasePath, purchase);
 
-console.log("Canonical select migration applied to armament query and purchases.");
+console.log("Canonical select migration applied and behavior preserved.");
