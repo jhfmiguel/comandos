@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ComandosSelectField } from "components/common/select-field";
 import { Eye } from "lucide-react";
 import axios from "axios";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -171,10 +172,15 @@ function Query() {
                         </div>)}
                         <div className={styles.field}>
                             <label htmlFor="query-status">Situação</label>
-                            <select id="query-status" name="status" defaultValue={params.get("status") || ""}>
-                                <option value="">Todos</option>
-                                {statuses.map(status => <option key={status}>{status}</option>)}
-                            </select>
+                            <ComandosSelectField
+                                id="query-status"
+                                name="status"
+                                label="Situação"
+                                value={params.get("status") || ""}
+                                placeholder="Todos"
+                                options={statuses.map(status => ({ value: status, label: status }))}
+                                onChange={() => {}}
+                            />
                         </div>
                     </div>
                     <div className={styles.actions}>
