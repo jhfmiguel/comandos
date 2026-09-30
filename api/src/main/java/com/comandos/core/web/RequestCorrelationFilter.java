@@ -1,6 +1,6 @@
 package com.comandos.core.web;
 
-import com.comandos.core.api.IdGenerator;
+import com.fariamiguel.core.api.IdGenerator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,8 +22,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     public static final String ATTRIBUTE = "platform.requestId";
     public static final String MDC_KEY = "requestId";
 
-    private static final Pattern SAFE_ID =
-        Pattern.compile("[A-Za-z0-9._:-]{1,128}");
+    private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9._:-]{1,128}");
 
     private final IdGenerator ids;
 
@@ -32,11 +31,8 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        FilterChain chain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
         String requestId = resolve(request.getHeader(HEADER));
         long startedAt = System.nanoTime();
 
@@ -60,9 +56,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     }
 
     private String resolve(String supplied) {
-        if (supplied != null && SAFE_ID.matcher(supplied).matches()) {
-            return supplied;
-        }
+        if (supplied != null && SAFE_ID.matcher(supplied).matches()) return supplied;
         return ids.next().toString();
     }
 }
