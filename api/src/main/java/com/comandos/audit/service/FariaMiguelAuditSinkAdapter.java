@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
  * COMANDOS audit history while the product-specific query/read model remains local.
  */
 @Component
-public final class FariaMiguelAuditSinkAdapter implements AuditSink {
+public class FariaMiguelAuditSinkAdapter implements AuditSink {
     private final AuditService audit;
 
     public FariaMiguelAuditSinkAdapter(AuditService audit) {
