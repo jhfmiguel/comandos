@@ -26,7 +26,7 @@ public final class FariaMiguelAuditSinkAdapter implements AuditSink {
         Map<String, String> snapshot = new LinkedHashMap<>(event.metadata());
         snapshot.putIfAbsent("sharedAuditId", event.id().toString());
         snapshot.putIfAbsent("correlationId", event.correlationId() == null ? "" : event.correlationId());
-        snapshot.putIfAbsent("sharedActor", event.actor() == null ? "" : event.actor());
+        snapshot.putIfAbsent("sharedActor", event.actorId() == null ? "" : event.actorId());
         snapshot.putIfAbsent("sharedOccurredAt", event.occurredAt().toString());
         audit.record(event.resourceType(), recordId, event.action(), null, snapshot);
     }
