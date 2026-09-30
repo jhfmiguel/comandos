@@ -71,7 +71,7 @@ function failure(error: unknown): string {
     return "Unable to complete the request. Check the API connection and try again.";
 }
 
-function money(value: number | string | undefined, _locale: "pt-BR" | "en-US"): string {
+function money(value: number | string | undefined): string {
     return formatBRLValue(value ?? 0);
 }
 
@@ -847,14 +847,14 @@ function PurchaseSummary({ purchase }: { purchase: PurchaseView }) {
                         <tr key={item.id}>
                             <td>{item.itemName}</td>
                             <td>{item.quantity}</td>
-                            <td>{money(item.unitPrice, locale)}</td>
-                            <td>{money(item.discount, locale)}</td>
-                            <td>{money(item.total, locale)}</td>
+                            <td>{money(item.unitPrice)}</td>
+                            <td>{money(item.discount)}</td>
+                            <td>{money(item.total)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-            <p className={styles.pagination}>Total: {money(purchase.total, locale)}</p>
+            <p className={styles.pagination}>Total: {money(purchase.total)}</p>
         </div>
     );
 }
@@ -915,7 +915,7 @@ function PurchaseHistory({
                                             ? `${purchase.procurement.procurementMethod} · ${purchase.procurement.status}`
                                             : "—"}
                                     </td>
-                                    <td>{money(purchase.total, locale)}</td>
+                                    <td>{money(purchase.total)}</td>
                                 </tr>
                             ))}
                             {!result.length && (

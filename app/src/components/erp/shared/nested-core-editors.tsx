@@ -36,7 +36,9 @@ export function RoleDetailsEditor({
 
     React.useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setLoading(true);
+        });
 
         service.list(
             "role-data",

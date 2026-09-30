@@ -209,7 +209,9 @@ export function PersonContactsEditor({
         }
 
         const controller = new AbortController();
-        setCountriesLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setCountriesLoading(true);
+        });
 
         fetch("/api/countries", {
             signal: controller.signal,

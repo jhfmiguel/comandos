@@ -1397,7 +1397,9 @@ function RecallItemsEditor({
 
     React.useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setLoading(true);
+        });
 
         service.list(
             "recall-items",
