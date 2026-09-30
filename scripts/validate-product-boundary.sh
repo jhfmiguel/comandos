@@ -53,8 +53,8 @@ if [[ -d "$ROOT_DIR/app" ]] && grep -RInE --exclude-dir=node_modules --exclude-d
   fail "frontend source imports sibling-product code"
 fi
 
-# Shared platform/domain modules cannot be reintroduced as COMANDOS-owned roots.
-for shared in tenancy productcontrol builders commerce; do
+# Shared platform/domain modules that have completed cutover cannot be reintroduced as COMANDOS-owned roots.
+for shared in tenancy productcontrol builders commerce notifications; do
   [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$shared" ]] || fail "shared capability '$shared' must live in jhfmiguel/faria-miguel"
 done
 
@@ -69,11 +69,12 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow notifications integrations security; do
+for capability in core audit documents workflow integrations security; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
+printf 'Notifications cutover is complete: no COMANDOS-owned notification root is allowed.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
