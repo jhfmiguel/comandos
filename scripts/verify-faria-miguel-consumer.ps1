@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
+$root = [System.IO.Path]::GetFullPath($root)
 Set-Location $root
 
 function Invoke-Step([string]$Name, [scriptblock]$Command) {
@@ -16,28 +17,82 @@ function Invoke-Step([string]$Name, [scriptblock]$Command) {
     }
 }
 
+function Resolve-BashCommand {
+    $runningOnWindows = $env:OS -eq 'Windows_NT'
+    $isWindowsVariable = Get-Variable -Name IsWindows -ErrorAction SilentlyContinue
+    if ($isWindowsVariable) {
+        $runningOnWindows = $runningOnWindows -or [bool]$isWindowsVariable.Value
+    }
+
+    if ($runningOnWindows) {
+        $gitBashCandidates = @()
+        if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+            $gitBashCandidates += (Join-Path $env:ProgramFiles 'Git\bin\bash.exe')
+            $gitBashCandidates += (Join-Path $env:ProgramFiles 'Git\usr\bin\bash.exe')
+        }
+        if (-not [string]::IsNullOrWhiteSpace(${env:ProgramFiles(x86)})) {
+            $gitBashCandidates += (Join-Path ${env:ProgramFiles(x86)} 'Git\bin\bash.exe')
+            $gitBashCandidates += (Join-Path ${env:ProgramFiles(x86)} 'Git\usr\bin\bash.exe')
+        }
+
+        foreach ($candidate in $gitBashCandidates) {
+            if (Test-Path $candidate) {
+                Write-Host "Using Git Bash for COMANDOS checks: $candidate" -ForegroundColor DarkGray
+                return $candidate
+            }
+        }
+    }
+
+    $bash = Get-Command bash -ErrorAction SilentlyContinue
+    if (-not $bash) {
+        throw 'bash is required for scripts/validate-product-boundary.sh (Git Bash or WSL).'
+    }
+
+    Write-Host "Using bash from PATH for COMANDOS checks: $($bash.Source)" -ForegroundColor DarkGray
+    return $bash.Source
+}
+
 if ([string]::IsNullOrWhiteSpace($FoundationPath)) {
     $FoundationPath = Join-Path $root '..\faria-miguel'
 }
 $FoundationPath = [System.IO.Path]::GetFullPath($FoundationPath)
 
 Invoke-Step 'Validate and install Faria Miguel foundation' {
-    & (Join-Path $root 'scripts\bootstrap-faria-miguel.ps1') -FoundationPath $FoundationPath
+    Push-Location $root
+    try {
+        & (Join-Path $root 'scripts\bootstrap-faria-miguel.ps1') -FoundationPath $FoundationPath
+    }
+    finally {
+        Pop-Location
+    }
 }
 
-$bash = Get-Command bash -ErrorAction SilentlyContinue
-if (-not $bash) {
-    throw 'bash is required for scripts/validate-product-boundary.sh (Git Bash or WSL).'
-}
+# The foundation verifier changes its own current directory. Re-anchor every
+# COMANDOS validation step to the consumer repository so relative paths remain stable.
+Set-Location $root
+$bashCommand = Resolve-BashCommand
+$boundaryScript = Join-Path $root 'scripts\validate-product-boundary.sh'
 Invoke-Step 'Validate COMANDOS product-consumer boundary' {
-    bash scripts/validate-product-boundary.sh
+    Push-Location $root
+    try {
+        & $bashCommand $boundaryScript
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 Invoke-Step 'Verify COMANDOS backend against Faria Miguel artifacts' {
-    mvn -B -ntp -f api/pom.xml verify
+    Push-Location $root
+    try {
+        mvn -B -ntp -f (Join-Path $root 'api\pom.xml') verify
+    }
+    finally {
+        Pop-Location
+    }
 }
 
-Push-Location app
+Push-Location (Join-Path $root 'app')
 try {
     Invoke-Step 'Install COMANDOS frontend dependencies' { yarn install --non-interactive }
     Invoke-Step 'COMANDOS frontend lint' { yarn lint }
@@ -51,4 +106,5 @@ finally {
     Pop-Location
 }
 
+Set-Location $root
 Write-Host "`nCOMANDOS IS A VALIDATED FARIA MIGUEL CONSUMER" -ForegroundColor Green
