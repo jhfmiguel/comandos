@@ -84,7 +84,15 @@ class InventorySalesApiTests {
         return Map.of(field, id, "quantity", quantity, "expectedUnitPrice", "12.3456");
     }
     private Map<String, Object> sale(Setup s, List<Map<String, Object>> items) {
-        return new HashMap<>(Map.of("requestId", unique(), "organizationId", s.organization(), "buyerId", s.buyer(), "paymentMethod", "PIX", "items", items));
+        return new HashMap<>(Map.of(
+            "requestId", unique(),
+            "organizationId", s.organization(),
+            "buyerId", s.buyer(),
+            "paymentMethod", "PIX",
+            "processNumber", "SALE-" + unique(),
+            "legalBasis", "Integration test sale",
+            "documentReference", "DOC-" + unique(),
+            "items", items));
     }
     private Map<String, Object> mixed(Setup s) {
         return sale(s, List.of(line("assetId", s.asset(), "1"), line("balanceId", s.balance(), "2.125")));
@@ -132,7 +140,7 @@ class InventorySalesApiTests {
     @Test
     void requiredFieldsQuantitiesDuplicatesAndScopeAreValidated() throws Exception {
         var s = setup();
-        for (String missing : List.of("paymentMethod", "buyerId", "organizationId", "requestId", "items")) {
+        for (String missing : List.of("paymentMethod", "buyerId", "organizationId", "requestId", "processNumber", "legalBasis", "documentReference", "items")) {
             var data = mixed(s); data.remove(missing);
             assertEquals(400, request("POST", "sales", data).status(), missing);
         }
@@ -211,7 +219,6 @@ class InventorySalesApiTests {
         long unit = create("core/units", Map.of("organizationId", s.organization(), "code", "MAIN", "name", "Original unit", "type", "Office"));
         long sibling = create("core/units", Map.of("organizationId", s.organization(), "code", "OTHER", "name", "Other unit", "type", "Office"));
         var data = mixed(s); data.put("unitId", unit);
-        // Stock without a unit cannot be assigned to one by the sale request.
         assertEquals(400, request("POST", "sales", data).status());
         stockUnchanged(s);
         jdbc.update("update erp_stock_location set unit_id = ? where id = ?", unit, s.location());
@@ -240,7 +247,6 @@ class InventorySalesApiTests {
         assertEquals(409, request("POST", "sales", data).status());
         assertEquals(1, request("GET", "sales?organizationId=" + s.organization(), null).body().get("totalElements").asInt());
         assertEquals(0, request("GET", "sales?organizationId=" + s.organization() + "&unitId=" + sibling, null).body().get("totalElements").asInt());
-        // Isolate the sale guard from the inventory guard, simulating later location reassignment.
         jdbc.update("update erp_stock_location set unit_id = null where id = ?", s.location());
         var change = new HashMap<String, Object>(Map.of("organizationId", otherOrg, "code", "MAIN", "name", "Renamed unit", "type", "Office", "version", 0));
         var moved = request("PUT", "core/units/" + unit, change);
