@@ -64,8 +64,6 @@ public class InventorySalesService {
     public SaleView finalizeSale(FinalizeRequest request) {
         validateRequest(request);
         access.requireScope("sales", "CREATE", request.organizationId(), request.unitId());
-        // Same lock order as inventory registration: catalog, then organization.
-        // This also protects prices, expiry dates and manual availability changes.
         em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
             .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         var organization = locked(Organization.class, request.organizationId());
@@ -89,9 +87,9 @@ public class InventorySalesService {
         sale.organizationName = organization.name;
         sale.buyerName = buyer.fullName;
         sale.paymentMethod = request.paymentMethod();
-        sale.processNumber = request.processNumber() == null || request.processNumber().isBlank() ? null : request.processNumber().trim();
-        sale.legalBasis = request.legalBasis() == null || request.legalBasis().isBlank() ? null : request.legalBasis().trim();
-        sale.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
+        sale.processNumber = request.processNumber().trim();
+        sale.legalBasis = request.legalBasis().trim();
+        sale.documentReference = request.documentReference().trim();
         sale.finalizedAt = LocalDateTime.now();
         sale.withdrawnAt = sale.finalizedAt;
         sale.withdrawnByLogin = audit.actor().login();
@@ -266,6 +264,13 @@ public class InventorySalesService {
     private void validateRequest(FinalizeRequest request) {
         if (request == null || request.organizationId() == null || request.buyerId() == null || request.paymentMethod() == null)
             bad("Organization, buyer and payment method are required.");
+        if (request.processNumber() == null || request.processNumber().isBlank()
+                || request.legalBasis() == null || request.legalBasis().isBlank()
+                || request.documentReference() == null || request.documentReference().isBlank())
+            bad("Process number, legal basis and document reference are required.");
+        if (request.processNumber().trim().length() > 255) bad("Process number is too long.");
+        if (request.legalBasis().trim().length() > 500) bad("Legal basis is too long.");
+        if (request.documentReference().trim().length() > 1000) bad("Document reference is too long.");
         try {
             if (request.requestId() == null || !UUID.fromString(request.requestId()).toString().equals(request.requestId()))
                 bad("A canonical UUID request ID is required.");
@@ -287,10 +292,12 @@ public class InventorySalesService {
             bad("Amounts must be nonnegative with at most 15 integer and 4 decimal digits; quantities must be positive.");
     }
     private static String fingerprint(FinalizeRequest request) {
-        var value = new StringBuilder().append(request.organizationId()).append('|').append(request.buyerId()).append('|').append(request.paymentMethod());
+        var value = new StringBuilder().append(request.organizationId()).append('|').append(request.buyerId()).append('|').append(request.paymentMethod())
+            .append("|process:").append(request.processNumber().trim())
+            .append("|basis:").append(request.legalBasis().trim())
+            .append("|document:").append(request.documentReference().trim());
         for (var item : request.items()) value.append('|').append(item.assetId()).append(':').append(item.balanceId())
             .append(':').append(item.quantity().stripTrailingZeros().toPlainString()).append(':').append(item.expectedUnitPrice().stripTrailingZeros().toPlainString());
-        // Preserve fingerprints of earlier organization-wide requests.
         if (request.unitId() != null) value.append("|unit:").append(request.unitId());
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.toString().getBytes(StandardCharsets.UTF_8))); }
         catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
