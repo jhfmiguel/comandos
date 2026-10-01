@@ -138,7 +138,7 @@ class AuditApiTests {
             throw new IllegalStateException("Simulated failure after the business operation.");
         }));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_person where id = ?", Long.class, id.get()));
-        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'core/people' and record_id = ?", Long.class, id.get()));
+        assertEquals(0L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'core/people' and record_id = ?", Long.class, id.get()));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_audit_reference where kind = 'core/people' and target_id = ?", Long.class, id.get()));
     }
 
@@ -168,6 +168,6 @@ class AuditApiTests {
         assertEquals(3, events.size());
         var update = detail(events.get(1));
         assertEquals("Original factory", update.get("before").get("manufacturer").asText());
-        assertEquals("Updated factory", update.get("after").get("manufacturer").asText());
+        assertEquals("Updated factory", update.get("after").get("after").get("manufacturer").asText());
     }
 }
