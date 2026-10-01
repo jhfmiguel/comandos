@@ -1,5 +1,6 @@
 package com.comandos.consumption.controller;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.*;
 import java.util.*;
@@ -25,6 +26,9 @@ class AmmunitionConsumptionApiTests {
         var response = client.send(request, HttpResponse.BodyHandlers.ofString()); return new Result(response.statusCode(), response.body().isBlank() ? null : json.readTree(response.body()), response.body()); }
     private long create(String path, Map<String, Object> body) throws Exception { var result = request("POST", path, body); assertEquals(201, result.status(), result.raw()); return result.body().get("id").asLong(); }
     private String unique() { return UUID.randomUUID().toString(); }
+    private String decimal(String sql, Object... args) {
+        return jdbc.queryForObject(sql, BigDecimal.class, args).setScale(4).toPlainString();
+    }
     private Setup setup() throws Exception {
         long org = create("core/organizations", Map.of("name", unique(), "nature", "Public safety", "publicOrganization", true, "active", true));
         long unit = create("core/units", Map.of("organizationId", org, "code", unique(), "name", "Range", "type", "Unit"));
@@ -46,11 +50,11 @@ class AmmunitionConsumptionApiTests {
         var s = setup(); var data = payload(s, "2.2500"); var first = request("POST", "ammunition-consumptions", data);
         assertEquals(200, first.status(), first.raw()); assertEquals("FINALIZED", first.body().get("status").asText());
         com.comandos.audit.controller.AuditTraceAssertions.trace(port,"ammunition-consumptions",first.body().get("id").asLong(),"lotId="+s.lot()+"&unitId="+s.unit(),"FINALIZE");
-        assertEquals("8.2500", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
-        assertEquals("8.2500", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
+        assertEquals("8.2500", decimal("select available from erp_stock_balance where id = ?", s.balance()));
+        assertEquals("8.2500", decimal("select available_quantity from erp_stock_lot where id = ?", s.lot()));
         assertEquals(first.body().get("id").asLong(), request("POST", "ammunition-consumptions", data).body().get("id").asLong());
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'ammunition-consumptions' and record_id = ?", Long.class, first.body().get("id").asLong()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'ammunition-consumptions' and record_id = ?", Long.class, first.body().get("id").asLong()));
     }
     @Test void insufficientSecondLineRollsBackEveryDeduction() throws Exception {
         var s = setup(); var data = new HashMap<String, Object>(payload(s, "1"));
@@ -61,8 +65,8 @@ class AmmunitionConsumptionApiTests {
         assertEquals(409, request("POST", "ammunition-consumptions", data).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_ammunition_consumption where request_id = ?", Long.class, data.get("requestId")));
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
-        assertEquals("10.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
-        assertEquals("10.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
+        assertEquals("10.5000", decimal("select available from erp_stock_balance where id = ?", s.balance()));
+        assertEquals("10.5000", decimal("select available_quantity from erp_stock_lot where id = ?", s.lot()));
     }
     @Test void changedRetryConflictsAndExpiredAmmunitionIsExcluded() throws Exception {
         var s = setup(); var data = new HashMap<String, Object>(payload(s, "1"));
@@ -72,7 +76,7 @@ class AmmunitionConsumptionApiTests {
         jdbc.update("update erp_stock_lot set valid_until = ? where id = ?", java.time.LocalDate.now().minusDays(1), s.lot());
         assertEquals(0, request("GET", "ammunition-consumptions/stock?organizationId=" + s.organization() + "&unitId=" + s.unit(), null).body().get("totalElements").asInt());
         assertEquals(400, request("POST", "ammunition-consumptions", payload(s, "1")).status());
-        assertEquals("9.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
+        assertEquals("9.5000", decimal("select available from erp_stock_balance where id = ?", s.balance()));
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
     }
     @Test void concurrentRetriesProduceOnlyOneConsumption() throws Exception {
@@ -85,8 +89,8 @@ class AmmunitionConsumptionApiTests {
             assertEquals(200, a.status(), a.raw()); assertEquals(200, b.status(), b.raw());
             assertEquals(a.body().get("id").asLong(), b.body().get("id").asLong());
         }
-        assertEquals("8.5000", jdbc.queryForObject("select cast(available as varchar) from erp_stock_balance where id = ?", String.class, s.balance()));
-        assertEquals("8.5000", jdbc.queryForObject("select cast(available_quantity as varchar) from erp_stock_lot where id = ?", String.class, s.lot()));
+        assertEquals("8.5000", decimal("select available from erp_stock_balance where id = ?", s.balance()));
+        assertEquals("8.5000", decimal("select available_quantity from erp_stock_lot where id = ?", s.lot()));
         assertEquals(1L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CONSUMPTION_DEFLAGRATION' and lot_id = ?", Long.class, s.lot()));
     }
     @Test void stockAndHistoryAreScopedAndValidationRejectsInvalidLines() throws Exception {
