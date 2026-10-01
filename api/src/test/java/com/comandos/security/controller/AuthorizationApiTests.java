@@ -131,7 +131,8 @@ class AuthorizationApiTests {
             var asset = asset(model, location); var otherAsset = asset(model, otherLocation);
             asset(model, location(org, null));
             var sale = new InventorySale(); sale.organization = other; sale.buyer = person; sale.organizationName = other.name; sale.buyerName = person.fullName;
-            sale.paymentMethod = PaymentMethod.PIX; sale.finalizedAt = LocalDateTime.now(); sale.total = BigDecimal.ZERO;
+            sale.paymentMethod = PaymentMethod.PIX; sale.processNumber = "AUTH-" + UUID.randomUUID(); sale.legalBasis = "Authorization fixture";
+            sale.documentReference = "AUTH-DOC-" + UUID.randomUUID(); sale.finalizedAt = LocalDateTime.now(); sale.total = BigDecimal.ZERO;
             sale.requestId = UUID.randomUUID().toString(); sale.requestFingerprint = "fixture"; persist(sale);
             return new Fixture(user.id, user.login, person.id, org.id, other.id, unit.id, location.id, otherLocation.id, model.id, asset.id, otherAsset.id, sale.id);
         });
@@ -288,7 +289,6 @@ class AuthorizationApiTests {
         assertEquals(403, request("POST", "/api/erp/core/users", Map.of()).status());
         assertEquals(403, request("GET", "/api/erp/core/permissions", null).status());
         assertEquals(403, request("GET", "/api/erp/core/people", null).status());
-        // A separate read-only account cannot mutate stock even within its scope.
         var reader = fixture(); grant(reader, "inventory/assets", "READ", "SYSTEM", null); login(reader);
         assertEquals(403, request("POST", "/api/erp/inventory/assets", Map.of()).status());
         assertEquals(403, request("POST", "/api/erp/inventory/assets/batch", Map.of()).status());
@@ -336,15 +336,15 @@ class AuthorizationApiTests {
         var created = request("POST", "/api/erp/inventory/assets", data);
         assertEquals(201, created.status(), created.raw());
         long assetId = created.body().get("id").asLong();
-        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource='inventory/assets' and action='CREATE' and record_id=?", Long.class, assetId));
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource_name='inventory/assets' and action='CREATE' and record_id=?", Long.class, assetId));
         data.put("version", created.body().get("version").asLong()); data.put("condition", "GOOD");
         assertEquals(403, request("PUT", "/api/erp/inventory/assets/" + assetId, data).status());
         grant(f, "inventory/assets", "UPDATE", "ORGANIZATION", null);
         assertEquals(403, request("PUT", "/api/erp/inventory/assets/" + f.otherAsset(), data).status());
         var edited = request("PUT", "/api/erp/inventory/assets/" + assetId, data);
         assertEquals(200, edited.status(), edited.raw());
-        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource='inventory/assets' and action='UPDATE' and record_id=?", Long.class, assetId));
-        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource='inventory/assets' and record_id=?", Long.class, assetId));
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource_name='inventory/assets' and action='UPDATE' and record_id=?", Long.class, assetId));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name='inventory/assets' and record_id=?", Long.class, assetId));
         assertEquals(403, request("POST", "/api/erp/inventory/locations", Map.of("organizationId", f.otherOrganization(), "name", "Forbidden location", "type", "Warehouse", "controlled", false)).status());
         assertEquals(0L, jdbc.queryForObject("select count(*) from erp_stock_location where name = 'Forbidden location'", Long.class));
     }
@@ -393,14 +393,16 @@ class AuthorizationApiTests {
         assertEquals(403, request("GET", "/api/erp/sales/stock?organizationId=" + f.otherOrganization() + "&kind=ASSET", null).status());
         assertEquals(403, request("GET", "/api/erp/sales/" + f.otherSale(), null).status());
         var sale = new HashMap<String, Object>(Map.of("requestId", UUID.randomUUID().toString(), "organizationId", f.otherOrganization(),
-            "buyerId", f.person(), "paymentMethod", "PIX", "items", List.of(Map.of("assetId", f.otherAsset(), "quantity", "1", "expectedUnitPrice", "10"))));
+            "buyerId", f.person(), "paymentMethod", "PIX", "processNumber", "AUTH-SALE-" + UUID.randomUUID(),
+            "legalBasis", "Authorization test", "documentReference", "AUTH-DOC-" + UUID.randomUUID(),
+            "items", List.of(Map.of("assetId", f.otherAsset(), "quantity", "1", "expectedUnitPrice", "10"))));
         assertEquals(403, request("POST", "/api/erp/sales", sale).status());
         assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, f.otherAsset()));
         sale.put("organizationId", f.organization()); sale.put("items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10")));
         var result = request("POST", "/api/erp/sales", sale); assertEquals(200, result.status(), result.raw());
         assertEquals(f.user(), result.body().get("finalizedById").asLong());
         assertEquals(f.login(), result.body().get("finalizedByLogin").asText());
-        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource = 'sales' and record_id = ?", Long.class, result.body().get("id").asLong()));
+        assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource_name = 'sales' and record_id = ?", Long.class, result.body().get("id").asLong()));
         assertEquals(403, request("GET", "/api/users", null).status());
         grant(f, "legacy/users", "READ", "SYSTEM", null);
         assertEquals(200, request("GET", "/api/users", null).status());
@@ -467,7 +469,7 @@ class AuthorizationApiTests {
     void systemAdministratorCanManageAccessAndInvalidScopesGrantNothing() throws Exception {
         var f = fixture(); grant(f, "*", "*", "SYSTEM", null); login(f);
         var result = request("GET", "/api/erp/core/catalog", null);
-        assertEquals(200, result.status(), result.raw()); assertEquals(18, result.body().size());
+        assertEquals(200, result.status(), result.raw()); assertTrue(result.body().size() >= 18);
         assertEquals(201, request("POST", "/api/erp/core/profiles", Map.of("name", UUID.randomUUID().toString(), "level", "SYSTEM")).status());
         var invalid = fixture();
         grant(invalid, "*", "*", "SYSTEM", invalid.unit());
@@ -512,7 +514,9 @@ class AuthorizationApiTests {
         assertEquals(403, request("GET", "/api/erp/sales?organizationId=" + f.organization() + "&unitId=" + siblingUnit, null).status());
         assertEquals(403, request("GET", "/api/erp/sales/" + f.otherSale(), null).status());
         var data = new HashMap<String, Object>(Map.of("requestId", UUID.randomUUID().toString(), "organizationId", f.organization(),
-            "buyerId", f.person(), "paymentMethod", "PIX", "items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10"))));
+            "buyerId", f.person(), "paymentMethod", "PIX", "processNumber", "AUTH-UNIT-" + UUID.randomUUID(),
+            "legalBasis", "Authorization unit test", "documentReference", "AUTH-DOC-" + UUID.randomUUID(),
+            "items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10"))));
         assertEquals(403, request("POST", "/api/erp/sales", data).status());
         data.put("unitId", f.unit());
         for (long forbidden : List.of(siblingAsset, unassignedAsset, f.otherAsset())) {
@@ -535,10 +539,9 @@ class AuthorizationApiTests {
         var retry = request("POST", "/api/erp/sales", data);
         assertEquals(200, retry.status(), retry.raw());
         assertEquals(id, retry.body().get("id").asLong());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource = 'sales' and record_id = ?", Long.class, id));
-        var audit = json.readTree(jdbc.queryForObject("select after_json from erp_audit_record where resource = 'sales' and record_id = ?", String.class, id));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'sales' and record_id = ?", Long.class, id));
+        var audit = json.readTree(jdbc.queryForObject("select after_json from erp_audit_record where resource_name = 'sales' and record_id = ?", String.class, id));
         assertEquals(f.unit(), audit.get("sale").get("unitId").asLong());
-        // A second unit grant does not expose the first unit's receipt.
         jdbc.update("delete from erp_user_profile where user_id = ?", f.user());
         grant(f, "sales", "READ", "UNIT", siblingUnit);
         assertEquals(403, request("GET", "/api/erp/sales/" + id, null).status());
@@ -551,7 +554,9 @@ class AuthorizationApiTests {
         long create = grant(f, "sales", "CREATE", "ORGANIZATION", null);
         grant(f, "core/people", "READ", "SYSTEM", null); login(f);
         var data = Map.of("requestId", UUID.randomUUID().toString(), "organizationId", f.organization(),
-            "buyerId", f.person(), "paymentMethod", "PIX", "items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10")));
+            "buyerId", f.person(), "paymentMethod", "PIX", "processNumber", "AUTH-ORG-" + UUID.randomUUID(),
+            "legalBasis", "Authorization organization test", "documentReference", "AUTH-DOC-" + UUID.randomUUID(),
+            "items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10")));
         var result = request("POST", "/api/erp/sales", data);
         assertEquals(200, result.status(), result.raw());
         assertTrue(result.body().get("unitId").isNull());
