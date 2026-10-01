@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "platform")
+@ConfigurationProperties(prefix = "erp")
 public class PlatformProperties {
     private String allowedOrigin = "http://localhost:3000";
     private final Security security = new Security();
