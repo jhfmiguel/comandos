@@ -168,6 +168,6 @@ class AuditApiTests {
         assertEquals(3, events.size());
         var update = detail(events.get(1));
         assertEquals("Original factory", update.get("before").get("manufacturer").asText());
-        assertEquals("Updated factory", update.get("after").get("after").get("manufacturer").asText());
+        assertEquals("Updated factory", update.get("after").get("manufacturer").asText());
     }
 }
