@@ -49,13 +49,13 @@ class TransferApiTests {
         assertEquals("2.5000", decimal("select blocked from erp_stock_balance where lot_id=? and location_id=?",
             setup.lot(), setup.destinationLocation()));
         assertEquals("10.0000", decimal("select available_quantity from erp_stock_lot where id=?", setup.lot()));
-        assertEquals(2, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='TRANSFER_OUT'", Integer.class));
-        assertEquals(2, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='TRANSFER_IN'", Integer.class));
+        assertEquals(2, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='TRANSFER_OUT' and reference_id=?", Integer.class, transferId));
+        assertEquals(2, jdbc.queryForObject("select count(*) from erp_stock_movement where nature='TRANSFER_IN' and reference_id=?", Integer.class, transferId));
         Result repeated = request("POST", "transfers", payload);
         assertEquals(200, repeated.status(), repeated.raw());
         assertEquals(transferId, repeated.body().get("id").asLong());
         assertEquals(2, jdbc.queryForObject("select count(*) from erp_inventory_transfer_item where transfer_id=?", Integer.class, transferId));
-        assertEquals(1, jdbc.queryForObject("select count(*) from erp_audit_record where resource='transfers' and record_id=?", Integer.class, transferId));
+        assertEquals(1, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name='transfers' and record_id=?", Integer.class, transferId));
         // The intake remains attributed to the original unit after the asset moves.
         var intake = request("GET", "audit?resource=inventory/assets&action=CREATE&assetId=" + setup.asset()
             + "&unitId=" + setup.sourceUnit(), null);
@@ -95,7 +95,7 @@ class TransferApiTests {
         assertEquals("ACCEPTED", jdbc.queryForObject(
             "select status from erp_inventory_transfer where id=?", String.class, transferId));
         assertEquals(1, jdbc.queryForObject(
-            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='ACCEPT'",
+            "select count(*) from erp_audit_record where resource_name='transfers' and record_id=? and action='ACCEPT'",
             Integer.class, transferId));
     }
     @Test
@@ -154,13 +154,13 @@ class TransferApiTests {
             setup.lot(), setup.destinationLocation()));
 
         assertEquals(2, jdbc.queryForObject(
-            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT'",
-            Integer.class));
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT' and reference_id=?",
+            Integer.class, transferId));
         assertEquals(2, jdbc.queryForObject(
-            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN'",
-            Integer.class));
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN' and reference_id=?",
+            Integer.class, transferId));
         assertEquals(1, jdbc.queryForObject(
-            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='REJECT'",
+            "select count(*) from erp_audit_record where resource_name='transfers' and record_id=? and action='REJECT'",
             Integer.class, transferId));
     }
 
@@ -182,14 +182,14 @@ class TransferApiTests {
         assertEquals("REJECTED", repeated.body().get("status").asText());
 
         assertEquals(1, jdbc.queryForObject(
-            "select count(*) from erp_audit_record where resource='transfers' and record_id=? and action='REJECT'",
+            "select count(*) from erp_audit_record where resource_name='transfers' and record_id=? and action='REJECT'",
             Integer.class, transferId));
         assertEquals(2, jdbc.queryForObject(
-            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT'",
-            Integer.class));
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_OUT' and reference_id=?",
+            Integer.class, transferId));
         assertEquals(2, jdbc.queryForObject(
-            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN'",
-            Integer.class));
+            "select count(*) from erp_stock_movement where nature='TRANSFER_REJECT_RETURN' and reference_id=?",
+            Integer.class, transferId));
 
         Result acceptAfterReject = request(
             "POST",
@@ -252,7 +252,9 @@ class TransferApiTests {
         assertEquals("10.0000", decimal("select available from erp_stock_balance where id=?", setup.sourceBalance()));
         assertEquals(0, jdbc.queryForObject("select count(*) from erp_inventory_transfer where request_id=?", Integer.class,
             payload.get("requestId")));
-        assertEquals(0, jdbc.queryForObject("select count(*) from erp_stock_movement where nature like 'TRANSFER_%'", Integer.class));
+        assertEquals(0, jdbc.queryForObject(
+            "select count(*) from erp_stock_movement where nature like 'TRANSFER_%' and (asset_id=? or lot_id=?)",
+            Integer.class, setup.asset(), setup.lot()));
     }
 
     @Test
