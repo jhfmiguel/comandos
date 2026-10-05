@@ -64,7 +64,7 @@ public class WorkflowService implements WorkflowGateway {
         w.justification = requiredJustification(r.justification());
         w.requestedAt = LocalDateTime.now();
         CurrentActor actor = requiredActor();
-        w.requestedById = actor.id() == null ? null : Long.valueOf(actor.id());
+        w.requestedById = actorId(actor);
         w.requestedByLogin = actor.displayName();
         em.persist(w);
         em.flush();
@@ -166,7 +166,7 @@ public class WorkflowService implements WorkflowGateway {
         w.status = target;
 
         if (WorkflowPolicy.AUTHORIZED.equals(target)) {
-            w.authorityId = actor.id() == null ? null : Long.valueOf(actor.id());
+            w.authorityId = actorId(actor);
             w.authorityLogin = actor.displayName();
             w.authorizedAt = now;
         }
@@ -189,7 +189,7 @@ public class WorkflowService implements WorkflowGateway {
         e.toStatus = to;
         e.justification = requiredJustification(reason);
         e.occurredAt = occurredAt == null ? LocalDateTime.now() : occurredAt;
-        e.actorId = actor.id() == null ? null : Long.valueOf(actor.id());
+        e.actorId = actorId(actor);
         e.actorLogin = actor.displayName();
         em.persist(e);
     }
@@ -229,6 +229,18 @@ public class WorkflowService implements WorkflowGateway {
                 "An authenticated and identified actor is required for workflow transitions.");
         }
         return actor;
+    }
+
+    private static Long actorId(CurrentActor actor) {
+        if (actor == null || actor.id() == null || actor.id().isBlank()
+                || "anonymous".equalsIgnoreCase(actor.id())) {
+            return null;
+        }
+        try {
+            return Long.valueOf(actor.id());
+        } catch (NumberFormatException ignored) {
+            return Integer.toUnsignedLong(actor.id().hashCode());
+        }
     }
 
     private static String requiredTransitionJustification(WorkflowTransition transition) {
