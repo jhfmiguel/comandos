@@ -100,7 +100,9 @@
     "Master data migration must expose Faria Miguel canonical Person, Organization, OrganizationalUnit and IdentityDirectory contracts before legacy persistence is removed.",
     "Legacy COMANDOS master-data entities are compatibility persistence only and cannot become new public contracts.",
     "Legacy person contacts must be projected through the canonical Faria Miguel contact contracts during the persistence migration.",
-    "Reusable person roles CUSTOMER/SUPPLIER/PARTNER/SERVICE_PROVIDER must project through Faria Miguel PartyRoleAssignment; security-specific roles remain COMANDOS-owned."
+    "Reusable person roles CUSTOMER/SUPPLIER/PARTNER/SERVICE_PROVIDER must project through Faria Miguel PartyRoleAssignment; security-specific roles remain COMANDOS-owned.",
+    "Legacy person credentials must project through Faria Miguel PartyDocument; product-specific credential metadata is preserved in attributes.",
+    "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
@@ -108,6 +110,8 @@
     "legacy-unit-to-faria-tenancy-unit",
     "legacy-identity-to-faria-identity-directory",
     "legacy-person-contacts-to-faria-enterprise-contacts",
-    "legacy-person-roles-to-faria-party-roles"
+    "legacy-person-roles-to-faria-party-roles",
+    "legacy-person-credentials-to-faria-party-documents",
+    "legacy-party-snapshot-to-faria-party-snapshot"
   ]
 }
