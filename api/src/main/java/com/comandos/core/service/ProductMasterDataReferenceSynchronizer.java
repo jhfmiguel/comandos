@@ -5,6 +5,9 @@ import com.comandos.inventory.model.StockLocation;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
+import com.comandos.custody.model.Custody;
+import com.comandos.donation.model.Donation;
+import com.comandos.sales.model.InventorySale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +62,18 @@ public class ProductMasterDataReferenceSynchronizer {
             synchronizeTransfer(transfer);
             return true;
         }
+        if (entity instanceof Custody custody) {
+            synchronizeCustody(custody);
+            return true;
+        }
+        if (entity instanceof Donation donation) {
+            synchronizeDonation(donation);
+            return true;
+        }
+        if (entity instanceof InventorySale sale) {
+            synchronizeSale(sale);
+            return true;
+        }
         return false;
     }
 
@@ -107,6 +122,114 @@ public class ProductMasterDataReferenceSynchronizer {
                 "Canonical supplier organization reference is missing for legacy id "
                     + purchase.supplierOrganization.id
             ));
+    }
+
+    private void synchronizeCustody(Custody custody) {
+        if (custody.organization == null || custody.organization.id == null) {
+            throw new IllegalStateException("Custody requires a persisted organization before canonical reference synchronization.");
+        }
+        if (custody.authorizer == null || custody.authorizer.id == null) {
+            throw new IllegalStateException("Custody requires a persisted authorizer before canonical reference synchronization.");
+        }
+
+        custody.organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            custody.organization.id,
+            "custody organization"
+        );
+        custody.authorizerCanonicalId = require(
+            MasterDataReferenceService.PERSON,
+            custody.authorizer.id,
+            "custody authorizer"
+        );
+        custody.unitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            custody.unit == null ? null : custody.unit.id,
+            "custody unit"
+        );
+        custody.recipientCanonicalId = optional(
+            MasterDataReferenceService.PERSON,
+            custody.recipient == null ? null : custody.recipient.id,
+            "custody recipient"
+        );
+        custody.recipientUnitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            custody.recipientUnit == null ? null : custody.recipientUnit.id,
+            "custody recipient unit"
+        );
+    }
+
+    private void synchronizeDonation(Donation donation) {
+        if (donation.organization == null || donation.organization.id == null) {
+            throw new IllegalStateException("Donation requires a persisted organization before canonical reference synchronization.");
+        }
+        if (donation.donor == null || donation.donor.id == null) {
+            throw new IllegalStateException("Donation requires a persisted donor before canonical reference synchronization.");
+        }
+        if (donation.donee == null || donation.donee.id == null) {
+            throw new IllegalStateException("Donation requires a persisted donee before canonical reference synchronization.");
+        }
+
+        donation.organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            donation.organization.id,
+            "donation organization"
+        );
+        donation.unitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            donation.unit == null ? null : donation.unit.id,
+            "donation unit"
+        );
+        donation.donorCanonicalId = require(
+            MasterDataReferenceService.PERSON,
+            donation.donor.id,
+            "donation donor"
+        );
+        donation.doneeCanonicalId = require(
+            MasterDataReferenceService.PERSON,
+            donation.donee.id,
+            "donation donee"
+        );
+    }
+
+    private void synchronizeSale(InventorySale sale) {
+        if (sale.organization == null || sale.organization.id == null) {
+            throw new IllegalStateException("Sale requires a persisted organization before canonical reference synchronization.");
+        }
+        if (sale.buyer == null || sale.buyer.id == null) {
+            throw new IllegalStateException("Sale requires a persisted buyer before canonical reference synchronization.");
+        }
+
+        sale.organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            sale.organization.id,
+            "sale organization"
+        );
+        sale.unitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            sale.unit == null ? null : sale.unit.id,
+            "sale unit"
+        );
+        sale.buyerCanonicalId = require(
+            MasterDataReferenceService.PERSON,
+            sale.buyer.id,
+            "sale buyer"
+        );
+    }
+
+    private String require(String resourceType, Long legacyId, String label) {
+        if (legacyId == null) {
+            throw new IllegalStateException(label + " must be persisted before canonical reference synchronization.");
+        }
+        return references.resolveCanonicalId(resourceType, legacyId)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical " + label + " reference is missing for legacy id " + legacyId
+            ));
+    }
+
+    private String optional(String resourceType, Long legacyId, String label) {
+        if (legacyId == null) return null;
+        return require(resourceType, legacyId, label);
     }
 
     private void synchronizeTransfer(InventoryTransfer transfer) {
