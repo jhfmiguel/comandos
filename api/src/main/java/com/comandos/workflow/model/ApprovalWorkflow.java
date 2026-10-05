@@ -4,6 +4,8 @@ import com.comandos.core.model.*;import jakarta.persistence.*;import java.time.L
 public class ApprovalWorkflow extends CoreEntity{
  @ManyToOne(optional=false)@JoinColumn(name="organization_id",nullable=false)public Organization organization;
  @ManyToOne@JoinColumn(name="unit_id")public OrganizationalUnit unit;
+ @Column(name="organization_canonical_id",length=128)public String organizationCanonicalId;
+ @Column(name="unit_canonical_id",length=128)public String unitCanonicalId;
  @Column(nullable=false,length=100)public String operationType;@Column(name="resource_name",nullable=false,length=100)public String resource;
  @Column(name="record_id")public Long recordId;@Column(nullable=false,length=30)public String status="REQUESTED";
  @Column(nullable=false,length=2000)public String justification;@Column(nullable=false)public LocalDateTime requestedAt;
