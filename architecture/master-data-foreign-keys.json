@@ -23,10 +23,10 @@
       "entity": "StockMovement",
       "path": "api/src/main/java/com/comandos/inventory/model/StockMovement.java",
       "fields": [
-        "organization",
-        "unit"
+        "location"
       ],
-      "state": "legacy-jpa-association"
+      "state": "retired",
+      "note": "No direct master-data association remains; organization and unit scope are derived through StockLocation."
     },
     {
       "entity": "Purchase",
