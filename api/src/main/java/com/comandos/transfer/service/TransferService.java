@@ -127,8 +127,10 @@ public class TransferService {
         if (sourceUnit.id.equals(destinationUnit.id)) bad("Source and destination units must be different.");
         StockLocation destinationLocation = locked(StockLocation.class, request.destinationLocationId());
         if (!Boolean.TRUE.equals(destinationLocation.active)) bad("Destination location must be active.");
-        if (!destinationLocation.organization.id.equals(organization.id) || destinationLocation.unit == null
-                || !destinationLocation.unit.id.equals(destinationUnit.id)) {
+        var destinationScope = canonicalScope.scope(organization.id, destinationUnit.id);
+        if (!destinationLocation.matchesCanonicalScope(
+                destinationScope.organizationId(),
+                destinationScope.unitId())) {
             bad("Destination location must belong to the selected destination unit.");
         }
 
@@ -144,9 +146,12 @@ public class TransferService {
         }
 
         InventoryTransfer transfer = new InventoryTransfer();
-        transfer.organization = organization;
-        transfer.sourceUnit = sourceUnit;
-        transfer.destinationUnit = destinationUnit;
+        transfer.organizationLegacyId = organization.id;
+        transfer.sourceUnitLegacyId = sourceUnit.id;
+        transfer.destinationUnitLegacyId = destinationUnit.id;
+        transfer.organizationCanonicalId = canonicalScope.organization(organization.id);
+        transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id);
+        transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id);
         transfer.destinationLocation = destinationLocation;
         transfer.organizationName = organization.name;
         transfer.sourceUnitName = sourceUnit.name;
@@ -172,13 +177,6 @@ public class TransferService {
         transfer.finalizedByLogin = actor.login();
         transfer.requestId = request.requestId();
         transfer.requestFingerprint = fingerprint;
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) {
-                masterDataReferences.synchronizeForBackfill(transfer);
-            } else {
-                masterDataReferences.synchronize(transfer);
-            }
-        }
         em.persist(transfer);
 
         List<Map<String, Object>> changes = new ArrayList<>();
@@ -200,7 +198,7 @@ public class TransferService {
 
         InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
-        access.requireScope("transfers", "ACCEPT", transfer.organization.id, transfer.destinationUnit.id);
+        access.requireScope("transfers", "ACCEPT", transfer.organizationLegacyId, transfer.destinationUnitLegacyId);
 
         if ("ACCEPTED".equals(transfer.status)) return view(transfer);
         if (!"PENDING_ACCEPTANCE".equals(transfer.status) || !"IN_TRANSIT".equals(effectiveTransitState(transfer))) {
@@ -240,7 +238,7 @@ public class TransferService {
 
         InventoryTransfer transfer = em.find(InventoryTransfer.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (transfer == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
-        access.requireScope("transfers", "REJECT", transfer.organization.id, transfer.destinationUnit.id);
+        access.requireScope("transfers", "REJECT", transfer.organizationLegacyId, transfer.destinationUnitLegacyId);
 
         if ("REJECTED".equals(transfer.status)) return view(transfer);
         if (!"PENDING_ACCEPTANCE".equals(transfer.status) || !"IN_TRANSIT".equals(effectiveTransitState(transfer))) {
@@ -274,12 +272,12 @@ public class TransferService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from InventoryTransfer t where "
-            + (canonical ? "t.organizationCanonicalId" : "t.organization.id")
+            + (canonical ? "t.organizationCanonicalId" : "t.organizationLegacyId")
             + "=:organization"
             + (unitId == null ? "" : " and ("
-                + (canonical ? "t.sourceUnitCanonicalId" : "t.sourceUnit.id")
+                + (canonical ? "t.sourceUnitCanonicalId" : "t.sourceUnitLegacyId")
                 + "=:unit or "
-                + (canonical ? "t.destinationUnitCanonicalId" : "t.destinationUnit.id")
+                + (canonical ? "t.destinationUnitCanonicalId" : "t.destinationUnitLegacyId")
                 + "=:unit)");
         var query = em.createQuery("select t" + from + " order by t.id desc", InventoryTransfer.class);
         var count = em.createQuery("select count(t)" + from, Long.class);
@@ -491,11 +489,11 @@ public class TransferService {
 
         return new TransferView(
             transfer.id,
-            transfer.organization.id,
+            transfer.organizationLegacyId,
             transfer.organizationName,
-            transfer.sourceUnit.id,
+            transfer.sourceUnitLegacyId,
             transfer.sourceUnitName,
-            transfer.destinationUnit.id,
+            transfer.destinationUnitLegacyId,
             transfer.destinationUnitName,
             transfer.destinationLocation.id,
             transfer.destinationLocationName,
@@ -531,15 +529,15 @@ public class TransferService {
     }
 
     private void requireTransferRead(InventoryTransfer transfer) {
-        if (!access.canScope("transfers", "READ", transfer.organization.id, transfer.sourceUnit.id)
-                && !access.canScope("transfers", "READ", transfer.organization.id, transfer.destinationUnit.id)) {
+        if (!access.canScope("transfers", "READ", transfer.organizationLegacyId, transfer.sourceUnitLegacyId)
+                && !access.canScope("transfers", "READ", transfer.organizationLegacyId, transfer.destinationUnitLegacyId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "You do not have permission for this operation or scope.");
         }
     }
 
     private void requireSource(StockLocation source, InventoryTransfer transfer) {
-        access.requireScope("transfers", "CREATE", transfer.organization.id, transfer.sourceUnit.id);
+        access.requireScope("transfers", "CREATE", transfer.organizationLegacyId, transfer.sourceUnitLegacyId);
         if (canonicalScope != null && canonicalScope.enabled()) {
             if (!source.matchesCanonicalScope(
                     transfer.organizationCanonicalId,
@@ -548,8 +546,8 @@ public class TransferService {
             }
             return;
         }
-        if (!source.organization.id.equals(transfer.organization.id) || source.unit == null
-                || !source.unit.id.equals(transfer.sourceUnit.id)) {
+        if (!source.organization.id.equals(transfer.organizationLegacyId) || source.unit == null
+                || !source.unit.id.equals(transfer.sourceUnitLegacyId)) {
             bad("Every item must belong to the selected source unit.");
         }
     }
