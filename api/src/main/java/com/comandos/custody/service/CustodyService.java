@@ -3,6 +3,7 @@ package com.comandos.custody.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
 import com.comandos.inventory.model.*;
@@ -26,29 +27,38 @@ public class CustodyService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public CustodyService(
             EntityManager em,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null);
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from AssetItem a where a.location.organization.id = :organization"
-            + (unitId == null ? "" : " and a.location.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from AssetItem a where "
+            + (canonical ? "a.location.organizationCanonicalId" : "a.location.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "a.location.unitCanonicalId" : "a.location.unit.id")
+                + " = :unit")
             + " and a.status = 'AVAILABLE'"
             + " and not exists (select c.id from EquipmentSetComponent c where c.asset = a and c.equipmentSet.active = true)"
             + " and (a.validUntil is null or a.validUntil >= :today)"
@@ -58,8 +68,8 @@ public class CustodyService {
         var count = em.createQuery("select count(a)" + from, Long.class);
         String term = escaped(search);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream()
             .map(a -> new StockOption(a.id, a.assetCode, a.serialNumber, a.model.name, a.location.name)).toList(),
@@ -125,7 +135,11 @@ public class CustodyService {
         custody.requestId = request.requestId(); custody.requestFingerprint = fingerprint;
         var actor = audit.actor(); custody.issuedById = actor.id(); custody.issuedByLogin = actor.login();
         if (masterDataReferences != null) {
-            masterDataReferences.synchronize(custody);
+            if (canonicalScope != null && canonicalScope.enabled()) {
+                masterDataReferences.synchronizeForBackfill(custody);
+            } else {
+                masterDataReferences.synchronize(custody);
+            }
         }
         em.persist(custody);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
@@ -243,10 +257,20 @@ public class CustodyService {
     public Page<CustodyView> list(long organizationId, Long unitId, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from Custody c where c.organization.id = :organization" + (unitId == null ? "" : " and c.unit.id = :unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from Custody c where "
+            + (canonical ? "c.organizationCanonicalId" : "c.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "c.unitCanonicalId" : "c.unit.id")
+                + " = :unit");
         var query = em.createQuery("select c" + from + " order by c.id desc", Custody.class);
         var count = em.createQuery("select count(c)" + from, Long.class);
-        for (var q : List.of(query, count)) { q.setParameter("organization", organizationId); if (unitId != null) q.setParameter("unit", unitId); }
+        for (var q : List.of(query, count)) {
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
     }
