@@ -42,8 +42,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         unit.id = 20L;
 
         StockLocation location = new StockLocation();
-        location.organization = organization;
-        location.unit = unit;
+        location.organizationLegacyId = organization.id;
+        location.unitLegacyId = unit.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -63,7 +63,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         organization.id = 10L;
 
         StockLocation location = new StockLocation();
-        location.organization = organization;
+        location.organizationLegacyId = organization.id;
         location.unitCanonicalId = "stale-unit";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
@@ -84,7 +84,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         organization.id = 10L;
 
         StockLocation location = new StockLocation();
-        location.organization = organization;
+        location.organizationLegacyId = organization.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -125,9 +125,9 @@ class ProductMasterDataReferenceSynchronizerTest {
         origin.id = 20L;
 
         Purchase purchase = new Purchase();
-        purchase.buyerOrganization = buyer;
-        purchase.supplierOrganization = supplier;
-        purchase.originPerson = origin;
+        purchase.buyerOrganizationLegacyId = buyer.id;
+        purchase.supplierOrganizationLegacyId = supplier.id;
+        purchase.originPersonLegacyId = origin.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -168,8 +168,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         origin.id = 20L;
 
         Purchase purchase = new Purchase();
-        purchase.buyerOrganization = buyer;
-        purchase.originPerson = origin;
+        purchase.buyerOrganizationLegacyId = buyer.id;
+        purchase.originPersonLegacyId = origin.id;
         purchase.supplierOrganizationCanonicalId = "stale-supplier";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
@@ -197,9 +197,9 @@ class ProductMasterDataReferenceSynchronizerTest {
         destination.id = 42L;
 
         InventoryTransfer transfer = new InventoryTransfer();
-        transfer.organization = organization;
-        transfer.sourceUnit = source;
-        transfer.destinationUnit = destination;
+        transfer.organizationLegacyId = organization.id;
+        transfer.sourceUnitLegacyId = source.id;
+        transfer.destinationUnitLegacyId = destination.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -231,11 +231,11 @@ class ProductMasterDataReferenceSynchronizerTest {
         com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 54L;
 
         Custody custody = new Custody();
-        custody.organization = organization;
-        custody.unit = unit;
-        custody.recipient = recipient;
-        custody.recipientUnit = recipientUnit;
-        custody.authorizer = authorizer;
+        custody.organizationLegacyId = organization.id;
+        custody.unitLegacyId = unit.id;
+        custody.recipientLegacyId = recipient.id;
+        custody.recipientUnitLegacyId = recipientUnit.id;
+        custody.authorizerLegacyId = authorizer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -266,10 +266,10 @@ class ProductMasterDataReferenceSynchronizerTest {
         com.comandos.core.model.Person donee = new com.comandos.core.model.Person(); donee.id = 63L;
 
         Donation donation = new Donation();
-        donation.organization = organization;
-        donation.unit = unit;
-        donation.donor = donor;
-        donation.donee = donee;
+        donation.organizationLegacyId = organization.id;
+        donation.unitLegacyId = unit.id;
+        donation.donorLegacyId = donor.id;
+        donation.doneeLegacyId = donee.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -296,9 +296,9 @@ class ProductMasterDataReferenceSynchronizerTest {
         com.comandos.core.model.Person buyer = new com.comandos.core.model.Person(); buyer.id = 72L;
 
         InventorySale sale = new InventorySale();
-        sale.organization = organization;
-        sale.unit = unit;
-        sale.buyer = buyer;
+        sale.organizationLegacyId = organization.id;
+        sale.unitLegacyId = unit.id;
+        sale.buyerLegacyId = buyer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
@@ -338,8 +338,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("ops-unit", workflow.unitCanonicalId);
 
         DisposalProcess disposal = new DisposalProcess();
-        disposal.organization = organization;
-        disposal.unit = unit;
+        disposal.organizationLegacyId = organization.id;
+        disposal.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(disposal));
         assertEquals("ops-org", disposal.organizationCanonicalId);
         assertEquals("ops-unit", disposal.unitCanonicalId);
@@ -391,10 +391,10 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("authorizer-person", ammunition.authorizerCanonicalId);
 
         ConsumableUsage usage = new ConsumableUsage();
-        usage.organization = organization;
-        usage.unit = unit;
-        usage.responsible = responsible;
-        usage.authorizer = authorizer;
+        usage.organizationLegacyId = organization.id;
+        usage.unitLegacyId = unit.id;
+        usage.responsibleLegacyId = responsible.id;
+        usage.authorizerLegacyId = authorizer.id;
         assertTrue(synchronizer.synchronize(usage));
         assertEquals("remaining-org", usage.organizationCanonicalId);
         assertEquals("remaining-unit", usage.unitCanonicalId);
