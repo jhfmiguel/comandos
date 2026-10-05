@@ -1,7 +1,6 @@
 package com.comandos.identity.service;
 
 import com.comandos.core.model.Person;
-import com.comandos.identity.api.PersonIdentity;
 import com.fariamiguel.identity.api.IdentitySubject;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
@@ -20,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class JpaIdentityDirectory
-    implements com.comandos.identity.api.IdentityDirectory,
-               com.fariamiguel.identity.api.IdentityDirectory {
+    implements com.fariamiguel.identity.api.IdentityDirectory {
 
     public static final String LOCAL_PROVIDER = "COMANDOS";
 
@@ -29,24 +27,6 @@ public class JpaIdentityDirectory
 
     public JpaIdentityDirectory(EntityManager entityManager) {
         this.entityManager = entityManager;
-    }
-
-    @Override
-    public Optional<PersonIdentity> findPerson(long id) {
-        Person person = entityManager.find(Person.class, id);
-
-        if (person == null) return Optional.empty();
-
-        return Optional.of(new PersonIdentity(
-            person.id,
-            person.personType,
-            person.fullName,
-            person.taxId,
-            person.birthDate,
-            person.phone,
-            person.email,
-            Boolean.TRUE.equals(person.active)
-        ));
     }
 
     @Override
