@@ -15,6 +15,12 @@ public class StockLocation extends CoreEntity {
     public Long organizationLegacyId;
     @Column(name = "unit_id")
     public Long unitLegacyId;
+    @ManyToOne
+    @JoinColumn(name = "organization_id", insertable = false, updatable = false)
+    public Organization organization;
+    @ManyToOne
+    @JoinColumn(name = "unit_id", insertable = false, updatable = false)
+    public OrganizationalUnit unit;
 
     @Column(name = "organization_canonical_id", length = 128)
     public String organizationCanonicalId;
