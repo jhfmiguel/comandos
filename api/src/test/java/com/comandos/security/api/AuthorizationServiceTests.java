@@ -1,5 +1,6 @@
 package com.comandos.security.api;
 
+import com.fariamiguel.security.api.AccessDeniedException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
