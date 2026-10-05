@@ -43,6 +43,38 @@ public final class CanonicalMasterDataMapper {
             List<PersonPhone> phones,
             List<PersonEmail> emails) {
 
+        List<com.fariamiguel.enterprise.common.Address> canonicalAddresses =
+            safe(addresses).stream()
+                .filter(address -> !address.archived)
+                .map(address -> CanonicalContactMapper.address(address, tenantId).address())
+                .toList();
+
+        Set<String> canonicalPhones =
+            safe(phones).stream()
+                .map(phone -> CanonicalContactMapper.phone(phone, tenantId).number())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        Set<String> canonicalEmails =
+            safe(emails).stream()
+                .map(email -> CanonicalContactMapper.email(email, tenantId).email())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        return person(
+            source,
+            tenantId,
+            canonicalAddresses,
+            canonicalPhones,
+            canonicalEmails
+        );
+    }
+
+    public static com.fariamiguel.enterprise.people.Person person(
+            Person source,
+            TenantId tenantId,
+            java.util.Collection<com.fariamiguel.enterprise.common.Address> addresses,
+            Set<String> phones,
+            Set<String> emails) {
+
         requirePersisted(source == null ? null : source.id, "person");
         if (tenantId == null) throw new IllegalArgumentException("tenantId is required");
 
@@ -51,23 +83,13 @@ public final class CanonicalMasterDataMapper {
         put(attributes, "legacyAddress", source.address);
 
         List<com.fariamiguel.enterprise.common.Address> canonicalAddresses =
-            safe(addresses).stream()
-                .filter(address -> !address.archived)
-                .map(address -> CanonicalContactMapper.address(address, tenantId).address())
-                .toList();
+            addresses == null ? List.of() : List.copyOf(addresses);
 
         Set<String> canonicalEmails =
-            safe(emails).stream()
-                .map(email -> CanonicalContactMapper.email(email, tenantId).email())
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+            emails == null || emails.isEmpty() ? nonBlankSet(source.email) : Set.copyOf(emails);
 
         Set<String> canonicalPhones =
-            safe(phones).stream()
-                .map(phone -> CanonicalContactMapper.phone(phone, tenantId).number())
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
-
-        if (canonicalEmails.isEmpty()) canonicalEmails = nonBlankSet(source.email);
-        if (canonicalPhones.isEmpty()) canonicalPhones = nonBlankSet(source.phone);
+            phones == null || phones.isEmpty() ? nonBlankSet(source.phone) : Set.copyOf(phones);
 
         return new com.fariamiguel.enterprise.people.Person(
             BusinessId.of("comandos:person:" + source.id),
