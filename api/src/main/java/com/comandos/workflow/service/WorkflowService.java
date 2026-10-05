@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
-public class WorkflowService implements WorkflowGateway {
+public class WorkflowService implements SensitiveWorkflowGateway {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
