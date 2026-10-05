@@ -11,6 +11,10 @@ public class AmmunitionConsumption extends CoreEntity {
     @ManyToOne @JoinColumn(name = "unit_id") public OrganizationalUnit unit;
     @ManyToOne(optional = false) @JoinColumn(name = "responsible_id", nullable = false) public Person responsible;
     @ManyToOne(optional = false) @JoinColumn(name = "authorizer_id", nullable = false) public Person authorizer;
+    @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
+    @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
+    @Column(name = "responsible_canonical_id", length = 128) public String responsibleCanonicalId;
+    @Column(name = "authorizer_canonical_id", length = 128) public String authorizerCanonicalId;
     @Column(nullable = false) public String organizationName;
     @Column public String unitName;
     @Column(nullable = false) public String responsibleName;
