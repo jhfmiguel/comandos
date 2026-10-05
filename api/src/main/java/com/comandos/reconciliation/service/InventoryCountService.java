@@ -3,6 +3,7 @@ package com.comandos.reconciliation.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.dto.InventoryCountContract.*;
 import com.comandos.reconciliation.model.*;
@@ -20,11 +21,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service @Transactional(readOnly=true)
 public class InventoryCountService {
-    private final EntityManager em; private final AccessPolicy access; private final AuditService audit; private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final EntityManager em; private final AccessPolicy access; private final AuditService audit; private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
     @org.springframework.beans.factory.annotation.Autowired
-    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences){this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;}
+    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;}
     @Deprecated
-    InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null);}
+    InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null,null);}
 
     @Transactional public CountView open(OpenRequest r){
         if(r==null||r.organizationId()==null||r.locationId()==null||blank(r.purpose()))bad("Organization, location and purpose are required.");
@@ -38,7 +39,7 @@ public class InventoryCountService {
         access.requireScope("inventory-counts","CREATE",location.organization.id,location.unit==null?null:location.unit.id);
         long active=em.createQuery("select count(c) from InventoryCount c where c.location.id=:l and c.status.code in ('OPEN','COUNTED')",Long.class).setParameter("l",location.id).getSingleResult();
         if(active>0)conflict("This location already has an unfinished inventory count.");
-        var c=new InventoryCount();c.organization=organization;c.unit=unit;c.location=location;c.status=status("OPEN");c.organizationName=organization.name;c.unitName=unit==null?null:unit.name;c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;if(masterDataReferences!=null)masterDataReferences.synchronize(c);em.persist(c);
+        var c=new InventoryCount();c.organization=organization;c.unit=unit;c.location=location;c.status=status("OPEN");c.organizationName=organization.name;c.unitName=unit==null?null:unit.name;c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(c);else masterDataReferences.synchronize(c);}em.persist(c);
         var assets=em.createQuery("select a from AssetItem a where a.location.id=:l and a.status in ('AVAILABLE','BLOCKED') order by a.id",AssetItem.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         for(var a:assets){var i=base(c,a.model,a.assetCode);i.asset=a;i.systemQuantity=BigDecimal.ONE;em.persist(i);}
         var balances=em.createQuery("select b from StockBalance b where b.location.id=:l and (b.available+b.reserved+b.blocked)>0 order by b.id",StockBalance.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
@@ -67,7 +68,7 @@ public class InventoryCountService {
 
     @Transactional public CountView cancel(long id){var c=locked(InventoryCount.class,id);access.requireEntity("inventory-counts","CANCEL",c);if(Set.of("APPROVED","CANCELLED").contains(c.status.code))return view(c);var previousView=view(c);c.status=status("CANCELLED");em.flush();var value=view(c);audit.record("inventory-counts",c.id,"CANCEL",previousView,value);return value;}
 
-    public Page<CountView> list(long org,Long unit,int page){access.requireScope("inventory-counts","READ",org,unit);unit(org,unit);if(page<0)bad("Invalid page.");String f=" from InventoryCount c where c.organization.id=:o"+(unit==null?"":" and c.unit.id=:u");var q=em.createQuery("select c"+f+" order by c.id desc",InventoryCount.class);var total=em.createQuery("select count(c)"+f,Long.class);q.setParameter("o",org);total.setParameter("o",org);if(unit!=null){q.setParameter("u",unit);total.setParameter("u",unit);}return new Page<>(q.setFirstResult(page*20).setMaxResults(20).getResultList().stream().map(this::view).toList(),total.getSingleResult(),page,20);}
+    public Page<CountView> list(long org,Long unit,int page){access.requireScope("inventory-counts","READ",org,unit);unit(org,unit);if(page<0)bad("Invalid page.");boolean canonical=canonicalScope!=null&&canonicalScope.enabled();var scope=canonical?canonicalScope.scope(org,unit):null;String f=" from InventoryCount c where "+(canonical?"c.organizationCanonicalId":"c.organization.id")+"=:o"+(unit==null?"":" and "+(canonical?"c.unitCanonicalId":"c.unit.id")+"=:u");var q=em.createQuery("select c"+f+" order by c.id desc",InventoryCount.class);var total=em.createQuery("select count(c)"+f,Long.class);q.setParameter("o",canonical?scope.organizationId():org);total.setParameter("o",canonical?scope.organizationId():org);if(unit!=null){q.setParameter("u",canonical?scope.unitId():unit);total.setParameter("u",canonical?scope.unitId():unit);}return new Page<>(q.setFirstResult(page*20).setMaxResults(20).getResultList().stream().map(this::view).toList(),total.getSingleResult(),page,20);}
 
     private InventoryCountItem base(InventoryCount c,ItemModel model,String code){var i=new InventoryCountItem();i.inventoryCount=c;i.model=model;i.modelName=model.name;i.sku=model.sku;i.stockCode=code;i.unitOfMeasure=model.unitOfMeasure;return i;}
     private StockMovement movement(AssetItem a,StockLot l,StockLocation location,BigDecimal q,Long inventoryCountId){var m=new StockMovement();m.asset=a;m.lot=l;m.location=location;m.nature=StockMovementNature.INVENTORY_ADJUSTMENT.name();m.referenceType=StockMovementReferenceType.INVENTORY_COUNT.name();m.referenceId=inventoryCountId;m.quantity=q;m.movedAt=LocalDateTime.now();m.operatorLogin=audit.actor().login();m.operatorId=audit.actor().id();em.persist(m);return m;}
