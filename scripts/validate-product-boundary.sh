@@ -95,6 +95,8 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDa
   || fail "canonical master-data directory is required during legacy persistence migration"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalContactMapper.java" \
   || fail "canonical person-contact mapper is required during legacy persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalContactDirectory.java" \
+  || fail "canonical person-contact directory is required during legacy persistence migration"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
