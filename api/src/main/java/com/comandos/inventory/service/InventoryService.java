@@ -283,17 +283,17 @@ public class InventoryService {
                 case "locations" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.organizationCanonicalId"
-                        : "e.organization.id";
+                        : "e.organizationLegacyId";
                 case "assets",
                      "balances",
                      "movements" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.location.organizationCanonicalId"
-                        : "e.location.organization.id";
+                        : "e.location.organizationLegacyId";
                 case "regulatory-controls" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.asset.location.organizationCanonicalId"
-                        : "e.asset.location.organization.id";
+                        : "e.asset.location.organizationLegacyId";
                 case "expirations",
                      "certifications",
                      "recalls" ->
@@ -307,7 +307,7 @@ public class InventoryService {
                 case "lots" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.openingLocation.organizationCanonicalId"
-                        : "e.openingLocation.organization.id";
+                        : "e.openingLocation.organizationLegacyId";
                 default ->
                     null;
             };
