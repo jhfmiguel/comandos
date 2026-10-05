@@ -14,6 +14,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class SpringCurrentActorProvider implements CurrentActorProvider {
 
+    private final AccessPolicy access;
+
+    public SpringCurrentActorProvider(AccessPolicy access) {
+        this.access = access;
+    }
+
     @Override
     public CurrentActor currentActor() {
         var authentication =
@@ -41,7 +47,7 @@ public class SpringCurrentActorProvider implements CurrentActorProvider {
             principal.getUsername(),
             roles,
             authorities,
-            Set.of(),
+            access.currentScopeGrants(),
             null,
             true
         );
