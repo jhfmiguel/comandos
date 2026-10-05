@@ -1,8 +1,6 @@
 package com.comandos.inventory.model;
 
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,12 +13,6 @@ public class StockLocation extends CoreEntity {
     public Long organizationLegacyId;
     @Column(name = "unit_id")
     public Long unitLegacyId;
-    @ManyToOne
-    @JoinColumn(name = "organization_id", insertable = false, updatable = false)
-    public Organization organization;
-    @ManyToOne
-    @JoinColumn(name = "unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit unit;
 
     @Column(name = "organization_canonical_id", length = 128)
     public String organizationCanonicalId;
