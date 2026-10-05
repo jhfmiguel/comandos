@@ -19,26 +19,35 @@ public class MasterDataCutoverStatusService {
         boolean readinessPassed,
         boolean parityPassed,
         boolean shadowWriteEnabled,
+        boolean productReferenceShadowEnabled,
+        boolean productReferencesReady,
         boolean canonicalReadEnabled,
         boolean readyToRetireLegacyPersistence,
         MasterDataMigrationService.ReadinessReport readiness,
-        MasterDataParityService.ParityReport parity
+        MasterDataParityService.ParityReport parity,
+        ProductMasterDataReferenceBackfillService.ReadinessReport productReferences
     ) {}
 
     private final MasterDataMigrationService migration;
     private final MasterDataParityService parity;
     private final CanonicalMasterDataMirrorService mirror;
+    private final ProductMasterDataReferenceSynchronizer productReferences;
+    private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
     private final boolean canonicalReadEnabled;
 
     public MasterDataCutoverStatusService(
             MasterDataMigrationService migration,
             MasterDataParityService parity,
             CanonicalMasterDataMirrorService mirror,
+            ProductMasterDataReferenceSynchronizer productReferences,
+            ProductMasterDataReferenceBackfillService productReferenceBackfill,
             @Value("${comandos.master-data.canonical-read.enabled:false}")
             boolean canonicalReadEnabled) {
         this.migration = migration;
         this.parity = parity;
         this.mirror = mirror;
+        this.productReferences = productReferences;
+        this.productReferenceBackfill = productReferenceBackfill;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
@@ -50,21 +59,29 @@ public class MasterDataCutoverStatusService {
         var readinessReport = migration.readiness();
         var parityReport = parity.verify();
 
+        var productReferenceReport = productReferenceBackfill.readiness();
         boolean readinessPassed = readinessReport.ready();
         boolean parityPassed = parityReport.consistent();
         boolean shadowWriteEnabled = mirror.enabled();
+        boolean productReferenceShadowEnabled = productReferences.enabled();
+        boolean productReferencesReady = productReferenceReport.ready();
 
         return new CutoverStatus(
             readinessPassed,
             parityPassed,
             shadowWriteEnabled,
+            productReferenceShadowEnabled,
+            productReferencesReady,
             canonicalReadEnabled,
             readinessPassed
                 && parityPassed
                 && shadowWriteEnabled
+                && productReferenceShadowEnabled
+                && productReferencesReady
                 && canonicalReadEnabled,
             readinessReport,
-            parityReport
+            parityReport,
+            productReferenceReport
         );
     }
 
@@ -77,9 +94,12 @@ public class MasterDataCutoverStatusService {
                     + "readinessPassed=" + status.readinessPassed()
                     + ", parityPassed=" + status.parityPassed()
                     + ", shadowWriteEnabled=" + status.shadowWriteEnabled()
+                    + ", productReferenceShadowEnabled=" + status.productReferenceShadowEnabled()
+                    + ", productReferencesReady=" + status.productReferencesReady()
                     + ", canonicalReadEnabled=" + status.canonicalReadEnabled()
                     + ", readinessIssues=" + status.readiness().issues()
                     + ", parityMismatches=" + status.parity().mismatches()
+                    + ", productReferenceIncomplete=" + status.productReferences().incompleteByEntity()
             );
         }
 
