@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 public class InventoryCount extends CoreEntity {
     @ManyToOne(optional=false) @JoinColumn(name="organization_id",nullable=false) public Organization organization;
     @ManyToOne @JoinColumn(name="unit_id") public OrganizationalUnit unit;
+    @Column(name="organization_canonical_id", length=128) public String organizationCanonicalId;
+    @Column(name="unit_canonical_id", length=128) public String unitCanonicalId;
     @ManyToOne(optional=false) @JoinColumn(name="location_id",nullable=false) public StockLocation location;
     @ManyToOne(optional=false) @JoinColumn(name="status_type_id",nullable=false) public InventoryCountStatusType status;
     @Column(nullable=false) public String organizationName;
