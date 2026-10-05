@@ -55,7 +55,6 @@ public class PurchaseService {
    AcquisitionDocument d=new AcquisitionDocument();d.purchase=p;d.documentType=x.documentType();d.documentNumber=trim(x.documentNumber());d.issueDate=x.issueDate();
    d.issuer=trim(x.issuer());d.amount=x.amount()==null?null:money(x.amount());d.storageReference=trim(x.storageReference());d.notes=trim(x.notes());p.documents.add(d);}
   p.recalculateTotals();
-  if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(p);else masterDataReferences.synchronize(p);}
   return view(purchases.save(p));
  }
  @Transactional public PurchaseView configureProcurement(Long id,CreateProcurementRequest r){
