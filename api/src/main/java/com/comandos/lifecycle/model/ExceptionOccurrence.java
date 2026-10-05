@@ -1,7 +1,7 @@
 package com.comandos.lifecycle.model;
 import com.comandos.core.model.*;import com.comandos.inventory.model.*;import jakarta.persistence.*;import java.math.BigDecimal;import java.time.LocalDateTime;
 @Entity @Table(name="erp_exception_occurrence") public class ExceptionOccurrence extends CoreEntity{
- @ManyToOne(optional=false)@JoinColumn(name="organization_id")public Organization organization;@ManyToOne@JoinColumn(name="unit_id")public OrganizationalUnit unit;@Column(name="organization_canonical_id",length=128)public String organizationCanonicalId;@Column(name="unit_canonical_id",length=128)public String unitCanonicalId;
+ @Column(name="organization_id",nullable=false)public Long organizationLegacyId;@Column(name="unit_id")public Long unitLegacyId;@Column(name="organization_canonical_id",length=128)public String organizationCanonicalId;@Column(name="unit_canonical_id",length=128)public String unitCanonicalId;
  @ManyToOne@JoinColumn(name="asset_id")public AssetItem asset;@ManyToOne@JoinColumn(name="lot_id")public StockLot lot;@ManyToOne@JoinColumn(name="balance_id")public StockBalance balance;
  @ManyToOne@JoinColumn(name="related_occurrence_id")public ExceptionOccurrence relatedOccurrence;
  @Column(nullable=false,length=40)public String type;@Column(nullable=false,length=30)public String status="OPEN";@Column(precision=19,scale=4)public BigDecimal quantity;
