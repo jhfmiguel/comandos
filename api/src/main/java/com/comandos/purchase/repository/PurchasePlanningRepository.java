@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PurchasePlanningRepository extends JpaRepository<PurchasePlanning, Long> {
-    List<PurchasePlanning> findByOrganizationIdOrderByCreatedAtDesc(Long organizationId);
+    List<PurchasePlanning> findByOrganizationLegacyIdOrderByCreatedAtDesc(Long organizationLegacyId);
     List<PurchasePlanning> findByOrganizationCanonicalIdOrderByCreatedAtDesc(String organizationCanonicalId);
 }
