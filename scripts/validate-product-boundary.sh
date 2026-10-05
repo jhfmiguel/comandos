@@ -88,6 +88,24 @@ done
 grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.(core\.api\.(IdGenerator|PlatformClock|PlatformPage)|audit\.api\.AuditRecorder|documents\.api\.(DocumentStorage|DocumentReference)|notifications\.api\.(NotificationSender|NotificationMessage));' "$ROOT_DIR/api/src" \
   && fail "source still imports a removed COMANDOS-owned generic contract" || true
 
+# Master-data migration seams must remain present until the legacy persistence cutover is complete.
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataMapper.java" \
+  || fail "canonical master-data mapper is required during legacy persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java" \
+  || fail "canonical master-data directory is required during legacy persistence migration"
+grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
+  || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
+
+grep -q '"legacy-person-to-faria-enterprise-person"' "$MANIFEST" \
+  || fail "person canonical migration bridge is not declared"
+grep -q '"legacy-organization-to-faria-enterprise-organization"' "$MANIFEST" \
+  || fail "organization canonical migration bridge is not declared"
+grep -q '"legacy-unit-to-faria-tenancy-unit"' "$MANIFEST" \
+  || fail "organizational-unit canonical migration bridge is not declared"
+grep -q '"legacy-identity-to-faria-identity-directory"' "$MANIFEST" \
+  || fail "identity canonical migration bridge is not declared"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
@@ -99,7 +117,7 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow integrations security; do
+for capability in core audit documents workflow integrations security identity organization; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -113,5 +131,6 @@ printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceA
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
+printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity contracts while legacy Oracle persistence remains transitional.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
