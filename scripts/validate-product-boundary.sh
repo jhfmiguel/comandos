@@ -115,6 +115,8 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalCoreRead
   || fail "canonical core read service is required after master-data read cutover"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CorePageResult.java" \
   || fail "standalone core pagination contract is required after master-data read cutover"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/PersonRegistrationService.java" \
+  || fail "person registration orchestration must stay outside CoreService"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
@@ -141,6 +143,13 @@ grep -q '"canonical-master-data-read-api"' "$MANIFEST" \
   || fail "canonical master-data read cutover is not declared"
 grep -q '"canonical-person-detail-read-api"' "$MANIFEST" \
   || fail "canonical person detail read cutover is not declared"
+grep -q '"person-registration-orchestration"' "$MANIFEST" \
+  || fail "person registration extraction is not declared"
+
+if grep -q 'record PersonRegistration\|savePersonWithContacts' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"; then
+  fail "CoreService must not regain PersonRegistration orchestration"
+fi
 
 # Local identity/organization APIs are frozen compatibility surfaces only.
 # New product code must consume Faria Miguel contracts or canonical migration directories.
@@ -200,5 +209,6 @@ printf 'Master-data compatibility bridges expose Faria Miguel canonical person/o
 printf 'People, organization and unit reads are routed through CanonicalCoreReadService; generic CoreService master-data reads are no longer the primary HTTP path.\n'
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Deprecated local identity/organization APIs are frozen; new consumers are forbidden.\n'
+printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
