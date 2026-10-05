@@ -330,7 +330,7 @@ public class CustodyService {
                 bad("Every asset must belong to the selected organization and unit.");
             }
         } else if (!asset.location.organizationLegacyId.equals(organizationId)
-                || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unitLegacyId))) {
+                || unitId != null && (asset.location.unitLegacyId == null || !unitId.equals(asset.location.unitLegacyId))) {
             bad("Every asset must belong to the selected organization and unit.");
         }
         if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
@@ -354,7 +354,7 @@ public class CustodyService {
                 bad("Every stock balance must belong to the selected organization and unit.");
             }
         } else if (!balance.location.organizationLegacyId.equals(organizationId) || unitId != null
-                && (balance.location.unit == null || !unitId.equals(balance.location.unitLegacyId))) {
+                && (balance.location.unitLegacyId == null || !unitId.equals(balance.location.unitLegacyId))) {
             bad("Every stock balance must belong to the selected organization and unit.");
         }
         if (balance.lot.validUntil != null && balance.lot.validUntil.isBefore(LocalDate.now()))
