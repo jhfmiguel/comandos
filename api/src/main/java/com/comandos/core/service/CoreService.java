@@ -33,10 +33,7 @@ public class CoreService {
         this.unitScopeGuards = unitScopeGuards;
     }
 
-    public record PageResult(List<Map<String, Object>> content, long totalElements,
-                             int page, int size) {}
-
-    public PageResult list(
+    public CorePageResult list(
             String resource,
             String search,
             int page,
@@ -213,7 +210,7 @@ public class CoreService {
             count.setParameter(name, value);
         });
 
-        return new PageResult(
+        return new CorePageResult(
             query
                 .setFirstResult(page * size)
                 .setMaxResults(size)
