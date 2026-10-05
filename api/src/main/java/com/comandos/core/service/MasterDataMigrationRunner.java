@@ -75,6 +75,32 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + " incomplete=" + productReferenceReadiness.incompleteByEntity()
         );
 
+        if (backfillOnStartup) {
+            if (!readiness.ready()) {
+                throw new IllegalStateException(
+                    "Master-data canonical backfill requested but readiness has blockers: "
+                        + readiness.issues()
+                );
+            }
+
+            var report = migration.backfill();
+
+            System.out.println(
+                "[master-data-migration] backfill completed: mirrored="
+                    + report.mirroredTotal()
+                    + ", skippedProductRoles="
+                    + report.skippedProductRoles()
+                    + ", details="
+                    + report
+            );
+
+            requireParity();
+        } else if (parityOnStartup) {
+            requireParity();
+        }
+
+        // Product-table shadows depend on the canonical crosswalk populated by
+        // the master-data backfill, so this phase must always run afterwards.
         if (productReferenceBackfillOnStartup) {
             var productReport = productReferenceBackfill.backfill();
             System.out.println(
@@ -86,36 +112,6 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                     + productReport.synchronizedByEntity()
             );
         }
-
-        if (!backfillOnStartup) {
-            if (parityOnStartup) {
-                requireParity();
-            }
-            if (canonicalReadEnabled) {
-                cutoverStatus.requireReadyToRetireLegacyPersistence();
-            }
-            return;
-        }
-
-        if (!readiness.ready()) {
-            throw new IllegalStateException(
-                "Master-data canonical backfill requested but readiness has blockers: "
-                    + readiness.issues()
-            );
-        }
-
-        var report = migration.backfill();
-
-        System.out.println(
-            "[master-data-migration] backfill completed: mirrored="
-                + report.mirroredTotal()
-                + ", skippedProductRoles="
-                + report.skippedProductRoles()
-                + ", details="
-                + report
-        );
-
-        requireParity();
 
         if (canonicalReadEnabled) {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
