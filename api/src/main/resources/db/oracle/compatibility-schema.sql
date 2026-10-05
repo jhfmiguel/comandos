@@ -252,3 +252,30 @@ alter table erp_sale add buyer_canonical_id varchar2(128 char);
 create index ix_sale_org_canonical on erp_sale (organization_canonical_id);
 create index ix_sale_unit_canonical on erp_sale (unit_canonical_id);
 create index ix_sale_buyer_canonical on erp_sale (buyer_canonical_id);
+
+
+-- Canonical scope shadow references for maintenance/workflow/disposal/reservation/reconciliation.
+alter table erp_work_order add organization_canonical_id varchar2(128 char);
+alter table erp_work_order add unit_canonical_id varchar2(128 char);
+create index ix_work_order_org_canonical on erp_work_order (organization_canonical_id);
+create index ix_work_order_unit_canonical on erp_work_order (unit_canonical_id);
+
+alter table erp_approval_workflow add organization_canonical_id varchar2(128 char);
+alter table erp_approval_workflow add unit_canonical_id varchar2(128 char);
+create index ix_approval_workflow_org_canonical on erp_approval_workflow (organization_canonical_id);
+create index ix_approval_workflow_unit_canonical on erp_approval_workflow (unit_canonical_id);
+
+alter table erp_disposal_process add organization_canonical_id varchar2(128 char);
+alter table erp_disposal_process add unit_canonical_id varchar2(128 char);
+create index ix_disposal_process_org_canonical on erp_disposal_process (organization_canonical_id);
+create index ix_disposal_process_unit_canonical on erp_disposal_process (unit_canonical_id);
+
+alter table erp_inventory_reservation add organization_canonical_id varchar2(128 char);
+alter table erp_inventory_reservation add unit_canonical_id varchar2(128 char);
+create index ix_inventory_reservation_org_canonical on erp_inventory_reservation (organization_canonical_id);
+create index ix_inventory_reservation_unit_canonical on erp_inventory_reservation (unit_canonical_id);
+
+alter table erp_inventory_count add organization_canonical_id varchar2(128 char);
+alter table erp_inventory_count add unit_canonical_id varchar2(128 char);
+create index ix_inventory_count_org_canonical on erp_inventory_count (organization_canonical_id);
+create index ix_inventory_count_unit_canonical on erp_inventory_count (unit_canonical_id);
