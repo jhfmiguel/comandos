@@ -509,7 +509,11 @@ public class InventoryService {
         // direct master-data owners (currently StockLocation) receive stable
         // canonical identifiers before persistence.
         if (masterDataReferences != null) {
-            masterDataReferences.synchronize(entity);
+            if (canonicalProductReferenceReadEnabled) {
+                masterDataReferences.synchronizeForBackfill(entity);
+            } else {
+                masterDataReferences.synchronize(entity);
+            }
         }
 
         if (id == null) {
