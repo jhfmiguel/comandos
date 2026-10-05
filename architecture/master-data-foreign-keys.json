@@ -14,11 +14,11 @@
       "entity": "StockLocation",
       "path": "api/src/main/java/com/comandos/inventory/model/StockLocation.java",
       "fields": [
-        "organization",
-        "unit"
+        "organizationLegacyId",
+        "unitLegacyId"
       ],
-      "state": "canonical-id-primary",
-      "note": "Inventory location-derived organization reads can use canonical IDs behind COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_PRIMARY_READ; legacy JPA associations remain for compatibility."
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
     },
     {
       "entity": "StockMovement",
