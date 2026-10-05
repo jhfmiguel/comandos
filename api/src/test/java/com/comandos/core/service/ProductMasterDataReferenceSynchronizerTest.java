@@ -7,6 +7,9 @@ import com.comandos.inventory.model.StockMovement;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
+import com.comandos.custody.model.Custody;
+import com.comandos.donation.model.Donation;
+import com.comandos.sales.model.InventorySale;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -198,6 +201,105 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("transfer-org", transfer.organizationCanonicalId);
         assertEquals("source-unit", transfer.sourceUnitCanonicalId);
         assertEquals("destination-unit", transfer.destinationUnitCanonicalId);
+    }
+
+    @Test
+    void synchronizesCustodyReferences() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 50L))
+            .thenReturn(Optional.of("custody-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 51L))
+            .thenReturn(Optional.of("custody-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 52L))
+            .thenReturn(Optional.of("recipient-person"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 53L))
+            .thenReturn(Optional.of("recipient-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 54L))
+            .thenReturn(Optional.of("authorizer-person"));
+
+        Organization organization = new Organization(); organization.id = 50L;
+        OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 51L;
+        com.comandos.core.model.Person recipient = new com.comandos.core.model.Person(); recipient.id = 52L;
+        OrganizationalUnit recipientUnit = new OrganizationalUnit(); recipientUnit.id = 53L;
+        com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 54L;
+
+        Custody custody = new Custody();
+        custody.organization = organization;
+        custody.unit = unit;
+        custody.recipient = recipient;
+        custody.recipientUnit = recipientUnit;
+        custody.authorizer = authorizer;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertTrue(synchronizer.synchronize(custody));
+        assertEquals("custody-org", custody.organizationCanonicalId);
+        assertEquals("custody-unit", custody.unitCanonicalId);
+        assertEquals("recipient-person", custody.recipientCanonicalId);
+        assertEquals("recipient-unit", custody.recipientUnitCanonicalId);
+        assertEquals("authorizer-person", custody.authorizerCanonicalId);
+    }
+
+    @Test
+    void synchronizesDonationReferences() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 60L))
+            .thenReturn(Optional.of("donation-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 61L))
+            .thenReturn(Optional.of("donation-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 62L))
+            .thenReturn(Optional.of("donor-person"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 63L))
+            .thenReturn(Optional.of("donee-person"));
+
+        Organization organization = new Organization(); organization.id = 60L;
+        OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 61L;
+        com.comandos.core.model.Person donor = new com.comandos.core.model.Person(); donor.id = 62L;
+        com.comandos.core.model.Person donee = new com.comandos.core.model.Person(); donee.id = 63L;
+
+        Donation donation = new Donation();
+        donation.organization = organization;
+        donation.unit = unit;
+        donation.donor = donor;
+        donation.donee = donee;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertTrue(synchronizer.synchronize(donation));
+        assertEquals("donation-org", donation.organizationCanonicalId);
+        assertEquals("donation-unit", donation.unitCanonicalId);
+        assertEquals("donor-person", donation.donorCanonicalId);
+        assertEquals("donee-person", donation.doneeCanonicalId);
+    }
+
+    @Test
+    void synchronizesSaleReferences() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 70L))
+            .thenReturn(Optional.of("sale-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 71L))
+            .thenReturn(Optional.of("sale-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 72L))
+            .thenReturn(Optional.of("buyer-person"));
+
+        Organization organization = new Organization(); organization.id = 70L;
+        OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 71L;
+        com.comandos.core.model.Person buyer = new com.comandos.core.model.Person(); buyer.id = 72L;
+
+        InventorySale sale = new InventorySale();
+        sale.organization = organization;
+        sale.unit = unit;
+        sale.buyer = buyer;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertTrue(synchronizer.synchronize(sale));
+        assertEquals("sale-org", sale.organizationCanonicalId);
+        assertEquals("sale-unit", sale.unitCanonicalId);
+        assertEquals("buyer-person", sale.buyerCanonicalId);
     }
 
     @Test
