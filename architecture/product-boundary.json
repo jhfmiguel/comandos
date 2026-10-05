@@ -119,7 +119,8 @@
     "Local identity and organization APIs are removed; only canonical Faria Miguel contracts may be consumed.",
     "Local workflow code is limited to the COMANDOS sensitive-operation overlay; generic workflow engine/contracts remain owned by Faria Miguel.",
     "Local security code is limited to COMANDOS authentication/session and product-specific scope overlays; canonical principal, actor, access-denied and authorization contracts are owned by Faria Miguel.",
-    "Canonical master-data persistence cutover must pass readiness, idempotent backfill and controlled shadow-write before legacy erp_* persistence is removed."
+    "Canonical master-data persistence cutover must pass readiness, idempotent backfill and controlled shadow-write before legacy erp_* persistence is removed.",
+    "Legacy-to-canonical master-data parity must be zero-mismatch after backfill and during shadow-write observation before read cutover."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
@@ -132,6 +133,7 @@
     "legacy-party-snapshot-to-faria-party-snapshot",
     "legacy-person-qualifications-to-faria-professional-qualifications",
     "legacy-master-data-to-canonical-shadow-write",
-    "legacy-master-data-canonical-backfill"
+    "legacy-master-data-canonical-backfill",
+    "legacy-master-data-canonical-parity"
   ]
 }
