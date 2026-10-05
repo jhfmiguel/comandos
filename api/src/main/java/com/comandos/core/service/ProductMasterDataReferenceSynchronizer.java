@@ -150,18 +150,24 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof AmmunitionConsumption consumption) {
-            synchronizeScope(consumption.organization, consumption.unit, ids -> {
-                consumption.organizationCanonicalId = ids.organization();
-                consumption.unitCanonicalId = ids.unit();
-            }, "ammunition consumption");
+            consumption.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                consumption.organizationLegacyId,
+                "ammunition consumption organization"
+            );
+            consumption.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                consumption.unitLegacyId,
+                "ammunition consumption unit"
+            );
             consumption.responsibleCanonicalId = require(
                 MasterDataReferenceService.PERSON,
-                consumption.responsible == null ? null : consumption.responsible.id,
+                consumption.responsibleLegacyId,
                 "ammunition consumption responsible"
             );
             consumption.authorizerCanonicalId = require(
                 MasterDataReferenceService.PERSON,
-                consumption.authorizer == null ? null : consumption.authorizer.id,
+                consumption.authorizerLegacyId,
                 "ammunition consumption authorizer"
             );
             return true;
