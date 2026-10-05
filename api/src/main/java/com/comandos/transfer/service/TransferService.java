@@ -3,6 +3,7 @@ package com.comandos.transfer.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.AssetItem;
 import com.comandos.inventory.model.AssetStatus;
 import com.comandos.inventory.model.ItemCategory;
@@ -55,11 +56,23 @@ public class TransferService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
 
-    public TransferService(EntityManager em, AccessPolicy access, AuditService audit) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public TransferService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
         this.em = em;
         this.access = access;
         this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    TransferService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
     }
 
     public Page<StockOption> stock(long organizationId, long sourceUnitId, String kind, String search, int page) {
@@ -148,6 +161,9 @@ public class TransferService {
         transfer.finalizedByLogin = actor.login();
         transfer.requestId = request.requestId();
         transfer.requestFingerprint = fingerprint;
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(transfer);
+        }
         em.persist(transfer);
 
         List<Map<String, Object>> changes = new ArrayList<>();
