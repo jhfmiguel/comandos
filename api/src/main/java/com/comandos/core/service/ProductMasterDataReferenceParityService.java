@@ -86,10 +86,10 @@ public class ProductMasterDataReferenceParityService {
             ref("authorizer.id", "authorizerCanonicalId", MasterDataReferenceService.PERSON)
         )),
         new Spec(Donation.class, List.of(
-            ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unit.id", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("donor.id", "donorCanonicalId", MasterDataReferenceService.PERSON),
-            ref("donee.id", "doneeCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
+            ref("donorLegacyId", "donorCanonicalId", MasterDataReferenceService.PERSON),
+            ref("doneeLegacyId", "doneeCanonicalId", MasterDataReferenceService.PERSON)
         )),
         new Spec(InventorySale.class, List.of(
             ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
