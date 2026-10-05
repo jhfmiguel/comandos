@@ -20,7 +20,13 @@ public class AccountService implements UserDetailsService {
         var account = em.createQuery("select u from SystemUser u where u.login = :login", SystemUser.class)
             .setParameter("login", username).getResultStream().findFirst().orElse(null);
         if (!available(account)) throw new UsernameNotFoundException("Invalid login or password.");
-        return new AccountPrincipal(account.id, account.version, account.login, account.passwordHash);
+        return new AccountPrincipal(
+            account.id,
+            account.version,
+            account.login,
+            account.person.fullName,
+            account.passwordHash
+        );
     }
 
     public AccountView current(AccountPrincipal principal) {
