@@ -2,6 +2,8 @@ package com.comandos.core.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.inventory.model.StockLocation;
+import com.comandos.purchase.model.EquipmentReceiving;
+import com.comandos.purchase.model.Purchase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +46,82 @@ public class ProductMasterDataReferenceSynchronizer {
             synchronizeLocation(location);
             return true;
         }
+        if (entity instanceof Purchase purchase) {
+            synchronizePurchase(purchase);
+            return true;
+        }
+        if (entity instanceof EquipmentReceiving receiving) {
+            synchronizeReceiving(receiving);
+            return true;
+        }
         return false;
+    }
+
+    private void synchronizePurchase(Purchase purchase) {
+        if (purchase.buyerOrganization == null || purchase.buyerOrganization.id == null) {
+            throw new IllegalStateException(
+                "Purchase requires a persisted buyer organization before canonical reference synchronization."
+            );
+        }
+        if (purchase.originPerson == null || purchase.originPerson.id == null) {
+            throw new IllegalStateException(
+                "Purchase requires a persisted origin person before canonical reference synchronization."
+            );
+        }
+
+        purchase.buyerOrganizationCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.ORGANIZATION,
+                purchase.buyerOrganization.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical buyer organization reference is missing for legacy id "
+                    + purchase.buyerOrganization.id
+            ));
+
+        purchase.originPersonCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.PERSON,
+                purchase.originPerson.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical origin person reference is missing for legacy id "
+                    + purchase.originPerson.id
+            ));
+
+        if (purchase.supplierOrganization == null) {
+            purchase.supplierOrganizationCanonicalId = null;
+            return;
+        }
+        if (purchase.supplierOrganization.id == null) {
+            throw new IllegalStateException(
+                "Purchase supplier organization must be persisted before canonical reference synchronization."
+            );
+        }
+
+        purchase.supplierOrganizationCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.ORGANIZATION,
+                purchase.supplierOrganization.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical supplier organization reference is missing for legacy id "
+                    + purchase.supplierOrganization.id
+            ));
+    }
+
+    private void synchronizeReceiving(EquipmentReceiving receiving) {
+        if (receiving.receivingOrganization == null) {
+            receiving.receivingOrganizationCanonicalId = null;
+            return;
+        }
+        if (receiving.receivingOrganization.id == null) {
+            throw new IllegalStateException(
+                "Receiving organization must be persisted before canonical reference synchronization."
+            );
+        }
+
+        receiving.receivingOrganizationCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.ORGANIZATION,
+                receiving.receivingOrganization.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical receiving organization reference is missing for legacy id "
+                    + receiving.receivingOrganization.id
+            ));
     }
 
     private void synchronizeLocation(StockLocation location) {
