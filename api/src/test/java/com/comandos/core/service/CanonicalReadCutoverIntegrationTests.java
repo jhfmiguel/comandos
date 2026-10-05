@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "spring.jpa.show-sql=false",
     "spring.flyway.enabled=false",
-    "comandos.master-data.shadow-write.enabled=false",
+    "comandos.master-data.shadow-write.enabled=true",
     "comandos.master-data.canonical-read.enabled=true",
     "comandos.master-data.readiness-on-startup=false",
     "comandos.master-data.backfill-on-startup=false",
