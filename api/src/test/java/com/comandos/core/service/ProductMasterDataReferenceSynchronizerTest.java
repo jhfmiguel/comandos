@@ -10,6 +10,11 @@ import com.comandos.transfer.model.InventoryTransfer;
 import com.comandos.custody.model.Custody;
 import com.comandos.donation.model.Donation;
 import com.comandos.sales.model.InventorySale;
+import com.comandos.maintenance.model.WorkOrder;
+import com.comandos.workflow.model.ApprovalWorkflow;
+import com.comandos.disposal.model.DisposalProcess;
+import com.comandos.reservation.model.InventoryReservation;
+import com.comandos.reconciliation.model.InventoryCount;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -300,6 +305,56 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("sale-org", sale.organizationCanonicalId);
         assertEquals("sale-unit", sale.unitCanonicalId);
         assertEquals("buyer-person", sale.buyerCanonicalId);
+    }
+
+    @Test
+    void synchronizesOperationalScopeEntities() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 80L))
+            .thenReturn(Optional.of("ops-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 81L))
+            .thenReturn(Optional.of("ops-unit"));
+
+        Organization organization = new Organization(); organization.id = 80L;
+        OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 81L;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        WorkOrder workOrder = new WorkOrder();
+        workOrder.organization = organization;
+        workOrder.unit = unit;
+        assertTrue(synchronizer.synchronize(workOrder));
+        assertEquals("ops-org", workOrder.organizationCanonicalId);
+        assertEquals("ops-unit", workOrder.unitCanonicalId);
+
+        ApprovalWorkflow workflow = new ApprovalWorkflow();
+        workflow.organization = organization;
+        workflow.unit = unit;
+        assertTrue(synchronizer.synchronize(workflow));
+        assertEquals("ops-org", workflow.organizationCanonicalId);
+        assertEquals("ops-unit", workflow.unitCanonicalId);
+
+        DisposalProcess disposal = new DisposalProcess();
+        disposal.organization = organization;
+        disposal.unit = unit;
+        assertTrue(synchronizer.synchronize(disposal));
+        assertEquals("ops-org", disposal.organizationCanonicalId);
+        assertEquals("ops-unit", disposal.unitCanonicalId);
+
+        InventoryReservation reservation = new InventoryReservation();
+        reservation.organization = organization;
+        reservation.unit = unit;
+        assertTrue(synchronizer.synchronize(reservation));
+        assertEquals("ops-org", reservation.organizationCanonicalId);
+        assertEquals("ops-unit", reservation.unitCanonicalId);
+
+        InventoryCount count = new InventoryCount();
+        count.organization = organization;
+        count.unit = unit;
+        assertTrue(synchronizer.synchronize(count));
+        assertEquals("ops-org", count.organizationCanonicalId);
+        assertEquals("ops-unit", count.unitCanonicalId);
     }
 
     @Test
