@@ -4,6 +4,7 @@ import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.CoreService;
 import com.comandos.core.service.CanonicalCoreReadService;
 import com.comandos.core.service.CorePageResult;
+import com.comandos.core.service.PersonRegistrationService;
 import com.comandos.core.service.CepService;
 import com.comandos.security.service.AccessPolicy;
 
@@ -18,17 +19,20 @@ public class CoreController {
 	
     private final CoreService service;
     private final CanonicalCoreReadService canonicalReads;
+    private final PersonRegistrationService registrations;
     private final AccessPolicy access;
     private final CepService cep;
     
     public CoreController(
             CoreService service,
             CanonicalCoreReadService canonicalReads,
+            PersonRegistrationService registrations,
             AccessPolicy access,
             CepService cep
     ) {
         this.service = service;
         this.canonicalReads = canonicalReads;
+        this.registrations = registrations;
         this.access = access;
         this.cep = cep;
     }
@@ -57,8 +61,8 @@ public class CoreController {
     @PostMapping("/people/with-contacts")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createPersonWithContacts(
-            @RequestBody CoreService.PersonRegistration registration) {
-        return service.savePersonWithContacts(registration);
+            @RequestBody PersonRegistrationService.PersonRegistration registration) {
+        return registrations.save(registration);
     }
 
     @GetMapping("/{resource}")
