@@ -24,6 +24,15 @@ public class InventoryTransfer extends CoreEntity {
     @JoinColumn(name = "destination_location_id", nullable = false)
     public StockLocation destinationLocation;
 
+    @Column(name = "organization_canonical_id", length = 128)
+    public String organizationCanonicalId;
+
+    @Column(name = "source_unit_canonical_id", length = 128)
+    public String sourceUnitCanonicalId;
+
+    @Column(name = "destination_unit_canonical_id", length = 128)
+    public String destinationUnitCanonicalId;
+
     @Column(nullable = false)
     public String organizationName;
 
