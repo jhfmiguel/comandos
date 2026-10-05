@@ -3,6 +3,7 @@ package com.comandos.donation.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.donation.dto.DonationContract.*;
 import com.comandos.donation.model.*;
 import com.comandos.inventory.model.*;
@@ -21,23 +22,24 @@ import org.springframework.web.server.ResponseStatusException;
 @Service @Transactional(readOnly=true)
 public class DonationService {
  private static final int PAGE_SIZE=20; private final EntityManager em; private final AccessPolicy access; private final AuditService audit;
- private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+ private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
 
  @org.springframework.beans.factory.annotation.Autowired
- public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences){
-  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;
+ public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){
+  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;
  }
 
  @Deprecated
- DonationService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null);}
+ DonationService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null,null);}
 
  public Page<StockOption> stock(long organizationId,Long unitId,String kind,String search,int page){
   access.requireScope("donations","READ",organizationId,unitId);selectedUnit(organizationId,unitId);pagination(page);
   boolean assets="ASSET".equals(kind);if(!assets&&!"LOT".equals(kind))bad("Stock kind must be ASSET or LOT.");
   String model=assets?"e.model":"e.lot.model",code=assets?"e.assetCode":"e.lot.lotNumber",expiry=assets?"e.validUntil":"e.lot.validUntil";
-  String from=" from "+(assets?"AssetItem":"StockBalance")+" e where e.location.organization.id=:organization"+(unitId==null?"":" and e.location.unit.id=:unit")+(assets?" and e.status='AVAILABLE'":" and e.available>0")+" and ("+expiry+" is null or "+expiry+">=:today) and (lower("+code+") like :search escape '!' or lower("+model+".name) like :search escape '!' or lower("+model+".sku) like :search escape '!')";
+  boolean canonical=canonicalScope!=null&&canonicalScope.enabled();var canonicalIds=canonical?canonicalScope.scope(organizationId,unitId):null;
+  String from=" from "+(assets?"AssetItem":"StockBalance")+" e where "+(canonical?"e.location.organizationCanonicalId":"e.location.organization.id")+"=:organization"+(unitId==null?"":" and "+(canonical?"e.location.unitCanonicalId":"e.location.unit.id")+"=:unit")+(assets?" and e.status='AVAILABLE'":" and e.available>0")+" and ("+expiry+" is null or "+expiry+">=:today) and (lower("+code+") like :search escape '!' or lower("+model+".name) like :search escape '!' or lower("+model+".sku) like :search escape '!')";
   var query=em.createQuery("select e"+from+" order by e.id",CoreEntity.class);var count=em.createQuery("select count(e)"+from,Long.class);String term=escaped(search);
-  for(var q:List.of(query,count)){q.setParameter("organization",organizationId).setParameter("today",LocalDate.now()).setParameter("search",term);if(unitId!=null)q.setParameter("unit",unitId);}
+  for(var q:List.of(query,count)){q.setParameter("organization",canonical?canonicalIds.organizationId():organizationId).setParameter("today",LocalDate.now()).setParameter("search",term);if(unitId!=null)q.setParameter("unit",canonical?canonicalIds.unitId():unitId);}
   return new Page<>(query.setFirstResult(page*PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(e->{if(e instanceof AssetItem a)return new StockOption("ASSET",a.id,a.assetCode,a.model.name,a.model.sku,a.location.name,a.model.unitOfMeasure,"1");var b=(StockBalance)e;return new StockOption("LOT",b.id,b.lot.lotNumber,b.lot.model.name,b.lot.model.sku,b.location.name,b.lot.model.unitOfMeasure,decimal(b.available));}).toList(),count.getSingleResult(),page,PAGE_SIZE);
  }
 
@@ -48,7 +50,7 @@ public class DonationService {
   if(existing.isPresent()){access.requireEntity("donations","READ",existing.get());if(!existing.get().requestFingerprint.equals(fingerprint))conflict("This request ID was already used for a different donation.");return view(existing.get());}
   var donor=locked(Person.class,request.donorId());var donee=locked(Person.class,request.doneeId());access.requireEntity("core/people","READ",donor);access.requireEntity("core/people","READ",donee);
   if(!organization.active||!donor.active||!donee.active)bad("Organization, donor and donee must be active.");if(donor.id.equals(donee.id))bad("Donor and donee must be different people.");
-  var now=LocalDateTime.now();var actor=audit.actor();var donation=new Donation();donation.organization=organization;donation.unit=unit;donation.donor=donor;donation.donee=donee;donation.organizationName=organization.name;donation.unitName=unit==null?null:unit.name;donation.donorName=donor.fullName;donation.doneeName=donee.fullName;donation.term=request.term().trim();donation.direction="OUTGOING";donation.eventType="REALIZED";donation.titleTransferState="TRANSFERRED_TO_DONEE";donation.termConfirmed=true;donation.documentReference=clean(request.documentReference());donation.approvedById=actor.id();donation.approvedByLogin=actor.login();donation.approvedAt=now;donation.finalizedAt=now;donation.realizedAt=now;donation.titleTransferredAt=now;donation.finalizedById=actor.id();donation.finalizedByLogin=actor.login();donation.requestId=request.requestId();donation.requestFingerprint=fingerprint;if(masterDataReferences!=null)masterDataReferences.synchronize(donation);em.persist(donation);
+  var now=LocalDateTime.now();var actor=audit.actor();var donation=new Donation();donation.organization=organization;donation.unit=unit;donation.donor=donor;donation.donee=donee;donation.organizationName=organization.name;donation.unitName=unit==null?null:unit.name;donation.donorName=donor.fullName;donation.doneeName=donee.fullName;donation.term=request.term().trim();donation.direction="OUTGOING";donation.eventType="REALIZED";donation.titleTransferState="TRANSFERRED_TO_DONEE";donation.termConfirmed=true;donation.documentReference=clean(request.documentReference());donation.approvedById=actor.id();donation.approvedByLogin=actor.login();donation.approvedAt=now;donation.finalizedAt=now;donation.realizedAt=now;donation.titleTransferredAt=now;donation.finalizedById=actor.id();donation.finalizedByLogin=actor.login();donation.requestId=request.requestId();donation.requestFingerprint=fingerprint;if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(donation);else masterDataReferences.synchronize(donation);}em.persist(donation);
   List<Map<String,Object>> changes=new ArrayList<>();
   for(var line:sorted(request.items())){
    var item=new DonationItem();item.donation=donation;item.quantity=line.quantity();item.previousOwnerType="ORGANIZATION";item.previousOwnerName=organization.name;item.newOwnerType="DONEE";item.newOwnerName=donee.fullName;
@@ -59,7 +61,7 @@ public class DonationService {
   em.flush();var result=view(donation);audit.record("donations",donation.id,"REALIZE",null,Map.of("donation",result,"direction","OUTGOING","titleTransferState",donation.titleTransferState,"stockChanges",changes));return result;
  }
 
- public Page<DonationView> list(long organizationId,Long unitId,int page){access.requireScope("donations","READ",organizationId,unitId);selectedUnit(organizationId,unitId);pagination(page);String from=" from Donation d where d.organization.id=:organization"+(unitId==null?"":" and d.unit.id=:unit");var query=em.createQuery("select d"+from+" order by d.id desc",Donation.class);var count=em.createQuery("select count(d)"+from,Long.class);for(var q:List.of(query,count)){q.setParameter("organization",organizationId);if(unitId!=null)q.setParameter("unit",unitId);}return new Page<>(query.setFirstResult(page*PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),count.getSingleResult(),page,PAGE_SIZE);}
+ public Page<DonationView> list(long organizationId,Long unitId,int page){access.requireScope("donations","READ",organizationId,unitId);selectedUnit(organizationId,unitId);pagination(page);boolean canonical=canonicalScope!=null&&canonicalScope.enabled();var canonicalIds=canonical?canonicalScope.scope(organizationId,unitId):null;String from=" from Donation d where "+(canonical?"d.organizationCanonicalId":"d.organization.id")+"=:organization"+(unitId==null?"":" and "+(canonical?"d.unitCanonicalId":"d.unit.id")+"=:unit");var query=em.createQuery("select d"+from+" order by d.id desc",Donation.class);var count=em.createQuery("select count(d)"+from,Long.class);for(var q:List.of(query,count)){q.setParameter("organization",organizationId);if(unitId!=null)q.setParameter("unit",unitId);}return new Page<>(query.setFirstResult(page*PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),count.getSingleResult(),page,PAGE_SIZE);}
  public DonationView get(long id){access.requireAny("donations","READ");var d=em.find(Donation.class,id);if(d==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Donation not found.");access.requireEntity("donations","READ",d);return view(d);}
  public DonationLifecycleView lifecycle(long id){access.requireAny("donations","READ");var d=em.find(Donation.class,id);if(d==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Donation not found.");access.requireEntity("donations","READ",d);return new DonationLifecycleView(d.id,normalizeDirection(d.direction),eventType(d),titleState(d),d.documentReference,d.termConfirmed,text(d.finalizedAt),text(d.receivedAt),text(d.realizedAt),d.donorName,d.doneeName,d.organizationName,d.unitName);}
  private DonationView view(Donation d){var items=em.createQuery("select i from DonationItem i where i.donation.id=:id order by i.id",DonationItem.class).setParameter("id",d.id).getResultList().stream().map(i->new LineView(i.id,i.model.id,i.asset==null?null:i.asset.id,i.lot==null?null:i.lot.id,i.location.id,i.movement.id,i.modelName,i.sku,i.stockCode,i.locationName,i.unitOfMeasure,decimal(i.quantity))).toList();return new DonationView(d.id,d.organization.id,d.organizationName,d.unit==null?null:d.unit.id,d.unitName,d.donor.id,d.donorName,d.donee.id,d.doneeName,d.term,d.status,d.finalizedAt.toString(),d.finalizedById,d.finalizedByLogin,items);}
