@@ -56,7 +56,8 @@
     "person-registration-orchestration",
     "integrations-adapters-removed",
     "local-identity-api-removed",
-    "local-organization-api-removed"
+    "local-organization-api-removed",
+    "workflow-adapters-reclassified"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -84,12 +85,12 @@
     "escolta",
     "inteligencia",
     "operacoes",
-    "security-public-private-specifics"
+    "security-public-private-specifics",
+    "sensitive-operation-workflow-overlay"
   ],
   "compatibilityAdaptersOnly": [
     "core",
     "audit",
-    "workflow",
     "security",
     "identity"
   ],
@@ -113,7 +114,8 @@
     "Person detail reads for addresses, phones, emails, credentials and qualifications must route through CanonicalCoreReadService.",
     "Person registration with contacts is owned by PersonRegistrationService; CoreService must not regain this orchestration.",
     "Generic integrations adapters are no longer permitted in COMANDOS; integration infrastructure is owned by Faria Miguel.",
-    "Local identity and organization APIs are removed; only canonical Faria Miguel contracts may be consumed."
+    "Local identity and organization APIs are removed; only canonical Faria Miguel contracts may be consumed.",
+    "Local workflow code is limited to the COMANDOS sensitive-operation overlay; generic workflow engine/contracts remain owned by Faria Miguel."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
