@@ -3,6 +3,7 @@ import com.comandos.core.model.Organization;
 import com.comandos.core.model.Person;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.purchase.dto.PurchaseContract.*;
 import com.comandos.purchase.model.*;
 import com.comandos.purchase.repository.*;
@@ -18,16 +19,16 @@ import java.util.Set;
 @Service
 public class PurchaseService {
  private final PurchaseRepository purchases; private final ProcurementProcessRepository procurements; private final EntityManager em;
- private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+ private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
 
  @org.springframework.beans.factory.annotation.Autowired
- public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences){
-  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;
+ public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){
+  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;
  }
 
  @Deprecated
  PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){
-  this(p,pr,em,null);
+  this(p,pr,em,null,null);
  }
  @Transactional public PurchaseView create(CreatePurchaseRequest r){
   if(r==null||r.buyerOrganizationId()==null)throw new IllegalArgumentException("Buyer organization is required.");
@@ -51,7 +52,7 @@ public class PurchaseService {
    AcquisitionDocument d=new AcquisitionDocument();d.purchase=p;d.documentType=x.documentType();d.documentNumber=trim(x.documentNumber());d.issueDate=x.issueDate();
    d.issuer=trim(x.issuer());d.amount=x.amount()==null?null:money(x.amount());d.storageReference=trim(x.storageReference());d.notes=trim(x.notes());p.documents.add(d);}
   p.recalculateTotals();
-  if(masterDataReferences!=null)masterDataReferences.synchronize(p);
+  if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(p);else masterDataReferences.synchronize(p);}
   return view(purchases.save(p));
  }
  @Transactional public PurchaseView configureProcurement(Long id,CreateProcurementRequest r){
@@ -127,7 +128,7 @@ public class PurchaseService {
  }
 
  @Transactional(readOnly=true) public PurchaseView get(Long id){return view(find(id));}
- @Transactional(readOnly=true) public List<PurchaseView> list(Long organizationId){return purchases.findByBuyerOrganizationIdOrderByCreatedAtDesc(organizationId).stream().map(this::view).toList();}
+ @Transactional(readOnly=true) public List<PurchaseView> list(Long organizationId){var rows=canonicalScope!=null&&canonicalScope.enabled()?purchases.findByBuyerOrganizationCanonicalIdOrderByCreatedAtDesc(canonicalScope.organization(organizationId)):purchases.findByBuyerOrganizationIdOrderByCreatedAtDesc(organizationId);return rows.stream().map(this::view).toList();}
  @Transactional public PurchaseView cancel(Long id){Purchase p=find(id);if(p.items.stream().anyMatch(i->nz(i.receivedQuantity).signum()>0))throw new IllegalStateException("Acquisition with received items cannot be cancelled.");p.status=PurchaseStatus.CANCELLED;return view(purchases.save(p));}
  private PurchaseView view(Purchase p){
   ProcurementView pv=null;if(p.procurementProcess!=null){var x=p.procurementProcess;pv=new ProcurementView(x.id,x.processNumber,x.procurementMethod,x.biddingModality,x.directContractingType,x.status,x.estimatedValue,x.legalBasis);}
