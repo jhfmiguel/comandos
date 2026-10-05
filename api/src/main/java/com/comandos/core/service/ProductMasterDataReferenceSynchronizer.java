@@ -156,7 +156,7 @@ public class ProductMasterDataReferenceSynchronizer {
         if (entity instanceof PurchasePlanning planning) {
             planning.organizationCanonicalId = require(
                 MasterDataReferenceService.ORGANIZATION,
-                planning.organization == null ? null : planning.organization.id,
+                planning.organizationLegacyId,
                 "purchase planning organization"
             );
             return true;
