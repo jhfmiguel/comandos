@@ -20,6 +20,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     private final MasterDataParityService parity;
     private final MasterDataCutoverStatusService cutoverStatus;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
+    private final ProductMasterDataReferenceParityService productReferenceParity;
     private final boolean readinessOnStartup;
     private final boolean backfillOnStartup;
     private final boolean parityOnStartup;
@@ -30,6 +31,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             MasterDataParityService parity,
             MasterDataCutoverStatusService cutoverStatus,
             ProductMasterDataReferenceBackfillService productReferenceBackfill,
+            ProductMasterDataReferenceParityService productReferenceParity,
             @Value("${comandos.master-data.readiness-on-startup:false}")
             boolean readinessOnStartup,
             @Value("${comandos.master-data.backfill-on-startup:false}")
@@ -42,6 +44,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         this.parity = parity;
         this.cutoverStatus = cutoverStatus;
         this.productReferenceBackfill = productReferenceBackfill;
+        this.productReferenceParity = productReferenceParity;
         this.readinessOnStartup = readinessOnStartup;
         this.backfillOnStartup = backfillOnStartup;
         this.parityOnStartup = parityOnStartup;
@@ -112,6 +115,16 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                     + productReport.synchronizedByEntity()
             );
         }
+
+        var productParityReport = productReferenceParity.verify();
+        System.out.println(
+            "[master-data-migration] product-reference parity consistent="
+                + productParityReport.consistent()
+                + ", checked="
+                + productParityReport.checkedReferences()
+                + ", mismatches="
+                + productParityReport.mismatches()
+        );
 
         if (canonicalReadEnabled) {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
