@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
 import com.comandos.core.model.PersonQualification;
 import com.fariamiguel.enterprise.contact.ContactRepository;
@@ -16,6 +17,7 @@ import com.fariamiguel.enterprise.party.PartyDocumentRepository;
 import com.fariamiguel.enterprise.party.PartyRoleRepository;
 import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.enterprise.people.ProfessionalQualificationRepository;
+import com.fariamiguel.tenancy.api.OrganizationalUnitRepository;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ class CanonicalMasterDataMirrorServiceTests {
     private final EntityManager entityManager = mock(EntityManager.class);
     private final PersonRepository people = mock(PersonRepository.class);
     private final OrganizationRepository organizations = mock(OrganizationRepository.class);
+    private final OrganizationalUnitRepository units = mock(OrganizationalUnitRepository.class);
     private final ContactRepository contacts = mock(ContactRepository.class);
     private final PartyRoleRepository roles = mock(PartyRoleRepository.class);
     private final PartyDocumentRepository documents = mock(PartyDocumentRepository.class);
@@ -68,6 +71,27 @@ class CanonicalMasterDataMirrorServiceTests {
         verify(organizations).save(any());
     }
 
+
+    @Test
+    void mirrorsOrganizationalUnitWhenEnabled() {
+        var mirror = service(true);
+
+        var organization = new Organization();
+        organization.id = 20L;
+        organization.name = "Organizacao Teste";
+
+        var unit = new OrganizationalUnit();
+        unit.id = 21L;
+        unit.organization = organization;
+        unit.code = "UNIT-01";
+        unit.name = "Unidade Operacional";
+        unit.type = "OPERATIONAL";
+        unit.active = true;
+
+        assertTrue(mirror.mirror(unit));
+        verify(units).save(any());
+    }
+
     @Test
     void mirrorsProfessionalQualificationWhenEnabled() {
         var mirror = service(true);
@@ -91,6 +115,7 @@ class CanonicalMasterDataMirrorServiceTests {
             entityManager,
             people,
             organizations,
+            units,
             contacts,
             roles,
             documents,
