@@ -2,6 +2,7 @@ package com.comandos.purchase.service;
 
 import com.comandos.core.model.Organization;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.purchase.dto.PurchasePlanningContract.CreateRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.StatusRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.View;
@@ -20,14 +21,17 @@ public class PurchasePlanningService {
     private final PurchasePlanningRepository repository;
     private final EntityManager em;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     public PurchasePlanningService(
             PurchasePlanningRepository repository,
             EntityManager em,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.repository = repository;
         this.em = em;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
     }
 
     @Transactional
@@ -64,7 +68,11 @@ public class PurchasePlanningService {
         planning.notes = clean(request.notes());
         planning.status = PurchasePlanningStatus.DRAFT;
 
-        masterDataReferences.synchronize(planning);
+        if (canonicalScope.enabled()) {
+            masterDataReferences.synchronizeForBackfill(planning);
+        } else {
+            masterDataReferences.synchronize(planning);
+        }
         return view(repository.save(planning));
     }
 
@@ -86,7 +94,13 @@ public class PurchasePlanningService {
         if (organizationId == null) {
             throw new IllegalArgumentException("Organization is required.");
         }
-        return repository.findByOrganizationIdOrderByCreatedAtDesc(organizationId).stream()
+        var rows = canonicalScope.enabled()
+            ? repository.findByOrganizationCanonicalIdOrderByCreatedAtDesc(
+                canonicalScope.organization(organizationId)
+            )
+            : repository.findByOrganizationIdOrderByCreatedAtDesc(organizationId);
+
+        return rows.stream()
             .map(this::view)
             .toList();
     }
