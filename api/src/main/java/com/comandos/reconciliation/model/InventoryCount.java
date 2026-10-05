@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_inventory_count")
 public class InventoryCount extends CoreEntity {
-    @ManyToOne(optional=false) @JoinColumn(name="organization_id",nullable=false) public Organization organization;
-    @ManyToOne @JoinColumn(name="unit_id") public OrganizationalUnit unit;
+    @Column(name="organization_id",nullable=false) public Long organizationLegacyId;
+    @Column(name="unit_id") public Long unitLegacyId;
     @Column(name="organization_canonical_id", length=128) public String organizationCanonicalId;
     @Column(name="unit_canonical_id", length=128) public String unitCanonicalId;
     @ManyToOne(optional=false) @JoinColumn(name="location_id",nullable=false) public StockLocation location;
