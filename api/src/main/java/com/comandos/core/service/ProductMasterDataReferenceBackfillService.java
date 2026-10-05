@@ -115,12 +115,12 @@ public class ProductMasterDataReferenceBackfillService {
             "e.organizationCanonicalId is null"),
         new Spec(PeriodicInspection.class,
             "e.organizationCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(ExceptionOccurrence.class,
             "e.organizationCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)")
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)")
     );
 
     private final EntityManager em;
