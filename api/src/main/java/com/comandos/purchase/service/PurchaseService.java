@@ -137,12 +137,13 @@ public class PurchaseService {
   var dv=p.documents.stream().map(d->new DocumentView(d.id,d.documentType,d.documentNumber,d.issueDate,d.issuer,d.amount,d.storageReference,d.notes)).toList();
   Organization buyerOrganization=org(p.buyerOrganizationLegacyId);
   Organization supplierOrganization=p.supplierOrganizationLegacyId==null?null:org(p.supplierOrganizationLegacyId);
-  Person originPerson=person(p.originPersonLegacyId);
+  Person originPerson=personRecord(p.originPersonLegacyId);
   return new PurchaseView(p.id,p.buyerOrganizationLegacyId,buyerOrganization.name,buyerOrganization.publicOrganization,p.supplierOrganizationLegacyId,supplierOrganization==null?null:supplierOrganization.name,
    p.originPersonLegacyId,originPerson.fullName,originPerson.personType,originPerson.taxId,p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
  }
  private Organization org(Long id){Organization o=em.find(Organization.class,id);if(o==null)throw new EntityNotFoundException("Organization not found: "+id);return o;}
  private Person person(Long id){Person p=em.find(Person.class,id);if(p==null)throw new EntityNotFoundException("Person not found: "+id);if(!Boolean.TRUE.equals(p.active))throw new IllegalArgumentException("Acquisition origin person must be active.");return p;}
+ private Person personRecord(Long id){Person p=em.find(Person.class,id);if(p==null)throw new EntityNotFoundException("Person not found: "+id);return p;}
  private Purchase find(Long id){return purchases.findById(id).orElseThrow(()->new EntityNotFoundException("Purchase not found: "+id));}
  private void assertMutableBeforeReceiving(Purchase p){if(p.status==PurchaseStatus.CANCELLED)throw new IllegalStateException("Cancelled acquisition cannot be changed.");if(p.items.stream().anyMatch(i->nz(i.receivedQuantity).signum()>0))throw new IllegalStateException("Acquisition cannot change contracting or authorization after receiving has started.");}
  private BigDecimal nz(BigDecimal v){return v==null?BigDecimal.ZERO:v;}
