@@ -24,13 +24,38 @@ public class CoreService {
     private final List<UnitScopeGuard> unitScopeGuards;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final CanonicalMasterDataMirrorService masterDataMirror;
     private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder(12);
 
-    public CoreService(EntityManager em, List<UnitScopeGuard> unitScopeGuards, AccessPolicy access, AuditService audit) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public CoreService(
+            EntityManager em,
+            List<UnitScopeGuard> unitScopeGuards,
+            AccessPolicy access,
+            AuditService audit,
+            CanonicalMasterDataMirrorService masterDataMirror) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.unitScopeGuards = unitScopeGuards;
+        this.masterDataMirror = masterDataMirror;
+    }
+
+    /**
+     * Transitional constructor kept for focused unit tests while the canonical
+     * persistence mirror becomes mandatory in the Spring runtime.
+     */
+    @Deprecated
+    CoreService(
+            EntityManager em,
+            List<UnitScopeGuard> unitScopeGuards,
+            AccessPolicy access,
+            AuditService audit) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.unitScopeGuards = unitScopeGuards;
+        this.masterDataMirror = null;
     }
 
     public CorePageResult list(
@@ -357,6 +382,9 @@ public class CoreService {
         validate(entity);
         if (id == null) em.persist(entity);
         em.flush();
+        if (masterDataMirror != null) {
+            masterDataMirror.mirror(entity);
+        }
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
