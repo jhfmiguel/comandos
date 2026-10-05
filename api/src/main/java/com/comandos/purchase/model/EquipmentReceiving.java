@@ -9,6 +9,7 @@ public class EquipmentReceiving extends CoreEntity {
  @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="purchase_id") public Purchase acquisition;
  @Column(name="external_source_id") public Long externalSourceId;
  @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="receiving_organization_id") public Organization receivingOrganization;
+ @Column(name="receiving_organization_canonical_id",length=128) public String receivingOrganizationCanonicalId;
  @Column(name="receiving_unit",length=255) public String receivingUnit;
  @Column(name="receiving_location",length=500) public String receivingLocation;
  @Column(name="delivery_document_number",length=160) public String deliveryDocumentNumber;
