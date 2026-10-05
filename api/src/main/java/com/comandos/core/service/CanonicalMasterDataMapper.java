@@ -3,6 +3,9 @@ package com.comandos.core.service;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
+import com.comandos.core.model.PersonAddress;
+import com.comandos.core.model.PersonEmail;
+import com.comandos.core.model.PersonPhone;
 import com.fariamiguel.enterprise.common.BusinessId;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.tenancy.api.CompanyId;
@@ -10,6 +13,7 @@ import com.fariamiguel.tenancy.api.OrganizationalUnitId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitType;
 import com.fariamiguel.tenancy.api.TenantId;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +33,15 @@ public final class CanonicalMasterDataMapper {
     public static com.fariamiguel.enterprise.people.Person person(
             Person source,
             TenantId tenantId) {
+        return person(source, tenantId, List.of(), List.of(), List.of());
+    }
+
+    public static com.fariamiguel.enterprise.people.Person person(
+            Person source,
+            TenantId tenantId,
+            List<PersonAddress> addresses,
+            List<PersonPhone> phones,
+            List<PersonEmail> emails) {
 
         requirePersisted(source == null ? null : source.id, "person");
         if (tenantId == null) throw new IllegalArgumentException("tenantId is required");
@@ -37,8 +50,24 @@ public final class CanonicalMasterDataMapper {
         put(attributes, "legacyPersonType", source.personType);
         put(attributes, "legacyAddress", source.address);
 
-        Set<String> emails = nonBlankSet(source.email);
-        Set<String> phones = nonBlankSet(source.phone);
+        List<com.fariamiguel.enterprise.common.Address> canonicalAddresses =
+            safe(addresses).stream()
+                .filter(address -> !address.archived)
+                .map(address -> CanonicalContactMapper.address(address, tenantId).address())
+                .toList();
+
+        Set<String> canonicalEmails =
+            safe(emails).stream()
+                .map(email -> CanonicalContactMapper.email(email, tenantId).email())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        Set<String> canonicalPhones =
+            safe(phones).stream()
+                .map(phone -> CanonicalContactMapper.phone(phone, tenantId).number())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        if (canonicalEmails.isEmpty()) canonicalEmails = nonBlankSet(source.email);
+        if (canonicalPhones.isEmpty()) canonicalPhones = nonBlankSet(source.phone);
 
         return new com.fariamiguel.enterprise.people.Person(
             BusinessId.of("comandos:person:" + source.id),
@@ -46,9 +75,9 @@ public final class CanonicalMasterDataMapper {
             source.fullName,
             source.taxId,
             source.birthDate,
-            java.util.List.of(),
-            emails,
-            phones,
+            canonicalAddresses,
+            canonicalEmails,
+            canonicalPhones,
             lifecycle(source.active),
             attributes
         );
@@ -148,6 +177,10 @@ public final class CanonicalMasterDataMapper {
         } catch (IllegalArgumentException ignored) {
             return OrganizationalUnitType.OTHER;
         }
+    }
+
+    private static <T> List<T> safe(List<T> value) {
+        return value == null ? List.of() : value;
     }
 
     private static Set<String> nonBlankSet(String value) {
