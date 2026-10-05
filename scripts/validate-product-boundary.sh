@@ -79,6 +79,7 @@ forbidden_local_contracts=(
   "api/src/main/java/com/comandos/audit/service/FariaMiguelAuditSinkAdapter.java"
   "api/src/main/java/com/comandos/workflow/api/WorkflowEngine.java"
   "api/src/main/java/com/comandos/workflow/api/WorkflowDefinition.java"
+  "api/src/main/java/com/comandos/workflow/dto/WorkflowContract.java"
 )
 for contract in "${forbidden_local_contracts[@]}"; do
   [[ ! -e "$ROOT_DIR/$contract" ]] || fail "generic contract '$contract' must be consumed from Faria Miguel"
@@ -111,5 +112,6 @@ printf 'Canonical security AccessDeniedException is consumed from Faria Miguel; 
 printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy directly; redundant local authorization adapters are forbidden.\n'
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
+printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
