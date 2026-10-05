@@ -28,7 +28,30 @@ public class InventoryService {
     private final InventoryRules rules;
     private final AccessPolicy access;
     private final AuditService audit;
-    public InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) { this.em = em; this.rules = rules; this.access = access; this.audit = audit; }
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InventoryService(
+            EntityManager em,
+            InventoryRules rules,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em;
+        this.rules = rules;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    /**
+     * Transitional constructor kept for focused unit tests that do not exercise
+     * canonical product-reference shadowing.
+     */
+    @Deprecated
+    InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) {
+        this(em, rules, access, audit, null);
+    }
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
 
@@ -425,6 +448,14 @@ public class InventoryService {
         access.requireEntity("inventory/" + resource, action, entity);
         rules.validate(entity, previous);
         if (validateOnly) return Map.of();
+
+        // Product entities keep their existing JPA relations during cutover, but
+        // direct master-data owners (currently StockLocation) receive stable
+        // canonical identifiers before persistence.
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(entity);
+        }
+
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
             // share this check under the catalog lock, before stock or audit writes.
