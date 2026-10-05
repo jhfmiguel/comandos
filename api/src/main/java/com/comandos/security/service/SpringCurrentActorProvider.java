@@ -1,15 +1,21 @@
 package com.comandos.security.service;
 
-import com.comandos.security.api.CurrentActor;
-import com.comandos.security.api.CurrentActorProvider;
+import com.fariamiguel.security.api.CurrentActor;
+import com.fariamiguel.security.api.CurrentActorProvider;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+/**
+ * COMANDOS adapter that exposes its authenticated account through the canonical
+ * Faria Miguel security contract.
+ */
 @Component
 public class SpringCurrentActorProvider implements CurrentActorProvider {
 
     @Override
-    public CurrentActor current() {
+    public CurrentActor currentActor() {
         var authentication =
             SecurityContextHolder.getContext().getAuthentication();
 
@@ -21,9 +27,22 @@ public class SpringCurrentActorProvider implements CurrentActorProvider {
             return CurrentActor.anonymous();
         }
 
+        Set<String> authorities = principal.getAuthorities().stream()
+            .map(granted -> granted.getAuthority())
+            .collect(Collectors.toUnmodifiableSet());
+
+        Set<String> roles = authorities.stream()
+            .filter(value -> value.startsWith("ROLE_"))
+            .map(value -> value.substring(5))
+            .collect(Collectors.toUnmodifiableSet());
+
         return new CurrentActor(
-            principal.accountId,
+            String.valueOf(principal.accountId),
             principal.getUsername(),
+            roles,
+            authorities,
+            Set.of(),
+            null,
             true
         );
     }
