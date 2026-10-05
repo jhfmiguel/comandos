@@ -39,6 +39,18 @@ public class ProductCanonicalScopeResolver {
             ));
     }
 
+    public String person(Long legacyId) {
+        if (legacyId == null) {
+            throw new IllegalArgumentException("Person id is required.");
+        }
+        return references.resolveCanonicalId(
+                MasterDataReferenceService.PERSON,
+                legacyId)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical person reference is missing for legacy id " + legacyId
+            ));
+    }
+
     public String unit(Long legacyId) {
         if (legacyId == null) return null;
         return references.resolveCanonicalId(
