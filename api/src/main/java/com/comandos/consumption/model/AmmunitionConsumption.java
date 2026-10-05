@@ -7,8 +7,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_ammunition_consumption")
 public class AmmunitionConsumption extends CoreEntity {
-    @ManyToOne(optional = false) @JoinColumn(name = "organization_id", nullable = false) public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id") public OrganizationalUnit unit;
+    @Column(name = "organization_id", nullable = false) public Long organizationLegacyId;
+    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false) public Organization organization;
+    @Column(name = "unit_id") public Long unitLegacyId;
+    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false) public OrganizationalUnit unit;
     @ManyToOne(optional = false) @JoinColumn(name = "responsible_id", nullable = false) public Person responsible;
     @ManyToOne(optional = false) @JoinColumn(name = "authorizer_id", nullable = false) public Person authorizer;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
