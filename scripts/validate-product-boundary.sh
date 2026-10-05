@@ -75,6 +75,7 @@ forbidden_local_contracts=(
   "api/src/main/java/com/comandos/security/api/AccessDeniedException.java"
   "api/src/main/java/com/comandos/security/api/AuthorizationService.java"
   "api/src/main/java/com/comandos/security/service/AccessPolicyAuthorizationService.java"
+  "api/src/main/java/com/comandos/security/service/FariaMiguelResourceAccessPolicyAdapter.java"
 )
 for contract in "${forbidden_local_contracts[@]}"; do
   [[ ! -e "$ROOT_DIR/$contract" ]] || fail "generic contract '$contract' must be consumed from Faria Miguel"
@@ -104,6 +105,6 @@ printf 'Completed cutovers are guarded: id generation, platform clock/page, audi
 printf 'Canonical Platform Core runtime implementations are wired from Faria Miguel; product-local clock/UUID implementations are forbidden.\n'
 printf 'Canonical security CurrentActor contracts are consumed from Faria Miguel; product-local copies are forbidden.\n'
 printf 'Canonical security AccessDeniedException is consumed from Faria Miguel; product-local copies are forbidden.\n'
-printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy; redundant local AuthorizationService adapters are forbidden.\n'
+printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy directly; redundant local authorization adapters are forbidden.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
