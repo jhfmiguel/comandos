@@ -178,6 +178,24 @@ grep -q 'sensitive-operation/security workflow overlay' \
 grep -q '"workflow-adapters-reclassified"' "$MANIFEST" \
   || fail "workflow adapter reclassification is not declared"
 
+[[ ! -e "$ROOT_DIR/api/src/main/java/com/comandos/security/api" ]] \
+  || fail "local COMANDOS security API package is forbidden; use Faria Miguel security contracts"
+
+grep -q 'implements PlatformPrincipal' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/security/service/AccountPrincipal.java" \
+  || fail "local account principal must implement canonical Faria Miguel PlatformPrincipal"
+
+grep -q 'implements CurrentActorProvider' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/security/service/SpringCurrentActorProvider.java" \
+  || fail "COMANDOS current actor provider must implement canonical CurrentActorProvider"
+
+grep -q 'implements ResourceAccessPolicy' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/security/service/AccessPolicy.java" \
+  || fail "COMANDOS access policy must implement canonical ResourceAccessPolicy"
+
+grep -q '"security-adapters-reclassified"' "$MANIFEST" \
+  || fail "security adapter reclassification is not declared"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
@@ -189,7 +207,7 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents security identity; do
+for capability in core audit documents identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -199,6 +217,7 @@ printf 'Completed cutovers are guarded: id generation, platform clock/page, audi
 printf 'Canonical Platform Core runtime implementations are wired from Faria Miguel; product-local clock/UUID implementations are forbidden.\n'
 printf 'Canonical security CurrentActor contracts are consumed from Faria Miguel; product-local copies are forbidden.\n'
 printf 'Canonical security AccessDeniedException is consumed from Faria Miguel; product-local copies are forbidden.\n'
+printf 'Local security code is restricted to COMANDOS authentication/session and product-specific scope overlays.\n'
 printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy directly; redundant local authorization adapters are forbidden.\n'
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
