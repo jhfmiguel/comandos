@@ -13,6 +13,11 @@ import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.reservation.model.InventoryReservation;
 import com.comandos.reconciliation.model.InventoryCount;
+import com.comandos.consumption.model.AmmunitionConsumption;
+import com.comandos.consumption.model.ConsumableUsage;
+import com.comandos.purchase.model.PurchasePlanning;
+import com.comandos.lifecycle.model.PeriodicInspection;
+import com.comandos.lifecycle.model.ExceptionOccurrence;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -112,6 +117,62 @@ public class ProductMasterDataReferenceSynchronizer {
                 count.organizationCanonicalId = ids.organization();
                 count.unitCanonicalId = ids.unit();
             }, "inventory count");
+            return true;
+        }
+        if (entity instanceof AmmunitionConsumption consumption) {
+            synchronizeScope(consumption.organization, consumption.unit, ids -> {
+                consumption.organizationCanonicalId = ids.organization();
+                consumption.unitCanonicalId = ids.unit();
+            }, "ammunition consumption");
+            consumption.responsibleCanonicalId = require(
+                MasterDataReferenceService.PERSON,
+                consumption.responsible == null ? null : consumption.responsible.id,
+                "ammunition consumption responsible"
+            );
+            consumption.authorizerCanonicalId = require(
+                MasterDataReferenceService.PERSON,
+                consumption.authorizer == null ? null : consumption.authorizer.id,
+                "ammunition consumption authorizer"
+            );
+            return true;
+        }
+        if (entity instanceof ConsumableUsage usage) {
+            synchronizeScope(usage.organization, usage.unit, ids -> {
+                usage.organizationCanonicalId = ids.organization();
+                usage.unitCanonicalId = ids.unit();
+            }, "consumable usage");
+            usage.responsibleCanonicalId = require(
+                MasterDataReferenceService.PERSON,
+                usage.responsible == null ? null : usage.responsible.id,
+                "consumable usage responsible"
+            );
+            usage.authorizerCanonicalId = require(
+                MasterDataReferenceService.PERSON,
+                usage.authorizer == null ? null : usage.authorizer.id,
+                "consumable usage authorizer"
+            );
+            return true;
+        }
+        if (entity instanceof PurchasePlanning planning) {
+            planning.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                planning.organization == null ? null : planning.organization.id,
+                "purchase planning organization"
+            );
+            return true;
+        }
+        if (entity instanceof PeriodicInspection inspection) {
+            synchronizeScope(inspection.organization, inspection.unit, ids -> {
+                inspection.organizationCanonicalId = ids.organization();
+                inspection.unitCanonicalId = ids.unit();
+            }, "periodic inspection");
+            return true;
+        }
+        if (entity instanceof ExceptionOccurrence occurrence) {
+            synchronizeScope(occurrence.organization, occurrence.unit, ids -> {
+                occurrence.organizationCanonicalId = ids.organization();
+                occurrence.unitCanonicalId = ids.unit();
+            }, "exception occurrence");
             return true;
         }
         return false;
