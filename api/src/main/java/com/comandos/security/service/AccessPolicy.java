@@ -3,17 +3,14 @@ package com.comandos.security.service;
 import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
 import com.fariamiguel.security.api.AccessDeniedException;
-import com.fariamiguel.security.api.AuthorizationScope;
 import com.fariamiguel.security.api.ResourceAccessPolicy;
 import com.fariamiguel.security.api.ScopeGrant;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
