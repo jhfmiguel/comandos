@@ -133,8 +133,12 @@ public class EquipmentReceivingService {
                 throw new IllegalArgumentException("Organization not found: " + request.receivingOrganizationId());
             }
             receiving.receivingOrganizationLegacyId = organization.id;
-            receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organization.id);
             receiving.receivingOrganizationName = organization.name;
+            if (canonicalScope != null) {
+                receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organization.id);
+            } else if (masterDataReferences != null) {
+                masterDataReferences.synchronizeForBackfill(receiving);
+            }
         }
 
         receiving.receivingUnit = clean(request.receivingUnit());
@@ -381,13 +385,24 @@ public class EquipmentReceivingService {
                 })
                 .toList();
 
+        String receivingOrganizationName = receiving.receivingOrganizationName;
+        if (receivingOrganizationName == null && receiving.receivingOrganizationLegacyId != null) {
+            Organization legacyOrganization = em.find(
+                Organization.class,
+                receiving.receivingOrganizationLegacyId
+            );
+            receivingOrganizationName = legacyOrganization == null
+                ? null
+                : legacyOrganization.name;
+        }
+
         return new EquipmentReceivingContract.View(
             receiving.id,
             receiving.sourceType,
             receiving.acquisition == null ? null : receiving.acquisition.id,
             receiving.acquisition == null ? null : receiving.acquisition.purchaseNumber,
             receiving.receivingOrganizationLegacyId,
-            receiving.receivingOrganizationName,
+            receivingOrganizationName,
             receiving.receivingUnit,
             receiving.receivingLocation,
             receiving.deliveryDocumentNumber,
