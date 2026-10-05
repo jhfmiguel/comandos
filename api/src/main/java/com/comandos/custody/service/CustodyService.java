@@ -261,10 +261,10 @@ public class CustodyService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from Custody c where "
-            + (canonical ? "c.organizationCanonicalId" : "c.organization.id")
+            + (canonical ? "c.organizationCanonicalId" : "c.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "c.unitCanonicalId" : "c.unit.id")
+                + (canonical ? "c.unitCanonicalId" : "c.unitLegacyId")
                 + " = :unit");
         var query = em.createQuery("select c" + from + " order by c.id desc", Custody.class);
         var count = em.createQuery("select count(c)" + from, Long.class);
@@ -313,12 +313,12 @@ public class CustodyService {
             .setParameter("custody", custody.id).getResultList().stream().map(r -> new ReturnView(r.id, text(r.returnedAt),
                 r.returnedById, r.returnedByLogin, em.createQuery("select i.custodyItem.id from CustodyReturnItem i where i.custodyReturn.id = :return order by i.id", Long.class)
                     .setParameter("return", r.id).getResultList())).toList();
-        return new CustodyView(custody.id, custody.organization.id, custody.organizationName,
-            custody.unit == null ? null : custody.unit.id, custody.unitName,
-            custody.recipient == null ? null : custody.recipient.id,
-            custody.recipientUnit == null ? null : custody.recipientUnit.id,
-            custody.recipientUnit == null ? "PERSON" : "UNIT", custody.recipientName,
-            custody.authorizer.id, custody.authorizerName, custody.purpose, custody.status, text(custody.deliveredAt),
+        return new CustodyView(custody.id, custody.organizationLegacyId, custody.organizationName,
+            custody.unitLegacyId, custody.unitName,
+            custody.recipientLegacyId,
+            custody.recipientUnitLegacyId,
+            custody.recipientUnitLegacyId == null ? "PERSON" : "UNIT", custody.recipientName,
+            custody.authorizerLegacyId, custody.authorizerName, custody.purpose, custody.status, text(custody.deliveredAt),
             text(custody.dueAt), text(custody.completedAt), custody.issuedById, custody.issuedByLogin, items, returns);
     }
 
