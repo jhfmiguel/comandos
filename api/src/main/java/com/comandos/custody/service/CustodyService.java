@@ -322,9 +322,16 @@ public class CustodyService {
     }
 
     private void validateAsset(AssetItem asset, long organizationId, Long unitId, boolean equipmentSetIssue) {
-        access.requireScope("custodies", "CREATE", asset.location.organization.id, asset.location.unit == null ? null : asset.location.unit.id);
-        if (!asset.location.organization.id.equals(organizationId) || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unit.id)))
+        access.requireScope("custodies", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!asset.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Every asset must belong to the selected organization and unit.");
+            }
+        } else if (!asset.location.organization.id.equals(organizationId)
+                || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unit.id))) {
             bad("Every asset must belong to the selected organization and unit.");
+        }
         if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
         if (asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())) bad("Expired assets cannot be issued in custody.");
         if (!equipmentSetIssue && countActiveSets(asset.id) > 0)
@@ -339,11 +346,16 @@ public class CustodyService {
     }
 
     private void validateBalance(StockBalance balance, BigDecimal quantity, long organizationId, Long unitId) {
-        access.requireScope("custodies", "CREATE", balance.location.organization.id,
-            balance.location.unit == null ? null : balance.location.unit.id);
-        if (!balance.location.organization.id.equals(organizationId) || unitId != null
-                && (balance.location.unit == null || !unitId.equals(balance.location.unit.id)))
+        access.requireScope("custodies", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!balance.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Every stock balance must belong to the selected organization and unit.");
+            }
+        } else if (!balance.location.organization.id.equals(organizationId) || unitId != null
+                && (balance.location.unit == null || !unitId.equals(balance.location.unit.id))) {
             bad("Every stock balance must belong to the selected organization and unit.");
+        }
         if (balance.lot.validUntil != null && balance.lot.validUntil.isBefore(LocalDate.now()))
             bad("Expired stock cannot be issued in custody.");
         if (balance.available.compareTo(quantity) < 0) conflict("The equipment set quantity is no longer available.");
