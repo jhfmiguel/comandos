@@ -146,10 +146,11 @@
       "entity": "InventoryReservation",
       "path": "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
       "fields": [
-        "organization",
-        "unit"
+        "organizationLegacyId",
+        "unitLegacyId"
       ],
-      "state": "canonical-id-primary"
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
     },
     {
       "entity": "InventoryCount",
