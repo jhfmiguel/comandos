@@ -1,12 +1,8 @@
 package com.comandos.disposal.model;
 
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -14,8 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_disposal_process", uniqueConstraints = @UniqueConstraint(columnNames = {"organization_id", "process_number"}))
 public class DisposalProcess extends CoreEntity {
-    @ManyToOne(optional = false) @JoinColumn(name = "organization_id", nullable = false) public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id") public OrganizationalUnit unit;
+    @Column(name = "organization_id", nullable = false) public Long organizationLegacyId;
+    @Column(name = "unit_id") public Long unitLegacyId;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
     @Column(nullable = false) public String organizationName;
