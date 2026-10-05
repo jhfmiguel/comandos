@@ -4,6 +4,11 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
+import com.comandos.core.model.PersonAddress;
+import com.comandos.core.model.PersonCredential;
+import com.comandos.core.model.PersonEmail;
+import com.comandos.core.model.PersonPhone;
+import com.comandos.core.model.PersonQualification;
 import com.comandos.security.service.AccessPolicy;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.tenancy.api.CompanyId;
@@ -36,7 +41,12 @@ public class CanonicalCoreReadService {
     private static final Set<String> SUPPORTED = Set.of(
         "people",
         "organizations",
-        "units"
+        "units",
+        "person-addresses",
+        "person-phones",
+        "person-emails",
+        "credentials",
+        "qualifications"
     );
 
     private final EntityManager entityManager;
@@ -207,6 +217,11 @@ public class CanonicalCoreReadService {
             case "people" -> personView((Person) entity);
             case "organizations" -> organizationView((Organization) entity);
             case "units" -> unitView((OrganizationalUnit) entity);
+            case "person-addresses" -> addressView((PersonAddress) entity);
+            case "person-phones" -> phoneView((PersonPhone) entity);
+            case "person-emails" -> emailView((PersonEmail) entity);
+            case "credentials" -> credentialView((PersonCredential) entity);
+            case "qualifications" -> qualificationView((PersonQualification) entity);
             default -> throw new IllegalArgumentException(
                 "Unsupported canonical Core read resource: " + resource
             );
@@ -327,6 +342,120 @@ public class CanonicalCoreReadService {
 
         result.put("referenceLabels", labels);
         return result;
+    }
+
+
+    private Map<String, Object> addressView(PersonAddress source) {
+        var canonical = CanonicalContactMapper.address(source, TENANT);
+        Map<String, Object> result = metadata(
+            source,
+            canonical.address().line1()
+        );
+
+        result.put("personId", source.person.id);
+        result.put("contactTypeId", source.contactType == null ? null : source.contactType.id);
+        result.put("foreignAddress", source.foreignAddress);
+        result.put("country", source.country);
+        result.put("postalCode", canonical.address().postalCode());
+        result.put("street", source.street);
+        result.put("number", source.number);
+        result.put("complement", canonical.address().line2());
+        result.put("district", canonical.address().district());
+        result.put("city", canonical.address().city());
+        result.put("state", canonical.address().state());
+        result.put("primaryAddress", canonical.primary());
+
+        result.put(
+            "referenceLabels",
+            contactLabels(source.person.id, source.person.fullName, source.contactType)
+        );
+        return result;
+    }
+
+    private Map<String, Object> phoneView(PersonPhone source) {
+        var canonical = CanonicalContactMapper.phone(source, TENANT);
+        Map<String, Object> result = metadata(source, canonical.number());
+
+        result.put("personId", source.person.id);
+        result.put("contactTypeId", source.contactType == null ? null : source.contactType.id);
+        result.put("countryCode", canonical.countryCode());
+        result.put("number", canonical.number());
+        result.put("whatsapp", canonical.whatsapp());
+        result.put("primaryPhone", canonical.primary());
+
+        result.put(
+            "referenceLabels",
+            contactLabels(source.person.id, source.person.fullName, source.contactType)
+        );
+        return result;
+    }
+
+    private Map<String, Object> emailView(PersonEmail source) {
+        var canonical = CanonicalContactMapper.email(source, TENANT);
+        Map<String, Object> result = metadata(source, canonical.email());
+
+        result.put("personId", source.person.id);
+        result.put("contactTypeId", source.contactType == null ? null : source.contactType.id);
+        result.put("email", canonical.email());
+        result.put("primaryEmail", canonical.primary());
+
+        result.put(
+            "referenceLabels",
+            contactLabels(source.person.id, source.person.fullName, source.contactType)
+        );
+        return result;
+    }
+
+    private Map<String, Object> credentialView(PersonCredential source) {
+        var canonical = CanonicalPartyDocumentMapper.credential(source, TENANT);
+        Map<String, Object> result = metadata(source, canonical.number());
+
+        result.put("personId", source.person.id);
+        result.put("type", source.type);
+        result.put("number", canonical.number());
+        result.put("validUntil", canonical.validUntil());
+
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put(
+            "personId",
+            source.person.fullName + " (#" + source.person.id + ")"
+        );
+        result.put("referenceLabels", labels);
+        return result;
+    }
+
+    private Map<String, Object> qualificationView(PersonQualification source) {
+        var canonical = CanonicalProfessionalQualificationMapper.qualification(source, TENANT);
+        Map<String, Object> result = metadata(source, canonical.category());
+
+        result.put("personId", source.person.id);
+        result.put("category", canonical.category());
+        result.put("validUntil", canonical.validUntil());
+        result.put("status", source.status);
+
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put(
+            "personId",
+            source.person.fullName + " (#" + source.person.id + ")"
+        );
+        result.put("referenceLabels", labels);
+        return result;
+    }
+
+    private static Map<String, String> contactLabels(
+            Long personId,
+            String personName,
+            com.comandos.core.model.PersonContactType contactType) {
+
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("personId", personName + " (#" + personId + ")");
+        if (contactType != null) {
+            labels.put(
+                "contactTypeId",
+                contactType.name + " (#" + contactType.id + ")"
+            );
+        }
+        return labels;
     }
 
     private static Map<String, Object> metadata(CoreEntity source, String labelValue) {
