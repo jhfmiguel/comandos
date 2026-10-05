@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 public class DisposalProcess extends CoreEntity {
     @Column(name = "organization_id", nullable = false) public Long organizationLegacyId;
     @Column(name = "unit_id") public Long unitLegacyId;
+    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false) public Organization organization;
+    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false) public OrganizationalUnit unit;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
     @Column(nullable = false) public String organizationName;
