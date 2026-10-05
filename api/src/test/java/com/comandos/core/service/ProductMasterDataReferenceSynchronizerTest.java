@@ -144,11 +144,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 30L))
             .thenReturn(Optional.of("receiving-org"));
 
-        Organization organization = new Organization();
-        organization.id = 30L;
-
         EquipmentReceiving receiving = new EquipmentReceiving();
-        receiving.receivingOrganization = organization;
+        receiving.receivingOrganizationLegacyId = 30L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, true);
