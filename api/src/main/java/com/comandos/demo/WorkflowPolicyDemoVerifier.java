@@ -86,13 +86,10 @@ public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
             if (blank(event.actorLogin)) fail("event without actor for workflow " + workflow.id);
             if (event.occurredAt.isBefore(previousTimestamp)) fail("non-monotonic event timestamp for workflow " + workflow.id);
 
-            if (WorkflowPolicy.CANCELLED.equals(event.toStatus)) {
-                if (policy.terminal(event.fromStatus))
-                    fail("invalid cancellation origin for workflow " + workflow.id);
-            } else {
-                int from = WorkflowPolicy.MAIN_PATH.indexOf(event.fromStatus);
-                int to = WorkflowPolicy.MAIN_PATH.indexOf(event.toStatus);
-                if (from < 0 || to != from + 1) fail("invalid workflow transition for " + workflow.id);
+            try {
+                policy.requireTransition(event.fromStatus, event.toStatus);
+            } catch (RuntimeException exception) {
+                fail("invalid workflow transition for " + workflow.id + ": " + exception.getMessage());
             }
             previousStatus = event.toStatus;
             previousTimestamp = event.occurredAt;
