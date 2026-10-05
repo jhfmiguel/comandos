@@ -108,10 +108,6 @@ public class DisposalService {
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
         process.requestId = request.requestId(); process.requestFingerprint = fingerprint;
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) masterDataReferences.synchronizeForBackfill(process);
-            else masterDataReferences.synchronize(process);
-        }
         em.persist(process);
 
         if (destructionRequested(request)) {
