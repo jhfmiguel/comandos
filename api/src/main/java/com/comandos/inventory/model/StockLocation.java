@@ -28,6 +28,15 @@ public class StockLocation extends CoreEntity {
     @Column(name = "unit_canonical_id", length = 128)
     public String unitCanonicalId;
 
+    @PrePersist
+    @PreUpdate
+    void synchronizeLegacyScopeIds() {
+        if (organization != null) {
+            organizationLegacyId = organization.id;
+        }
+        unitLegacyId = unit == null ? null : unit.id;
+    }
+
     public boolean matchesCanonicalScope(String organizationId, String unitId) {
         if (!java.util.Objects.equals(organizationCanonicalId, organizationId)) {
             return false;
