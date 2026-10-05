@@ -433,4 +433,56 @@ class CoreApiTests {
         assertTrue(statuses.contains(200), statuses.toString());
         assertTrue(statuses.contains(400), statuses.toString());
     }
+
+    @Test
+    void canonicalMasterDataReadsPreserveLegacyHttpShape() throws Exception {
+        var person = person();
+        var personRead = request("GET", "people/" + person.get("id").asLong(), null);
+        assertEquals(200, personRead.status(), personRead.raw());
+        assertEquals(person.get("id").asLong(), personRead.body().get("id").asLong());
+        assertEquals(person.get("version").asLong(), personRead.body().get("version").asLong());
+        assertTrue(personRead.body().has("label"));
+        assertTrue(personRead.body().has("referenceLabels"));
+
+        var organization = organization();
+        var organizationRead = request(
+            "GET",
+            "organizations/" + organization.get("id").asLong(),
+            null
+        );
+        assertEquals(200, organizationRead.status(), organizationRead.raw());
+        assertEquals(
+            organization.get("id").asLong(),
+            organizationRead.body().get("id").asLong()
+        );
+        assertEquals(
+            organization.get("version").asLong(),
+            organizationRead.body().get("version").asLong()
+        );
+        assertTrue(organizationRead.body().has("referenceLabels"));
+
+        var unit = create("units", unitData(organization.get("id").asLong()));
+        var unitRead = request("GET", "units/" + unit.get("id").asLong(), null);
+        assertEquals(200, unitRead.status(), unitRead.raw());
+        assertEquals(unit.get("id").asLong(), unitRead.body().get("id").asLong());
+        assertEquals(unit.get("version").asLong(), unitRead.body().get("version").asLong());
+        assertEquals(
+            organization.get("id").asLong(),
+            unitRead.body().get("organizationId").asLong()
+        );
+        assertTrue(unitRead.body().has("referenceLabels"));
+
+        var peoplePage = request("GET", "people?search=" + personRead.body().get("fullName").asText(), null);
+        assertEquals(200, peoplePage.status(), peoplePage.raw());
+        assertTrue(peoplePage.body().get("totalElements").asLong() >= 1);
+
+        var unitsPage = request(
+            "GET",
+            "units?organizationId=" + organization.get("id").asLong(),
+            null
+        );
+        assertEquals(200, unitsPage.status(), unitsPage.raw());
+        assertTrue(unitsPage.body().get("totalElements").asLong() >= 1);
+    }
+
 }
