@@ -116,7 +116,7 @@
         "responsible",
         "authorizer"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "ConsumableUsage",
@@ -127,7 +127,7 @@
         "responsible",
         "authorizer"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "DisposalProcess",
@@ -171,7 +171,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "ExceptionOccurrence",
@@ -180,7 +180,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
