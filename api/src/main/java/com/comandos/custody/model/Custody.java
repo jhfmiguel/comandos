@@ -17,16 +17,6 @@ public class Custody extends CoreEntity {
     public Long recipientUnitLegacyId;
     @Column(name = "authorizer_id", nullable = false)
     public Long authorizerLegacyId;
-    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false)
-    public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit unit;
-    @ManyToOne @JoinColumn(name = "recipient_id", insertable = false, updatable = false)
-    public Person recipient;
-    @ManyToOne @JoinColumn(name = "recipient_unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit recipientUnit;
-    @ManyToOne @JoinColumn(name = "authorizer_id", insertable = false, updatable = false)
-    public Person authorizer;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
     @Column(name = "recipient_canonical_id", length = 128) public String recipientCanonicalId;
