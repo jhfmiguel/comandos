@@ -54,7 +54,9 @@
     "canonical-master-data-read-api",
     "canonical-person-detail-read-api",
     "person-registration-orchestration",
-    "integrations-adapters-removed"
+    "integrations-adapters-removed",
+    "local-identity-api-removed",
+    "local-organization-api-removed"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -89,8 +91,7 @@
     "audit",
     "workflow",
     "security",
-    "identity",
-    "organization"
+    "identity"
   ],
   "rules": [
     "COMANDOS owns only product-specific public/private security capabilities.",
@@ -111,7 +112,8 @@
     "Core master-data reads for people, organizations and units must route through CanonicalCoreReadService; CoreService remains write/compatibility only for those resources.",
     "Person detail reads for addresses, phones, emails, credentials and qualifications must route through CanonicalCoreReadService.",
     "Person registration with contacts is owned by PersonRegistrationService; CoreService must not regain this orchestration.",
-    "Generic integrations adapters are no longer permitted in COMANDOS; integration infrastructure is owned by Faria Miguel."
+    "Generic integrations adapters are no longer permitted in COMANDOS; integration infrastructure is owned by Faria Miguel.",
+    "Local identity and organization APIs are removed; only canonical Faria Miguel contracts may be consumed."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
