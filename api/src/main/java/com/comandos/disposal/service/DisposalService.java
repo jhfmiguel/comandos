@@ -101,8 +101,10 @@ public class DisposalService {
 
         DisposalProcess process = new DisposalProcess();
         process.organizationLegacyId = organization.id; process.unitLegacyId = unit == null ? null : unit.id;
-        process.organizationCanonicalId = canonicalScope.organization(organization.id);
-        process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        if (canonicalScope != null) {
+            process.organizationCanonicalId = canonicalScope.organization(organization.id);
+            process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        }
         process.organizationName = organization.name;
         process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
