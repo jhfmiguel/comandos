@@ -33,11 +33,12 @@
       "entity": "Purchase",
       "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
       "fields": [
-        "buyerOrganization",
-        "supplierOrganization",
-        "originPerson"
+        "buyerOrganizationLegacyId",
+        "supplierOrganizationLegacyId",
+        "originPersonLegacyId"
       ],
-      "state": "canonical-id-primary"
+      "state": "retired",
+      "note": "Legacy buyer/supplier Organization and origin Person JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
     },
     {
       "entity": "EquipmentReceiving",
