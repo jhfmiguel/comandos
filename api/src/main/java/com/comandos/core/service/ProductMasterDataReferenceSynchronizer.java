@@ -401,22 +401,17 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeReceiving(EquipmentReceiving receiving) {
-        if (receiving.receivingOrganization == null) {
+        if (receiving.receivingOrganizationLegacyId == null) {
             receiving.receivingOrganizationCanonicalId = null;
             return;
-        }
-        if (receiving.receivingOrganization.id == null) {
-            throw new IllegalStateException(
-                "Receiving organization must be persisted before canonical reference synchronization."
-            );
         }
 
         receiving.receivingOrganizationCanonicalId = references.resolveCanonicalId(
                 MasterDataReferenceService.ORGANIZATION,
-                receiving.receivingOrganization.id)
+                receiving.receivingOrganizationLegacyId)
             .orElseThrow(() -> new IllegalStateException(
                 "Canonical receiving organization reference is missing for legacy id "
-                    + receiving.receivingOrganization.id
+                    + receiving.receivingOrganizationLegacyId
             ));
     }
 
