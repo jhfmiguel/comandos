@@ -98,10 +98,16 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof ApprovalWorkflow workflow) {
-            synchronizeScope(workflow.organization, workflow.unit, ids -> {
-                workflow.organizationCanonicalId = ids.organization();
-                workflow.unitCanonicalId = ids.unit();
-            }, "approval workflow");
+            workflow.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                workflow.organizationLegacyId,
+                "approval workflow organization"
+            );
+            workflow.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                workflow.unitLegacyId,
+                "approval workflow unit"
+            );
             return true;
         }
         if (entity instanceof DisposalProcess disposal) {
