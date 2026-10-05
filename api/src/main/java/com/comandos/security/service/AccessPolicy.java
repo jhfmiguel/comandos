@@ -130,7 +130,7 @@ public class AccessPolicy implements ResourceAccessPolicy {
             case "inventory/item-values" -> new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
             case "sales" -> new Scope("organizationLegacyId", "unitLegacyId");
             case "custodies" -> new Scope("organizationLegacyId", "unitLegacyId");
-            case "ammunition-consumptions" -> new Scope("organization.id", "unit.id");
+            case "ammunition-consumptions" -> new Scope("organizationLegacyId", "unitLegacyId");
             case "donations" -> new Scope("organizationLegacyId", "unitLegacyId");
             case "transfers" -> new Scope("organizationLegacyId", "sourceUnitLegacyId");
             case "disposals" -> new Scope("organizationLegacyId", "unitLegacyId");
