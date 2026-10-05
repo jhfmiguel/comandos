@@ -206,10 +206,10 @@ public class InventorySalesService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from InventorySale s where "
-            + (canonical ? "s.organizationCanonicalId" : "s.organization.id")
+            + (canonical ? "s.organizationCanonicalId" : "s.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "s.unitCanonicalId" : "s.unit.id")
+                + (canonical ? "s.unitCanonicalId" : "s.unitLegacyId")
                 + " = :unit");
         var query = em.createQuery("select s" + from + " order by s.id desc", InventorySale.class);
         var count = em.createQuery("select count(s)" + from, Long.class);
