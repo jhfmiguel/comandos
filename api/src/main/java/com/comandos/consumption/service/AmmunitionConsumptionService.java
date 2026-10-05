@@ -47,10 +47,10 @@ public class AmmunitionConsumptionService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from StockBalance b where "
-            + (canonical ? "b.location.organizationCanonicalId" : "b.location.organization.id")
+            + (canonical ? "b.location.organizationCanonicalId" : "b.location.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "b.location.unitCanonicalId" : "b.location.unit.id")
+                + (canonical ? "b.location.unitCanonicalId" : "b.location.unitLegacyId")
                 + " = :unit")
             + " and b.lot.model.category.family = 'AMMUNITION' and b.lot.model.category.lotControlled = true"
             + " and b.lot.model.category.serialized = false and b.lot.model.category.consumable = true"
@@ -174,8 +174,8 @@ public class AmmunitionConsumptionService {
             if (!b.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every ammunition lot must belong to the selected organization and unit.");
             }
-        } else if (!b.location.organization.id.equals(organizationId)
-                || unitId != null && (b.location.unit == null || !unitId.equals(b.location.unit.id))) {
+        } else if (!b.location.organizationLegacyId.equals(organizationId)
+                || unitId != null && (b.location.unitLegacyId == null || !unitId.equals(b.location.unitLegacyId))) {
             bad("Every ammunition lot must belong to the selected organization and unit.");
         }
         var category = lot.model.category;
