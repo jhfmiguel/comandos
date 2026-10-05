@@ -79,6 +79,7 @@ forbidden_local_contracts=(
   "api/src/main/java/com/comandos/audit/service/FariaMiguelAuditSinkAdapter.java"
   "api/src/main/java/com/comandos/workflow/api/WorkflowEngine.java"
   "api/src/main/java/com/comandos/workflow/api/WorkflowDefinition.java"
+  "api/src/main/java/com/comandos/workflow/api/WorkflowGateway.java"
   "api/src/main/java/com/comandos/workflow/dto/WorkflowContract.java"
 )
 for contract in "${forbidden_local_contracts[@]}"; do
@@ -169,6 +170,14 @@ grep -q '"local-identity-api-removed"' "$MANIFEST" \
 grep -q '"local-organization-api-removed"' "$MANIFEST" \
   || fail "local organization API removal is not declared"
 
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/workflow/api/SensitiveWorkflowGateway.java" \
+  || fail "COMANDOS sensitive workflow overlay must expose SensitiveWorkflowGateway"
+grep -q 'sensitive-operation/security workflow overlay' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/workflow/package-info.java" \
+  || fail "local workflow package must remain explicitly product-specific"
+grep -q '"workflow-adapters-reclassified"' "$MANIFEST" \
+  || fail "workflow adapter reclassification is not declared"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
@@ -180,7 +189,7 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow security identity; do
+for capability in core audit documents security identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -193,6 +202,7 @@ printf 'Canonical security AccessDeniedException is consumed from Faria Miguel; 
 printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy directly; redundant local authorization adapters are forbidden.\n'
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
+printf 'Local workflow code is restricted to the product-specific sensitive-operation overlay.\n'
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
 printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot/professional-qualification contracts while legacy Oracle persistence remains transitional.\n'
 printf 'People, organization and unit reads are routed through CanonicalCoreReadService; generic CoreService master-data reads are no longer the primary HTTP path.\n'
