@@ -60,8 +60,8 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(Purchase.class,
             "e.buyerOrganizationCanonicalId is null or e.originPersonCanonicalId is null or "
-                + "(e.supplierOrganization is not null and e.supplierOrganizationCanonicalId is null) or "
-                + "(e.supplierOrganization is null and e.supplierOrganizationCanonicalId is not null)"),
+                + "(e.supplierOrganizationLegacyId is not null and e.supplierOrganizationCanonicalId is null) or "
+                + "(e.supplierOrganizationLegacyId is null and e.supplierOrganizationCanonicalId is not null)"),
         new Spec(EquipmentReceiving.class,
             "(e.receivingOrganizationLegacyId is not null and e.receivingOrganizationCanonicalId is null) or "
                 + "(e.receivingOrganizationLegacyId is null and e.receivingOrganizationCanonicalId is not null)"),
@@ -69,12 +69,12 @@ public class ProductMasterDataReferenceBackfillService {
             "e.organizationCanonicalId is null or e.sourceUnitCanonicalId is null or e.destinationUnitCanonicalId is null"),
         new Spec(Custody.class,
             "e.organizationCanonicalId is null or e.authorizerCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null) or "
-                + "(e.recipient is not null and e.recipientCanonicalId is null) or "
-                + "(e.recipient is null and e.recipientCanonicalId is not null) or "
-                + "(e.recipientUnit is not null and e.recipientUnitCanonicalId is null) or "
-                + "(e.recipientUnit is null and e.recipientUnitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null) or "
+                + "(e.recipientLegacyId is not null and e.recipientCanonicalId is null) or "
+                + "(e.recipientLegacyId is null and e.recipientCanonicalId is not null) or "
+                + "(e.recipientUnitLegacyId is not null and e.recipientUnitCanonicalId is null) or "
+                + "(e.recipientUnitLegacyId is null and e.recipientUnitCanonicalId is not null)"),
         new Spec(Donation.class,
             "e.organizationCanonicalId is null or e.donorCanonicalId is null or e.doneeCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
