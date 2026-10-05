@@ -279,3 +279,36 @@ alter table erp_inventory_count add organization_canonical_id varchar2(128 char)
 alter table erp_inventory_count add unit_canonical_id varchar2(128 char);
 create index ix_inventory_count_org_canonical on erp_inventory_count (organization_canonical_id);
 create index ix_inventory_count_unit_canonical on erp_inventory_count (unit_canonical_id);
+
+
+-- Canonical master-data shadows for consumption, planning and lifecycle cutover.
+alter table erp_ammunition_consumption add organization_canonical_id varchar2(128 char);
+alter table erp_ammunition_consumption add unit_canonical_id varchar2(128 char);
+alter table erp_ammunition_consumption add responsible_canonical_id varchar2(128 char);
+alter table erp_ammunition_consumption add authorizer_canonical_id varchar2(128 char);
+create index ix_ammunition_consumption_org_canonical on erp_ammunition_consumption (organization_canonical_id);
+create index ix_ammunition_consumption_unit_canonical on erp_ammunition_consumption (unit_canonical_id);
+create index ix_ammunition_consumption_responsible_canonical on erp_ammunition_consumption (responsible_canonical_id);
+create index ix_ammunition_consumption_authorizer_canonical on erp_ammunition_consumption (authorizer_canonical_id);
+
+alter table erp_consumable_usage add organization_canonical_id varchar2(128 char);
+alter table erp_consumable_usage add unit_canonical_id varchar2(128 char);
+alter table erp_consumable_usage add responsible_canonical_id varchar2(128 char);
+alter table erp_consumable_usage add authorizer_canonical_id varchar2(128 char);
+create index ix_consumable_usage_org_canonical on erp_consumable_usage (organization_canonical_id);
+create index ix_consumable_usage_unit_canonical on erp_consumable_usage (unit_canonical_id);
+create index ix_consumable_usage_responsible_canonical on erp_consumable_usage (responsible_canonical_id);
+create index ix_consumable_usage_authorizer_canonical on erp_consumable_usage (authorizer_canonical_id);
+
+alter table erp_purchase_planning add organization_canonical_id varchar2(128 char);
+create index ix_purchase_planning_org_canonical on erp_purchase_planning (organization_canonical_id);
+
+alter table erp_periodic_inspection add organization_canonical_id varchar2(128 char);
+alter table erp_periodic_inspection add unit_canonical_id varchar2(128 char);
+create index ix_periodic_inspection_org_canonical on erp_periodic_inspection (organization_canonical_id);
+create index ix_periodic_inspection_unit_canonical on erp_periodic_inspection (unit_canonical_id);
+
+alter table erp_exception_occurrence add organization_canonical_id varchar2(128 char);
+alter table erp_exception_occurrence add unit_canonical_id varchar2(128 char);
+create index ix_exception_occurrence_org_canonical on erp_exception_occurrence (organization_canonical_id);
+create index ix_exception_occurrence_unit_canonical on erp_exception_occurrence (unit_canonical_id);
