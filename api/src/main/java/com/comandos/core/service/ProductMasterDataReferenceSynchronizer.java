@@ -131,10 +131,16 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof InventoryCount count) {
-            synchronizeScope(count.organization, count.unit, ids -> {
-                count.organizationCanonicalId = ids.organization();
-                count.unitCanonicalId = ids.unit();
-            }, "inventory count");
+            count.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                count.organizationLegacyId,
+                "inventory count organization"
+            );
+            count.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                count.unitLegacyId,
+                "inventory count unit"
+            );
             return true;
         }
         if (entity instanceof AmmunitionConsumption consumption) {
