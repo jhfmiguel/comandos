@@ -2,6 +2,7 @@ package com.comandos.identity.api;
 
 import java.time.LocalDate;
 
+@Deprecated(forRemoval = true)
 public record PersonIdentity(
     long id,
     String personType,
