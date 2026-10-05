@@ -108,10 +108,13 @@ public class InventorySalesService {
         access.requireEntity("core/people", "READ", buyer);
         if (!organization.active || !buyer.active) bad("Organization and buyer must be active.");
         var sale = new InventorySale();
-        sale.organization = organization;
-        sale.unit = unit;
+        sale.organizationLegacyId = organization.id;
+        sale.unitLegacyId = unit == null ? null : unit.id;
+        sale.buyerLegacyId = buyer.id;
+        sale.organizationCanonicalId = canonicalScope.organization(organization.id);
+        sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        sale.buyerCanonicalId = canonicalScope.person(buyer.id);
         sale.unitName = unit == null ? null : unit.name;
-        sale.buyer = buyer;
         sale.organizationName = organization.name;
         sale.buyerName = buyer.fullName;
         sale.paymentMethod = request.paymentMethod();
