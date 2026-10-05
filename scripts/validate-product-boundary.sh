@@ -93,6 +93,8 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDa
   || fail "canonical master-data mapper is required during legacy persistence migration"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java" \
   || fail "canonical master-data directory is required during legacy persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalContactMapper.java" \
+  || fail "canonical person-contact mapper is required during legacy persistence migration"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
@@ -105,6 +107,8 @@ grep -q '"legacy-unit-to-faria-tenancy-unit"' "$MANIFEST" \
   || fail "organizational-unit canonical migration bridge is not declared"
 grep -q '"legacy-identity-to-faria-identity-directory"' "$MANIFEST" \
   || fail "identity canonical migration bridge is not declared"
+grep -q '"legacy-person-contacts-to-faria-enterprise-contacts"' "$MANIFEST" \
+  || fail "person contact canonical migration bridge is not declared"
 
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
@@ -131,6 +135,6 @@ printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceA
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
-printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity contracts while legacy Oracle persistence remains transitional.\n'
+printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact contracts while legacy Oracle persistence remains transitional.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
