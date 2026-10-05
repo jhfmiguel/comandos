@@ -126,11 +126,13 @@ public class CustodyService {
         custody.recipientLegacyId = recipient == null ? null : recipient.id;
         custody.recipientUnitLegacyId = recipientUnit == null ? null : recipientUnit.id;
         custody.authorizerLegacyId = authorizer.id;
-        custody.organizationCanonicalId = canonicalScope.organization(organization.id);
-        custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-        custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id);
-        custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id);
-        custody.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+        if (canonicalScope != null) {
+            custody.organizationCanonicalId = canonicalScope.organization(organization.id);
+            custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id);
+            custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id);
+            custody.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+        }
         custody.organizationName = organization.name; custody.unitName = unit == null ? null : unit.name;
         custody.recipientName = recipient == null ? recipientUnit.name : recipient.fullName; custody.authorizerName = authorizer.fullName;
         custody.purpose = request.purpose().trim(); custody.deliveredAt = deliveredAt; custody.dueAt = dueAt;
