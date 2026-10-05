@@ -49,6 +49,16 @@ public class CanonicalMasterDataDirectory {
 
     public Optional<com.fariamiguel.enterprise.organization.Organization> findOrganization(
             long id,
+            TenantId tenantId) {
+        return findOrganization(
+            id,
+            tenantId,
+            CompanyId.of("comandos:organization:" + id)
+        );
+    }
+
+    public Optional<com.fariamiguel.enterprise.organization.Organization> findOrganization(
+            long id,
             TenantId tenantId,
             CompanyId companyId) {
 
@@ -58,6 +68,24 @@ public class CanonicalMasterDataDirectory {
         return source == null
             ? Optional.empty()
             : Optional.of(CanonicalMasterDataMapper.organization(source, tenantId, companyId));
+    }
+
+    public Optional<com.fariamiguel.tenancy.api.OrganizationalUnit> findUnit(
+            long id,
+            TenantId tenantId) {
+
+        if (id <= 0) return Optional.empty();
+
+        OrganizationalUnit source = entityManager.find(OrganizationalUnit.class, id);
+        if (source == null || source.organization == null || source.organization.id == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(CanonicalMasterDataMapper.unit(
+            source,
+            tenantId,
+            CompanyId.of("comandos:organization:" + source.organization.id)
+        ));
     }
 
     public Optional<com.fariamiguel.tenancy.api.OrganizationalUnit> findUnit(
