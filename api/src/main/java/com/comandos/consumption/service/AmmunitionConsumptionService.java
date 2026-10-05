@@ -168,9 +168,16 @@ public class AmmunitionConsumptionService {
         b.lot.lotNumber, b.location.name, b.lot.model.unitOfMeasure, b.available,
         b.lot.validUntil == null ? null : b.lot.validUntil.toString()); }
     private void validateStock(StockBalance b, StockLot lot, long organizationId, Long unitId, BigDecimal quantity) {
-        access.requireScope("ammunition-consumptions", "CREATE", b.location.organization.id, b.location.unit == null ? null : b.location.unit.id);
-        if (!b.location.organization.id.equals(organizationId) || unitId != null && (b.location.unit == null || !unitId.equals(b.location.unit.id)))
+        access.requireScope("ammunition-consumptions", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!b.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Every ammunition lot must belong to the selected organization and unit.");
+            }
+        } else if (!b.location.organization.id.equals(organizationId)
+                || unitId != null && (b.location.unit == null || !unitId.equals(b.location.unit.id))) {
             bad("Every ammunition lot must belong to the selected organization and unit.");
+        }
         var category = lot.model.category;
         if (!"AMMUNITION".equals(category.family) || !Boolean.TRUE.equals(category.lotControlled)
                 || Boolean.TRUE.equals(category.serialized) || !Boolean.TRUE.equals(category.consumable))
