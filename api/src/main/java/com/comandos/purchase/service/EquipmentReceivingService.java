@@ -1,6 +1,7 @@
 package com.comandos.purchase.service;
 
 import com.comandos.core.model.Organization;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.purchase.dto.EquipmentReceivingContract;
 import com.comandos.purchase.model.*;
@@ -24,7 +25,9 @@ public class EquipmentReceivingService {
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public EquipmentReceivingService(
         EquipmentReceivingRepository receivingRepository,
         EquipmentReceivingItemRepository itemRepository,
@@ -32,7 +35,8 @@ public class EquipmentReceivingService {
         ReceivingIncorporationRepository incorporationRepository,
         PurchaseRepository purchaseRepository,
         PurchaseItemRepository purchaseItemRepository,
-        EntityManager em
+        EntityManager em,
+        ProductMasterDataReferenceSynchronizer masterDataReferences
     ) {
         this.receivingRepository = receivingRepository;
         this.itemRepository = itemRepository;
@@ -41,6 +45,29 @@ public class EquipmentReceivingService {
         this.purchaseRepository = purchaseRepository;
         this.purchaseItemRepository = purchaseItemRepository;
         this.em = em;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    EquipmentReceivingService(
+        EquipmentReceivingRepository receivingRepository,
+        EquipmentReceivingItemRepository itemRepository,
+        ReceivingSerialRepository serialRepository,
+        ReceivingIncorporationRepository incorporationRepository,
+        PurchaseRepository purchaseRepository,
+        PurchaseItemRepository purchaseItemRepository,
+        EntityManager em
+    ) {
+        this(
+            receivingRepository,
+            itemRepository,
+            serialRepository,
+            incorporationRepository,
+            purchaseRepository,
+            purchaseItemRepository,
+            em,
+            null
+        );
     }
 
     public List<EquipmentReceivingContract.View> list(Long acquisitionId) {
@@ -113,6 +140,9 @@ public class EquipmentReceivingService {
         receiving.documentsChecked = Boolean.TRUE.equals(request.documentsChecked());
         receiving.notes = clean(request.notes());
         receiving.status = ReceivingStatus.RECEIVED;
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(receiving);
+        }
         receiving = receivingRepository.save(receiving);
 
         boolean thisDeliveryHasQuantityDivergence = false;
