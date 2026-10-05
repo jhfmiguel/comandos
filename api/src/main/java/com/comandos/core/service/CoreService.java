@@ -752,6 +752,9 @@ public class CoreService {
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
+        if (masterDataMirror != null) {
+            masterDataMirror.delete(entity);
+        }
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 
