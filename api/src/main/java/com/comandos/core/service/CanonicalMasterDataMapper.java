@@ -99,6 +99,11 @@ public final class CanonicalMasterDataMapper {
         if (tenantId == null) throw new IllegalArgumentException("tenantId is required");
         if (companyId == null) throw new IllegalArgumentException("companyId is required");
 
+        requirePersisted(
+            source.organization == null ? null : source.organization.id,
+            "organizational unit organization"
+        );
+
         Map<String, String> attributes = new LinkedHashMap<>();
         put(
             attributes,
