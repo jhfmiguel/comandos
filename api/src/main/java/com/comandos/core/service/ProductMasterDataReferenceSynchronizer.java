@@ -111,10 +111,16 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof DisposalProcess disposal) {
-            synchronizeScope(disposal.organization, disposal.unit, ids -> {
-                disposal.organizationCanonicalId = ids.organization();
-                disposal.unitCanonicalId = ids.unit();
-            }, "disposal process");
+            disposal.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                disposal.organizationLegacyId,
+                "disposal organization"
+            );
+            disposal.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                disposal.unitLegacyId,
+                "disposal unit"
+            );
             return true;
         }
         if (entity instanceof InventoryReservation reservation) {
@@ -161,18 +167,24 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof ConsumableUsage usage) {
-            synchronizeScope(usage.organization, usage.unit, ids -> {
-                usage.organizationCanonicalId = ids.organization();
-                usage.unitCanonicalId = ids.unit();
-            }, "consumable usage");
+            usage.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                usage.organizationLegacyId,
+                "consumable usage organization"
+            );
+            usage.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                usage.unitLegacyId,
+                "consumable usage unit"
+            );
             usage.responsibleCanonicalId = require(
                 MasterDataReferenceService.PERSON,
-                usage.responsible == null ? null : usage.responsible.id,
+                usage.responsibleLegacyId,
                 "consumable usage responsible"
             );
             usage.authorizerCanonicalId = require(
                 MasterDataReferenceService.PERSON,
-                usage.authorizer == null ? null : usage.authorizer.id,
+                usage.authorizerLegacyId,
                 "consumable usage authorizer"
             );
             return true;
@@ -215,50 +227,21 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizePurchase(Purchase purchase) {
-        if (purchase.buyerOrganization == null || purchase.buyerOrganization.id == null) {
-            throw new IllegalStateException(
-                "Purchase requires a persisted buyer organization before canonical reference synchronization."
-            );
-        }
-        if (purchase.originPerson == null || purchase.originPerson.id == null) {
-            throw new IllegalStateException(
-                "Purchase requires a persisted origin person before canonical reference synchronization."
-            );
-        }
-
-        purchase.buyerOrganizationCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                purchase.buyerOrganization.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical buyer organization reference is missing for legacy id "
-                    + purchase.buyerOrganization.id
-            ));
-
-        purchase.originPersonCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.PERSON,
-                purchase.originPerson.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical origin person reference is missing for legacy id "
-                    + purchase.originPerson.id
-            ));
-
-        if (purchase.supplierOrganization == null) {
-            purchase.supplierOrganizationCanonicalId = null;
-            return;
-        }
-        if (purchase.supplierOrganization.id == null) {
-            throw new IllegalStateException(
-                "Purchase supplier organization must be persisted before canonical reference synchronization."
-            );
-        }
-
-        purchase.supplierOrganizationCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                purchase.supplierOrganization.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical supplier organization reference is missing for legacy id "
-                    + purchase.supplierOrganization.id
-            ));
+        purchase.buyerOrganizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            purchase.buyerOrganizationLegacyId,
+            "buyer organization"
+        );
+        purchase.supplierOrganizationCanonicalId = optional(
+            MasterDataReferenceService.ORGANIZATION,
+            purchase.supplierOrganizationLegacyId,
+            "supplier organization"
+        );
+        purchase.originPersonCanonicalId = require(
+            MasterDataReferenceService.PERSON,
+            purchase.originPersonLegacyId,
+            "origin person"
+        );
     }
 
     private record ScopeIds(String organization, String unit) {}
@@ -287,36 +270,29 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeCustody(Custody custody) {
-        if (custody.organization == null || custody.organization.id == null) {
-            throw new IllegalStateException("Custody requires a persisted organization before canonical reference synchronization.");
-        }
-        if (custody.authorizer == null || custody.authorizer.id == null) {
-            throw new IllegalStateException("Custody requires a persisted authorizer before canonical reference synchronization.");
-        }
-
         custody.organizationCanonicalId = require(
             MasterDataReferenceService.ORGANIZATION,
-            custody.organization.id,
+            custody.organizationLegacyId,
             "custody organization"
         );
         custody.authorizerCanonicalId = require(
             MasterDataReferenceService.PERSON,
-            custody.authorizer.id,
+            custody.authorizerLegacyId,
             "custody authorizer"
         );
         custody.unitCanonicalId = optional(
             MasterDataReferenceService.UNIT,
-            custody.unit == null ? null : custody.unit.id,
+            custody.unitLegacyId,
             "custody unit"
         );
         custody.recipientCanonicalId = optional(
             MasterDataReferenceService.PERSON,
-            custody.recipient == null ? null : custody.recipient.id,
+            custody.recipientLegacyId,
             "custody recipient"
         );
         custody.recipientUnitCanonicalId = optional(
             MasterDataReferenceService.UNIT,
-            custody.recipientUnit == null ? null : custody.recipientUnit.id,
+            custody.recipientUnitLegacyId,
             "custody recipient unit"
         );
     }
@@ -380,45 +356,21 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeTransfer(InventoryTransfer transfer) {
-        if (transfer.organization == null || transfer.organization.id == null) {
-            throw new IllegalStateException(
-                "Inventory transfer requires a persisted organization before canonical reference synchronization."
-            );
-        }
-        if (transfer.sourceUnit == null || transfer.sourceUnit.id == null) {
-            throw new IllegalStateException(
-                "Inventory transfer requires a persisted source unit before canonical reference synchronization."
-            );
-        }
-        if (transfer.destinationUnit == null || transfer.destinationUnit.id == null) {
-            throw new IllegalStateException(
-                "Inventory transfer requires a persisted destination unit before canonical reference synchronization."
-            );
-        }
-
-        transfer.organizationCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                transfer.organization.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical transfer organization reference is missing for legacy id "
-                    + transfer.organization.id
-            ));
-
-        transfer.sourceUnitCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.UNIT,
-                transfer.sourceUnit.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical source unit reference is missing for legacy id "
-                    + transfer.sourceUnit.id
-            ));
-
-        transfer.destinationUnitCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.UNIT,
-                transfer.destinationUnit.id)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical destination unit reference is missing for legacy id "
-                    + transfer.destinationUnit.id
-            ));
+        transfer.organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            transfer.organizationLegacyId,
+            "transfer organization"
+        );
+        transfer.sourceUnitCanonicalId = require(
+            MasterDataReferenceService.UNIT,
+            transfer.sourceUnitLegacyId,
+            "transfer source unit"
+        );
+        transfer.destinationUnitCanonicalId = require(
+            MasterDataReferenceService.UNIT,
+            transfer.destinationUnitLegacyId,
+            "transfer destination unit"
+        );
     }
 
     private void synchronizeReceiving(EquipmentReceiving receiving) {
