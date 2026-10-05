@@ -7,15 +7,25 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_custody")
 public class Custody extends CoreEntity {
-    @ManyToOne(optional = false) @JoinColumn(name = "organization_id", nullable = false)
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
+    @Column(name = "unit_id")
+    public Long unitLegacyId;
+    @Column(name = "recipient_id")
+    public Long recipientLegacyId;
+    @Column(name = "recipient_unit_id")
+    public Long recipientUnitLegacyId;
+    @Column(name = "authorizer_id", nullable = false)
+    public Long authorizerLegacyId;
+    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false)
     public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id")
+    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false)
     public OrganizationalUnit unit;
-    @ManyToOne @JoinColumn(name = "recipient_id")
+    @ManyToOne @JoinColumn(name = "recipient_id", insertable = false, updatable = false)
     public Person recipient;
-    @ManyToOne @JoinColumn(name = "recipient_unit_id")
+    @ManyToOne @JoinColumn(name = "recipient_unit_id", insertable = false, updatable = false)
     public OrganizationalUnit recipientUnit;
-    @ManyToOne(optional = false) @JoinColumn(name = "authorizer_id", nullable = false)
+    @ManyToOne @JoinColumn(name = "authorizer_id", insertable = false, updatable = false)
     public Person authorizer;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
