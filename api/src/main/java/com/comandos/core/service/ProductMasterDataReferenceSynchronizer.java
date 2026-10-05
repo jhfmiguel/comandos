@@ -8,6 +8,11 @@ import com.comandos.transfer.model.InventoryTransfer;
 import com.comandos.custody.model.Custody;
 import com.comandos.donation.model.Donation;
 import com.comandos.sales.model.InventorySale;
+import com.comandos.maintenance.model.WorkOrder;
+import com.comandos.workflow.model.ApprovalWorkflow;
+import com.comandos.disposal.model.DisposalProcess;
+import com.comandos.reservation.model.InventoryReservation;
+import com.comandos.reconciliation.model.InventoryCount;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +79,41 @@ public class ProductMasterDataReferenceSynchronizer {
             synchronizeSale(sale);
             return true;
         }
+        if (entity instanceof WorkOrder workOrder) {
+            synchronizeScope(workOrder.organization, workOrder.unit, ids -> {
+                workOrder.organizationCanonicalId = ids.organization();
+                workOrder.unitCanonicalId = ids.unit();
+            }, "work order");
+            return true;
+        }
+        if (entity instanceof ApprovalWorkflow workflow) {
+            synchronizeScope(workflow.organization, workflow.unit, ids -> {
+                workflow.organizationCanonicalId = ids.organization();
+                workflow.unitCanonicalId = ids.unit();
+            }, "approval workflow");
+            return true;
+        }
+        if (entity instanceof DisposalProcess disposal) {
+            synchronizeScope(disposal.organization, disposal.unit, ids -> {
+                disposal.organizationCanonicalId = ids.organization();
+                disposal.unitCanonicalId = ids.unit();
+            }, "disposal process");
+            return true;
+        }
+        if (entity instanceof InventoryReservation reservation) {
+            synchronizeScope(reservation.organization, reservation.unit, ids -> {
+                reservation.organizationCanonicalId = ids.organization();
+                reservation.unitCanonicalId = ids.unit();
+            }, "inventory reservation");
+            return true;
+        }
+        if (entity instanceof InventoryCount count) {
+            synchronizeScope(count.organization, count.unit, ids -> {
+                count.organizationCanonicalId = ids.organization();
+                count.unitCanonicalId = ids.unit();
+            }, "inventory count");
+            return true;
+        }
         return false;
     }
 
@@ -122,6 +162,31 @@ public class ProductMasterDataReferenceSynchronizer {
                 "Canonical supplier organization reference is missing for legacy id "
                     + purchase.supplierOrganization.id
             ));
+    }
+
+    private record ScopeIds(String organization, String unit) {}
+
+    private void synchronizeScope(
+            com.comandos.core.model.Organization organization,
+            com.comandos.core.model.OrganizationalUnit unit,
+            java.util.function.Consumer<ScopeIds> consumer,
+            String label) {
+        if (organization == null || organization.id == null) {
+            throw new IllegalStateException(
+                label + " requires a persisted organization before canonical reference synchronization."
+            );
+        }
+        String organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            organization.id,
+            label + " organization"
+        );
+        String unitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            unit == null ? null : unit.id,
+            label + " unit"
+        );
+        consumer.accept(new ScopeIds(organizationCanonicalId, unitCanonicalId));
     }
 
     private void synchronizeCustody(Custody custody) {
