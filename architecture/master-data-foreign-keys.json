@@ -163,7 +163,8 @@
       "fields": [
         "organization"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary",
+      "note": "Organization-scoped list reads use organizationCanonicalId when COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_PRIMARY_READ is enabled; legacy association is retained for compatibility."
     },
     {
       "entity": "PeriodicInspection",
