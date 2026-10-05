@@ -4,6 +4,7 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.inventory.model.StockLocation;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
+import com.comandos.transfer.model.InventoryTransfer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,10 @@ public class ProductMasterDataReferenceSynchronizer {
             synchronizeReceiving(receiving);
             return true;
         }
+        if (entity instanceof InventoryTransfer transfer) {
+            synchronizeTransfer(transfer);
+            return true;
+        }
         return false;
     }
 
@@ -101,6 +106,48 @@ public class ProductMasterDataReferenceSynchronizer {
             .orElseThrow(() -> new IllegalStateException(
                 "Canonical supplier organization reference is missing for legacy id "
                     + purchase.supplierOrganization.id
+            ));
+    }
+
+    private void synchronizeTransfer(InventoryTransfer transfer) {
+        if (transfer.organization == null || transfer.organization.id == null) {
+            throw new IllegalStateException(
+                "Inventory transfer requires a persisted organization before canonical reference synchronization."
+            );
+        }
+        if (transfer.sourceUnit == null || transfer.sourceUnit.id == null) {
+            throw new IllegalStateException(
+                "Inventory transfer requires a persisted source unit before canonical reference synchronization."
+            );
+        }
+        if (transfer.destinationUnit == null || transfer.destinationUnit.id == null) {
+            throw new IllegalStateException(
+                "Inventory transfer requires a persisted destination unit before canonical reference synchronization."
+            );
+        }
+
+        transfer.organizationCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.ORGANIZATION,
+                transfer.organization.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical transfer organization reference is missing for legacy id "
+                    + transfer.organization.id
+            ));
+
+        transfer.sourceUnitCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.UNIT,
+                transfer.sourceUnit.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical source unit reference is missing for legacy id "
+                    + transfer.sourceUnit.id
+            ));
+
+        transfer.destinationUnitCanonicalId = references.resolveCanonicalId(
+                MasterDataReferenceService.UNIT,
+                transfer.destinationUnit.id)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical destination unit reference is missing for legacy id "
+                    + transfer.destinationUnit.id
             ));
     }
 
