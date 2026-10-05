@@ -17,18 +17,6 @@ public class InventoryTransfer extends CoreEntity {
     @Column(name = "destination_unit_id", nullable = false)
     public Long destinationUnitLegacyId;
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", insertable = false, updatable = false)
-    public Organization organization;
-
-    @ManyToOne
-    @JoinColumn(name = "source_unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit sourceUnit;
-
-    @ManyToOne
-    @JoinColumn(name = "destination_unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit destinationUnit;
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "destination_location_id", nullable = false)
     public StockLocation destinationLocation;
