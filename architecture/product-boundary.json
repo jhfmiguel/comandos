@@ -98,12 +98,14 @@
     "Documents and notifications consume Faria Miguel contracts directly and cannot reintroduce COMANDOS-owned contracts.",
     "Security actor, access-denied, resource authorization, audit sink and workflow transition engine consume Faria Miguel contracts directly.",
     "Master data migration must expose Faria Miguel canonical Person, Organization, OrganizationalUnit and IdentityDirectory contracts before legacy persistence is removed.",
-    "Legacy COMANDOS master-data entities are compatibility persistence only and cannot become new public contracts."
+    "Legacy COMANDOS master-data entities are compatibility persistence only and cannot become new public contracts.",
+    "Legacy person contacts must be projected through the canonical Faria Miguel contact contracts during the persistence migration."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
     "legacy-organization-to-faria-enterprise-organization",
     "legacy-unit-to-faria-tenancy-unit",
-    "legacy-identity-to-faria-identity-directory"
+    "legacy-identity-to-faria-identity-directory",
+    "legacy-person-contacts-to-faria-enterprise-contacts"
   ]
 }
