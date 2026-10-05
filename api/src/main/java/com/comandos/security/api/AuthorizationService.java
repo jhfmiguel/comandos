@@ -1,5 +1,7 @@
 package com.comandos.security.api;
 
+import com.fariamiguel.security.api.AccessDeniedException;
+
 public interface AuthorizationService {
 
     boolean can(
