@@ -5,6 +5,7 @@ import com.comandos.consumption.dto.ConsumableUsageContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.*;
@@ -26,23 +27,31 @@ public class ConsumableUsageService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null);
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("ammunition-consumptions", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from StockBalance b where b.location.organization.id=:organization"
-            + (unitId == null ? "" : " and b.location.unit.id=:unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from StockBalance b where "
+            + (canonical ? "b.location.organizationCanonicalId" : "b.location.organization.id")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "b.location.unitCanonicalId" : "b.location.unit.id")
+                + "=:unit")
             + " and b.lot.model.category.lotControlled=true"
             + " and b.lot.model.category.serialized=false"
             + " and b.lot.model.category.consumable=true"
@@ -53,8 +62,8 @@ public class ConsumableUsageService {
         var query = em.createQuery("select b" + from + " order by b.lot.validUntil, b.id", StockBalance.class);
         var count = em.createQuery("select count(b)" + from, Long.class);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", escaped(search));
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", escaped(search));
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::stockView).toList(), count.getSingleResult(), page, PAGE_SIZE);
     }
@@ -83,7 +92,7 @@ public class ConsumableUsageService {
         usage.purpose=request.purpose().trim(); usage.activityType=normalized(request.activityType(), "OPERATION");
         usage.operationTraining=blankToNull(request.operationTraining()); usage.deliveredAt=now; usage.closedAt=now;
         var actor=audit.actor(); usage.finalizedById=actor.id(); usage.finalizedByLogin=actor.login();
-        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; if(masterDataReferences!=null)masterDataReferences.synchronize(usage); em.persist(usage); em.flush();
+        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(usage);else masterDataReferences.synchronize(usage);} em.persist(usage); em.flush();
 
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
@@ -127,9 +136,10 @@ public class ConsumableUsageService {
     }
     public Page<UsageView> list(long organizationId,Long unitId,int page) {
         access.requireScope("ammunition-consumptions","READ",organizationId,unitId); selectedUnit(organizationId,unitId); pagination(page);
-        String from=" from ConsumableUsage u where u.organization.id=:organization"+(unitId==null?"":" and u.unit.id=:unit");
+        boolean canonical=canonicalScope!=null&&canonicalScope.enabled();var canonicalIds=canonical?canonicalScope.scope(organizationId,unitId):null;
+        String from=" from ConsumableUsage u where "+(canonical?"u.organizationCanonicalId":"u.organization.id")+"=:organization"+(unitId==null?"":" and "+(canonical?"u.unitCanonicalId":"u.unit.id")+"=:unit");
         var q=em.createQuery("select u"+from+" order by u.id desc",ConsumableUsage.class); var c=em.createQuery("select count(u)"+from,Long.class);
-        for(var x:List.of(q,c)){x.setParameter("organization",organizationId);if(unitId!=null)x.setParameter("unit",unitId);}
+        for(var x:List.of(q,c)){x.setParameter("organization",canonical?canonicalIds.organizationId():organizationId);if(unitId!=null)x.setParameter("unit",canonical?canonicalIds.unitId():unitId);}
         return new Page<>(q.setFirstResult(page*PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),c.getSingleResult(),page,PAGE_SIZE);
     }
 
