@@ -554,6 +554,21 @@ public class InventoryService {
             if (id != null && (entity instanceof Recall || entity instanceof RecallItem)
                     && field.name().equals("description") && !data.containsKey("description")) continue;
             Object raw = data.get(field.name());
+            if (entity instanceof StockLocation location
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                Long legacyId = raw == null ? null : integer(raw, false);
+                if (legacyId == null && field.required()) bad(field.label() + " is required.");
+                if (legacyId != null) {
+                    CoreEntity reference = findReference(field.reference(), legacyId);
+                    access.requireEntity(field.reference(), "READ", reference);
+                }
+                if ("organizationId".equals(field.name())) {
+                    location.organizationLegacyId = legacyId;
+                } else {
+                    location.unitLegacyId = legacyId;
+                }
+                continue;
+            }
             if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && raw instanceof String text)
                 raw = AssetIdentity.normalize(text);
             Object value = parse(field, raw);
@@ -818,14 +833,30 @@ public class InventoryService {
         if (entity instanceof StockLocation location) {
             result.put("organizationCanonicalId", location.organizationCanonicalId);
             result.put("unitCanonicalId", location.unitCanonicalId);
+            result.put("organizationId", location.organizationLegacyId);
+            result.put("unitId", location.unitLegacyId);
+            Organization organization = location.organizationLegacyId == null
+                ? null : em.find(Organization.class, location.organizationLegacyId);
+            OrganizationalUnit unit = location.unitLegacyId == null
+                ? null : em.find(OrganizationalUnit.class, location.unitLegacyId);
+            if (organization != null) labels.put("organizationId", label(organization));
+            if (unit != null) labels.put("unitId", label(unit));
         }
         if (entity instanceof AssetItem asset) {
-            result.put("organizationId", asset.location.organization.id);
-            result.put("unitId", asset.location.unit == null ? null : asset.location.unit.id);
-            labels.put("organizationId", label(asset.location.organization));
-            if (asset.location.unit != null) labels.put("unitId", label(asset.location.unit));
+            result.put("organizationId", asset.location.organizationLegacyId);
+            result.put("unitId", asset.location.unitLegacyId);
+            Organization organization = asset.location.organizationLegacyId == null
+                ? null : em.find(Organization.class, asset.location.organizationLegacyId);
+            OrganizationalUnit unit = asset.location.unitLegacyId == null
+                ? null : em.find(OrganizationalUnit.class, asset.location.unitLegacyId);
+            if (organization != null) labels.put("organizationId", label(organization));
+            if (unit != null) labels.put("unitId", label(unit));
         }
         for (var field : spec.fields()) {
+            if (entity instanceof StockLocation
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                continue;
+            }
             Object value = read(entity, field.property());
             if (value instanceof CoreEntity ref) { result.put(field.name(), ref.id); labels.put(field.name(), label(ref)); }
             else result.put(field.name(), value instanceof BigDecimal decimal ? decimal.toPlainString() : value);
