@@ -44,7 +44,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         boolean canonicalReadEnabled =
-            cutoverStatus.status().canonicalReadEnabled();
+            cutoverStatus.canonicalReadEnabled();
 
         if (!readinessOnStartup
                 && !backfillOnStartup
