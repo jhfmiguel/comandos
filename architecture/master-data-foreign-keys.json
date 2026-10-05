@@ -17,7 +17,8 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary",
+      "note": "Inventory location-derived organization reads can use canonical IDs behind COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_PRIMARY_READ; legacy JPA associations remain for compatibility."
     },
     {
       "entity": "StockMovement",
