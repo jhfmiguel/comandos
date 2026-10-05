@@ -85,8 +85,8 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.unit is null and e.unitCanonicalId is not null)"),
         new Spec(WorkOrder.class,
             "e.organizationCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(ApprovalWorkflow.class,
             "e.organizationCanonicalId is null or "
                 + "(e.unit is not null and e.unitCanonicalId is null) or "
