@@ -95,10 +95,12 @@ public class AmmunitionConsumptionService {
         consumption.unitLegacyId = unit == null ? null : unit.id;
         consumption.responsibleLegacyId = responsible.id;
         consumption.authorizerLegacyId = authorizer.id;
-        consumption.organizationCanonicalId = canonicalScope.organization(organization.id);
-        consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-        consumption.responsibleCanonicalId = canonicalScope.person(responsible.id);
-        consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+        if (canonicalScope != null) {
+            consumption.organizationCanonicalId = canonicalScope.organization(organization.id);
+            consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            consumption.responsibleCanonicalId = canonicalScope.person(responsible.id);
+            consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+        }
         consumption.organizationName = organization.name; consumption.unitName = unit == null ? null : unit.name;
         consumption.responsibleName = responsible.fullName; consumption.authorizerName = authorizer.fullName;
         consumption.purpose = request.purpose().trim();
