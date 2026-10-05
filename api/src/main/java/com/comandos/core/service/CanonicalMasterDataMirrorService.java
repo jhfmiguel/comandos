@@ -77,7 +77,17 @@ public class CanonicalMasterDataMirrorService {
 
     @Transactional
     public boolean mirror(CoreEntity entity) {
-        if (!enabled || entity == null) return false;
+        if (!enabled) return false;
+        return mirrorNow(entity);
+    }
+
+    @Transactional
+    public boolean mirrorForBackfill(CoreEntity entity) {
+        return mirrorNow(entity);
+    }
+
+    private boolean mirrorNow(CoreEntity entity) {
+        if (entity == null) return false;
         if (entity instanceof Person person) {
             people.save(CanonicalMasterDataMapper.person(person, TENANT));
             return true;
