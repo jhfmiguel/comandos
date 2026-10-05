@@ -2,6 +2,7 @@ package com.comandos.inventory.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.InventoryCountResultType;
