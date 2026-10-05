@@ -106,7 +106,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "AmmunitionConsumption",
@@ -137,7 +137,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "InventoryReservation",
