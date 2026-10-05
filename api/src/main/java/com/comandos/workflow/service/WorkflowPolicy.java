@@ -1,5 +1,10 @@
 package com.comandos.workflow.service;
 
+import com.fariamiguel.security.api.CurrentActor;
+import com.fariamiguel.workflow.api.WorkflowDefinition;
+import com.fariamiguel.workflow.api.WorkflowEngine;
+import com.fariamiguel.workflow.api.WorkflowTransition;
+import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -36,6 +41,23 @@ public class WorkflowPolicy {
         EXECUTED, AUTHORIZED,
         CONCLUDED, EXECUTED
     );
+    private static final WorkflowDefinition SHARED_DEFINITION = new WorkflowDefinition(
+        "COMANDOS_APPROVAL",
+        REQUESTED,
+        Set.of(REQUESTED, ANALYZED, AUTHORIZED, EXECUTED, CONCLUDED, CANCELLED),
+        List.of(
+            new WorkflowTransition(REQUESTED, ANALYZED, ANALYZED, null),
+            new WorkflowTransition(ANALYZED, AUTHORIZED, AUTHORIZED, null),
+            new WorkflowTransition(AUTHORIZED, EXECUTED, EXECUTED, null),
+            new WorkflowTransition(EXECUTED, CONCLUDED, CONCLUDED, null),
+            new WorkflowTransition(REQUESTED, CANCELLED, CANCELLED, null),
+            new WorkflowTransition(ANALYZED, CANCELLED, CANCELLED, null),
+            new WorkflowTransition(AUTHORIZED, CANCELLED, CANCELLED, null),
+            new WorkflowTransition(EXECUTED, CANCELLED, CANCELLED, null)
+        )
+    );
+
+    private final WorkflowEngine engine = new DefaultWorkflowEngine();
 
     public Rule rule(String operationType) {
         String type = normalize(operationType);
@@ -76,15 +98,14 @@ public class WorkflowPolicy {
         String from = normalizeStatus(fromStatus);
         String target = normalizeStatus(targetStatus);
 
-        if (CANCELLED.equals(target)) {
-            if (terminal(from)) {
-                invalidTransition(from, target);
-            }
-            return;
-        }
+        var decision = engine.evaluate(
+            SHARED_DEFINITION,
+            from,
+            target,
+            CurrentActor.anonymous()
+        );
 
-        String expected = expectedPrevious(target);
-        if (expected == null || !expected.equals(from)) {
+        if (!decision.allowed()) {
             invalidTransition(from, target);
         }
     }
