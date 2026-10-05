@@ -62,12 +62,19 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         String resource = WorkflowPolicy.normalizeResource(r.resource());
         access.requireScope(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
 
-        var w = new ApprovalWorkflow();
-        w.organization = find(Organization.class, r.organizationId());
-        w.unit = r.unitId() == null ? null : find(OrganizationalUnit.class, r.unitId());
-        if (w.unit != null && !w.unit.organization.id.equals(w.organization.id)) {
+        Organization organization = find(Organization.class, r.organizationId());
+        OrganizationalUnit unit = r.unitId() == null
+            ? null
+            : find(OrganizationalUnit.class, r.unitId());
+        if (unit != null && !unit.organization.id.equals(organization.id)) {
             bad("Unit does not belong to organization.");
         }
+
+        var w = new ApprovalWorkflow();
+        w.organizationLegacyId = organization.id;
+        w.unitLegacyId = unit == null ? null : unit.id;
+        w.organizationCanonicalId = canonicalScope.organization(organization.id);
+        w.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
         if (r.recordId() != null && r.recordId() <= 0) {
             bad("Record id must be positive when informed.");
         }
@@ -136,7 +143,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         }
 
         access.requireScope(w.resource, policy.permissionForTransition(WorkflowPolicy.EXECUTED),
-            w.organization.id, w.unit == null ? null : w.unit.id);
+            w.organizationLegacyId, w.unitLegacyId);
         requiredActor();
         var before = view(w);
         w.recordId = recordId;
@@ -148,7 +155,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
 
     public WorkflowView get(long id) {
         var w = find(ApprovalWorkflow.class, id);
-        access.requireScope(w.resource, "READ", w.organization.id, w.unit == null ? null : w.unit.id);
+        access.requireScope(w.resource, "READ", w.organizationLegacyId, w.unitLegacyId);
         return view(w);
     }
 
@@ -157,10 +164,10 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(org, unit) : null;
         String where = " where "
-            + (canonical ? "w.organizationCanonicalId" : "w.organization.id")
+            + (canonical ? "w.organizationCanonicalId" : "w.organizationLegacyId")
             + "=:o"
             + (unit == null ? "" : " and "
-                + (canonical ? "w.unitCanonicalId" : "w.unit.id")
+                + (canonical ? "w.unitCanonicalId" : "w.unitLegacyId")
                 + "=:u")
             + (blank(status) ? "" : " and w.status=:s");
         var q = em.createQuery("select w from ApprovalWorkflow w" + where + " order by w.id desc", ApprovalWorkflow.class);
@@ -185,7 +192,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         policy.rule(w.operationType);
         policy.requireTransition(w.status, target);
         access.requireScope(w.resource, policy.permissionForTransition(target),
-            w.organization.id, w.unit == null ? null : w.unit.id);
+            w.organizationLegacyId, w.unitLegacyId);
 
         String reason = requiredTransitionJustification(transition);
         CurrentActor actor = requiredActor();
@@ -232,7 +239,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
             .map(e -> new WorkflowEventView(e.id, e.fromStatus, e.toStatus, e.justification,
                 e.occurredAt.toString(), e.actorLogin))
             .toList();
-        return new WorkflowView(w.id, w.organization.id, w.unit == null ? null : w.unit.id,
+        return new WorkflowView(w.id, w.organizationLegacyId, w.unitLegacyId,
             w.operationType, w.resource, w.recordId, w.status, w.justification, w.requestedAt.toString(),
             w.requestedByLogin, w.authorityLogin, s(w.authorizedAt), s(w.executedAt),
             s(w.concludedAt), s(w.cancelledAt), events);
