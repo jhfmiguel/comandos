@@ -78,6 +78,9 @@ public class CanonicalCoreReadService {
         }
 
         List<String> clauses = new ArrayList<>();
+        if (spec.entity() == PersonAddress.class) {
+            clauses.add("e.archived = false");
+        }
         Map<String, Object> parameters = new LinkedHashMap<>();
 
         if (search != null && !search.isBlank()) {
@@ -201,7 +204,7 @@ public class CanonicalCoreReadService {
         access.requireAny("core/" + resource, "READ");
 
         CoreEntity entity = entityManager.find(spec.entity(), id);
-        if (entity == null) {
+        if (entity == null || entity instanceof PersonAddress address && address.archived) {
             throw new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 spec.label() + ": record not found."
