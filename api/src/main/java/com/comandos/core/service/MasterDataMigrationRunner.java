@@ -43,7 +43,15 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!readinessOnStartup && !backfillOnStartup && !parityOnStartup) return;
+        boolean canonicalReadEnabled =
+            cutoverStatus.status().canonicalReadEnabled();
+
+        if (!readinessOnStartup
+                && !backfillOnStartup
+                && !parityOnStartup
+                && !canonicalReadEnabled) {
+            return;
+        }
 
         var readiness = migration.readiness();
 
@@ -56,7 +64,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             if (parityOnStartup) {
                 requireParity();
             }
-            if (cutoverStatus.status().canonicalReadEnabled()) {
+            if (canonicalReadEnabled) {
                 cutoverStatus.requireReadyToRetireLegacyPersistence();
             }
             return;
@@ -82,7 +90,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
         requireParity();
 
-        if (cutoverStatus.status().canonicalReadEnabled()) {
+        if (canonicalReadEnabled) {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
         }
     }
