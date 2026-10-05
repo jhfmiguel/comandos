@@ -21,6 +21,7 @@ import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,7 @@ public class CanonicalMasterDataMirrorService {
     private final PartyRoleRepository roles;
     private final PartyDocumentRepository documents;
     private final ProfessionalQualificationRepository qualifications;
+    private final boolean enabled;
 
     public CanonicalMasterDataMirrorService(
             EntityManager entityManager,
@@ -52,7 +54,8 @@ public class CanonicalMasterDataMirrorService {
             ContactRepository contacts,
             PartyRoleRepository roles,
             PartyDocumentRepository documents,
-            ProfessionalQualificationRepository qualifications) {
+            ProfessionalQualificationRepository qualifications,
+            @Value("${comandos.master-data.shadow-write.enabled:false}") boolean enabled) {
         this.entityManager = entityManager;
         this.people = people;
         this.organizations = organizations;
@@ -60,10 +63,16 @@ public class CanonicalMasterDataMirrorService {
         this.roles = roles;
         this.documents = documents;
         this.qualifications = qualifications;
+        this.enabled = enabled;
+    }
+
+    public boolean enabled() {
+        return enabled;
     }
 
     @Transactional
     public boolean mirror(CoreEntity entity) {
+        if (!enabled || entity == null) return false;
         if (entity instanceof Person person) {
             people.save(CanonicalMasterDataMapper.person(person, TENANT));
             return true;
