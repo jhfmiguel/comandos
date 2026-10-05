@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface PurchasePlanningRepository extends JpaRepository<PurchasePlanning, Long> {
     List<PurchasePlanning> findByOrganizationIdOrderByCreatedAtDesc(Long organizationId);
+    List<PurchasePlanning> findByOrganizationCanonicalIdOrderByCreatedAtDesc(String organizationCanonicalId);
 }
