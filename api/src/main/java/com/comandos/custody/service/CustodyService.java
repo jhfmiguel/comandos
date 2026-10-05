@@ -2,6 +2,7 @@ package com.comandos.custody.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
 import com.comandos.inventory.model.*;
@@ -24,9 +25,23 @@ public class CustodyService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
 
-    public CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    @org.springframework.beans.factory.annotation.Autowired
+    public CustodyService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -109,6 +124,9 @@ public class CustodyService {
         custody.deliveryCondition = request.deliveryCondition() == null || request.deliveryCondition().isBlank() ? null : request.deliveryCondition().trim();
         custody.requestId = request.requestId(); custody.requestFingerprint = fingerprint;
         var actor = audit.actor(); custody.issuedById = actor.id(); custody.issuedByLogin = actor.login();
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(custody);
+        }
         em.persist(custody);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (Long assetId : values(request.assetIds()).stream().sorted().toList()) {
