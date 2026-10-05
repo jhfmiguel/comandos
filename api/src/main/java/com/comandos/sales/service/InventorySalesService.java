@@ -130,13 +130,6 @@ public class InventorySalesService {
         sale.total = BigDecimal.ZERO;
         sale.requestId = request.requestId();
         sale.requestFingerprint = fingerprint;
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) {
-                masterDataReferences.synchronizeForBackfill(sale);
-            } else {
-                masterDataReferences.synchronize(sale);
-            }
-        }
         em.persist(sale);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var requested : request.items()) {
