@@ -2,6 +2,7 @@ package com.comandos.sales.service;
 
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.model.InventoryCountItem;
 import com.comandos.sales.dto.SalesContract.*;
@@ -31,22 +32,25 @@ public class InventorySalesService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public InventorySalesService(
             EntityManager em,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null);
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -58,8 +62,14 @@ public class InventorySalesService {
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
         String expiry = assets ? "e.validUntil" : "e.lot.validUntil";
-        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where e.location.organization.id = :organization"
-            + (unitId == null ? "" : " and e.location.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unit.id")
+                + " = :unit")
             + (assets ? " and e.status = 'AVAILABLE'" : " and e.available > 0")
             + " and (" + expiry + " is null or " + expiry + " >= :today)"
             + " and (lower(" + code + ") like :search escape '!' or lower(" + model + ".name) like :search escape '!'"
@@ -67,8 +77,8 @@ public class InventorySalesService {
         String term = "%" + search.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
         var query = em.createQuery("select e" + from + " order by e.id", CoreEntity.class);
         var count = em.createQuery("select count(e)" + from, Long.class);
-        for (var q : List.of(query, count)) q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
-        if (unitId != null) for (var q : List.of(query, count)) q.setParameter("unit", unitId);
+        for (var q : List.of(query, count)) q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
+        if (unitId != null) for (var q : List.of(query, count)) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(e -> {
             if (e instanceof AssetItem a) return new StockOption("ASSET", a.id, a.assetCode, a.model.name, a.model.sku,
                 a.location.name, a.model.unitOfMeasure, "1", decimal(a.model.listPrice));
@@ -118,7 +128,11 @@ public class InventorySalesService {
         sale.requestId = request.requestId();
         sale.requestFingerprint = fingerprint;
         if (masterDataReferences != null) {
-            masterDataReferences.synchronize(sale);
+            if (canonicalScope != null && canonicalScope.enabled()) {
+                masterDataReferences.synchronizeForBackfill(sale);
+            } else {
+                masterDataReferences.synchronize(sale);
+            }
         }
         em.persist(sale);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
@@ -193,12 +207,19 @@ public class InventorySalesService {
         access.requireScope("sales", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId);
         pagination(page);
-        String from = " from InventorySale s where s.organization.id = :organization" + (unitId == null ? "" : " and s.unit.id = :unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from InventorySale s where "
+            + (canonical ? "s.organizationCanonicalId" : "s.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "s.unitCanonicalId" : "s.unit.id")
+                + " = :unit");
         var query = em.createQuery("select s" + from + " order by s.id desc", InventorySale.class);
         var count = em.createQuery("select count(s)" + from, Long.class);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId);
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         var rows = query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList();
         return new Page<>(rows.stream().map(this::view).toList(), count.getSingleResult(), page, PAGE_SIZE);
