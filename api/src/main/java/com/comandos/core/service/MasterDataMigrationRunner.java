@@ -18,6 +18,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
     private final MasterDataMigrationService migration;
     private final MasterDataParityService parity;
+    private final MasterDataCutoverStatusService cutoverStatus;
     private final boolean readinessOnStartup;
     private final boolean backfillOnStartup;
     private final boolean parityOnStartup;
@@ -25,6 +26,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     public MasterDataMigrationRunner(
             MasterDataMigrationService migration,
             MasterDataParityService parity,
+            MasterDataCutoverStatusService cutoverStatus,
             @Value("${comandos.master-data.readiness-on-startup:false}")
             boolean readinessOnStartup,
             @Value("${comandos.master-data.backfill-on-startup:false}")
@@ -33,6 +35,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             boolean parityOnStartup) {
         this.migration = migration;
         this.parity = parity;
+        this.cutoverStatus = cutoverStatus;
         this.readinessOnStartup = readinessOnStartup;
         this.backfillOnStartup = backfillOnStartup;
         this.parityOnStartup = parityOnStartup;
@@ -52,6 +55,9 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         if (!backfillOnStartup) {
             if (parityOnStartup) {
                 requireParity();
+            }
+            if (cutoverStatus.status().canonicalReadEnabled()) {
+                cutoverStatus.requireReadyToRetireLegacyPersistence();
             }
             return;
         }
@@ -75,6 +81,10 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         );
 
         requireParity();
+
+        if (cutoverStatus.status().canonicalReadEnabled()) {
+            cutoverStatus.requireReadyToRetireLegacyPersistence();
+        }
     }
 
     private void requireParity() {
