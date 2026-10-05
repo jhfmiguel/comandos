@@ -97,7 +97,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "ApprovalWorkflow",
@@ -146,7 +146,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "InventoryCount",
@@ -155,7 +155,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "PurchasePlanning",
