@@ -86,13 +86,18 @@ public class ConsumableUsageService {
         if (!organization.active || !responsible.active || !authorizer.active) bad("Organization, responsible person and authorizer must be active.");
         var now = LocalDateTime.now();
         var usage = new ConsumableUsage();
-        usage.organization=organization; usage.unit=unit; usage.responsible=responsible; usage.authorizer=authorizer;
+        usage.organizationLegacyId=organization.id; usage.unitLegacyId=unit==null?null:unit.id;
+        usage.responsibleLegacyId=responsible.id; usage.authorizerLegacyId=authorizer.id;
+        usage.organizationCanonicalId=canonicalScope.organization(organization.id);
+        usage.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id);
+        usage.responsibleCanonicalId=canonicalScope.person(responsible.id);
+        usage.authorizerCanonicalId=canonicalScope.person(authorizer.id);
         usage.organizationName=organization.name; usage.unitName=unit==null?null:unit.name;
         usage.responsibleName=responsible.fullName; usage.authorizerName=authorizer.fullName;
         usage.purpose=request.purpose().trim(); usage.activityType=normalized(request.activityType(), "OPERATION");
         usage.operationTraining=blankToNull(request.operationTraining()); usage.deliveredAt=now; usage.closedAt=now;
         var actor=audit.actor(); usage.finalizedById=actor.id(); usage.finalizedByLogin=actor.login();
-        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(usage);else masterDataReferences.synchronize(usage);} em.persist(usage); em.flush();
+        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; em.persist(usage); em.flush();
 
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
@@ -137,7 +142,7 @@ public class ConsumableUsageService {
     public Page<UsageView> list(long organizationId,Long unitId,int page) {
         access.requireScope("ammunition-consumptions","READ",organizationId,unitId); selectedUnit(organizationId,unitId); pagination(page);
         boolean canonical=canonicalScope!=null&&canonicalScope.enabled();var canonicalIds=canonical?canonicalScope.scope(organizationId,unitId):null;
-        String from=" from ConsumableUsage u where "+(canonical?"u.organizationCanonicalId":"u.organization.id")+"=:organization"+(unitId==null?"":" and "+(canonical?"u.unitCanonicalId":"u.unit.id")+"=:unit");
+        String from=" from ConsumableUsage u where "+(canonical?"u.organizationCanonicalId":"u.organizationLegacyId")+"=:organization"+(unitId==null?"":" and "+(canonical?"u.unitCanonicalId":"u.unitLegacyId")+"=:unit");
         var q=em.createQuery("select u"+from+" order by u.id desc",ConsumableUsage.class); var c=em.createQuery("select count(u)"+from,Long.class);
         for(var x:List.of(q,c)){x.setParameter("organization",canonical?canonicalIds.organizationId():organizationId);if(unitId!=null)x.setParameter("unit",canonical?canonicalIds.unitId():unitId);}
         return new Page<>(q.setFirstResult(page*PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),c.getSingleResult(),page,PAGE_SIZE);
@@ -147,7 +152,7 @@ public class ConsumableUsageService {
         var m=new StockMovement();m.lot=lot;m.location=location;m.nature=nature.name();m.referenceType=StockMovementReferenceType.CONSUMABLE_USAGE.name();
         m.referenceId=ref;m.quantity=qty;m.movedAt=at;var actor=audit.actor();m.operatorId=actor.id();m.operatorLogin=actor.login();em.persist(m);return m;
     }
-    private UsageView view(ConsumableUsage u){var items=em.createQuery("select i from ConsumableUsageItem i where i.usage.id=:id order by i.id",ConsumableUsageItem.class).setParameter("id",u.id).getResultList().stream().map(i->new ItemView(i.id,i.lot.id,i.balance.id,i.family,i.sku,i.modelName,i.lotNumber,i.locationName,i.unitOfMeasure,i.deliveredQuantity,i.usedQuantity,i.returnedQuantity,i.deliveryMovement.id,i.returnMovement==null?null:i.returnMovement.id,i.result)).toList();return new UsageView(u.id,u.organization.id,u.organizationName,u.unit==null?null:u.unit.id,u.unitName,u.responsible.id,u.responsibleName,u.authorizer.id,u.authorizerName,u.purpose,u.activityType,u.operationTraining,u.status,u.deliveredAt.toString(),u.closedAt.toString(),u.finalizedById,u.finalizedByLogin,items);}
+    private UsageView view(ConsumableUsage u){var items=em.createQuery("select i from ConsumableUsageItem i where i.usage.id=:id order by i.id",ConsumableUsageItem.class).setParameter("id",u.id).getResultList().stream().map(i->new ItemView(i.id,i.lot.id,i.balance.id,i.family,i.sku,i.modelName,i.lotNumber,i.locationName,i.unitOfMeasure,i.deliveredQuantity,i.usedQuantity,i.returnedQuantity,i.deliveryMovement.id,i.returnMovement==null?null:i.returnMovement.id,i.result)).toList();return new UsageView(u.id,u.organizationLegacyId,u.organizationName,u.unitLegacyId,u.unitName,u.responsibleLegacyId,u.responsibleName,u.authorizerLegacyId,u.authorizerName,u.purpose,u.activityType,u.operationTraining,u.status,u.deliveredAt.toString(),u.closedAt.toString(),u.finalizedById,u.finalizedByLogin,items);}
     private StockOption stockView(StockBalance b){return new StockOption(b.id,b.lot.id,b.lot.model.category.family,b.lot.model.sku,b.lot.model.name,b.lot.lotNumber,b.location.name,b.lot.model.unitOfMeasure,b.available,b.lot.validUntil==null?null:b.lot.validUntil.toString());}
     private void validateStock(StockBalance b,StockLot lot,long org,Long unit,BigDecimal delivered){if(canonicalScope!=null&&canonicalScope.enabled()){var ids=canonicalScope.scope(org,unit);if(!b.location.matchesCanonicalScope(ids.organizationId(),ids.unitId()))bad("Every consumable lot must belong to the selected organization and unit.");}else if(!b.location.organization.id.equals(org)||unit!=null&&(b.location.unit==null||!unit.equals(b.location.unit.id)))bad("Every consumable lot must belong to the selected organization and unit.");var c=lot.model.category;if(!Boolean.TRUE.equals(c.lotControlled)||Boolean.TRUE.equals(c.serialized)||!Boolean.TRUE.equals(c.consumable))bad("Only lot-controlled, non-serialized consumable items use this lifecycle.");if(lot.validUntil!=null&&lot.validUntil.isBefore(LocalDate.now()))bad("Expired consumable stock cannot be delivered.");if(b.available.compareTo(delivered)<0||lot.availableQuantity.compareTo(delivered)<0)conflict("Insufficient available consumable stock for delivery.");}
     private void validate(FinalizeRequest r){if(r==null||r.organizationId()==null||r.responsibleId()==null||r.authorizerId()==null||r.purpose()==null||r.purpose().isBlank())bad("Organization, responsible person, authorizer and purpose are required.");uuid(r.requestId());if(r.items()==null||r.items().isEmpty()||r.items().size()>100)bad("Select 1 to 100 consumable lots.");Set<Long> ids=new HashSet<>();for(var l:r.items()){if(l==null||l.balanceId()==null||l.deliveredQuantity()==null||l.usedQuantity()==null||l.returnedQuantity()==null||l.deliveredQuantity().signum()<=0||l.usedQuantity().signum()<0||l.returnedQuantity().signum()<0||l.usedQuantity().add(l.returnedQuantity()).compareTo(l.deliveredQuantity())!=0||l.result()==null||l.result().isBlank())bad("Each line must satisfy delivered = used + returned and include a result.");if(!ids.add(l.balanceId()))bad("Each stock balance can appear only once.");}}
