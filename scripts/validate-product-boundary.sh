@@ -180,6 +180,13 @@ grep -q '@Deprecated(forRemoval = true)' \
   "$ROOT_DIR/api/src/main/java/com/comandos/organization/api/OrganizationDirectory.java" \
   || fail "local organization API must remain explicitly deprecated"
 
+integrations_root="$ROOT_DIR/api/src/main/java/com/comandos/integrations"
+[[ ! -e "$integrations_root" ]] \
+  || fail "generic COMANDOS integrations root is forbidden; use Faria Miguel integration infrastructure"
+
+grep -q '"integrations-adapters-removed"' "$MANIFEST" \
+  || fail "integrations adapter removal is not declared"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
@@ -191,7 +198,7 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow integrations security identity organization; do
+for capability in core audit documents workflow security identity organization; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -210,5 +217,6 @@ printf 'People, organization and unit reads are routed through CanonicalCoreRead
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Deprecated local identity/organization APIs are frozen; new consumers are forbidden.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
+printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
