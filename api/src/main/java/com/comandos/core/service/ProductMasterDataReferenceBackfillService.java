@@ -101,8 +101,8 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(InventoryCount.class,
             "e.organizationCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(AmmunitionConsumption.class,
             "e.organizationCanonicalId is null or e.responsibleCanonicalId is null or e.authorizerCanonicalId is null or "
                 + "(e.unit is not null and e.unitCanonicalId is null) or "
