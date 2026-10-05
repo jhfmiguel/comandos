@@ -4,6 +4,7 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.disposal.dto.DisposalContract.*;
 import com.comandos.disposal.model.*;
 import com.comandos.inventory.model.*;
@@ -26,9 +27,17 @@ public class DisposalService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
 
-    public DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    @org.springframework.beans.factory.annotation.Autowired
+    public DisposalService(EntityManager em, AccessPolicy access, AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -86,7 +95,7 @@ public class DisposalService {
         process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
-        process.requestId = request.requestId(); process.requestFingerprint = fingerprint; em.persist(process);
+        process.requestId = request.requestId(); process.requestFingerprint = fingerprint; if (masterDataReferences != null) masterDataReferences.synchronize(process); em.persist(process);
 
         if (destructionRequested(request)) {
             Destruction destruction = new Destruction(); destruction.process = process;
