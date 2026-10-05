@@ -380,10 +380,10 @@ class ProductMasterDataReferenceSynchronizerTest {
             new ProductMasterDataReferenceSynchronizer(references, true);
 
         AmmunitionConsumption ammunition = new AmmunitionConsumption();
-        ammunition.organization = organization;
-        ammunition.unit = unit;
-        ammunition.responsible = responsible;
-        ammunition.authorizer = authorizer;
+        ammunition.organizationLegacyId = organization.id;
+        ammunition.unitLegacyId = unit.id;
+        ammunition.responsibleLegacyId = responsible.id;
+        ammunition.authorizerLegacyId = authorizer.id;
         assertTrue(synchronizer.synchronize(ammunition));
         assertEquals("remaining-org", ammunition.organizationCanonicalId);
         assertEquals("remaining-unit", ammunition.unitCanonicalId);
