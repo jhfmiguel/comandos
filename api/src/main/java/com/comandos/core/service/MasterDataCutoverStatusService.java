@@ -22,11 +22,13 @@ public class MasterDataCutoverStatusService {
         boolean productReferenceShadowEnabled,
         boolean productReferencePrimaryReadEnabled,
         boolean productReferencesReady,
+        boolean productReferenceParityPassed,
         boolean canonicalReadEnabled,
         boolean readyToRetireLegacyPersistence,
         MasterDataMigrationService.ReadinessReport readiness,
         MasterDataParityService.ParityReport parity,
-        ProductMasterDataReferenceBackfillService.ReadinessReport productReferences
+        ProductMasterDataReferenceBackfillService.ReadinessReport productReferences,
+        ProductMasterDataReferenceParityService.ParityReport productReferenceParity
     ) {}
 
     private final MasterDataMigrationService migration;
@@ -35,6 +37,7 @@ public class MasterDataCutoverStatusService {
     private final ProductMasterDataReferenceSynchronizer productReferences;
     private final ProductCanonicalScopeResolver productCanonicalScope;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
+    private final ProductMasterDataReferenceParityService productReferenceParity;
     private final boolean canonicalReadEnabled;
 
     public MasterDataCutoverStatusService(
@@ -44,6 +47,7 @@ public class MasterDataCutoverStatusService {
             ProductMasterDataReferenceSynchronizer productReferences,
             ProductCanonicalScopeResolver productCanonicalScope,
             ProductMasterDataReferenceBackfillService productReferenceBackfill,
+            ProductMasterDataReferenceParityService productReferenceParity,
             @Value("${comandos.master-data.canonical-read.enabled:false}")
             boolean canonicalReadEnabled) {
         this.migration = migration;
@@ -52,6 +56,7 @@ public class MasterDataCutoverStatusService {
         this.productReferences = productReferences;
         this.productCanonicalScope = productCanonicalScope;
         this.productReferenceBackfill = productReferenceBackfill;
+        this.productReferenceParity = productReferenceParity;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
@@ -64,12 +69,14 @@ public class MasterDataCutoverStatusService {
         var parityReport = parity.verify();
 
         var productReferenceReport = productReferenceBackfill.readiness();
+        var productReferenceParityReport = productReferenceParity.verify();
         boolean readinessPassed = readinessReport.ready();
         boolean parityPassed = parityReport.consistent();
         boolean shadowWriteEnabled = mirror.enabled();
         boolean productReferenceShadowEnabled = productReferences.enabled();
         boolean productReferencePrimaryReadEnabled = productCanonicalScope.enabled();
         boolean productReferencesReady = productReferenceReport.ready();
+        boolean productReferenceParityPassed = productReferenceParityReport.consistent();
 
         return new CutoverStatus(
             readinessPassed,
@@ -78,6 +85,7 @@ public class MasterDataCutoverStatusService {
             productReferenceShadowEnabled,
             productReferencePrimaryReadEnabled,
             productReferencesReady,
+            productReferenceParityPassed,
             canonicalReadEnabled,
             readinessPassed
                 && parityPassed
@@ -85,10 +93,12 @@ public class MasterDataCutoverStatusService {
                 && productReferenceShadowEnabled
                 && productReferencePrimaryReadEnabled
                 && productReferencesReady
+                && productReferenceParityPassed
                 && canonicalReadEnabled,
             readinessReport,
             parityReport,
-            productReferenceReport
+            productReferenceReport,
+            productReferenceParityReport
         );
     }
 
@@ -104,10 +114,12 @@ public class MasterDataCutoverStatusService {
                     + ", productReferenceShadowEnabled=" + status.productReferenceShadowEnabled()
                     + ", productReferencePrimaryReadEnabled=" + status.productReferencePrimaryReadEnabled()
                     + ", productReferencesReady=" + status.productReferencesReady()
+                    + ", productReferenceParityPassed=" + status.productReferenceParityPassed()
                     + ", canonicalReadEnabled=" + status.canonicalReadEnabled()
                     + ", readinessIssues=" + status.readiness().issues()
                     + ", parityMismatches=" + status.parity().mismatches()
                     + ", productReferenceIncomplete=" + status.productReferences().incompleteByEntity()
+                    + ", productReferenceMismatches=" + status.productReferenceParity().mismatches()
             );
         }
 
