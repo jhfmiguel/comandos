@@ -9,12 +9,18 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_sale")
 public class InventorySale extends CoreEntity {
-    @ManyToOne(optional = false) @JoinColumn(name = "organization_id", nullable = false)
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
+    @Column(name = "unit_id")
+    public Long unitLegacyId;
+    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false)
     public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id")
+    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false)
     public OrganizationalUnit unit;
     @Column public String unitName;
-    @ManyToOne(optional = false) @JoinColumn(name = "buyer_id", nullable = false)
+    @Column(name = "buyer_id", nullable = false)
+    public Long buyerLegacyId;
+    @ManyToOne @JoinColumn(name = "buyer_id", insertable = false, updatable = false)
     public Person buyer;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
