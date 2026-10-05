@@ -1,7 +1,5 @@
 package com.comandos.purchase.model;
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.Person;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,9 +11,6 @@ public class Purchase extends CoreEntity {
  @Column(name="buyer_organization_id",nullable=false) public Long buyerOrganizationLegacyId;
  @Column(name="supplier_organization_id") public Long supplierOrganizationLegacyId;
  @Column(name="origin_person_id",nullable=false) public Long originPersonLegacyId;
- @ManyToOne @JoinColumn(name="buyer_organization_id",insertable=false,updatable=false) public Organization buyerOrganization;
- @ManyToOne @JoinColumn(name="supplier_organization_id",insertable=false,updatable=false) public Organization supplierOrganization;
- @ManyToOne @JoinColumn(name="origin_person_id",insertable=false,updatable=false) public Person originPerson;
  @Column(name="buyer_organization_canonical_id",length=128) public String buyerOrganizationCanonicalId;
  @Column(name="supplier_organization_canonical_id",length=128) public String supplierOrganizationCanonicalId;
  @Column(name="origin_person_canonical_id",length=128) public String originPersonCanonicalId;
