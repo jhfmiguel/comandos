@@ -4,7 +4,6 @@ import com.fariamiguel.security.api.CurrentActor;
 import com.fariamiguel.workflow.api.WorkflowDefinition;
 import com.fariamiguel.workflow.api.WorkflowEngine;
 import com.fariamiguel.workflow.api.WorkflowTransition;
-import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,12 +34,6 @@ public class WorkflowPolicy {
 
     private static final Map<String, Rule> RULES = buildRules();
     private static final Set<String> TERMINAL = Set.of(CONCLUDED, CANCELLED);
-    private static final Map<String, String> EXPECTED_PREVIOUS = Map.of(
-        ANALYZED, REQUESTED,
-        AUTHORIZED, ANALYZED,
-        EXECUTED, AUTHORIZED,
-        CONCLUDED, EXECUTED
-    );
     private static final WorkflowDefinition SHARED_DEFINITION = new WorkflowDefinition(
         "COMANDOS_APPROVAL",
         REQUESTED,
@@ -57,7 +50,11 @@ public class WorkflowPolicy {
         )
     );
 
-    private final WorkflowEngine engine = new DefaultWorkflowEngine();
+    private final WorkflowEngine engine;
+
+    public WorkflowPolicy(WorkflowEngine engine) {
+        this.engine = engine;
+    }
 
     public Rule rule(String operationType) {
         String type = normalize(operationType);
@@ -88,10 +85,6 @@ public class WorkflowPolicy {
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Unsupported workflow state: " + targetStatus);
         };
-    }
-
-    public String expectedPrevious(String targetStatus) {
-        return EXPECTED_PREVIOUS.get(targetStatus);
     }
 
     public void requireTransition(String fromStatus, String targetStatus) {
