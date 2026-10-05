@@ -65,10 +65,10 @@ public class InventorySalesService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
-            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organization.id")
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "e.location.unitCanonicalId" : "e.location.unit.id")
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unitLegacyId")
                 + " = :unit")
             + (assets ? " and e.status = 'AVAILABLE'" : " and e.available > 0")
             + " and (" + expiry + " is null or " + expiry + " >= :today)"
@@ -356,8 +356,8 @@ public class InventorySalesService {
             }
             return;
         }
-        if (!location.organization.id.equals(organizationId)) bad("All stock must belong to the selected organization.");
-        if (unitId != null && (location.unit == null || !unitId.equals(location.unit.id)))
+        if (!location.organizationLegacyId.equals(organizationId)) bad("All stock must belong to the selected organization.");
+        if (unitId != null && (location.unit == null || !unitId.equals(location.unitLegacyId)))
             bad("All stock must belong to the selected unit.");
     }
     private <T> T locked(Class<T> type, Long id) {
