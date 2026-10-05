@@ -223,7 +223,7 @@ public class WorkflowService implements WorkflowGateway {
     }
 
     private CurrentActor requiredActor() {
-        CurrentActor actor = actors.current();
+        CurrentActor actor = actors.currentActor();
         if (actor == null || !actor.authenticated() || blank(actor.displayName())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "An authenticated and identified actor is required for workflow transitions.");
