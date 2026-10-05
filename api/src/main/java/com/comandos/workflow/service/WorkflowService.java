@@ -4,6 +4,7 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.security.service.AccessPolicy;
 import com.fariamiguel.security.api.CurrentActor;
 import com.fariamiguel.security.api.CurrentActorProvider;
@@ -28,23 +29,26 @@ public class WorkflowService implements SensitiveWorkflowGateway {
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.actors = actors;
         this.policy = policy;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy) {
-        this(em, access, audit, actors, policy, null);
+        this(em, access, audit, actors, policy, null, null);
     }
 
     @Transactional
@@ -78,7 +82,11 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         w.requestedById = actorId(actor);
         w.requestedByLogin = actor.displayName();
         if (masterDataReferences != null) {
-            masterDataReferences.synchronize(w);
+            if (canonicalScope != null && canonicalScope.enabled()) {
+                masterDataReferences.synchronizeForBackfill(w);
+            } else {
+                masterDataReferences.synchronize(w);
+            }
         }
         em.persist(w);
         em.flush();
@@ -146,15 +154,22 @@ public class WorkflowService implements SensitiveWorkflowGateway {
 
     public PlatformPage<WorkflowView> list(long org, Long unit, String status, int page) {
         access.requireScope("inventory/assets", "READ", org, unit);
-        String where = " where w.organization.id=:o" + (unit == null ? "" : " and w.unit.id=:u")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(org, unit) : null;
+        String where = " where "
+            + (canonical ? "w.organizationCanonicalId" : "w.organization.id")
+            + "=:o"
+            + (unit == null ? "" : " and "
+                + (canonical ? "w.unitCanonicalId" : "w.unit.id")
+                + "=:u")
             + (blank(status) ? "" : " and w.status=:s");
         var q = em.createQuery("select w from ApprovalWorkflow w" + where + " order by w.id desc", ApprovalWorkflow.class);
         var c = em.createQuery("select count(w) from ApprovalWorkflow w" + where, Long.class);
-        q.setParameter("o", org);
-        c.setParameter("o", org);
+        q.setParameter("o", canonical ? scope.organizationId() : org);
+        c.setParameter("o", canonical ? scope.organizationId() : org);
         if (unit != null) {
-            q.setParameter("u", unit);
-            c.setParameter("u", unit);
+            q.setParameter("u", canonical ? scope.unitId() : unit);
+            c.setParameter("u", canonical ? scope.unitId() : unit);
         }
         if (!blank(status)) {
             String normalizedStatus = WorkflowPolicy.normalizeStatus(status);
