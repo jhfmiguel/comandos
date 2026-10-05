@@ -84,7 +84,9 @@
     "audit",
     "workflow",
     "integrations",
-    "security"
+    "security",
+    "identity",
+    "organization"
   ],
   "rules": [
     "COMANDOS owns only product-specific public/private security capabilities.",
@@ -94,6 +96,14 @@
     "Compatibility packages may adapt legacy COMANDOS callers, but cannot introduce new generic domain behavior.",
     "Purchasing, sales, finance, contracts, catalog and inventory primitives must use Faria Miguel canonical contracts; COMANDOS may add only security-domain overlays.",
     "Documents and notifications consume Faria Miguel contracts directly and cannot reintroduce COMANDOS-owned contracts.",
-    "Security actor, access-denied, resource authorization, audit sink and workflow transition engine consume Faria Miguel contracts directly."
+    "Security actor, access-denied, resource authorization, audit sink and workflow transition engine consume Faria Miguel contracts directly.",
+    "Master data migration must expose Faria Miguel canonical Person, Organization, OrganizationalUnit and IdentityDirectory contracts before legacy persistence is removed.",
+    "Legacy COMANDOS master-data entities are compatibility persistence only and cannot become new public contracts."
+  ],
+  "activeMigrationBridges": [
+    "legacy-person-to-faria-enterprise-person",
+    "legacy-organization-to-faria-enterprise-organization",
+    "legacy-unit-to-faria-tenancy-unit",
+    "legacy-identity-to-faria-identity-directory"
   ]
 }
