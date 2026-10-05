@@ -23,6 +23,7 @@ public class MasterDataCutoverStatusService {
         boolean productReferencePrimaryReadEnabled,
         boolean productReferencesReady,
         boolean productReferenceParityPassed,
+        boolean legacyProductAssociationsRetired,
         boolean canonicalReadEnabled,
         boolean readyToRetireLegacyPersistence,
         MasterDataMigrationService.ReadinessReport readiness,
@@ -38,6 +39,7 @@ public class MasterDataCutoverStatusService {
     private final ProductCanonicalScopeResolver productCanonicalScope;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
     private final ProductMasterDataReferenceParityService productReferenceParity;
+    private final boolean legacyProductAssociationsRetired;
     private final boolean canonicalReadEnabled;
 
     public MasterDataCutoverStatusService(
@@ -48,6 +50,8 @@ public class MasterDataCutoverStatusService {
             ProductCanonicalScopeResolver productCanonicalScope,
             ProductMasterDataReferenceBackfillService productReferenceBackfill,
             ProductMasterDataReferenceParityService productReferenceParity,
+            @Value("${comandos.master-data.legacy-product-associations-retired:false}")
+            boolean legacyProductAssociationsRetired,
             @Value("${comandos.master-data.canonical-read.enabled:false}")
             boolean canonicalReadEnabled) {
         this.migration = migration;
@@ -57,6 +61,7 @@ public class MasterDataCutoverStatusService {
         this.productCanonicalScope = productCanonicalScope;
         this.productReferenceBackfill = productReferenceBackfill;
         this.productReferenceParity = productReferenceParity;
+        this.legacyProductAssociationsRetired = legacyProductAssociationsRetired;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
@@ -86,6 +91,7 @@ public class MasterDataCutoverStatusService {
             productReferencePrimaryReadEnabled,
             productReferencesReady,
             productReferenceParityPassed,
+            legacyProductAssociationsRetired,
             canonicalReadEnabled,
             readinessPassed
                 && parityPassed
@@ -94,6 +100,7 @@ public class MasterDataCutoverStatusService {
                 && productReferencePrimaryReadEnabled
                 && productReferencesReady
                 && productReferenceParityPassed
+                && legacyProductAssociationsRetired
                 && canonicalReadEnabled,
             readinessReport,
             parityReport,
@@ -115,6 +122,7 @@ public class MasterDataCutoverStatusService {
                     + ", productReferencePrimaryReadEnabled=" + status.productReferencePrimaryReadEnabled()
                     + ", productReferencesReady=" + status.productReferencesReady()
                     + ", productReferenceParityPassed=" + status.productReferenceParityPassed()
+                    + ", legacyProductAssociationsRetired=" + status.legacyProductAssociationsRetired()
                     + ", canonicalReadEnabled=" + status.canonicalReadEnabled()
                     + ", readinessIssues=" + status.readiness().issues()
                     + ", parityMismatches=" + status.parity().mismatches()
