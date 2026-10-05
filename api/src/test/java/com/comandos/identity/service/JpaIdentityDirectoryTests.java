@@ -20,7 +20,6 @@ class JpaIdentityDirectoryTests {
 
         var directory = new JpaIdentityDirectory(em);
 
-        assertFalse(directory.findPerson(99L).isPresent());
         assertFalse(directory.find("COMANDOS", "99").isPresent());
     }
 
@@ -40,13 +39,7 @@ class JpaIdentityDirectoryTests {
         when(em.find(Person.class, 7L)).thenReturn(person);
 
         var directory = new JpaIdentityDirectory(em);
-        var legacy = directory.findPerson(7L).orElseThrow();
         var canonical = directory.find("comandos", "7").orElseThrow();
-
-        assertEquals(7L, legacy.id());
-        assertEquals("Example Person", legacy.fullName());
-        assertEquals("person@example.com", legacy.email());
-        assertTrue(legacy.active());
 
         assertEquals("COMANDOS", canonical.provider());
         assertEquals("7", canonical.subject());
