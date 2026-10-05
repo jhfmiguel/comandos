@@ -71,7 +71,7 @@ class CanonicalContactMapperTests {
         assertTrue(canonicalAddress.primary());
 
         assertEquals("+55", canonicalPhone.countryCode());
-        assertEquals("6299999999", canonicalPhone.number());
+        assertEquals("62999999999", canonicalPhone.number());
         assertTrue(canonicalPhone.whatsapp());
         assertTrue(canonicalPhone.primary());
 
