@@ -2,6 +2,7 @@ package com.comandos.purchase.service;
 
 import com.comandos.core.model.Organization;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.purchase.dto.EquipmentReceivingContract;
 import com.comandos.purchase.model.*;
@@ -26,6 +27,7 @@ public class EquipmentReceivingService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public EquipmentReceivingService(
@@ -36,7 +38,8 @@ public class EquipmentReceivingService {
         PurchaseRepository purchaseRepository,
         PurchaseItemRepository purchaseItemRepository,
         EntityManager em,
-        ProductMasterDataReferenceSynchronizer masterDataReferences
+        ProductMasterDataReferenceSynchronizer masterDataReferences,
+        ProductCanonicalScopeResolver canonicalScope
     ) {
         this.receivingRepository = receivingRepository;
         this.itemRepository = itemRepository;
@@ -46,6 +49,7 @@ public class EquipmentReceivingService {
         this.purchaseItemRepository = purchaseItemRepository;
         this.em = em;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
@@ -66,6 +70,7 @@ public class EquipmentReceivingService {
             purchaseRepository,
             purchaseItemRepository,
             em,
+            null,
             null
         );
     }
@@ -141,7 +146,11 @@ public class EquipmentReceivingService {
         receiving.notes = clean(request.notes());
         receiving.status = ReceivingStatus.RECEIVED;
         if (masterDataReferences != null) {
-            masterDataReferences.synchronize(receiving);
+            if (canonicalScope != null && canonicalScope.enabled()) {
+                masterDataReferences.synchronizeForBackfill(receiving);
+            } else {
+                masterDataReferences.synchronize(receiving);
+            }
         }
         receiving = receivingRepository.save(receiving);
 
