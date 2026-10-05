@@ -92,10 +92,9 @@ public final class CanonicalPartyRoleMapper {
     public static LifecycleStatus status(String legacyStatus, java.time.LocalDate endDate) {
         String token = normalize(legacyStatus);
 
-        if (endDate != null && endDate.isBefore(java.time.LocalDate.now())) {
-            return LifecycleStatus.CLOSED;
+        if (token == null) {
+            return endDate == null ? LifecycleStatus.ACTIVE : LifecycleStatus.CLOSED;
         }
-        if (token == null) return LifecycleStatus.ACTIVE;
 
         return switch (token) {
             case "ACTIVE", "ATIVO", "ATIVA" -> LifecycleStatus.ACTIVE;
