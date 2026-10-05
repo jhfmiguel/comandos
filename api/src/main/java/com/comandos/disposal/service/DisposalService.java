@@ -95,12 +95,15 @@ public class DisposalService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different disposal.");
             return view(existing.get());
         }
-        boolean duplicate = !em.createQuery("select p.id from DisposalProcess p where p.organization.id=:organization and p.processNumber=:number", Long.class)
+        boolean duplicate = !em.createQuery("select p.id from DisposalProcess p where p.organizationLegacyId=:organization and p.processNumber=:number", Long.class)
             .setParameter("organization", organization.id).setParameter("number", request.processNumber().trim()).setMaxResults(1).getResultList().isEmpty();
         if (duplicate) conflict("A disposal process with this number already exists in the organization.");
 
         DisposalProcess process = new DisposalProcess();
-        process.organization = organization; process.unit = unit; process.organizationName = organization.name;
+        process.organizationLegacyId = organization.id; process.unitLegacyId = unit == null ? null : unit.id;
+        process.organizationCanonicalId = canonicalScope.organization(organization.id);
+        process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        process.organizationName = organization.name;
         process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
@@ -129,10 +132,10 @@ public class DisposalService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from DisposalProcess p where "
-            + (canonical ? "p.organizationCanonicalId" : "p.organization.id")
+            + (canonical ? "p.organizationCanonicalId" : "p.organizationLegacyId")
             + "=:organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "p.unitCanonicalId" : "p.unit.id")
+                + (canonical ? "p.unitCanonicalId" : "p.unitLegacyId")
                 + "=:unit");
         var query = em.createQuery("select p" + from + " order by p.id desc", DisposalProcess.class);
         var count = em.createQuery("select count(p)" + from, Long.class);
@@ -184,8 +187,8 @@ public class DisposalService {
             .setParameter("id", process.id).getResultList().stream().map(item -> new LineView(item.id,
                 item.asset == null ? null : item.asset.id, item.lot == null ? null : item.lot.id, item.modelName, item.sku,
                 item.stockCode, item.locationName, item.unitOfMeasure, decimal(item.quantity), item.movement.id)).toList();
-        return new DisposalView(process.id, process.organization.id, process.organizationName,
-            process.unit == null ? null : process.unit.id, process.unitName, process.processNumber, process.reason,
+        return new DisposalView(process.id, process.organizationLegacyId, process.organizationName,
+            process.unitLegacyId, process.unitName, process.processNumber, process.reason,
             process.status, process.finalizedAt.toString(), process.finalizedById, process.finalizedByLogin,
             destruction.map(value -> value.method).orElse(null), destruction.map(value -> value.destroyedAt.toString()).orElse(null),
             destruction.map(value -> value.certificate).orElse(null), items);
@@ -193,11 +196,20 @@ public class DisposalService {
 
     private void scope(StockLocation location, DisposalProcess process) {
         if (!Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
-        access.requireScope("disposals", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
-        access.requireScope("disposals", "APPROVE", location.organization.id, location.unit == null ? null : location.unit.id);
-        if (!location.organization.id.equals(process.organization.id) || process.unit != null
-                && (location.unit == null || !location.unit.id.equals(process.unit.id)))
+        access.requireScope("disposals", "CREATE", process.organizationLegacyId, process.unitLegacyId);
+        access.requireScope("disposals", "APPROVE", process.organizationLegacyId, process.unitLegacyId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            if (!location.matchesCanonicalScope(
+                    process.organizationCanonicalId,
+                    process.unitCanonicalId)) {
+                bad("Every item must belong to the selected organization and unit.");
+            }
+        } else if (!location.organization.id.equals(process.organizationLegacyId)
+                || process.unitLegacyId != null
+                    && (location.unit == null
+                        || !location.unit.id.equals(process.unitLegacyId))) {
             bad("Every item must belong to the selected organization and unit.");
+        }
         // Opening a count locks the same organization, so its snapshot cannot race this check.
         long activeCounts = em.createQuery("select count(c) from InventoryCount c where c.location.id=:location"
                 + " and c.status.code in ('OPEN','COUNTED')", Long.class)
