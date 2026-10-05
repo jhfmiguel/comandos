@@ -128,6 +128,10 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataParityS
   || fail "legacy-to-canonical master-data parity verifier is required during persistence migration"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataMigrationConfigurationGuard.java" \
   || fail "master-data migration configuration guard is required during read cutover"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/model/MasterDataReference.java" \
+  || fail "durable legacy-to-canonical master-data crosswalk entity is required"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java" \
+  || fail "durable legacy-to-canonical master-data crosswalk service is required"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
@@ -166,6 +170,8 @@ grep -q '"legacy-master-data-canonical-delete-shadow"' "$MANIFEST" \
   || fail "master-data delete-shadow bridge is not declared"
 grep -q '"canonical-master-data-controlled-read-cutover"' "$MANIFEST" \
   || fail "canonical master-data read-cutover bridge is not declared"
+grep -q '"legacy-master-data-reference-crosswalk"' "$MANIFEST" \
+  || fail "master-data reference crosswalk bridge is not declared"
 
 grep -q 'masterDataMirror.delete(entity)' \
   "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java" \
@@ -258,7 +264,7 @@ printf 'People, organization and unit reads are routed through CanonicalCoreRead
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Local identity/organization APIs are removed; canonical Faria Miguel contracts are mandatory.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
-printf 'Master-data persistence migration has guarded readiness, idempotent backfill, zero-mismatch parity, CREATE/UPDATE/DELETE shadow-write and controlled canonical reads.\n'
+printf 'Master-data persistence migration has guarded readiness, idempotent backfill, zero-mismatch parity, CREATE/UPDATE/DELETE shadow-write, controlled canonical reads and a durable FK crosswalk.\n'
 printf 'Remaining local core code is restricted to legacy master-data/admin compatibility during persistence cutover.\n'
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
