@@ -357,7 +357,7 @@ public class InventorySalesService {
             return;
         }
         if (!location.organizationLegacyId.equals(organizationId)) bad("All stock must belong to the selected organization.");
-        if (unitId != null && (location.unit == null || !unitId.equals(location.unitLegacyId)))
+        if (unitId != null && (location.unitLegacyId == null || !unitId.equals(location.unitLegacyId)))
             bad("All stock must belong to the selected unit.");
     }
     private <T> T locked(Class<T> type, Long id) {
