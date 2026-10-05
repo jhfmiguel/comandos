@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ProductMasterDataRetirementManifestTest {
 
     private static final Set<String> EXPECTED_PRIMARY =
-        Set.of("AmmunitionConsumption");
+        Set.of();
 
     @Test
     void onlyKnownFinalBridgesRemainPrimary() throws Exception {
@@ -35,7 +35,7 @@ class ProductMasterDataRetirementManifestTest {
             );
         }
 
-        assertEquals(17, retired);
+        assertEquals(18, retired);
         assertEquals(EXPECTED_PRIMARY, primary);
     }
 
