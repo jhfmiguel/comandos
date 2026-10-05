@@ -324,8 +324,8 @@ class ProductMasterDataReferenceSynchronizerTest {
             new ProductMasterDataReferenceSynchronizer(references, true);
 
         WorkOrder workOrder = new WorkOrder();
-        workOrder.organization = organization;
-        workOrder.unit = unit;
+        workOrder.organizationLegacyId = organization.id;
+        workOrder.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(workOrder));
         assertEquals("ops-org", workOrder.organizationCanonicalId);
         assertEquals("ops-unit", workOrder.unitCanonicalId);
