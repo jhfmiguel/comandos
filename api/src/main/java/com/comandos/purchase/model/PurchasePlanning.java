@@ -1,7 +1,6 @@
 package com.comandos.purchase.model;
 
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,9 +9,8 @@ import java.time.LocalDate;
 @Table(name = "erp_purchase_planning")
 public class PurchasePlanning extends CoreEntity {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
 
     @Column(name = "organization_canonical_id", length = 128)
     public String organizationCanonicalId;
