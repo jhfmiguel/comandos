@@ -102,8 +102,8 @@ public class ProductMasterDataReferenceParityService {
             ref("destinationUnit.id", "destinationUnitCanonicalId", MasterDataReferenceService.UNIT)
         )),
         new Spec(WorkOrder.class, List.of(
-            ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unit.id", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
         )),
         new Spec(ApprovalWorkflow.class, List.of(
             ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
