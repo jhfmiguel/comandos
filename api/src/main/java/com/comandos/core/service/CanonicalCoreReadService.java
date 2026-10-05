@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,12 +52,25 @@ public class CanonicalCoreReadService {
 
     private final EntityManager entityManager;
     private final AccessPolicy access;
+    private final CanonicalMasterDataDirectory masterData;
 
+    @Autowired
     public CanonicalCoreReadService(
+            EntityManager entityManager,
+            AccessPolicy access,
+            CanonicalMasterDataDirectory masterData) {
+        this.entityManager = entityManager;
+        this.access = access;
+        this.masterData = masterData;
+    }
+
+    @Deprecated
+    CanonicalCoreReadService(
             EntityManager entityManager,
             AccessPolicy access) {
         this.entityManager = entityManager;
         this.access = access;
+        this.masterData = null;
     }
 
     public boolean supports(String resource) {
@@ -232,7 +246,12 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> personView(Person source) {
-        var canonical = CanonicalMasterDataMapper.person(source, TENANT);
+        var canonical = masterData == null
+            ? CanonicalMasterDataMapper.person(source, TENANT)
+            : masterData.findPerson(source.id, TENANT)
+                .orElseThrow(() -> new IllegalStateException(
+                    "Canonical person is missing for legacy id " + source.id
+                ));
         Map<String, Object> result = metadata(source, canonical.name());
 
         result.put(
@@ -265,11 +284,16 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> organizationView(Organization source) {
-        var canonical = CanonicalMasterDataMapper.organization(
-            source,
-            TENANT,
-            CompanyId.of("comandos:organization:" + source.id)
-        );
+        var canonical = masterData == null
+            ? CanonicalMasterDataMapper.organization(
+                source,
+                TENANT,
+                CompanyId.of("comandos:organization:" + source.id)
+            )
+            : masterData.findOrganization(source.id, TENANT)
+                .orElseThrow(() -> new IllegalStateException(
+                    "Canonical organization is missing for legacy id " + source.id
+                ));
         Map<String, Object> result = metadata(source, canonical.legalName());
 
         result.put("natureId", source.nature == null ? null : source.nature.id);
@@ -306,11 +330,17 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> unitView(OrganizationalUnit source) {
-        var canonical = CanonicalMasterDataMapper.unit(
-            source,
-            TENANT,
-            CompanyId.of("comandos:organization:" + source.organization.id)
-        );
+        var canonical = masterData == null
+            ? CanonicalMasterDataMapper.unit(
+                source,
+                TENANT,
+                CompanyId.of("comandos:organization:" + source.organization.id)
+            )
+            : masterData.findUnit(source.id, TENANT)
+                .orElseThrow(() -> new IllegalStateException(
+                    "Canonical organizational unit is missing for legacy id "
+                        + source.id
+                ));
         Map<String, Object> result = metadata(source, canonical.name());
 
         result.put("organizationId", source.organization.id);
