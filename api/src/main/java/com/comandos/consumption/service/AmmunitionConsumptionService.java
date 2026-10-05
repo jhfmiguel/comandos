@@ -4,6 +4,7 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.consumption.dto.AmmunitionConsumptionContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.*;
@@ -24,8 +25,17 @@ public class AmmunitionConsumptionService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    public AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -80,7 +90,7 @@ public class AmmunitionConsumptionService {
         consumption.operationTraining = request.operationTraining() == null || request.operationTraining().isBlank() ? null : request.operationTraining().trim();
         consumption.consumedAt = now;
         consumption.requestId = request.requestId(); consumption.requestFingerprint = fingerprint;
-        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); em.persist(consumption);
+        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); if (masterDataReferences != null) masterDataReferences.synchronize(consumption); em.persist(consumption);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
             var balance = locked(StockBalance.class, line.balanceId());
