@@ -3,6 +3,7 @@ package com.comandos.inventory.service;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.MasterDataReferenceService;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.InventoryCountResultType;
@@ -30,6 +31,8 @@ public class InventoryService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final MasterDataReferenceService canonicalReferences;
+    private final boolean canonicalProductReferenceReadEnabled;
 
     @org.springframework.beans.factory.annotation.Autowired
     public InventoryService(
@@ -37,12 +40,27 @@ public class InventoryService {
             InventoryRules rules,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            MasterDataReferenceService canonicalReferences,
+            @org.springframework.beans.factory.annotation.Value(
+                "${comandos.master-data.product-reference-primary-read.enabled:false}"
+            ) boolean canonicalProductReferenceReadEnabled) {
         this.em = em;
         this.rules = rules;
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
+        this.canonicalReferences = canonicalReferences;
+        this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
+    }
+
+    InventoryService(
+            EntityManager em,
+            InventoryRules rules,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this(em, rules, access, audit, masterDataReferences, null, false);
     }
 
     /**
@@ -51,7 +69,7 @@ public class InventoryService {
      */
     @Deprecated
     InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) {
-        this(em, rules, access, audit, null);
+        this(em, rules, access, audit, null, null, false);
     }
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
@@ -263,13 +281,19 @@ public class InventoryService {
         String organizationPath =
             switch (resource) {
                 case "locations" ->
-                    "e.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.organizationCanonicalId"
+                        : "e.organization.id";
                 case "assets",
                      "balances",
                      "movements" ->
-                    "e.location.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.location.organizationCanonicalId"
+                        : "e.location.organization.id";
                 case "regulatory-controls" ->
-                    "e.asset.location.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.asset.location.organizationCanonicalId"
+                        : "e.asset.location.organization.id";
                 case "expirations",
                      "certifications",
                      "recalls" ->
@@ -281,7 +305,9 @@ public class InventoryService {
                 case "equipment-set-components" ->
                     "e.equipmentSet.organization.id";
                 case "lots" ->
-                    "e.openingLocation.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.openingLocation.organizationCanonicalId"
+                        : "e.openingLocation.organization.id";
                 default ->
                     null;
             };
@@ -291,8 +317,26 @@ public class InventoryService {
             organizationPath != null;
 
         if (scoped) {
-            clauses.add(organizationPath + " = :organizationId");
-            parameters.put("organizationId", organizationId);
+            if (canonicalProductReferenceReadEnabled
+                    && usesCanonicalLocationScope(resource)) {
+                if (canonicalReferences == null) {
+                    throw new IllegalStateException(
+                        "Canonical product-reference reads require MasterDataReferenceService."
+                    );
+                }
+                String canonicalOrganizationId = canonicalReferences.resolveCanonicalId(
+                        MasterDataReferenceService.ORGANIZATION,
+                        organizationId)
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Canonical organization reference is missing for legacy id "
+                            + organizationId
+                    ));
+                clauses.add(organizationPath + " = :organizationCanonicalId");
+                parameters.put("organizationCanonicalId", canonicalOrganizationId);
+            } else {
+                clauses.add(organizationPath + " = :organizationId");
+                parameters.put("organizationId", organizationId);
+            }
         }
 
         clauses.add(
@@ -337,6 +381,17 @@ public class InventoryService {
             page,
             size
         );
+    }
+
+    private static boolean usesCanonicalLocationScope(String resource) {
+        return Set.of(
+            "locations",
+            "assets",
+            "balances",
+            "movements",
+            "regulatory-controls",
+            "lots"
+        ).contains(resource);
     }
 
     private static String likeTerm(String raw) {
