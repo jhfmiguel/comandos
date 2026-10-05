@@ -76,7 +76,7 @@ public class ProductMasterDataReferenceParityService {
             ref("originPerson.id", "originPersonCanonicalId", MasterDataReferenceService.PERSON)
         )),
         new Spec(EquipmentReceiving.class, List.of(
-            ref("receivingOrganization.id", "receivingOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+            ref("receivingOrganizationLegacyId", "receivingOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
         )),
         new Spec(Custody.class, List.of(
             ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
