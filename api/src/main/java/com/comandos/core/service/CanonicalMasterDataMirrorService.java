@@ -94,16 +94,12 @@ public class CanonicalMasterDataMirrorService {
         }
 
         if (entity instanceof PersonRoleAssignment assignment) {
-            return CanonicalPartyRoleMapper.assignment(
-                    assignment,
-                    TENANT,
-                    roleData(assignment.id)
-                )
-                .map(role -> {
-                    roles.save(role);
-                    return true;
-                })
-                .orElse(false);
+            return mirrorRoleAssignment(assignment);
+        }
+
+        if (entity instanceof RoleData roleData) {
+            return roleData.personRole != null
+                && mirrorRoleAssignment(roleData.personRole);
         }
 
         if (entity instanceof PersonCredential credential) {
@@ -124,6 +120,19 @@ public class CanonicalMasterDataMirrorService {
         }
 
         return false;
+    }
+
+    private boolean mirrorRoleAssignment(PersonRoleAssignment assignment) {
+        return CanonicalPartyRoleMapper.assignment(
+                    assignment,
+                    TENANT,
+                    roleData(assignment.id)
+                )
+                .map(role -> {
+                    roles.save(role);
+                    return true;
+                })
+                .orElse(false);
     }
 
     private Map<String, String> roleData(Long assignmentId) {
