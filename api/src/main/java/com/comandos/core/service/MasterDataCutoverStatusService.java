@@ -42,6 +42,10 @@ public class MasterDataCutoverStatusService {
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
+    public boolean canonicalReadEnabled() {
+        return canonicalReadEnabled;
+    }
+
     public CutoverStatus status() {
         var readinessReport = migration.readiness();
         var parityReport = parity.verify();
