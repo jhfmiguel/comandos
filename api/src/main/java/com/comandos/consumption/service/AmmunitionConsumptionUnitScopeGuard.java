@@ -11,7 +11,7 @@ public class AmmunitionConsumptionUnitScopeGuard implements UnitScopeGuard {
     private final EntityManager em;
     public AmmunitionConsumptionUnitScopeGuard(EntityManager em) { this.em = em; }
     @Override public void validateOrganizationChange(long unitId, long organizationId) {
-        long count = em.createQuery("select count(c) from AmmunitionConsumption c where c.unit.id = :unit and c.organization.id <> :organization", Long.class)
+        long count = em.createQuery("select count(c) from AmmunitionConsumption c where c.unitLegacyId = :unit and c.organizationLegacyId <> :organization", Long.class)
             .setParameter("unit", unitId).setParameter("organization", organizationId).getSingleResult();
         if (count > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "The unit has ammunition consumption records in its current organization.");
