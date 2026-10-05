@@ -36,7 +36,8 @@
     "contracts": "faria-miguel-enterprise:contracts",
     "products": "faria-miguel-enterprise:catalog",
     "inventory": "faria-miguel-enterprise:inventory",
-    "commerce": "faria-miguel-commerce"
+    "commerce": "faria-miguel-commerce",
+    "professional-qualifications": "faria-miguel-enterprise"
   },
   "completedDirectCutovers": [
     "id-generation",
@@ -102,7 +103,8 @@
     "Legacy person contacts must be projected through the canonical Faria Miguel contact contracts during the persistence migration.",
     "Reusable person roles CUSTOMER/SUPPLIER/PARTNER/SERVICE_PROVIDER must project through Faria Miguel PartyRoleAssignment; security-specific roles remain COMANDOS-owned.",
     "Legacy person credentials must project through Faria Miguel PartyDocument; product-specific credential metadata is preserved in attributes.",
-    "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access."
+    "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access.",
+    "Professional qualifications are canonically owned by Faria Miguel Enterprise; COMANDOS keeps only legacy persistence and security-domain overlays during migration."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
@@ -112,6 +114,7 @@
     "legacy-person-contacts-to-faria-enterprise-contacts",
     "legacy-person-roles-to-faria-party-roles",
     "legacy-person-credentials-to-faria-party-documents",
-    "legacy-party-snapshot-to-faria-party-snapshot"
+    "legacy-party-snapshot-to-faria-party-snapshot",
+    "legacy-person-qualifications-to-faria-professional-qualifications"
   ]
 }
