@@ -19,26 +19,33 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     private final MasterDataMigrationService migration;
     private final MasterDataParityService parity;
     private final MasterDataCutoverStatusService cutoverStatus;
+    private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
     private final boolean readinessOnStartup;
     private final boolean backfillOnStartup;
     private final boolean parityOnStartup;
+    private final boolean productReferenceBackfillOnStartup;
 
     public MasterDataMigrationRunner(
             MasterDataMigrationService migration,
             MasterDataParityService parity,
             MasterDataCutoverStatusService cutoverStatus,
+            ProductMasterDataReferenceBackfillService productReferenceBackfill,
             @Value("${comandos.master-data.readiness-on-startup:false}")
             boolean readinessOnStartup,
             @Value("${comandos.master-data.backfill-on-startup:false}")
             boolean backfillOnStartup,
             @Value("${comandos.master-data.parity-on-startup:false}")
-            boolean parityOnStartup) {
+            boolean parityOnStartup,
+            @Value("${comandos.master-data.product-reference-backfill-on-startup:false}")
+            boolean productReferenceBackfillOnStartup) {
         this.migration = migration;
         this.parity = parity;
         this.cutoverStatus = cutoverStatus;
+        this.productReferenceBackfill = productReferenceBackfill;
         this.readinessOnStartup = readinessOnStartup;
         this.backfillOnStartup = backfillOnStartup;
         this.parityOnStartup = parityOnStartup;
+        this.productReferenceBackfillOnStartup = productReferenceBackfillOnStartup;
     }
 
     @Override
@@ -49,16 +56,36 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         if (!readinessOnStartup
                 && !backfillOnStartup
                 && !parityOnStartup
+                && !productReferenceBackfillOnStartup
                 && !canonicalReadEnabled) {
             return;
         }
 
         var readiness = migration.readiness();
+        var productReferenceReadiness = productReferenceBackfill.readiness();
 
         System.out.println(
             "[master-data-migration] ready=" + readiness.ready()
                 + " issues=" + readiness.issues()
         );
+
+        System.out.println(
+            "[master-data-migration] product-reference-ready="
+                + productReferenceReadiness.ready()
+                + " incomplete=" + productReferenceReadiness.incompleteByEntity()
+        );
+
+        if (productReferenceBackfillOnStartup) {
+            var productReport = productReferenceBackfill.backfill();
+            System.out.println(
+                "[master-data-migration] product-reference backfill completed: scanned="
+                    + productReport.scanned()
+                    + ", synchronized="
+                    + productReport.synchronized()
+                    + ", details="
+                    + productReport.synchronizedByEntity()
+            );
+        }
 
         if (!backfillOnStartup) {
             if (parityOnStartup) {
