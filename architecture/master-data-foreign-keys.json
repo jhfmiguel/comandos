@@ -120,12 +120,13 @@
       "entity": "AmmunitionConsumption",
       "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
       "fields": [
-        "organization",
-        "unit",
-        "responsible",
-        "authorizer"
+        "organizationLegacyId",
+        "unitLegacyId",
+        "responsibleLegacyId",
+        "authorizerLegacyId"
       ],
-      "state": "canonical-id-primary"
+      "state": "retired",
+      "note": "Organization, unit, responsible Person and authorizer Person JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
     },
     {
       "entity": "ConsumableUsage",
