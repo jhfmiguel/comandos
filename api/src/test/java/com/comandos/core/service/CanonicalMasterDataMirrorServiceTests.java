@@ -33,6 +33,8 @@ class CanonicalMasterDataMirrorServiceTests {
     private final PartyDocumentRepository documents = mock(PartyDocumentRepository.class);
     private final ProfessionalQualificationRepository qualifications =
         mock(ProfessionalQualificationRepository.class);
+    private final MasterDataReferenceService references =
+        mock(MasterDataReferenceService.class);
 
     @Test
     void doesNothingWhenShadowWriteIsDisabled() {
@@ -140,6 +142,7 @@ class CanonicalMasterDataMirrorServiceTests {
             roles,
             documents,
             qualifications,
+            references,
             enabled
         );
     }
