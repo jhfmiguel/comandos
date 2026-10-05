@@ -546,7 +546,7 @@ public class TransferService {
             }
             return;
         }
-        if (!source.organizationLegacyId.equals(transfer.organizationLegacyId) || source.unit == null
+        if (!source.organizationLegacyId.equals(transfer.organizationLegacyId) || source.unitLegacyId == null
                 || !source.unitLegacyId.equals(transfer.sourceUnitLegacyId)) {
             bad("Every item must belong to the selected source unit.");
         }
