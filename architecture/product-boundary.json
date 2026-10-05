@@ -52,7 +52,8 @@
     "audit-sink",
     "workflow-engine",
     "canonical-master-data-read-api",
-    "canonical-person-detail-read-api"
+    "canonical-person-detail-read-api",
+    "person-registration-orchestration"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -108,7 +109,8 @@
     "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access.",
     "Professional qualifications are canonically owned by Faria Miguel Enterprise; COMANDOS keeps only legacy persistence and security-domain overlays during migration.",
     "Core master-data reads for people, organizations and units must route through CanonicalCoreReadService; CoreService remains write/compatibility only for those resources.",
-    "Person detail reads for addresses, phones, emails, credentials and qualifications must route through CanonicalCoreReadService."
+    "Person detail reads for addresses, phones, emails, credentials and qualifications must route through CanonicalCoreReadService.",
+    "Person registration with contacts is owned by PersonRegistrationService; CoreService must not regain this orchestration."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
