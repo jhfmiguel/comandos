@@ -2,7 +2,10 @@ package com.comandos.security.service;
 
 import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
+import com.fariamiguel.security.api.AccessDeniedException;
+import com.fariamiguel.security.api.AuthorizationScope;
 import com.fariamiguel.security.api.ResourceAccessPolicy;
+import com.fariamiguel.security.api.ScopeGrant;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +84,23 @@ public class AccessPolicy implements ResourceAccessPolicy {
     }
 
     public AccessView current() { return new AccessView(enabled, enabled ? grants() : List.of()); }
+
+    public Set<ScopeGrant> currentScopeGrants() {
+        if (!enabled) return Set.of(ScopeGrant.system());
+
+        return grants().stream()
+            .map(grant -> switch (grant.scope()) {
+                case "SYSTEM" -> ScopeGrant.system();
+                case "ORGANIZATION" -> ScopeGrant.organization(String.valueOf(grant.organizationId()));
+                case "UNIT" -> ScopeGrant.unit(
+                    String.valueOf(grant.organizationId()),
+                    String.valueOf(grant.unitId())
+                );
+                default -> null;
+            })
+            .filter(Objects::nonNull)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
 
     private List<Grant> grants() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -242,5 +262,9 @@ public class AccessPolicy implements ResourceAccessPolicy {
         String action = switch (method) { case "GET", "HEAD" -> "READ"; case "POST" -> "CREATE"; case "PUT" -> "UPDATE"; case "DELETE" -> "DELETE"; default -> "DENIED"; };
         return canAny(resource, action);
     }
-    private static void denied() { throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission for this operation or scope."); }
+    private static void denied() {
+        throw new AccessDeniedException(
+            "You do not have permission for this operation or scope."
+        );
+    }
 }
