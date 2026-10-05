@@ -400,7 +400,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("remaining-unit", usage.unitCanonicalId);
 
         PurchasePlanning planning = new PurchasePlanning();
-        planning.organization = organization;
+        planning.organizationLegacyId = organization.id;
         assertTrue(synchronizer.synchronize(planning));
         assertEquals("remaining-org", planning.organizationCanonicalId);
 
