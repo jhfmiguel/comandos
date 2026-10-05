@@ -11,6 +11,7 @@ import com.comandos.core.model.PersonPhone;
 import com.comandos.core.model.PersonQualification;
 import com.comandos.core.model.PersonRoleAssignment;
 import com.comandos.core.model.RoleData;
+import com.fariamiguel.enterprise.common.BusinessId;
 import com.fariamiguel.enterprise.contact.ContactRepository;
 import com.fariamiguel.enterprise.organization.OrganizationRepository;
 import com.fariamiguel.enterprise.party.PartyDocumentRepository;
@@ -18,6 +19,7 @@ import com.fariamiguel.enterprise.party.PartyRoleRepository;
 import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.enterprise.people.ProfessionalQualificationRepository;
 import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.OrganizationalUnitId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitRepository;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
@@ -147,6 +149,100 @@ public class CanonicalMasterDataMirrorService {
                 CanonicalProfessionalQualificationMapper.qualification(
                     qualification,
                     TENANT
+                )
+            );
+            return true;
+        }
+
+        return false;
+    }
+
+
+    @Transactional
+    public boolean delete(CoreEntity entity) {
+        if (!enabled || entity == null) return false;
+
+        if (entity instanceof Person person) {
+            people.delete(
+                TENANT,
+                BusinessId.of("comandos:person:" + person.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof Organization organization) {
+            organizations.delete(
+                TENANT,
+                BusinessId.of("comandos:organization:" + organization.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof OrganizationalUnit unit) {
+            units.delete(
+                TENANT,
+                OrganizationalUnitId.of("comandos:unit:" + unit.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonAddress address) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-address:" + address.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonPhone phone) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-phone:" + phone.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonEmail email) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-email:" + email.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonRoleAssignment assignment) {
+            if (CanonicalPartyRoleMapper.roleType(assignment.role).isEmpty()) {
+                return false;
+            }
+            roles.delete(
+                TENANT,
+                BusinessId.of(
+                    "comandos:person-role-assignment:" + assignment.id
+                )
+            );
+            return true;
+        }
+
+        if (entity instanceof RoleData roleData) {
+            return roleData.personRole != null
+                && mirrorRoleAssignment(roleData.personRole);
+        }
+
+        if (entity instanceof PersonCredential credential) {
+            documents.delete(
+                TENANT,
+                BusinessId.of(
+                    "comandos:person-credential:" + credential.id
+                )
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonQualification qualification) {
+            qualifications.delete(
+                TENANT,
+                BusinessId.of(
+                    "comandos:person-qualification:" + qualification.id
                 )
             );
             return true;
