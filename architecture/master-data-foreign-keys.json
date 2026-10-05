@@ -96,7 +96,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "ApprovalWorkflow",
@@ -105,7 +105,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "AmmunitionConsumption",
@@ -136,7 +136,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "InventoryReservation",
@@ -145,7 +145,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "InventoryCount",
@@ -154,7 +154,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "PurchasePlanning",
