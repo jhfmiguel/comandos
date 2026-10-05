@@ -88,10 +88,10 @@ public class ConsumableUsageService {
         var usage = new ConsumableUsage();
         usage.organizationLegacyId=organization.id; usage.unitLegacyId=unit==null?null:unit.id;
         usage.responsibleLegacyId=responsible.id; usage.authorizerLegacyId=authorizer.id;
-        usage.organizationCanonicalId=canonicalScope.organization(organization.id);
+        if(canonicalScope!=null){usage.organizationCanonicalId=canonicalScope.organization(organization.id);
         usage.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id);
         usage.responsibleCanonicalId=canonicalScope.person(responsible.id);
-        usage.authorizerCanonicalId=canonicalScope.person(authorizer.id);
+        usage.authorizerCanonicalId=canonicalScope.person(authorizer.id);}
         usage.organizationName=organization.name; usage.unitName=unit==null?null:unit.name;
         usage.responsibleName=responsible.fullName; usage.authorizerName=authorizer.fullName;
         usage.purpose=request.purpose().trim(); usage.activityType=normalized(request.activityType(), "OPERATION");
