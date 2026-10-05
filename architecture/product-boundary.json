@@ -57,7 +57,8 @@
     "integrations-adapters-removed",
     "local-identity-api-removed",
     "local-organization-api-removed",
-    "workflow-adapters-reclassified"
+    "workflow-adapters-reclassified",
+    "security-adapters-reclassified"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -86,12 +87,13 @@
     "inteligencia",
     "operacoes",
     "security-public-private-specifics",
-    "sensitive-operation-workflow-overlay"
+    "sensitive-operation-workflow-overlay",
+    "local-authentication-session-overlay",
+    "security-scope-overlay"
   ],
   "compatibilityAdaptersOnly": [
     "core",
     "audit",
-    "security",
     "identity"
   ],
   "rules": [
@@ -115,7 +117,8 @@
     "Person registration with contacts is owned by PersonRegistrationService; CoreService must not regain this orchestration.",
     "Generic integrations adapters are no longer permitted in COMANDOS; integration infrastructure is owned by Faria Miguel.",
     "Local identity and organization APIs are removed; only canonical Faria Miguel contracts may be consumed.",
-    "Local workflow code is limited to the COMANDOS sensitive-operation overlay; generic workflow engine/contracts remain owned by Faria Miguel."
+    "Local workflow code is limited to the COMANDOS sensitive-operation overlay; generic workflow engine/contracts remain owned by Faria Miguel.",
+    "Local security code is limited to COMANDOS authentication/session and product-specific scope overlays; canonical principal, actor, access-denied and authorization contracts are owned by Faria Miguel."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
