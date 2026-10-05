@@ -6,13 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 class WorkflowPolicyTests {
-    private final WorkflowPolicy policy = new WorkflowPolicy();
+    private final WorkflowPolicy policy = new WorkflowPolicy(new DefaultWorkflowEngine());
 
     @Test
     void exposesTheCanonicalWorkflowPathInOrder() {
@@ -35,7 +36,7 @@ class WorkflowPolicyTests {
     }
 
     @Test
-    void acceptsOnlyTheLinearMainPath() {
+    void acceptsOnlyTheLinearMainPathThroughCanonicalEngine() {
         assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.ANALYZED));
         assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.ANALYZED, WorkflowPolicy.AUTHORIZED));
         assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.EXECUTED));
