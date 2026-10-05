@@ -174,3 +174,14 @@ create unique index uk_master_data_reference_canonical
 
 create index ix_master_data_reference_active
     on erp_master_data_reference (resource_type, active, legacy_id);
+
+
+-- Canonical master-data shadow references for product-domain cutover.
+alter table erp_stock_location add organization_canonical_id varchar2(128 char);
+alter table erp_stock_location add unit_canonical_id varchar2(128 char);
+
+create index ix_stock_location_org_canonical
+    on erp_stock_location (organization_canonical_id);
+
+create index ix_stock_location_unit_canonical
+    on erp_stock_location (unit_canonical_id);
