@@ -4,13 +4,21 @@ import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
 import com.fariamiguel.enterprise.common.BusinessId;
+import com.fariamiguel.enterprise.contact.ContactRepository;
+import com.fariamiguel.enterprise.organization.OrganizationRepository;
+import com.fariamiguel.enterprise.party.PartyKind;
+import com.fariamiguel.enterprise.party.PartyRef;
+import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitId;
+import com.fariamiguel.tenancy.api.OrganizationalUnitRepository;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +35,49 @@ public class CanonicalMasterDataDirectory {
 
     private final EntityManager entityManager;
     private final CanonicalContactDirectory contacts;
+    private final PersonRepository canonicalPeople;
+    private final OrganizationRepository canonicalOrganizations;
+    private final OrganizationalUnitRepository canonicalUnits;
+    private final ContactRepository canonicalContacts;
+    private final boolean canonicalReadEnabled;
 
+    @Autowired
+    public CanonicalMasterDataDirectory(
+            EntityManager entityManager,
+            CanonicalContactDirectory contacts,
+            PersonRepository canonicalPeople,
+            OrganizationRepository canonicalOrganizations,
+            OrganizationalUnitRepository canonicalUnits,
+            ContactRepository canonicalContacts,
+            @Value("${comandos.master-data.canonical-read.enabled:false}")
+            boolean canonicalReadEnabled) {
+        this.entityManager = entityManager;
+        this.contacts = contacts;
+        this.canonicalPeople = canonicalPeople;
+        this.canonicalOrganizations = canonicalOrganizations;
+        this.canonicalUnits = canonicalUnits;
+        this.canonicalContacts = canonicalContacts;
+        this.canonicalReadEnabled = canonicalReadEnabled;
+    }
+
+    /**
+     * Transitional constructor for focused unit tests using legacy projection.
+     */
+    @Deprecated
     public CanonicalMasterDataDirectory(
             EntityManager entityManager,
             CanonicalContactDirectory contacts) {
         this.entityManager = entityManager;
         this.contacts = contacts;
+        this.canonicalPeople = null;
+        this.canonicalOrganizations = null;
+        this.canonicalUnits = null;
+        this.canonicalContacts = null;
+        this.canonicalReadEnabled = false;
+    }
+
+    public boolean canonicalReadEnabled() {
+        return canonicalReadEnabled;
     }
 
     public Optional<com.fariamiguel.enterprise.people.Person> findPerson(
@@ -40,6 +85,12 @@ public class CanonicalMasterDataDirectory {
             TenantId tenantId) {
 
         if (id <= 0) return Optional.empty();
+
+        if (canonicalReadEnabled) {
+            return canonicalPeople
+                .find(tenantId, BusinessId.of("comandos:person:" + id))
+                .map(person -> enrichCanonicalPerson(person, tenantId));
+        }
 
         Person source = entityManager.find(Person.class, id);
         return source == null
@@ -64,6 +115,13 @@ public class CanonicalMasterDataDirectory {
 
         if (id <= 0) return Optional.empty();
 
+        if (canonicalReadEnabled) {
+            return canonicalOrganizations.find(
+                tenantId,
+                BusinessId.of("comandos:organization:" + id)
+            );
+        }
+
         Organization source = entityManager.find(Organization.class, id);
         return source == null
             ? Optional.empty()
@@ -75,6 +133,13 @@ public class CanonicalMasterDataDirectory {
             TenantId tenantId) {
 
         if (id <= 0) return Optional.empty();
+
+        if (canonicalReadEnabled) {
+            return canonicalUnits.find(
+                tenantId,
+                OrganizationalUnitId.of("comandos:unit:" + id)
+            );
+        }
 
         OrganizationalUnit source = entityManager.find(OrganizationalUnit.class, id);
         if (source == null || source.organization == null || source.organization.id == null) {
@@ -95,6 +160,13 @@ public class CanonicalMasterDataDirectory {
 
         if (id <= 0) return Optional.empty();
 
+        if (canonicalReadEnabled) {
+            return canonicalUnits.find(
+                tenantId,
+                OrganizationalUnitId.of("comandos:unit:" + id)
+            );
+        }
+
         OrganizationalUnit source = entityManager.find(OrganizationalUnit.class, id);
         return source == null
             ? Optional.empty()
@@ -108,6 +180,14 @@ public class CanonicalMasterDataDirectory {
 
         int safeLimit = boundedLimit(limit);
         String normalized = normalizeQuery(query);
+
+        if (canonicalReadEnabled) {
+            return canonicalPeople
+                .search(tenantId, normalized == null ? "" : normalized, safeLimit)
+                .stream()
+                .map(person -> enrichCanonicalPerson(person, tenantId))
+                .toList();
+        }
 
         var jpql = new StringBuilder("select p from Person p where p.active = true");
         if (normalized != null) {
@@ -130,6 +210,12 @@ public class CanonicalMasterDataDirectory {
     public List<com.fariamiguel.enterprise.organization.Organization> listOrganizations(
             TenantId tenantId) {
 
+        if (canonicalReadEnabled) {
+            return canonicalOrganizations.list(tenantId).stream()
+                .filter(org -> org.status() == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE)
+                .toList();
+        }
+
         return entityManager.createQuery(
                 "select o from Organization o where o.active = true order by o.name, o.id",
                 Organization.class)
@@ -150,6 +236,12 @@ public class CanonicalMasterDataDirectory {
 
         if (organizationId <= 0) return List.of();
 
+        if (canonicalReadEnabled) {
+            return canonicalUnits.findByCompany(tenantId, companyId).stream()
+                .filter(com.fariamiguel.tenancy.api.OrganizationalUnit::active)
+                .toList();
+        }
+
         return entityManager.createQuery(
                 "select u from OrganizationalUnit u "
                     + "where u.organization.id = :organizationId and u.active = true "
@@ -160,6 +252,38 @@ public class CanonicalMasterDataDirectory {
             .stream()
             .map(source -> CanonicalMasterDataMapper.unit(source, tenantId, companyId))
             .toList();
+    }
+
+    private com.fariamiguel.enterprise.people.Person enrichCanonicalPerson(
+            com.fariamiguel.enterprise.people.Person person,
+            TenantId tenantId) {
+
+        PartyRef party = new PartyRef(person.id(), PartyKind.PERSON);
+
+        var addresses = canonicalContacts.addresses(tenantId, party).stream()
+            .map(contact -> contact.address())
+            .toList();
+
+        var emails = canonicalContacts.emails(tenantId, party).stream()
+            .map(contact -> contact.email())
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        var phones = canonicalContacts.phones(tenantId, party).stream()
+            .map(contact -> contact.number())
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        return new com.fariamiguel.enterprise.people.Person(
+            person.id(),
+            person.tenantId(),
+            person.name(),
+            person.taxId(),
+            person.birthDate(),
+            addresses,
+            emails,
+            phones,
+            person.status(),
+            person.attributes()
+        );
     }
 
     private com.fariamiguel.enterprise.people.Person mapPerson(
