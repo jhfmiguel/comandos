@@ -1,6 +1,7 @@
 package com.comandos.sales.service;
 
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.model.InventoryCountItem;
 import com.comandos.sales.dto.SalesContract.*;
@@ -29,7 +30,24 @@ public class InventorySalesService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    public InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) { this.em = em; this.access = access; this.audit = audit; }
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InventorySalesService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
+    }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
         access.requireScope("sales", "READ", organizationId, unitId);
@@ -99,6 +117,9 @@ public class InventorySalesService {
         sale.total = BigDecimal.ZERO;
         sale.requestId = request.requestId();
         sale.requestFingerprint = fingerprint;
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(sale);
+        }
         em.persist(sale);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var requested : request.items()) {
