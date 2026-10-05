@@ -124,7 +124,8 @@
     "Legacy-to-canonical master-data parity must be zero-mismatch after backfill and during shadow-write observation before read cutover.",
     "Canonical delete shadowing must remain transactionally aligned with legacy master-data deletion/archiving while shadow-write is enabled.",
     "Canonical master-data read cutover is feature-flagged and may only run with shadow-write enabled and zero-mismatch parity.",
-    "Remaining local core code is limited to legacy master-data/admin compatibility during the persistence cutover; reusable Platform Core behavior is Faria Miguel-owned."
+    "Remaining local core code is limited to legacy master-data/admin compatibility during the persistence cutover; reusable Platform Core behavior is Faria Miguel-owned.",
+    "Legacy product foreign keys must migrate through the durable master-data reference crosswalk before erp_* master-data tables can be retired."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
@@ -140,6 +141,7 @@
     "legacy-master-data-canonical-backfill",
     "legacy-master-data-canonical-parity",
     "legacy-master-data-canonical-delete-shadow",
-    "canonical-master-data-controlled-read-cutover"
+    "canonical-master-data-controlled-read-cutover",
+    "legacy-master-data-reference-crosswalk"
   ]
 }
