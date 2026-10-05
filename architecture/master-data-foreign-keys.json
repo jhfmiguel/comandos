@@ -43,9 +43,10 @@
       "entity": "EquipmentReceiving",
       "path": "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java",
       "fields": [
-        "receivingOrganization"
+        "receivingOrganizationLegacyId"
       ],
-      "state": "canonical-id-primary"
+      "state": "retired",
+      "note": "The Organization JPA association was removed. receiving_organization_id remains only as a scalar compatibility bridge while receivingOrganizationCanonicalId is primary."
     },
     {
       "entity": "Custody",
