@@ -92,9 +92,9 @@ public class TransferService {
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, sourceUnitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e"
             + " where "
-            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organization.id")
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
             + "=:organization and "
-            + (canonical ? "e.location.unitCanonicalId" : "e.location.unit.id")
+            + (canonical ? "e.location.unitCanonicalId" : "e.location.unitLegacyId")
             + "=:unit"
             + (assets ? " and e.status='AVAILABLE'" : " and e.available>0")
             + " and (" + expiry + " is null or " + expiry + ">=:today)"
@@ -546,8 +546,8 @@ public class TransferService {
             }
             return;
         }
-        if (!source.organization.id.equals(transfer.organizationLegacyId) || source.unit == null
-                || !source.unit.id.equals(transfer.sourceUnitLegacyId)) {
+        if (!source.organizationLegacyId.equals(transfer.organizationLegacyId) || source.unit == null
+                || !source.unitLegacyId.equals(transfer.sourceUnitLegacyId)) {
             bad("Every item must belong to the selected source unit.");
         }
     }
