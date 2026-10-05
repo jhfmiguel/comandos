@@ -2,6 +2,7 @@ package com.comandos.purchase.service;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.Person;
 import com.comandos.inventory.model.ItemModel;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.purchase.dto.PurchaseContract.*;
 import com.comandos.purchase.model.*;
 import com.comandos.purchase.repository.*;
@@ -17,7 +18,17 @@ import java.util.Set;
 @Service
 public class PurchaseService {
  private final PurchaseRepository purchases; private final ProcurementProcessRepository procurements; private final EntityManager em;
- public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){this.purchases=p;this.procurements=pr;this.em=em;}
+ private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+ @org.springframework.beans.factory.annotation.Autowired
+ public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences){
+  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;
+ }
+
+ @Deprecated
+ PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){
+  this(p,pr,em,null);
+ }
  @Transactional public PurchaseView create(CreatePurchaseRequest r){
   if(r==null||r.buyerOrganizationId()==null)throw new IllegalArgumentException("Buyer organization is required.");
   if(r.originPersonId()==null)throw new IllegalArgumentException("Acquisition origin person is required.");
@@ -39,7 +50,9 @@ public class PurchaseService {
   if(r.documents()!=null)for(DocumentRequest x:r.documents()){if(x.documentType()==null)throw new IllegalArgumentException("Document type is required.");
    AcquisitionDocument d=new AcquisitionDocument();d.purchase=p;d.documentType=x.documentType();d.documentNumber=trim(x.documentNumber());d.issueDate=x.issueDate();
    d.issuer=trim(x.issuer());d.amount=x.amount()==null?null:money(x.amount());d.storageReference=trim(x.storageReference());d.notes=trim(x.notes());p.documents.add(d);}
-  p.recalculateTotals();return view(purchases.save(p));
+  p.recalculateTotals();
+  if(masterDataReferences!=null)masterDataReferences.synchronize(p);
+  return view(purchases.save(p));
  }
  @Transactional public PurchaseView configureProcurement(Long id,CreateProcurementRequest r){
   Purchase p=find(id);assertMutableBeforeReceiving(p);boolean pub=Boolean.TRUE.equals(p.buyerOrganization.publicOrganization);
