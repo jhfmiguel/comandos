@@ -32,7 +32,7 @@ done
 required_capabilities=(
   core people organizations organizational-units contacts customers suppliers
   security audit documents workflow notifications persistence purchases sales
-  finance contracts products inventory commerce
+  finance contracts products inventory commerce professional-qualifications
 )
 for capability in "${required_capabilities[@]}"; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "missing shared ownership mapping for ${capability}"
@@ -107,6 +107,10 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalPartyDoc
   || fail "canonical party-document directory is required during legacy persistence migration"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalPartySnapshotDirectory.java" \
   || fail "canonical party snapshot directory is required during legacy persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationMapper.java" \
+  || fail "canonical professional qualification mapper is required during legacy persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java" \
+  || fail "canonical professional qualification directory is required during legacy persistence migration"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
@@ -127,6 +131,8 @@ grep -q '"legacy-person-credentials-to-faria-party-documents"' "$MANIFEST" \
   || fail "party-document canonical migration bridge is not declared"
 grep -q '"legacy-party-snapshot-to-faria-party-snapshot"' "$MANIFEST" \
   || fail "party snapshot canonical migration bridge is not declared"
+grep -q '"legacy-person-qualifications-to-faria-professional-qualifications"' "$MANIFEST" \
+  || fail "professional qualification canonical migration bridge is not declared"
 
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
@@ -153,6 +159,6 @@ printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceA
 printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
-printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot contracts while legacy Oracle persistence remains transitional.\n'
+printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot/professional-qualification contracts while legacy Oracle persistence remains transitional.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
