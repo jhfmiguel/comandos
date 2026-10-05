@@ -88,7 +88,7 @@
         "sourceUnit",
         "destinationUnit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "WorkOrder",
@@ -173,7 +173,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "ExceptionOccurrence",
@@ -182,7 +182,7 @@
         "organization",
         "unit"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
