@@ -5,7 +5,9 @@ import com.comandos.organization.api.OrganizationDirectory;
 import com.comandos.organization.api.OrganizationView;
 import com.comandos.organization.api.OrganizationalUnitView;
 import com.fariamiguel.tenancy.api.TenantId;
+import jakarta.persistence.EntityManager;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +25,20 @@ public class JpaOrganizationDirectory implements OrganizationDirectory {
 
     private final CanonicalMasterDataDirectory canonical;
 
+    @Autowired
     public JpaOrganizationDirectory(CanonicalMasterDataDirectory canonical) {
         this.canonical = canonical;
+    }
+
+    /**
+     * Transitional constructor kept for tests and source-compatible callers.
+     */
+    @Deprecated
+    public JpaOrganizationDirectory(EntityManager entityManager) {
+        this(new CanonicalMasterDataDirectory(
+            entityManager,
+            new com.comandos.core.service.CanonicalContactDirectory(entityManager)
+        ));
     }
 
     @Override
