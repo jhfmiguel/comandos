@@ -13,6 +13,9 @@ public class Purchase extends CoreEntity {
  @ManyToOne(optional=false) @JoinColumn(name="buyer_organization_id",nullable=false) public Organization buyerOrganization;
  @ManyToOne @JoinColumn(name="supplier_organization_id") public Organization supplierOrganization;
  @ManyToOne(optional=false) @JoinColumn(name="origin_person_id",nullable=false) public Person originPerson;
+ @Column(name="buyer_organization_canonical_id",length=128) public String buyerOrganizationCanonicalId;
+ @Column(name="supplier_organization_canonical_id",length=128) public String supplierOrganizationCanonicalId;
+ @Column(name="origin_person_canonical_id",length=128) public String originPersonCanonicalId;
  @OneToOne @JoinColumn(name="procurement_process_id") public ProcurementProcess procurementProcess;
  @Enumerated(EnumType.STRING) @Column(name="acquisition_type",nullable=false,length=30) public AcquisitionType acquisitionType=AcquisitionType.ONEROUS;
  @Column(name="origin_description",length=1000) public String originDescription;
