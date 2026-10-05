@@ -15,6 +15,11 @@ import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.reservation.model.InventoryReservation;
 import com.comandos.reconciliation.model.InventoryCount;
+import com.comandos.consumption.model.AmmunitionConsumption;
+import com.comandos.consumption.model.ConsumableUsage;
+import com.comandos.purchase.model.PurchasePlanning;
+import com.comandos.lifecycle.model.PeriodicInspection;
+import com.comandos.lifecycle.model.ExceptionOccurrence;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -355,6 +360,66 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertTrue(synchronizer.synchronize(count));
         assertEquals("ops-org", count.organizationCanonicalId);
         assertEquals("ops-unit", count.unitCanonicalId);
+    }
+
+    @Test
+    void synchronizesRemainingMasterDataReferences() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 90L))
+            .thenReturn(Optional.of("remaining-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 91L))
+            .thenReturn(Optional.of("remaining-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 92L))
+            .thenReturn(Optional.of("responsible-person"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 93L))
+            .thenReturn(Optional.of("authorizer-person"));
+
+        Organization organization = new Organization(); organization.id = 90L;
+        OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 91L;
+        com.comandos.core.model.Person responsible = new com.comandos.core.model.Person(); responsible.id = 92L;
+        com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 93L;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        AmmunitionConsumption ammunition = new AmmunitionConsumption();
+        ammunition.organization = organization;
+        ammunition.unit = unit;
+        ammunition.responsible = responsible;
+        ammunition.authorizer = authorizer;
+        assertTrue(synchronizer.synchronize(ammunition));
+        assertEquals("remaining-org", ammunition.organizationCanonicalId);
+        assertEquals("remaining-unit", ammunition.unitCanonicalId);
+        assertEquals("responsible-person", ammunition.responsibleCanonicalId);
+        assertEquals("authorizer-person", ammunition.authorizerCanonicalId);
+
+        ConsumableUsage usage = new ConsumableUsage();
+        usage.organization = organization;
+        usage.unit = unit;
+        usage.responsible = responsible;
+        usage.authorizer = authorizer;
+        assertTrue(synchronizer.synchronize(usage));
+        assertEquals("remaining-org", usage.organizationCanonicalId);
+        assertEquals("remaining-unit", usage.unitCanonicalId);
+
+        PurchasePlanning planning = new PurchasePlanning();
+        planning.organization = organization;
+        assertTrue(synchronizer.synchronize(planning));
+        assertEquals("remaining-org", planning.organizationCanonicalId);
+
+        PeriodicInspection inspection = new PeriodicInspection();
+        inspection.organization = organization;
+        inspection.unit = unit;
+        assertTrue(synchronizer.synchronize(inspection));
+        assertEquals("remaining-org", inspection.organizationCanonicalId);
+        assertEquals("remaining-unit", inspection.unitCanonicalId);
+
+        ExceptionOccurrence occurrence = new ExceptionOccurrence();
+        occurrence.organization = organization;
+        occurrence.unit = unit;
+        assertTrue(synchronizer.synchronize(occurrence));
+        assertEquals("remaining-org", occurrence.organizationCanonicalId);
+        assertEquals("remaining-unit", occurrence.unitCanonicalId);
     }
 
     @Test
