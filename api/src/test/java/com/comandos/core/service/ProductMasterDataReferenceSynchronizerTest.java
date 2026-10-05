@@ -331,8 +331,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("ops-unit", workOrder.unitCanonicalId);
 
         ApprovalWorkflow workflow = new ApprovalWorkflow();
-        workflow.organization = organization;
-        workflow.unit = unit;
+        workflow.organizationLegacyId = organization.id;
+        workflow.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(workflow));
         assertEquals("ops-org", workflow.organizationCanonicalId);
         assertEquals("ops-unit", workflow.unitCanonicalId);
