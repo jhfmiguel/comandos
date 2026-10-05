@@ -54,10 +54,10 @@ public class CustodyService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from AssetItem a where "
-            + (canonical ? "a.location.organizationCanonicalId" : "a.location.organization.id")
+            + (canonical ? "a.location.organizationCanonicalId" : "a.location.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "a.location.unitCanonicalId" : "a.location.unit.id")
+                + (canonical ? "a.location.unitCanonicalId" : "a.location.unitLegacyId")
                 + " = :unit")
             + " and a.status = 'AVAILABLE'"
             + " and not exists (select c.id from EquipmentSetComponent c where c.asset = a and c.equipmentSet.active = true)"
@@ -329,8 +329,8 @@ public class CustodyService {
             if (!asset.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every asset must belong to the selected organization and unit.");
             }
-        } else if (!asset.location.organization.id.equals(organizationId)
-                || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unit.id))) {
+        } else if (!asset.location.organizationLegacyId.equals(organizationId)
+                || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unitLegacyId))) {
             bad("Every asset must belong to the selected organization and unit.");
         }
         if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
@@ -353,8 +353,8 @@ public class CustodyService {
             if (!balance.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every stock balance must belong to the selected organization and unit.");
             }
-        } else if (!balance.location.organization.id.equals(organizationId) || unitId != null
-                && (balance.location.unit == null || !unitId.equals(balance.location.unit.id))) {
+        } else if (!balance.location.organizationLegacyId.equals(organizationId) || unitId != null
+                && (balance.location.unit == null || !unitId.equals(balance.location.unitLegacyId))) {
             bad("Every stock balance must belong to the selected organization and unit.");
         }
         if (balance.lot.validUntil != null && balance.lot.validUntil.isBefore(LocalDate.now()))
