@@ -4,6 +4,7 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.consumption.dto.ConsumableUsageContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.*;
@@ -24,8 +25,17 @@ public class ConsumableUsageService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    public ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -73,7 +83,7 @@ public class ConsumableUsageService {
         usage.purpose=request.purpose().trim(); usage.activityType=normalized(request.activityType(), "OPERATION");
         usage.operationTraining=blankToNull(request.operationTraining()); usage.deliveredAt=now; usage.closedAt=now;
         var actor=audit.actor(); usage.finalizedById=actor.id(); usage.finalizedByLogin=actor.login();
-        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; em.persist(usage); em.flush();
+        usage.requestId=request.requestId(); usage.requestFingerprint=fingerprint; if(masterDataReferences!=null)masterDataReferences.synchronize(usage); em.persist(usage); em.flush();
 
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
