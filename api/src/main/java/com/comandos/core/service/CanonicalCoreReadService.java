@@ -53,7 +53,7 @@ public class CanonicalCoreReadService {
         return SUPPORTED.contains(resource);
     }
 
-    public CoreService.PageResult list(
+    public CorePageResult list(
             String resource,
             String search,
             int page,
@@ -173,7 +173,7 @@ public class CanonicalCoreReadService {
             count.setParameter(name, value);
         });
 
-        return new CoreService.PageResult(
+        return new CorePageResult(
             query.setFirstResult(page * size)
                 .setMaxResults(size)
                 .getResultList()
