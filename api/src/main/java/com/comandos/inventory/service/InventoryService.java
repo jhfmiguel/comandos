@@ -383,6 +383,79 @@ public class InventoryService {
         );
     }
 
+    private Map<String, Object> normalizeCanonicalLocationInput(
+            String resource,
+            Map<String, Object> input) {
+        if (!"locations".equals(resource) || input == null
+                || (!input.containsKey("organizationCanonicalId")
+                    && !input.containsKey("unitCanonicalId"))) {
+            return input;
+        }
+        if (canonicalReferences == null) {
+            throw new IllegalStateException(
+                "Canonical location input requires MasterDataReferenceService."
+            );
+        }
+
+        Map<String, Object> normalized = new LinkedHashMap<>(input);
+        String organizationCanonicalId = textValue(
+            normalized.remove("organizationCanonicalId")
+        );
+        String unitCanonicalId = textValue(
+            normalized.remove("unitCanonicalId")
+        );
+
+        if (organizationCanonicalId != null) {
+            Long legacyOrganizationId = canonicalReferences.resolveLegacyId(
+                    MasterDataReferenceService.ORGANIZATION,
+                    organizationCanonicalId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Unknown canonical organization id: "
+                        + organizationCanonicalId
+                ));
+            assertCompatibleLegacyId(
+                normalized.get("organizationId"),
+                legacyOrganizationId,
+                "organization"
+            );
+            normalized.put("organizationId", legacyOrganizationId);
+        }
+
+        if (unitCanonicalId != null) {
+            Long legacyUnitId = canonicalReferences.resolveLegacyId(
+                    MasterDataReferenceService.UNIT,
+                    unitCanonicalId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Unknown canonical unit id: " + unitCanonicalId
+                ));
+            assertCompatibleLegacyId(
+                normalized.get("unitId"),
+                legacyUnitId,
+                "unit"
+            );
+            normalized.put("unitId", legacyUnitId);
+        }
+
+        return normalized;
+    }
+
+    private void assertCompatibleLegacyId(
+            Object supplied,
+            Long expected,
+            String label) {
+        if (supplied == null) return;
+        Long legacyId = integer(supplied, false);
+        if (!Objects.equals(legacyId, expected)) {
+            bad("Canonical and legacy " + label + " references disagree.");
+        }
+    }
+
+    private static String textValue(Object raw) {
+        if (raw == null) return null;
+        String value = String.valueOf(raw).trim();
+        return value.isEmpty() ? null : value;
+    }
+
     private static boolean usesCanonicalLocationScope(String resource) {
         return Set.of(
             "locations",
@@ -436,6 +509,7 @@ public class InventoryService {
     }
 
     private Map<String, Object> save(String resource, Long id, Map<String, Object> data, String packaging, boolean validateOnly) {
+        data = normalizeCanonicalLocationInput(resource, data);
         var spec = InventoryCatalog.get(resource);
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("inventory/" + resource, action);
@@ -741,6 +815,10 @@ public class InventoryService {
         result.put("label", label(entity));
         if (entity instanceof ItemModel model) result.put("modelFamily", model.category.family);
         Map<String, String> labels = new LinkedHashMap<>();
+        if (entity instanceof StockLocation location) {
+            result.put("organizationCanonicalId", location.organizationCanonicalId);
+            result.put("unitCanonicalId", location.unitCanonicalId);
+        }
         if (entity instanceof AssetItem asset) {
             result.put("organizationId", asset.location.organization.id);
             result.put("unitId", asset.location.unit == null ? null : asset.location.unit.id);
