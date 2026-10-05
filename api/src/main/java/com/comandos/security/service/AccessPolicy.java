@@ -2,6 +2,7 @@ package com.comandos.security.service;
 
 import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
+import com.fariamiguel.security.api.ResourceAccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
-public class AccessPolicy {
+public class AccessPolicy implements ResourceAccessPolicy {
     private final EntityManager em;
     private final boolean enabled;
     private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profile-levels", "core/permission-resources", "core/permission-actions", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
@@ -162,12 +163,19 @@ public class AccessPolicy {
             .toList();
     }
 
+    @Override
+    public boolean can(String resource, String action) { return canAny(resource, action); }
+
     public boolean canAny(String resource, String action) { return !enabled || !matching(resource, action, scope(resource)).isEmpty(); }
     public List<String> actions(String resource) {
         return List.of("READ", "CREATE", "UPDATE", "DELETE").stream().filter(action -> canAny(resource, action)).toList();
     }
+    @Override
+    public void require(String resource, String action) { requireAny(resource, action); }
+
     public void requireAny(String resource, String action) { if (!canAny(resource, action)) denied(); }
 
+    @Override
     public String predicate(String resource, String action, String alias) {
         return predicate(resource, action, alias, scope(resource));
     }
@@ -185,13 +193,17 @@ public class AccessPolicy {
         }).toList()) + ")";
     }
 
-    public void requireEntity(String resource, String action, CoreEntity entity) {
+    @Override
+    public void requireEntity(String resource, String action, Object entity) {
+        if (!(entity instanceof CoreEntity coreEntity)) {
+            throw new IllegalArgumentException("COMANDOS scoped access requires a CoreEntity during the migration period.");
+        }
         if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
             requireAny(resource, action);
             return;
         }
         var scope = scope(resource);
-        requireScope(resource, action, scope, idAt(entity, scope.organizationPath()), idAt(entity, scope.unitPath()));
+        requireScope(resource, action, scope, idAt(coreEntity, scope.organizationPath()), idAt(coreEntity, scope.unitPath()));
     }
     public void requireScope(String resource, String action, Long organizationId, Long unitId) {
         requireScope(resource, action, scope(resource), organizationId, unitId);
