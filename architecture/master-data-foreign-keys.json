@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-05",
+  "purpose": "Track product-domain foreign keys that still depend on legacy COMANDOS master-data JPA entities before canonical persistence retirement.",
+  "canonicalReferenceCrosswalk": "erp_master_data_reference",
+  "states": [
+    "legacy-jpa-association",
+    "canonical-id-shadow",
+    "canonical-id-primary",
+    "retired"
+  ],
+  "references": [
+    {
+      "entity": "StockLocation",
+      "path": "api/src/main/java/com/comandos/inventory/model/StockLocation.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "StockMovement",
+      "path": "api/src/main/java/com/comandos/inventory/model/StockMovement.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "Purchase",
+      "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
+      "fields": [
+        "buyerOrganization",
+        "supplierOrganization",
+        "originPerson"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "EquipmentReceiving",
+      "path": "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java",
+      "fields": [
+        "receivingOrganization"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "Custody",
+      "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+      "fields": [
+        "organization",
+        "unit",
+        "recipient",
+        "recipientUnit",
+        "authorizer"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "Donation",
+      "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+      "fields": [
+        "organization",
+        "unit",
+        "donor",
+        "donee"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "InventorySale",
+      "path": "api/src/main/java/com/comandos/sales/model/InventorySale.java",
+      "fields": [
+        "organization",
+        "unit",
+        "buyer"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "InventoryTransfer",
+      "path": "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java",
+      "fields": [
+        "organization",
+        "sourceUnit",
+        "destinationUnit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "WorkOrder",
+      "path": "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "ApprovalWorkflow",
+      "path": "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "AmmunitionConsumption",
+      "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+      "fields": [
+        "organization",
+        "unit",
+        "responsible",
+        "authorizer"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "ConsumableUsage",
+      "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+      "fields": [
+        "organization",
+        "unit",
+        "responsible",
+        "authorizer"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "DisposalProcess",
+      "path": "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "InventoryReservation",
+      "path": "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "InventoryCount",
+      "path": "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "PurchasePlanning",
+      "path": "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java",
+      "fields": [
+        "organization"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "PeriodicInspection",
+      "path": "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    },
+    {
+      "entity": "ExceptionOccurrence",
+      "path": "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+      "fields": [
+        "organization",
+        "unit"
+      ],
+      "state": "legacy-jpa-association"
+    }
+  ],
+  "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
+}
