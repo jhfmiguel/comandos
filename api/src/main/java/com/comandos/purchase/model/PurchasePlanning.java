@@ -14,6 +14,9 @@ public class PurchasePlanning extends CoreEntity {
     @JoinColumn(name = "organization_id", nullable = false)
     public Organization organization;
 
+    @Column(name = "organization_canonical_id", length = 128)
+    public String organizationCanonicalId;
+
     @Column(name = "process_number", length = 120)
     public String processNumber;
 
