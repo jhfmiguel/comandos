@@ -58,7 +58,8 @@
     "local-identity-api-removed",
     "local-organization-api-removed",
     "workflow-adapters-reclassified",
-    "security-adapters-reclassified"
+    "security-adapters-reclassified",
+    "core-adapters-reclassified"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -89,10 +90,10 @@
     "security-public-private-specifics",
     "sensitive-operation-workflow-overlay",
     "local-authentication-session-overlay",
-    "security-scope-overlay"
+    "security-scope-overlay",
+    "legacy-master-data-admin-compatibility"
   ],
   "compatibilityAdaptersOnly": [
-    "core",
     "audit",
     "identity"
   ],
@@ -122,7 +123,8 @@
     "Canonical master-data persistence cutover must pass readiness, idempotent backfill and controlled shadow-write before legacy erp_* persistence is removed.",
     "Legacy-to-canonical master-data parity must be zero-mismatch after backfill and during shadow-write observation before read cutover.",
     "Canonical delete shadowing must remain transactionally aligned with legacy master-data deletion/archiving while shadow-write is enabled.",
-    "Canonical master-data read cutover is feature-flagged and may only run with shadow-write enabled and zero-mismatch parity."
+    "Canonical master-data read cutover is feature-flagged and may only run with shadow-write enabled and zero-mismatch parity.",
+    "Remaining local core code is limited to legacy master-data/admin compatibility during the persistence cutover; reusable Platform Core behavior is Faria Miguel-owned."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
