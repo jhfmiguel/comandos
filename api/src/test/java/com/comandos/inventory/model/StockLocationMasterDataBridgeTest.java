@@ -1,7 +1,6 @@
 package com.comandos.inventory.model;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,20 +25,10 @@ class StockLocationMasterDataBridgeTest {
     }
 
     @Test
-    void legacyJpaAssociationsAreReadOnlyCompatibilityBridges() throws Exception {
-        JoinColumn organization = StockLocation.class
-            .getField("organization")
-            .getAnnotation(JoinColumn.class);
-        JoinColumn unit = StockLocation.class
-            .getField("unit")
-            .getAnnotation(JoinColumn.class);
-
-        assertNotNull(organization);
-        assertFalse(organization.insertable());
-        assertFalse(organization.updatable());
-
-        assertNotNull(unit);
-        assertFalse(unit.insertable());
-        assertFalse(unit.updatable());
+    void legacyJpaAssociationsAreRemoved() {
+        assertThrows(NoSuchFieldException.class,
+            () -> StockLocation.class.getField("organization"));
+        assertThrows(NoSuchFieldException.class,
+            () -> StockLocation.class.getField("unit"));
     }
 }
