@@ -423,6 +423,28 @@ class ProductMasterDataReferenceSynchronizerTest {
     }
 
     @Test
+    void backfillBypassesRuntimeShadowFlag() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 100L))
+            .thenReturn(Optional.of("backfill-org"));
+
+        Organization organization = new Organization();
+        organization.id = 100L;
+
+        PurchasePlanning planning = new PurchasePlanning();
+        planning.organization = organization;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, false);
+
+        assertFalse(synchronizer.synchronize(planning));
+        assertNull(planning.organizationCanonicalId);
+
+        assertTrue(synchronizer.synchronizeForBackfill(planning));
+        assertEquals("backfill-org", planning.organizationCanonicalId);
+    }
+
+    @Test
     void runtimeFlagCanDisableSynchronization() {
         MasterDataReferenceService references = mock(MasterDataReferenceService.class);
         ProductMasterDataReferenceSynchronizer synchronizer =
