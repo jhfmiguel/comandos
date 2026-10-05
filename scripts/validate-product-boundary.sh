@@ -151,41 +151,23 @@ if grep -q 'record PersonRegistration\|savePersonWithContacts' \
   fail "CoreService must not regain PersonRegistration orchestration"
 fi
 
-# Local identity/organization APIs are frozen compatibility surfaces only.
-# New product code must consume Faria Miguel contracts or canonical migration directories.
-identity_api_consumers="$(
-  grep -RIl 'com\.comandos\.identity\.api' "$ROOT_DIR/api/src/main/java" 2>/dev/null \
-    | grep -v '/com/comandos/identity/api/' \
-    | grep -v '/com/comandos/identity/service/JpaIdentityDirectory.java' \
-    || true
-)"
-if [[ -n "$identity_api_consumers" ]]; then
-  fail "new consumers of deprecated local identity API are forbidden: $identity_api_consumers"
-fi
+# Local identity/organization compatibility APIs have been removed.
+[[ ! -e "$ROOT_DIR/api/src/main/java/com/comandos/identity/api" ]] \
+  || fail "local identity API package is forbidden; use Faria Miguel identity contracts"
+[[ ! -e "$ROOT_DIR/api/src/main/java/com/comandos/organization" ]] \
+  || fail "local organization package is forbidden; use canonical Faria Miguel master data"
 
-organization_api_consumers="$(
-  grep -RIl 'com\.comandos\.organization\.api' "$ROOT_DIR/api/src/main/java" 2>/dev/null \
-    | grep -v '/com/comandos/organization/api/' \
-    | grep -v '/com/comandos/organization/service/JpaOrganizationDirectory.java' \
-    || true
-)"
-if [[ -n "$organization_api_consumers" ]]; then
-  fail "new consumers of deprecated local organization API are forbidden: $organization_api_consumers"
-fi
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
+  || fail "canonical identity persistence bridge is required during legacy persistence migration"
 
-grep -q '@Deprecated(forRemoval = true)' \
-  "$ROOT_DIR/api/src/main/java/com/comandos/identity/api/IdentityDirectory.java" \
-  || fail "local identity API must remain explicitly deprecated"
-grep -q '@Deprecated(forRemoval = true)' \
-  "$ROOT_DIR/api/src/main/java/com/comandos/organization/api/OrganizationDirectory.java" \
-  || fail "local organization API must remain explicitly deprecated"
+grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
+  || fail "identity persistence bridge must implement canonical Faria Miguel IdentityDirectory"
 
-integrations_root="$ROOT_DIR/api/src/main/java/com/comandos/integrations"
-[[ ! -e "$integrations_root" ]] \
-  || fail "generic COMANDOS integrations root is forbidden; use Faria Miguel integration infrastructure"
-
-grep -q '"integrations-adapters-removed"' "$MANIFEST" \
-  || fail "integrations adapter removal is not declared"
+grep -q '"local-identity-api-removed"' "$MANIFEST" \
+  || fail "local identity API removal is not declared"
+grep -q '"local-organization-api-removed"' "$MANIFEST" \
+  || fail "local organization API removal is not declared"
 
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
@@ -198,7 +180,7 @@ if [[ -d "$enterprise_root" ]]; then
 fi
 
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents workflow security identity organization; do
+for capability in core audit documents workflow security identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -215,7 +197,7 @@ printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its 
 printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot/professional-qualification contracts while legacy Oracle persistence remains transitional.\n'
 printf 'People, organization and unit reads are routed through CanonicalCoreReadService; generic CoreService master-data reads are no longer the primary HTTP path.\n'
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
-printf 'Deprecated local identity/organization APIs are frozen; new consumers are forbidden.\n'
+printf 'Local identity/organization APIs are removed; canonical Faria Miguel contracts are mandatory.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
