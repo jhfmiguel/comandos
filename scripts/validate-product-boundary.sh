@@ -142,6 +142,35 @@ grep -q '"canonical-master-data-read-api"' "$MANIFEST" \
 grep -q '"canonical-person-detail-read-api"' "$MANIFEST" \
   || fail "canonical person detail read cutover is not declared"
 
+# Local identity/organization APIs are frozen compatibility surfaces only.
+# New product code must consume Faria Miguel contracts or canonical migration directories.
+identity_api_consumers="$(
+  grep -RIl 'com\.comandos\.identity\.api' "$ROOT_DIR/api/src/main/java" 2>/dev/null \
+    | grep -v '/com/comandos/identity/api/' \
+    | grep -v '/com/comandos/identity/service/JpaIdentityDirectory.java' \
+    || true
+)"
+if [[ -n "$identity_api_consumers" ]]; then
+  fail "new consumers of deprecated local identity API are forbidden: $identity_api_consumers"
+fi
+
+organization_api_consumers="$(
+  grep -RIl 'com\.comandos\.organization\.api' "$ROOT_DIR/api/src/main/java" 2>/dev/null \
+    | grep -v '/com/comandos/organization/api/' \
+    | grep -v '/com/comandos/organization/service/JpaOrganizationDirectory.java' \
+    || true
+)"
+if [[ -n "$organization_api_consumers" ]]; then
+  fail "new consumers of deprecated local organization API are forbidden: $organization_api_consumers"
+fi
+
+grep -q '@Deprecated(forRemoval = true)' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/identity/api/IdentityDirectory.java" \
+  || fail "local identity API must remain explicitly deprecated"
+grep -q '@Deprecated(forRemoval = true)' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/organization/api/OrganizationDirectory.java" \
+  || fail "local organization API must remain explicitly deprecated"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
@@ -170,5 +199,6 @@ printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its 
 printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot/professional-qualification contracts while legacy Oracle persistence remains transitional.\n'
 printf 'People, organization and unit reads are routed through CanonicalCoreReadService; generic CoreService master-data reads are no longer the primary HTTP path.\n'
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
+printf 'Deprecated local identity/organization APIs are frozen; new consumers are forbidden.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
