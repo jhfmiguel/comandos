@@ -322,59 +322,44 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeDonation(Donation donation) {
-        if (donation.organization == null || donation.organization.id == null) {
-            throw new IllegalStateException("Donation requires a persisted organization before canonical reference synchronization.");
-        }
-        if (donation.donor == null || donation.donor.id == null) {
-            throw new IllegalStateException("Donation requires a persisted donor before canonical reference synchronization.");
-        }
-        if (donation.donee == null || donation.donee.id == null) {
-            throw new IllegalStateException("Donation requires a persisted donee before canonical reference synchronization.");
-        }
 
         donation.organizationCanonicalId = require(
             MasterDataReferenceService.ORGANIZATION,
-            donation.organization.id,
+            donation.organizationLegacyId,
             "donation organization"
         );
         donation.unitCanonicalId = optional(
             MasterDataReferenceService.UNIT,
-            donation.unit == null ? null : donation.unit.id,
+            donation.unitLegacyId,
             "donation unit"
         );
         donation.donorCanonicalId = require(
             MasterDataReferenceService.PERSON,
-            donation.donor.id,
+            donation.donorLegacyId,
             "donation donor"
         );
         donation.doneeCanonicalId = require(
             MasterDataReferenceService.PERSON,
-            donation.donee.id,
+            donation.doneeLegacyId,
             "donation donee"
         );
     }
 
     private void synchronizeSale(InventorySale sale) {
-        if (sale.organization == null || sale.organization.id == null) {
-            throw new IllegalStateException("Sale requires a persisted organization before canonical reference synchronization.");
-        }
-        if (sale.buyer == null || sale.buyer.id == null) {
-            throw new IllegalStateException("Sale requires a persisted buyer before canonical reference synchronization.");
-        }
 
         sale.organizationCanonicalId = require(
             MasterDataReferenceService.ORGANIZATION,
-            sale.organization.id,
+            sale.organizationLegacyId,
             "sale organization"
         );
         sale.unitCanonicalId = optional(
             MasterDataReferenceService.UNIT,
-            sale.unit == null ? null : sale.unit.id,
+            sale.unitLegacyId,
             "sale unit"
         );
         sale.buyerCanonicalId = require(
             MasterDataReferenceService.PERSON,
-            sale.buyer.id,
+            sale.buyerLegacyId,
             "sale buyer"
         );
     }
