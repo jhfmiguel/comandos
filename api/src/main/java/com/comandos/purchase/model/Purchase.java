@@ -10,9 +10,12 @@ import java.util.List;
 @Entity
 @Table(name="erp_purchase",uniqueConstraints=@UniqueConstraint(columnNames={"buyer_organization_id","purchase_number"}))
 public class Purchase extends CoreEntity {
- @ManyToOne(optional=false) @JoinColumn(name="buyer_organization_id",nullable=false) public Organization buyerOrganization;
- @ManyToOne @JoinColumn(name="supplier_organization_id") public Organization supplierOrganization;
- @ManyToOne(optional=false) @JoinColumn(name="origin_person_id",nullable=false) public Person originPerson;
+ @Column(name="buyer_organization_id",nullable=false) public Long buyerOrganizationLegacyId;
+ @Column(name="supplier_organization_id") public Long supplierOrganizationLegacyId;
+ @Column(name="origin_person_id",nullable=false) public Long originPersonLegacyId;
+ @ManyToOne @JoinColumn(name="buyer_organization_id",insertable=false,updatable=false) public Organization buyerOrganization;
+ @ManyToOne @JoinColumn(name="supplier_organization_id",insertable=false,updatable=false) public Organization supplierOrganization;
+ @ManyToOne @JoinColumn(name="origin_person_id",insertable=false,updatable=false) public Person originPerson;
  @Column(name="buyer_organization_canonical_id",length=128) public String buyerOrganizationCanonicalId;
  @Column(name="supplier_organization_canonical_id",length=128) public String supplierOrganizationCanonicalId;
  @Column(name="origin_person_canonical_id",length=128) public String originPersonCanonicalId;
