@@ -3,6 +3,7 @@ package com.comandos.core.controller;
 import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.CoreService;
 import com.comandos.core.service.CanonicalCoreReadService;
+import com.comandos.core.service.CorePageResult;
 import com.comandos.core.service.CepService;
 import com.comandos.security.service.AccessPolicy;
 
@@ -61,7 +62,7 @@ public class CoreController {
     }
 
     @GetMapping("/{resource}")
-    public CoreService.PageResult list(
+    public CorePageResult list(
     		@PathVariable String resource,
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
