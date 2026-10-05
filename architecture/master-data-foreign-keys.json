@@ -36,7 +36,7 @@
         "supplierOrganization",
         "originPerson"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "EquipmentReceiving",
@@ -44,7 +44,7 @@
       "fields": [
         "receivingOrganization"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "Custody",
