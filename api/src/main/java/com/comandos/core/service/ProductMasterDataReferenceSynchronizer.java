@@ -452,7 +452,7 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeLocation(StockLocation location) {
-        if (location.organization == null || location.organization.id == null) {
+        if (location.organizationLegacyId == null) {
             throw new IllegalStateException(
                 "Stock location requires a persisted organization before canonical reference synchronization."
             );
@@ -460,29 +460,23 @@ public class ProductMasterDataReferenceSynchronizer {
 
         location.organizationCanonicalId = references.resolveCanonicalId(
                 MasterDataReferenceService.ORGANIZATION,
-                location.organization.id)
+                location.organizationLegacyId)
             .orElseThrow(() -> new IllegalStateException(
                 "Canonical organization reference is missing for legacy id "
-                    + location.organization.id
+                    + location.organizationLegacyId
             ));
 
-        if (location.unit == null) {
+        if (location.unitLegacyId == null) {
             location.unitCanonicalId = null;
             return;
         }
 
-        if (location.unit.id == null) {
-            throw new IllegalStateException(
-                "Stock location unit must be persisted before canonical reference synchronization."
-            );
-        }
-
         location.unitCanonicalId = references.resolveCanonicalId(
                 MasterDataReferenceService.UNIT,
-                location.unit.id)
+                location.unitLegacyId)
             .orElseThrow(() -> new IllegalStateException(
                 "Canonical organizational unit reference is missing for legacy id "
-                    + location.unit.id
+                    + location.unitLegacyId
             ));
     }
 }
