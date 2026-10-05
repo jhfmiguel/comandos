@@ -110,6 +110,26 @@ class CanonicalMasterDataMirrorServiceTests {
         verify(qualifications).save(any());
     }
 
+
+    @Test
+    void mirrorsCanonicalDeletionWhenEnabled() {
+        var mirror = service(true);
+
+        var person = new Person();
+        person.id = 99L;
+        person.fullName = "Pessoa Removida";
+        person.active = true;
+
+        assertTrue(mirror.delete(person));
+
+        verify(people).delete(
+            com.fariamiguel.tenancy.api.TenantId.of("comandos"),
+            com.fariamiguel.enterprise.common.BusinessId.of(
+                "comandos:person:99"
+            )
+        );
+    }
+
     private CanonicalMasterDataMirrorService service(boolean enabled) {
         return new CanonicalMasterDataMirrorService(
             entityManager,
