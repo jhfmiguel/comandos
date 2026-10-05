@@ -63,8 +63,8 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.supplierOrganization is not null and e.supplierOrganizationCanonicalId is null) or "
                 + "(e.supplierOrganization is null and e.supplierOrganizationCanonicalId is not null)"),
         new Spec(EquipmentReceiving.class,
-            "(e.receivingOrganization is not null and e.receivingOrganizationCanonicalId is null) or "
-                + "(e.receivingOrganization is null and e.receivingOrganizationCanonicalId is not null)"),
+            "(e.receivingOrganizationLegacyId is not null and e.receivingOrganizationCanonicalId is null) or "
+                + "(e.receivingOrganizationLegacyId is null and e.receivingOrganizationCanonicalId is not null)"),
         new Spec(InventoryTransfer.class,
             "e.organizationCanonicalId is null or e.sourceUnitCanonicalId is null or e.destinationUnitCanonicalId is null"),
         new Spec(Custody.class,
