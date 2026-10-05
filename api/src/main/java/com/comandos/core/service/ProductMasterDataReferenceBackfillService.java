@@ -56,8 +56,8 @@ public class ProductMasterDataReferenceBackfillService {
     private static final List<Spec> SPECS = List.of(
         new Spec(StockLocation.class,
             "e.organizationCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(Purchase.class,
             "e.buyerOrganizationCanonicalId is null or e.originPersonCanonicalId is null or "
                 + "(e.supplierOrganization is not null and e.supplierOrganizationCanonicalId is null) or "
@@ -77,12 +77,12 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.recipientUnit is null and e.recipientUnitCanonicalId is not null)"),
         new Spec(Donation.class,
             "e.organizationCanonicalId is null or e.donorCanonicalId is null or e.doneeCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(InventorySale.class,
             "e.organizationCanonicalId is null or e.buyerCanonicalId is null or "
-                + "(e.unit is not null and e.unitCanonicalId is null) or "
-                + "(e.unit is null and e.unitCanonicalId is not null)"),
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(WorkOrder.class,
             "e.organizationCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
