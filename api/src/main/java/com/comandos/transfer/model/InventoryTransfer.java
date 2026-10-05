@@ -8,17 +8,14 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_inventory_transfer")
 public class InventoryTransfer extends CoreEntity {
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "source_unit_id", nullable = false)
-    public OrganizationalUnit sourceUnit;
+    @Column(name = "source_unit_id", nullable = false)
+    public Long sourceUnitLegacyId;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "destination_unit_id", nullable = false)
-    public OrganizationalUnit destinationUnit;
+    @Column(name = "destination_unit_id", nullable = false)
+    public Long destinationUnitLegacyId;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "destination_location_id", nullable = false)
