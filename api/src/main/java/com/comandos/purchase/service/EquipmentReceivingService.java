@@ -132,7 +132,9 @@ public class EquipmentReceivingService {
             if (organization == null) {
                 throw new IllegalArgumentException("Organization not found: " + request.receivingOrganizationId());
             }
-            receiving.receivingOrganization = organization;
+            receiving.receivingOrganizationLegacyId = organization.id;
+            receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organization.id);
+            receiving.receivingOrganizationName = organization.name;
         }
 
         receiving.receivingUnit = clean(request.receivingUnit());
@@ -145,13 +147,6 @@ public class EquipmentReceivingService {
         receiving.documentsChecked = Boolean.TRUE.equals(request.documentsChecked());
         receiving.notes = clean(request.notes());
         receiving.status = ReceivingStatus.RECEIVED;
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) {
-                masterDataReferences.synchronizeForBackfill(receiving);
-            } else {
-                masterDataReferences.synchronize(receiving);
-            }
-        }
         receiving = receivingRepository.save(receiving);
 
         boolean thisDeliveryHasQuantityDivergence = false;
@@ -391,8 +386,8 @@ public class EquipmentReceivingService {
             receiving.sourceType,
             receiving.acquisition == null ? null : receiving.acquisition.id,
             receiving.acquisition == null ? null : receiving.acquisition.purchaseNumber,
-            receiving.receivingOrganization == null ? null : receiving.receivingOrganization.id,
-            receiving.receivingOrganization == null ? null : receiving.receivingOrganization.name,
+            receiving.receivingOrganizationLegacyId,
+            receiving.receivingOrganizationName,
             receiving.receivingUnit,
             receiving.receivingLocation,
             receiving.deliveryDocumentNumber,
