@@ -2,8 +2,8 @@ package com.comandos.workflow.model;
 import com.comandos.core.model.*;import jakarta.persistence.*;import java.time.LocalDateTime;
 @Entity @Table(name="erp_approval_workflow",indexes=@Index(name="idx_workflow_resource_record",columnList="resource_name,record_id"))
 public class ApprovalWorkflow extends CoreEntity{
- @ManyToOne(optional=false)@JoinColumn(name="organization_id",nullable=false)public Organization organization;
- @ManyToOne@JoinColumn(name="unit_id")public OrganizationalUnit unit;
+ @Column(name="organization_id",nullable=false)public Long organizationLegacyId;
+ @Column(name="unit_id")public Long unitLegacyId;
  @Column(name="organization_canonical_id",length=128)public String organizationCanonicalId;
  @Column(name="unit_canonical_id",length=128)public String unitCanonicalId;
  @Column(nullable=false,length=100)public String operationType;@Column(name="resource_name",nullable=false,length=100)public String resource;
