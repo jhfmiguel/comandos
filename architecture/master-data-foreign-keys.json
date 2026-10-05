@@ -162,10 +162,10 @@
       "entity": "PurchasePlanning",
       "path": "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java",
       "fields": [
-        "organization"
+        "organizationLegacyId"
       ],
-      "state": "canonical-id-primary",
-      "note": "Organization-scoped list reads use organizationCanonicalId when COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_PRIMARY_READ is enabled; legacy association is retained for compatibility."
+      "state": "retired",
+      "note": "The Organization JPA association was removed. organization_id remains only as a scalar compatibility bridge while organizationCanonicalId is primary."
     },
     {
       "entity": "PeriodicInspection",
