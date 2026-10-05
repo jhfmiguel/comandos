@@ -202,7 +202,7 @@ public class DisposalService {
             }
         } else if (!location.organizationLegacyId.equals(process.organizationLegacyId)
                 || process.unitLegacyId != null
-                    && (location.unit == null
+                    && (location.unitLegacyId == null
                         || !location.unitLegacyId.equals(process.unitLegacyId))) {
             bad("Every item must belong to the selected organization and unit.");
         }
