@@ -111,9 +111,11 @@ public class InventorySalesService {
         sale.organizationLegacyId = organization.id;
         sale.unitLegacyId = unit == null ? null : unit.id;
         sale.buyerLegacyId = buyer.id;
-        sale.organizationCanonicalId = canonicalScope.organization(organization.id);
-        sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-        sale.buyerCanonicalId = canonicalScope.person(buyer.id);
+        if (canonicalScope != null) {
+            sale.organizationCanonicalId = canonicalScope.organization(organization.id);
+            sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            sale.buyerCanonicalId = canonicalScope.person(buyer.id);
+        }
         sale.unitName = unit == null ? null : unit.name;
         sale.organizationName = organization.name;
         sale.buyerName = buyer.fullName;
