@@ -286,9 +286,9 @@ public class InventorySalesService {
             .setParameter("sale", sale.id).getResultList().stream().map(i -> new LineView(i.id, i.model.id,
                 i.asset == null ? null : i.asset.id, i.lot == null ? null : i.lot.id, i.location.id, i.movement.id,
                 i.modelName, i.sku, i.stockCode, i.locationName, i.unitOfMeasure, decimal(i.quantity), decimal(i.unitPrice), decimal(i.subtotal))).toList();
-        return new SaleView(sale.id, sale.organization.id, sale.organizationName, sale.buyer.id, sale.buyerName,
+        return new SaleView(sale.id, sale.organizationLegacyId, sale.organizationName, sale.buyerLegacyId, sale.buyerName,
             sale.paymentMethod.name(), sale.status, sale.finalizedAt.toString(), decimal(sale.total), items, sale.finalizedById, sale.finalizedByLogin,
-            sale.unit == null ? null : sale.unit.id, sale.unitName, returns(sale.id));
+            sale.unitLegacyId, sale.unitName, returns(sale.id));
     }
 
     private List<ReturnView> returns(long saleId){return em.createQuery("select r from SaleReturn r where r.sale.id=:id order by r.id",SaleReturn.class).setParameter("id",saleId).getResultList().stream().map(this::returnView).toList();}
