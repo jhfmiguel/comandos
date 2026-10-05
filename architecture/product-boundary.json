@@ -50,7 +50,8 @@
     "security-access-denied",
     "authorization-resource-policy",
     "audit-sink",
-    "workflow-engine"
+    "workflow-engine",
+    "canonical-master-data-read-api"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -104,7 +105,8 @@
     "Reusable person roles CUSTOMER/SUPPLIER/PARTNER/SERVICE_PROVIDER must project through Faria Miguel PartyRoleAssignment; security-specific roles remain COMANDOS-owned.",
     "Legacy person credentials must project through Faria Miguel PartyDocument; product-specific credential metadata is preserved in attributes.",
     "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access.",
-    "Professional qualifications are canonically owned by Faria Miguel Enterprise; COMANDOS keeps only legacy persistence and security-domain overlays during migration."
+    "Professional qualifications are canonically owned by Faria Miguel Enterprise; COMANDOS keeps only legacy persistence and security-domain overlays during migration.",
+    "Core master-data reads for people, organizations and units must route through CanonicalCoreReadService; CoreService remains write/compatibility only for those resources."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
