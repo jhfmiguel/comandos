@@ -220,3 +220,35 @@ create index ix_inventory_transfer_source_unit_canonical
 
 create index ix_inventory_transfer_destination_unit_canonical
     on erp_inventory_transfer (destination_unit_canonical_id);
+
+
+-- Canonical master-data shadow references for custody, donation and sales cutover.
+alter table erp_custody add organization_canonical_id varchar2(128 char);
+alter table erp_custody add unit_canonical_id varchar2(128 char);
+alter table erp_custody add recipient_canonical_id varchar2(128 char);
+alter table erp_custody add recipient_unit_canonical_id varchar2(128 char);
+alter table erp_custody add authorizer_canonical_id varchar2(128 char);
+
+create index ix_custody_org_canonical on erp_custody (organization_canonical_id);
+create index ix_custody_unit_canonical on erp_custody (unit_canonical_id);
+create index ix_custody_recipient_canonical on erp_custody (recipient_canonical_id);
+create index ix_custody_recipient_unit_canonical on erp_custody (recipient_unit_canonical_id);
+create index ix_custody_authorizer_canonical on erp_custody (authorizer_canonical_id);
+
+alter table erp_donation add organization_canonical_id varchar2(128 char);
+alter table erp_donation add unit_canonical_id varchar2(128 char);
+alter table erp_donation add donor_canonical_id varchar2(128 char);
+alter table erp_donation add donee_canonical_id varchar2(128 char);
+
+create index ix_donation_org_canonical on erp_donation (organization_canonical_id);
+create index ix_donation_unit_canonical on erp_donation (unit_canonical_id);
+create index ix_donation_donor_canonical on erp_donation (donor_canonical_id);
+create index ix_donation_donee_canonical on erp_donation (donee_canonical_id);
+
+alter table erp_sale add organization_canonical_id varchar2(128 char);
+alter table erp_sale add unit_canonical_id varchar2(128 char);
+alter table erp_sale add buyer_canonical_id varchar2(128 char);
+
+create index ix_sale_org_canonical on erp_sale (organization_canonical_id);
+create index ix_sale_unit_canonical on erp_sale (unit_canonical_id);
+create index ix_sale_buyer_canonical on erp_sale (buyer_canonical_id);
