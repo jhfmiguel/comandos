@@ -118,6 +118,12 @@ test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CorePageResult.ja
   || fail "standalone core pagination contract is required after master-data read cutover"
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/PersonRegistrationService.java" \
   || fail "person registration orchestration must stay outside CoreService"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataMirrorService.java" \
+  || fail "canonical master-data shadow writer is required during persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataMigrationService.java" \
+  || fail "master-data readiness/backfill service is required during persistence migration"
+test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataMigrationRunner.java" \
+  || fail "controlled master-data migration runner is required during persistence migration"
 grep -q 'com\.fariamiguel\.identity\.api\.IdentityDirectory' \
   "$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java" \
   || fail "legacy identity adapter must expose the canonical Faria Miguel IdentityDirectory"
@@ -146,6 +152,10 @@ grep -q '"canonical-person-detail-read-api"' "$MANIFEST" \
   || fail "canonical person detail read cutover is not declared"
 grep -q '"person-registration-orchestration"' "$MANIFEST" \
   || fail "person registration extraction is not declared"
+grep -q '"legacy-master-data-to-canonical-shadow-write"' "$MANIFEST" \
+  || fail "master-data shadow-write bridge is not declared"
+grep -q '"legacy-master-data-canonical-backfill"' "$MANIFEST" \
+  || fail "master-data backfill bridge is not declared"
 
 if grep -q 'record PersonRegistration\|savePersonWithContacts' \
   "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"; then
@@ -228,6 +238,7 @@ printf 'People, organization and unit reads are routed through CanonicalCoreRead
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Local identity/organization APIs are removed; canonical Faria Miguel contracts are mandatory.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
+printf 'Master-data persistence migration has guarded readiness, idempotent backfill and opt-in shadow-write.\n'
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
