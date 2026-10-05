@@ -162,7 +162,7 @@
       "fields": [
         "organization"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "PeriodicInspection",
