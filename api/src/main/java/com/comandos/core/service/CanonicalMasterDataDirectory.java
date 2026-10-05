@@ -3,6 +3,9 @@ package com.comandos.core.service;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
+import com.comandos.core.model.PersonAddress;
+import com.comandos.core.model.PersonEmail;
+import com.comandos.core.model.PersonPhone;
 import com.fariamiguel.enterprise.common.BusinessId;
 import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitId;
@@ -40,7 +43,7 @@ public class CanonicalMasterDataDirectory {
         Person source = entityManager.find(Person.class, id);
         return source == null
             ? Optional.empty()
-            : Optional.of(CanonicalMasterDataMapper.person(source, tenantId));
+            : Optional.of(mapPerson(source, tenantId));
     }
 
     public Optional<com.fariamiguel.enterprise.organization.Organization> findOrganization(
@@ -91,7 +94,7 @@ public class CanonicalMasterDataDirectory {
         }
 
         return typed.getResultList().stream()
-            .map(person -> CanonicalMasterDataMapper.person(person, tenantId))
+            .map(person -> mapPerson(person, tenantId))
             .toList();
     }
 
@@ -128,6 +131,37 @@ public class CanonicalMasterDataDirectory {
             .stream()
             .map(source -> CanonicalMasterDataMapper.unit(source, tenantId, companyId))
             .toList();
+    }
+
+    private com.fariamiguel.enterprise.people.Person mapPerson(
+            Person source,
+            TenantId tenantId) {
+
+        var addresses = entityManager.createQuery(
+                "select a from PersonAddress a where a.person.id=:personId and a.archived=false order by a.primaryAddress desc, a.id",
+                PersonAddress.class)
+            .setParameter("personId", source.id)
+            .getResultList();
+
+        var phones = entityManager.createQuery(
+                "select p from PersonPhone p where p.person.id=:personId order by p.primaryPhone desc, p.id",
+                PersonPhone.class)
+            .setParameter("personId", source.id)
+            .getResultList();
+
+        var emails = entityManager.createQuery(
+                "select e from PersonEmail e where e.person.id=:personId order by e.primaryEmail desc, e.id",
+                PersonEmail.class)
+            .setParameter("personId", source.id)
+            .getResultList();
+
+        return CanonicalMasterDataMapper.person(
+            source,
+            tenantId,
+            addresses,
+            phones,
+            emails
+        );
     }
 
     public static long legacyPersonId(BusinessId id) {
