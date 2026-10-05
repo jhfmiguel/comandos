@@ -70,6 +70,8 @@ forbidden_local_contracts=(
   "api/src/main/java/com/comandos/documents/api/DocumentReference.java"
   "api/src/main/java/com/comandos/notifications/api/NotificationSender.java"
   "api/src/main/java/com/comandos/notifications/api/NotificationMessage.java"
+  "api/src/main/java/com/comandos/security/api/CurrentActor.java"
+  "api/src/main/java/com/comandos/security/api/CurrentActorProvider.java"
 )
 for contract in "${forbidden_local_contracts[@]}"; do
   [[ ! -e "$ROOT_DIR/$contract" ]] || fail "generic contract '$contract' must be consumed from Faria Miguel"
@@ -97,5 +99,6 @@ printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
 printf 'Completed cutovers are guarded: id generation, platform clock/page, audit recorder, document storage/reference and notifications cannot be reintroduced locally.\n'
 printf 'Canonical Platform Core runtime implementations are wired from Faria Miguel; product-local clock/UUID implementations are forbidden.\n'
+printf 'Canonical security CurrentActor contracts are consumed from Faria Miguel; product-local copies are forbidden.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
