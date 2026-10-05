@@ -1,6 +1,8 @@
 package com.comandos.disposal.model;
 
 import com.comandos.core.model.CoreEntity;
+import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationalUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
