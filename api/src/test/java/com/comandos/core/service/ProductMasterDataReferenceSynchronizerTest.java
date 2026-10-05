@@ -345,8 +345,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("ops-unit", disposal.unitCanonicalId);
 
         InventoryReservation reservation = new InventoryReservation();
-        reservation.organization = organization;
-        reservation.unit = unit;
+        reservation.organizationLegacyId = organization.id;
+        reservation.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(reservation));
         assertEquals("ops-org", reservation.organizationCanonicalId);
         assertEquals("ops-unit", reservation.unitCanonicalId);
