@@ -352,7 +352,14 @@ public class InventorySalesService {
         return unit;
     }
     private void validateLocation(StockLocation location, long organizationId, Long unitId) {
-        access.requireScope("sales", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
+        access.requireScope("sales", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("All stock must belong to the selected organization and unit.");
+            }
+            return;
+        }
         if (!location.organization.id.equals(organizationId)) bad("All stock must belong to the selected organization.");
         if (unitId != null && (location.unit == null || !unitId.equals(location.unit.id)))
             bad("All stock must belong to the selected unit.");
