@@ -4,8 +4,6 @@ import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
 import com.fariamiguel.enterprise.common.BusinessId;
-import com.fariamiguel.enterprise.organization.OrganizationRepository;
-import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitId;
 import com.fariamiguel.tenancy.api.TenantId;
@@ -81,7 +79,7 @@ public class CanonicalMasterDataDirectory {
 
         var jpql = new StringBuilder("select p from Person p where p.active = true");
         if (normalized != null) {
-            jpql.append(" and (lower(p.fullName) like :query or lower(p.taxId) like :query)");
+            jpql.append(" and (lower(p.fullName) like :query escape '!' or lower(p.taxId) like :query escape '!')");
         }
         jpql.append(" order by p.fullName, p.id");
 
