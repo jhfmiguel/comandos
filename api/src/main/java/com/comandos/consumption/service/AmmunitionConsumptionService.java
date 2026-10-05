@@ -5,6 +5,7 @@ import com.comandos.consumption.dto.AmmunitionConsumptionContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.*;
@@ -26,23 +27,31 @@ public class AmmunitionConsumptionService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null);
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("ammunition-consumptions", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from StockBalance b where b.location.organization.id = :organization"
-            + (unitId == null ? "" : " and b.location.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from StockBalance b where "
+            + (canonical ? "b.location.organizationCanonicalId" : "b.location.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "b.location.unitCanonicalId" : "b.location.unit.id")
+                + " = :unit")
             + " and b.lot.model.category.family = 'AMMUNITION' and b.lot.model.category.lotControlled = true"
             + " and b.lot.model.category.serialized = false and b.lot.model.category.consumable = true"
             + " and b.available > 0 and b.lot.availableQuantity > 0"
@@ -52,8 +61,8 @@ public class AmmunitionConsumptionService {
         var query = em.createQuery("select b" + from + " order by b.lot.validUntil, b.id", StockBalance.class);
         var count = em.createQuery("select count(b)" + from, Long.class);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", escaped(search));
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", escaped(search));
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::stockView).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
@@ -90,7 +99,7 @@ public class AmmunitionConsumptionService {
         consumption.operationTraining = request.operationTraining() == null || request.operationTraining().isBlank() ? null : request.operationTraining().trim();
         consumption.consumedAt = now;
         consumption.requestId = request.requestId(); consumption.requestFingerprint = fingerprint;
-        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); if (masterDataReferences != null) masterDataReferences.synchronize(consumption); em.persist(consumption);
+        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); if (masterDataReferences != null) { if (canonicalScope != null && canonicalScope.enabled()) masterDataReferences.synchronizeForBackfill(consumption); else masterDataReferences.synchronize(consumption); } em.persist(consumption);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
             var balance = locked(StockBalance.class, line.balanceId());
@@ -123,10 +132,20 @@ public class AmmunitionConsumptionService {
     public Page<ConsumptionView> list(long organizationId, Long unitId, int page) {
         access.requireScope("ammunition-consumptions", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from AmmunitionConsumption c where c.organization.id = :organization" + (unitId == null ? "" : " and c.unit.id = :unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from AmmunitionConsumption c where "
+            + (canonical ? "c.organizationCanonicalId" : "c.organization.id")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "c.unitCanonicalId" : "c.unit.id")
+                + " = :unit");
         var query = em.createQuery("select c" + from + " order by c.id desc", AmmunitionConsumption.class);
         var count = em.createQuery("select count(c)" + from, Long.class);
-        for (var q : List.of(query, count)) { q.setParameter("organization", organizationId); if (unitId != null) q.setParameter("unit", unitId); }
+        for (var q : List.of(query, count)) {
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
     }
