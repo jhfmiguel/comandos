@@ -13,15 +13,9 @@ public class InventorySale extends CoreEntity {
     public Long organizationLegacyId;
     @Column(name = "unit_id")
     public Long unitLegacyId;
-    @ManyToOne @JoinColumn(name = "organization_id", insertable = false, updatable = false)
-    public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id", insertable = false, updatable = false)
-    public OrganizationalUnit unit;
     @Column public String unitName;
     @Column(name = "buyer_id", nullable = false)
     public Long buyerLegacyId;
-    @ManyToOne @JoinColumn(name = "buyer_id", insertable = false, updatable = false)
-    public Person buyer;
     @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
     @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
     @Column(name = "buyer_canonical_id", length = 128) public String buyerCanonicalId;
