@@ -3,9 +3,9 @@ package com.comandos.workflow.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
-import com.comandos.security.api.AuthorizationService;
-import com.comandos.security.api.CurrentActor;
-import com.comandos.security.api.CurrentActorProvider;
+import com.comandos.security.service.AccessPolicy;
+import com.fariamiguel.security.api.CurrentActor;
+import com.fariamiguel.security.api.CurrentActorProvider;
 import com.comandos.workflow.api.*;
 import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.workflow.model.ApprovalWorkflowEvent;
@@ -22,12 +22,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class WorkflowService implements WorkflowGateway {
     private final EntityManager em;
-    private final AuthorizationService access;
+    private final AccessPolicy access;
     private final AuditService audit;
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
 
-    public WorkflowService(EntityManager em, AuthorizationService access, AuditService audit,
+    public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy) {
         this.em = em;
         this.access = access;
@@ -45,7 +45,7 @@ public class WorkflowService implements WorkflowGateway {
         String operationType = WorkflowPolicy.normalize(r.operationType());
         policy.rule(operationType);
         String resource = WorkflowPolicy.normalizeResource(r.resource());
-        access.require(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
+        access.requireScope(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
 
         var w = new ApprovalWorkflow();
         w.organization = find(Organization.class, r.organizationId());
@@ -64,8 +64,8 @@ public class WorkflowService implements WorkflowGateway {
         w.justification = requiredJustification(r.justification());
         w.requestedAt = LocalDateTime.now();
         CurrentActor actor = requiredActor();
-        w.requestedById = actor.accountId();
-        w.requestedByLogin = actor.login();
+        w.requestedById = actor.id() == null ? null : Long.valueOf(actor.id());
+        w.requestedByLogin = actor.displayName();
         em.persist(w);
         em.flush();
 
@@ -113,7 +113,7 @@ public class WorkflowService implements WorkflowGateway {
             conflict("Workflow is already linked to another record.");
         }
 
-        access.require(w.resource, policy.permissionForTransition(WorkflowPolicy.EXECUTED),
+        access.requireScope(w.resource, policy.permissionForTransition(WorkflowPolicy.EXECUTED),
             w.organization.id, w.unit == null ? null : w.unit.id);
         requiredActor();
         var before = view(w);
@@ -126,12 +126,12 @@ public class WorkflowService implements WorkflowGateway {
 
     public WorkflowView get(long id) {
         var w = find(ApprovalWorkflow.class, id);
-        access.require(w.resource, "READ", w.organization.id, w.unit == null ? null : w.unit.id);
+        access.requireScope(w.resource, "READ", w.organization.id, w.unit == null ? null : w.unit.id);
         return view(w);
     }
 
     public PlatformPage<WorkflowView> list(long org, Long unit, String status, int page) {
-        access.require("inventory/assets", "READ", org, unit);
+        access.requireScope("inventory/assets", "READ", org, unit);
         String where = " where w.organization.id=:o" + (unit == null ? "" : " and w.unit.id=:u")
             + (blank(status) ? "" : " and w.status=:s");
         var q = em.createQuery("select w from ApprovalWorkflow w" + where + " order by w.id desc", ApprovalWorkflow.class);
@@ -155,7 +155,7 @@ public class WorkflowService implements WorkflowGateway {
         var w = locked(id);
         policy.rule(w.operationType);
         policy.requireTransition(w.status, target);
-        access.require(w.resource, policy.permissionForTransition(target),
+        access.requireScope(w.resource, policy.permissionForTransition(target),
             w.organization.id, w.unit == null ? null : w.unit.id);
 
         String reason = requiredTransitionJustification(transition);
@@ -166,8 +166,8 @@ public class WorkflowService implements WorkflowGateway {
         w.status = target;
 
         if (WorkflowPolicy.AUTHORIZED.equals(target)) {
-            w.authorityId = actor.accountId();
-            w.authorityLogin = actor.login();
+            w.authorityId = actor.id() == null ? null : Long.valueOf(actor.id());
+            w.authorityLogin = actor.displayName();
             w.authorizedAt = now;
         }
         if (WorkflowPolicy.EXECUTED.equals(target)) w.executedAt = now;
@@ -189,8 +189,8 @@ public class WorkflowService implements WorkflowGateway {
         e.toStatus = to;
         e.justification = requiredJustification(reason);
         e.occurredAt = occurredAt == null ? LocalDateTime.now() : occurredAt;
-        e.actorId = actor.accountId();
-        e.actorLogin = actor.login();
+        e.actorId = actor.id() == null ? null : Long.valueOf(actor.id());
+        e.actorLogin = actor.displayName();
         em.persist(e);
     }
 
@@ -224,7 +224,7 @@ public class WorkflowService implements WorkflowGateway {
 
     private CurrentActor requiredActor() {
         CurrentActor actor = actors.current();
-        if (actor == null || !actor.authenticated() || blank(actor.login())) {
+        if (actor == null || !actor.authenticated() || blank(actor.displayName())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "An authenticated and identified actor is required for workflow transitions.");
         }
