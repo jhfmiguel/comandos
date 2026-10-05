@@ -23,6 +23,21 @@ public class StockLocation extends CoreEntity {
 
     @Column(name = "unit_canonical_id", length = 128)
     public String unitCanonicalId;
+
+    public boolean matchesCanonicalScope(String organizationId, String unitId) {
+        if (!java.util.Objects.equals(organizationCanonicalId, organizationId)) {
+            return false;
+        }
+        return unitId == null || java.util.Objects.equals(unitCanonicalId, unitId);
+    }
+
+    public void requireCanonicalScope(String organizationId, String unitId) {
+        if (!matchesCanonicalScope(organizationId, unitId)) {
+            throw new IllegalStateException(
+                "Stock location does not belong to the requested canonical scope."
+            );
+        }
+    }
     @Column(name = "name", nullable = false, length = 255)
     public String name;
     @Column(name = "type", nullable = false, length = 255)
