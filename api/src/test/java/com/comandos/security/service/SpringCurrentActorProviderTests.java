@@ -19,14 +19,15 @@ class SpringCurrentActorProviderTests {
     }
 
     @Test
-    void returnsAnonymousWhenAuthenticationIsMissing() {
-        var actor = provider.current();
+    void returnsCanonicalAnonymousActorWhenAuthenticationIsMissing() {
+        var actor = provider.currentActor();
 
         assertFalse(actor.authenticated());
+        assertEquals("anonymous", actor.id());
     }
 
     @Test
-    void returnsAccountIdentityFromAuthenticatedPrincipal() {
+    void exposesComandosAccountThroughCanonicalCurrentActor() {
         var principal =
             new AccountPrincipal(42L, 3L, "operator", "hash");
         var authentication =
@@ -37,10 +38,10 @@ class SpringCurrentActorProviderTests {
             );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        var actor = provider.current();
+        var actor = provider.currentActor();
 
         assertTrue(actor.authenticated());
-        assertEquals(42L, actor.accountId());
-        assertEquals("operator", actor.login());
+        assertEquals("42", actor.id());
+        assertEquals("operator", actor.displayName());
     }
 }
