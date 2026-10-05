@@ -134,7 +134,7 @@ public class ProductMasterDataReferenceParityService {
             ref("unit.id", "unitCanonicalId", MasterDataReferenceService.UNIT)
         )),
         new Spec(PurchasePlanning.class, List.of(
-            ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
         )),
         new Spec(PeriodicInspection.class, List.of(
             ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
