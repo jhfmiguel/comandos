@@ -37,7 +37,7 @@
         "supplierOrganization",
         "originPerson"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "EquipmentReceiving",
@@ -45,7 +45,7 @@
       "fields": [
         "receivingOrganization"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "Custody",
@@ -57,7 +57,7 @@
         "recipientUnit",
         "authorizer"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "Donation",
@@ -68,7 +68,7 @@
         "donor",
         "donee"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "InventorySale",
@@ -78,7 +78,7 @@
         "unit",
         "buyer"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "InventoryTransfer",
@@ -117,7 +117,7 @@
         "responsible",
         "authorizer"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "ConsumableUsage",
@@ -128,7 +128,7 @@
         "responsible",
         "authorizer"
       ],
-      "state": "canonical-id-shadow"
+      "state": "canonical-id-primary"
     },
     {
       "entity": "DisposalProcess",
