@@ -91,7 +91,14 @@ public class AmmunitionConsumptionService {
             bad("Organization, responsible person and authorizer must be active.");
         var now = LocalDateTime.now();
         var consumption = new AmmunitionConsumption();
-        consumption.organization = organization; consumption.unit = unit; consumption.responsible = responsible; consumption.authorizer = authorizer;
+        consumption.organizationLegacyId = organization.id;
+        consumption.unitLegacyId = unit == null ? null : unit.id;
+        consumption.responsibleLegacyId = responsible.id;
+        consumption.authorizerLegacyId = authorizer.id;
+        consumption.organizationCanonicalId = canonicalScope.organization(organization.id);
+        consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        consumption.responsibleCanonicalId = canonicalScope.person(responsible.id);
+        consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id);
         consumption.organizationName = organization.name; consumption.unitName = unit == null ? null : unit.name;
         consumption.responsibleName = responsible.fullName; consumption.authorizerName = authorizer.fullName;
         consumption.purpose = request.purpose().trim();
@@ -99,7 +106,7 @@ public class AmmunitionConsumptionService {
         consumption.operationTraining = request.operationTraining() == null || request.operationTraining().isBlank() ? null : request.operationTraining().trim();
         consumption.consumedAt = now;
         consumption.requestId = request.requestId(); consumption.requestFingerprint = fingerprint;
-        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); if (masterDataReferences != null) { if (canonicalScope != null && canonicalScope.enabled()) masterDataReferences.synchronizeForBackfill(consumption); else masterDataReferences.synchronize(consumption); } em.persist(consumption);
+        var actor = audit.actor(); consumption.finalizedById = actor.id(); consumption.finalizedByLogin = actor.login(); em.persist(consumption);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
             var balance = locked(StockBalance.class, line.balanceId());
@@ -135,10 +142,10 @@ public class AmmunitionConsumptionService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from AmmunitionConsumption c where "
-            + (canonical ? "c.organizationCanonicalId" : "c.organization.id")
+            + (canonical ? "c.organizationCanonicalId" : "c.organizationLegacyId")
             + " = :organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "c.unitCanonicalId" : "c.unit.id")
+                + (canonical ? "c.unitCanonicalId" : "c.unitLegacyId")
                 + " = :unit");
         var query = em.createQuery("select c" + from + " order by c.id desc", AmmunitionConsumption.class);
         var count = em.createQuery("select count(c)" + from, Long.class);
@@ -159,8 +166,8 @@ public class AmmunitionConsumptionService {
             .setParameter("id", value.id).getResultList().stream().map(i -> new ItemView(i.id, i.lot.id, i.balance.id, i.sku,
                 i.modelName, i.lotNumber, i.locationName, i.unitOfMeasure, i.quantity, i.result, i.movement.id,
                 i.deliveredQuantity, i.usedQuantity, i.returnedQuantity)).toList();
-        return new ConsumptionView(value.id, value.organization.id, value.organizationName, value.unit == null ? null : value.unit.id,
-            value.unitName, value.responsible.id, value.responsibleName, value.authorizer.id, value.authorizerName, value.purpose,
+        return new ConsumptionView(value.id, value.organizationLegacyId, value.organizationName, value.unitLegacyId,
+            value.unitName, value.responsibleLegacyId, value.responsibleName, value.authorizerLegacyId, value.authorizerName, value.purpose,
             value.status, value.consumedAt.toString(), value.finalizedById, value.finalizedByLogin, items,
             value.activityType, value.operationTraining);
     }
