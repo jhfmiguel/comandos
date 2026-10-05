@@ -139,6 +139,8 @@ grep -q '"legacy-person-qualifications-to-faria-professional-qualifications"' "$
   || fail "professional qualification canonical migration bridge is not declared"
 grep -q '"canonical-master-data-read-api"' "$MANIFEST" \
   || fail "canonical master-data read cutover is not declared"
+grep -q '"canonical-person-detail-read-api"' "$MANIFEST" \
+  || fail "canonical person detail read cutover is not declared"
 
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
@@ -167,5 +169,6 @@ printf 'COMANDOS workflow transition validation consumes the canonical Faria Mig
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
 printf 'Master-data compatibility bridges expose Faria Miguel canonical person/organization/unit/identity/contact/party-role/document/snapshot/professional-qualification contracts while legacy Oracle persistence remains transitional.\n'
 printf 'People, organization and unit reads are routed through CanonicalCoreReadService; generic CoreService master-data reads are no longer the primary HTTP path.\n'
+printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
