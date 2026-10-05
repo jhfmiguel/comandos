@@ -352,8 +352,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("ops-unit", reservation.unitCanonicalId);
 
         InventoryCount count = new InventoryCount();
-        count.organization = organization;
-        count.unit = unit;
+        count.organizationLegacyId = organization.id;
+        count.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(count));
         assertEquals("ops-org", count.organizationCanonicalId);
         assertEquals("ops-unit", count.unitCanonicalId);
