@@ -230,8 +230,14 @@ if [[ -d "$enterprise_root" ]]; then
   done < <(find "$enterprise_root" -mindepth 1 -maxdepth 1 -print)
 fi
 
+grep -q '"core-adapters-reclassified"' "$MANIFEST" \
+  || fail "core adapter reclassification is not declared"
+
+grep -q '"legacy-master-data-admin-compatibility"' "$MANIFEST" \
+  || fail "remaining local core compatibility ownership is not declared"
+
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
-for capability in core audit documents identity; do
+for capability in audit documents identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
@@ -253,6 +259,7 @@ printf 'Person address/phone/email/credential/qualification reads also use Canon
 printf 'Local identity/organization APIs are removed; canonical Faria Miguel contracts are mandatory.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
 printf 'Master-data persistence migration has guarded readiness, idempotent backfill, zero-mismatch parity, CREATE/UPDATE/DELETE shadow-write and controlled canonical reads.\n'
+printf 'Remaining local core code is restricted to legacy master-data/admin compatibility during persistence cutover.\n'
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
