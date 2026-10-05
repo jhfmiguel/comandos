@@ -2,6 +2,7 @@ package com.comandos.donation.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.donation.dto.DonationContract.*;
 import com.comandos.donation.model.*;
 import com.comandos.inventory.model.*;
@@ -20,7 +21,15 @@ import org.springframework.web.server.ResponseStatusException;
 @Service @Transactional(readOnly=true)
 public class DonationService {
  private static final int PAGE_SIZE=20; private final EntityManager em; private final AccessPolicy access; private final AuditService audit;
- public DonationService(EntityManager em,AccessPolicy access,AuditService audit){this.em=em;this.access=access;this.audit=audit;}
+ private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+
+ @org.springframework.beans.factory.annotation.Autowired
+ public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences){
+  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;
+ }
+
+ @Deprecated
+ DonationService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null);}
 
  public Page<StockOption> stock(long organizationId,Long unitId,String kind,String search,int page){
   access.requireScope("donations","READ",organizationId,unitId);selectedUnit(organizationId,unitId);pagination(page);
@@ -39,7 +48,7 @@ public class DonationService {
   if(existing.isPresent()){access.requireEntity("donations","READ",existing.get());if(!existing.get().requestFingerprint.equals(fingerprint))conflict("This request ID was already used for a different donation.");return view(existing.get());}
   var donor=locked(Person.class,request.donorId());var donee=locked(Person.class,request.doneeId());access.requireEntity("core/people","READ",donor);access.requireEntity("core/people","READ",donee);
   if(!organization.active||!donor.active||!donee.active)bad("Organization, donor and donee must be active.");if(donor.id.equals(donee.id))bad("Donor and donee must be different people.");
-  var now=LocalDateTime.now();var actor=audit.actor();var donation=new Donation();donation.organization=organization;donation.unit=unit;donation.donor=donor;donation.donee=donee;donation.organizationName=organization.name;donation.unitName=unit==null?null:unit.name;donation.donorName=donor.fullName;donation.doneeName=donee.fullName;donation.term=request.term().trim();donation.direction="OUTGOING";donation.eventType="REALIZED";donation.titleTransferState="TRANSFERRED_TO_DONEE";donation.termConfirmed=true;donation.documentReference=clean(request.documentReference());donation.approvedById=actor.id();donation.approvedByLogin=actor.login();donation.approvedAt=now;donation.finalizedAt=now;donation.realizedAt=now;donation.titleTransferredAt=now;donation.finalizedById=actor.id();donation.finalizedByLogin=actor.login();donation.requestId=request.requestId();donation.requestFingerprint=fingerprint;em.persist(donation);
+  var now=LocalDateTime.now();var actor=audit.actor();var donation=new Donation();donation.organization=organization;donation.unit=unit;donation.donor=donor;donation.donee=donee;donation.organizationName=organization.name;donation.unitName=unit==null?null:unit.name;donation.donorName=donor.fullName;donation.doneeName=donee.fullName;donation.term=request.term().trim();donation.direction="OUTGOING";donation.eventType="REALIZED";donation.titleTransferState="TRANSFERRED_TO_DONEE";donation.termConfirmed=true;donation.documentReference=clean(request.documentReference());donation.approvedById=actor.id();donation.approvedByLogin=actor.login();donation.approvedAt=now;donation.finalizedAt=now;donation.realizedAt=now;donation.titleTransferredAt=now;donation.finalizedById=actor.id();donation.finalizedByLogin=actor.login();donation.requestId=request.requestId();donation.requestFingerprint=fingerprint;if(masterDataReferences!=null)masterDataReferences.synchronize(donation);em.persist(donation);
   List<Map<String,Object>> changes=new ArrayList<>();
   for(var line:sorted(request.items())){
    var item=new DonationItem();item.donation=donation;item.quantity=line.quantity();item.previousOwnerType="ORGANIZATION";item.previousOwnerName=organization.name;item.newOwnerType="DONEE";item.newOwnerName=donee.fullName;
