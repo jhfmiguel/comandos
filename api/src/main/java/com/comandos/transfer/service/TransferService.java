@@ -149,9 +149,11 @@ public class TransferService {
         transfer.organizationLegacyId = organization.id;
         transfer.sourceUnitLegacyId = sourceUnit.id;
         transfer.destinationUnitLegacyId = destinationUnit.id;
-        transfer.organizationCanonicalId = canonicalScope.organization(organization.id);
-        transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id);
-        transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id);
+        if (canonicalScope != null) {
+            transfer.organizationCanonicalId = canonicalScope.organization(organization.id);
+            transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id);
+            transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id);
+        }
         transfer.destinationLocation = destinationLocation;
         transfer.organizationName = organization.name;
         transfer.sourceUnitName = sourceUnit.name;
