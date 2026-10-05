@@ -17,16 +17,19 @@ import org.springframework.stereotype.Component;
 public class MasterDataMigrationRunner implements ApplicationRunner {
 
     private final MasterDataMigrationService migration;
+    private final MasterDataParityService parity;
     private final boolean readinessOnStartup;
     private final boolean backfillOnStartup;
 
     public MasterDataMigrationRunner(
             MasterDataMigrationService migration,
+            MasterDataParityService parity,
             @Value("${comandos.master-data.readiness-on-startup:false}")
             boolean readinessOnStartup,
             @Value("${comandos.master-data.backfill-on-startup:false}")
             boolean backfillOnStartup) {
         this.migration = migration;
+        this.parity = parity;
         this.readinessOnStartup = readinessOnStartup;
         this.backfillOnStartup = backfillOnStartup;
     }
@@ -61,5 +64,22 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + ", details="
                 + report
         );
+
+        var parityReport = parity.verify();
+        System.out.println(
+            "[master-data-migration] parity consistent="
+                + parityReport.consistent()
+                + ", checked="
+                + parityReport.checked()
+                + ", mismatches="
+                + parityReport.mismatches()
+        );
+
+        if (!parityReport.consistent()) {
+            throw new IllegalStateException(
+                "Master-data backfill completed with canonical parity mismatches: "
+                    + parityReport.mismatches()
+            );
+        }
     }
 }
