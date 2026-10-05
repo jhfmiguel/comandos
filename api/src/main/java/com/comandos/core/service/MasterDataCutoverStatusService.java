@@ -20,6 +20,7 @@ public class MasterDataCutoverStatusService {
         boolean parityPassed,
         boolean shadowWriteEnabled,
         boolean productReferenceShadowEnabled,
+        boolean productReferencePrimaryReadEnabled,
         boolean productReferencesReady,
         boolean canonicalReadEnabled,
         boolean readyToRetireLegacyPersistence,
@@ -32,6 +33,7 @@ public class MasterDataCutoverStatusService {
     private final MasterDataParityService parity;
     private final CanonicalMasterDataMirrorService mirror;
     private final ProductMasterDataReferenceSynchronizer productReferences;
+    private final ProductCanonicalScopeResolver productCanonicalScope;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
     private final boolean canonicalReadEnabled;
 
@@ -40,6 +42,7 @@ public class MasterDataCutoverStatusService {
             MasterDataParityService parity,
             CanonicalMasterDataMirrorService mirror,
             ProductMasterDataReferenceSynchronizer productReferences,
+            ProductCanonicalScopeResolver productCanonicalScope,
             ProductMasterDataReferenceBackfillService productReferenceBackfill,
             @Value("${comandos.master-data.canonical-read.enabled:false}")
             boolean canonicalReadEnabled) {
@@ -47,6 +50,7 @@ public class MasterDataCutoverStatusService {
         this.parity = parity;
         this.mirror = mirror;
         this.productReferences = productReferences;
+        this.productCanonicalScope = productCanonicalScope;
         this.productReferenceBackfill = productReferenceBackfill;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
@@ -64,6 +68,7 @@ public class MasterDataCutoverStatusService {
         boolean parityPassed = parityReport.consistent();
         boolean shadowWriteEnabled = mirror.enabled();
         boolean productReferenceShadowEnabled = productReferences.enabled();
+        boolean productReferencePrimaryReadEnabled = productCanonicalScope.enabled();
         boolean productReferencesReady = productReferenceReport.ready();
 
         return new CutoverStatus(
@@ -71,12 +76,14 @@ public class MasterDataCutoverStatusService {
             parityPassed,
             shadowWriteEnabled,
             productReferenceShadowEnabled,
+            productReferencePrimaryReadEnabled,
             productReferencesReady,
             canonicalReadEnabled,
             readinessPassed
                 && parityPassed
                 && shadowWriteEnabled
                 && productReferenceShadowEnabled
+                && productReferencePrimaryReadEnabled
                 && productReferencesReady
                 && canonicalReadEnabled,
             readinessReport,
@@ -95,6 +102,7 @@ public class MasterDataCutoverStatusService {
                     + ", parityPassed=" + status.parityPassed()
                     + ", shadowWriteEnabled=" + status.shadowWriteEnabled()
                     + ", productReferenceShadowEnabled=" + status.productReferenceShadowEnabled()
+                    + ", productReferencePrimaryReadEnabled=" + status.productReferencePrimaryReadEnabled()
                     + ", productReferencesReady=" + status.productReferencesReady()
                     + ", canonicalReadEnabled=" + status.canonicalReadEnabled()
                     + ", readinessIssues=" + status.readiness().issues()
