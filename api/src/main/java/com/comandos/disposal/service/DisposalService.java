@@ -5,6 +5,7 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.disposal.dto.DisposalContract.*;
 import com.comandos.disposal.model.*;
 import com.comandos.inventory.model.*;
@@ -28,16 +29,18 @@ public class DisposalService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     @org.springframework.beans.factory.annotation.Autowired
     public DisposalService(EntityManager em, AccessPolicy access, AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences;
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
     }
 
     @Deprecated
     DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null);
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -47,8 +50,14 @@ public class DisposalService {
         if (!assets && !"LOT".equals(kind)) bad("Stock kind must be ASSET or LOT.");
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
-        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where e.location.organization.id=:organization"
-            + (unitId == null ? "" : " and e.location.unit.id=:unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organization.id")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unit.id")
+                + "=:unit")
             + (assets ? " and e.status='AVAILABLE'" : " and e.available>0")
             + (assets ? "" : " and e.reserved=0")
             + " and not exists (select c.id from InventoryCount c where c.location.id=e.location.id and c.status.code in ('OPEN','COUNTED'))"
@@ -57,8 +66,8 @@ public class DisposalService {
         var query = em.createQuery("select e" + from + " order by e.id", CoreEntity.class);
         var count = em.createQuery("select count(e)" + from, Long.class);
         for (Query candidate : List.of(query, count)) {
-            candidate.setParameter("organization", organizationId).setParameter("search", escaped(search));
-            if (unitId != null) candidate.setParameter("unit", unitId);
+            candidate.setParameter("organization", canonical ? scope.organizationId() : organizationId).setParameter("search", escaped(search));
+            if (unitId != null) candidate.setParameter("unit", canonical ? scope.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(row -> {
             if (row instanceof AssetItem asset) return new StockOption("ASSET", asset.id, asset.assetCode, asset.model.name,
@@ -95,7 +104,12 @@ public class DisposalService {
         process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
-        process.requestId = request.requestId(); process.requestFingerprint = fingerprint; if (masterDataReferences != null) masterDataReferences.synchronize(process); em.persist(process);
+        process.requestId = request.requestId(); process.requestFingerprint = fingerprint;
+        if (masterDataReferences != null) {
+            if (canonicalScope != null && canonicalScope.enabled()) masterDataReferences.synchronizeForBackfill(process);
+            else masterDataReferences.synchronize(process);
+        }
+        em.persist(process);
 
         if (destructionRequested(request)) {
             Destruction destruction = new Destruction(); destruction.process = process;
@@ -112,10 +126,20 @@ public class DisposalService {
 
     public Page<DisposalView> list(long organizationId, Long unitId, int page) {
         access.requireScope("disposals", "READ", organizationId, unitId); selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from DisposalProcess p where p.organization.id=:organization" + (unitId == null ? "" : " and p.unit.id=:unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from DisposalProcess p where "
+            + (canonical ? "p.organizationCanonicalId" : "p.organization.id")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "p.unitCanonicalId" : "p.unit.id")
+                + "=:unit");
         var query = em.createQuery("select p" + from + " order by p.id desc", DisposalProcess.class);
         var count = em.createQuery("select count(p)" + from, Long.class);
-        for (Query candidate : List.of(query, count)) { candidate.setParameter("organization", organizationId); if (unitId != null) candidate.setParameter("unit", unitId); }
+        for (Query candidate : List.of(query, count)) {
+            candidate.setParameter("organization", canonical ? scope.organizationId() : organizationId);
+            if (unitId != null) candidate.setParameter("unit", canonical ? scope.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
     }
