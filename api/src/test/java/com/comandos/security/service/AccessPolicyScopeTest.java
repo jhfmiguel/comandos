@@ -32,8 +32,8 @@ class AccessPolicyScopeTest {
     }
 
     @Test
-    void ammunitionConsumptionKeepsLegacyJpaScopeUntilItsModelCanMigrate() {
-        assertScope("ammunition-consumptions", "organization.id", "unit.id");
+    void ammunitionConsumptionUsesScalarScopePaths() {
+        assertScope("ammunition-consumptions", "organizationLegacyId", "unitLegacyId");
     }
 
     private static void assertScope(
