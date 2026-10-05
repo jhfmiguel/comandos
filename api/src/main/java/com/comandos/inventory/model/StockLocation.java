@@ -17,6 +17,12 @@ public class StockLocation extends CoreEntity {
     @ManyToOne(optional = true)
     @JoinColumn(name = "unit_id", nullable = true)
     public OrganizationalUnit unit;
+
+    @Column(name = "organization_canonical_id", length = 128)
+    public String organizationCanonicalId;
+
+    @Column(name = "unit_canonical_id", length = 128)
+    public String unitCanonicalId;
     @Column(name = "name", nullable = false, length = 255)
     public String name;
     @Column(name = "type", nullable = false, length = 255)
