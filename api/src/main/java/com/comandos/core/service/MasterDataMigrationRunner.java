@@ -20,6 +20,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     private final MasterDataParityService parity;
     private final boolean readinessOnStartup;
     private final boolean backfillOnStartup;
+    private final boolean parityOnStartup;
 
     public MasterDataMigrationRunner(
             MasterDataMigrationService migration,
@@ -27,16 +28,19 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             @Value("${comandos.master-data.readiness-on-startup:false}")
             boolean readinessOnStartup,
             @Value("${comandos.master-data.backfill-on-startup:false}")
-            boolean backfillOnStartup) {
+            boolean backfillOnStartup,
+            @Value("${comandos.master-data.parity-on-startup:false}")
+            boolean parityOnStartup) {
         this.migration = migration;
         this.parity = parity;
         this.readinessOnStartup = readinessOnStartup;
         this.backfillOnStartup = backfillOnStartup;
+        this.parityOnStartup = parityOnStartup;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!readinessOnStartup && !backfillOnStartup) return;
+        if (!readinessOnStartup && !backfillOnStartup && !parityOnStartup) return;
 
         var readiness = migration.readiness();
 
@@ -45,7 +49,12 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + " issues=" + readiness.issues()
         );
 
-        if (!backfillOnStartup) return;
+        if (!backfillOnStartup) {
+            if (parityOnStartup) {
+                requireParity();
+            }
+            return;
+        }
 
         if (!readiness.ready()) {
             throw new IllegalStateException(
@@ -65,7 +74,12 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + report
         );
 
+        requireParity();
+    }
+
+    private void requireParity() {
         var parityReport = parity.verify();
+
         System.out.println(
             "[master-data-migration] parity consistent="
                 + parityReport.consistent()
@@ -77,7 +91,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
         if (!parityReport.consistent()) {
             throw new IllegalStateException(
-                "Master-data backfill completed with canonical parity mismatches: "
+                "Master-data canonical parity mismatch: "
                     + parityReport.mismatches()
             );
         }
