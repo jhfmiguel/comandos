@@ -67,8 +67,8 @@ public class ProductMasterDataReferenceParityService {
 
     private static final List<Spec> SPECS = List.of(
         new Spec(StockLocation.class, List.of(
-            ref("organization.id", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unit.id", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
         )),
         new Spec(Purchase.class, List.of(
             ref("buyerOrganizationLegacyId", "buyerOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
