@@ -1,61 +1,66 @@
 package com.comandos.organization.service;
 
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.organization.api.OrganizationDirectory;
 import com.comandos.organization.api.OrganizationView;
 import com.comandos.organization.api.OrganizationalUnitView;
-import jakarta.persistence.EntityManager;
+import com.fariamiguel.tenancy.api.TenantId;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Legacy organization API adapter backed by the canonical master-data bridge.
+ *
+ * <p>The local API remains only for source compatibility. New consumers should
+ * use Faria Miguel master-data contracts directly.</p>
+ */
 @Service
 @Transactional(readOnly = true)
 public class JpaOrganizationDirectory implements OrganizationDirectory {
 
-    private final EntityManager entityManager;
+    private static final TenantId TENANT = TenantId.of("comandos");
 
-    public JpaOrganizationDirectory(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    private final CanonicalMasterDataDirectory canonical;
+
+    public JpaOrganizationDirectory(CanonicalMasterDataDirectory canonical) {
+        this.canonical = canonical;
     }
 
     @Override
     public Optional<OrganizationView> findOrganization(long id) {
-        Organization organization = entityManager.find(Organization.class, id);
-
-        if (organization == null) return Optional.empty();
-
-        return Optional.of(new OrganizationView(
-            organization.id,
-            organization.nature == null
-                ? organization.legacyNature
-                : organization.nature.name,
-            organization.economicActivity == null
-                ? null
-                : organization.economicActivity.description,
-            organization.name,
-            organization.acronym,
-            organization.taxId,
-            Boolean.TRUE.equals(organization.publicOrganization),
-            Boolean.TRUE.equals(organization.active)
-        ));
+        return canonical.findOrganization(id, TENANT)
+            .map(organization -> new OrganizationView(
+                CanonicalMasterDataDirectory.legacyOrganizationId(organization.id()),
+                organization.attributes().get("nature"),
+                organization.attributes().get("economicActivity"),
+                organization.legalName(),
+                organization.tradeName(),
+                organization.taxId(),
+                Boolean.parseBoolean(
+                    organization.attributes().getOrDefault(
+                        "publicOrganization",
+                        "false"
+                    )
+                ),
+                organization.status()
+                    == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE
+            ));
     }
 
     @Override
     public Optional<OrganizationalUnitView> findUnit(long id) {
-        OrganizationalUnit unit = entityManager.find(OrganizationalUnit.class, id);
-
-        if (unit == null) return Optional.empty();
-
-        return Optional.of(new OrganizationalUnitView(
-            unit.id,
-            unit.organization.id,
-            unit.parentUnit == null ? null : unit.parentUnit.id,
-            unit.code,
-            unit.name,
-            unit.unitType == null ? unit.type : unit.unitType.name,
-            Boolean.TRUE.equals(unit.active)
-        ));
+        return canonical.findUnit(id, TENANT)
+            .map(unit -> new OrganizationalUnitView(
+                CanonicalMasterDataDirectory.legacyUnitId(unit.id()),
+                Long.parseLong(unit.attributes().get("legacyOrganizationId")),
+                unit.parentUnitId() == null
+                    ? null
+                    : CanonicalMasterDataDirectory.legacyUnitId(unit.parentUnitId()),
+                unit.code(),
+                unit.name(),
+                unit.attributes().get("legacyType"),
+                unit.active()
+            ));
     }
 }
