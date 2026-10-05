@@ -51,7 +51,8 @@
     "authorization-resource-policy",
     "audit-sink",
     "workflow-engine",
-    "canonical-master-data-read-api"
+    "canonical-master-data-read-api",
+    "canonical-person-detail-read-api"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -106,7 +107,8 @@
     "Legacy person credentials must project through Faria Miguel PartyDocument; product-specific credential metadata is preserved in attributes.",
     "New master-data readers should prefer the canonical PartySnapshot migration view instead of direct CoreService/JPA access.",
     "Professional qualifications are canonically owned by Faria Miguel Enterprise; COMANDOS keeps only legacy persistence and security-domain overlays during migration.",
-    "Core master-data reads for people, organizations and units must route through CanonicalCoreReadService; CoreService remains write/compatibility only for those resources."
+    "Core master-data reads for people, organizations and units must route through CanonicalCoreReadService; CoreService remains write/compatibility only for those resources.",
+    "Person detail reads for addresses, phones, emails, credentials and qualifications must route through CanonicalCoreReadService."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
