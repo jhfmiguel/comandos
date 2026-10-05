@@ -142,13 +142,6 @@ public class CustodyService {
         custody.deliveryCondition = request.deliveryCondition() == null || request.deliveryCondition().isBlank() ? null : request.deliveryCondition().trim();
         custody.requestId = request.requestId(); custody.requestFingerprint = fingerprint;
         var actor = audit.actor(); custody.issuedById = actor.id(); custody.issuedByLogin = actor.login();
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) {
-                masterDataReferences.synchronizeForBackfill(custody);
-            } else {
-                masterDataReferences.synchronize(custody);
-            }
-        }
         em.persist(custody);
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (Long assetId : values(request.assetIds()).stream().sorted().toList()) {
