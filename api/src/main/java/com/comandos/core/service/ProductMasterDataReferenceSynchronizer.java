@@ -162,17 +162,29 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof PeriodicInspection inspection) {
-            synchronizeScope(inspection.organization, inspection.unit, ids -> {
-                inspection.organizationCanonicalId = ids.organization();
-                inspection.unitCanonicalId = ids.unit();
-            }, "periodic inspection");
+            inspection.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                inspection.organizationLegacyId,
+                "periodic inspection organization"
+            );
+            inspection.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                inspection.unitLegacyId,
+                "periodic inspection unit"
+            );
             return true;
         }
         if (entity instanceof ExceptionOccurrence occurrence) {
-            synchronizeScope(occurrence.organization, occurrence.unit, ids -> {
-                occurrence.organizationCanonicalId = ids.organization();
-                occurrence.unitCanonicalId = ids.unit();
-            }, "exception occurrence");
+            occurrence.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                occurrence.organizationLegacyId,
+                "exception occurrence organization"
+            );
+            occurrence.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                occurrence.unitLegacyId,
+                "exception occurrence unit"
+            );
             return true;
         }
         return false;
