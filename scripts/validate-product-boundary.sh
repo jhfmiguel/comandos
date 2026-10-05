@@ -160,6 +160,12 @@ grep -q '"legacy-master-data-canonical-backfill"' "$MANIFEST" \
   || fail "master-data backfill bridge is not declared"
 grep -q '"legacy-master-data-canonical-parity"' "$MANIFEST" \
   || fail "master-data parity bridge is not declared"
+grep -q '"legacy-master-data-canonical-delete-shadow"' "$MANIFEST" \
+  || fail "master-data delete-shadow bridge is not declared"
+
+grep -q 'masterDataMirror.delete(entity)' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java" \
+  || fail "CoreService delete path must mirror canonical master-data deletion"
 
 if grep -q 'record PersonRegistration\|savePersonWithContacts' \
   "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"; then
@@ -242,7 +248,7 @@ printf 'People, organization and unit reads are routed through CanonicalCoreRead
 printf 'Person address/phone/email/credential/qualification reads also use CanonicalCoreReadService.\n'
 printf 'Local identity/organization APIs are removed; canonical Faria Miguel contracts are mandatory.\n'
 printf 'Person registration orchestration is isolated from the legacy CoreService.\n'
-printf 'Master-data persistence migration has guarded readiness, idempotent backfill, zero-mismatch parity and opt-in shadow-write.\n'
+printf 'Master-data persistence migration has guarded readiness, idempotent backfill, zero-mismatch parity and CREATE/UPDATE/DELETE shadow-write.\n'
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
