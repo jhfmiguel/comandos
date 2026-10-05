@@ -6,6 +6,7 @@ import com.comandos.inventory.model.StockLocation;
 import com.comandos.inventory.model.StockMovement;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
+import com.comandos.transfer.model.InventoryTransfer;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -166,6 +167,37 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         assertTrue(synchronizer.synchronize(purchase));
         assertNull(purchase.supplierOrganizationCanonicalId);
+    }
+
+    @Test
+    void synchronizesInventoryTransferScope() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 40L))
+            .thenReturn(Optional.of("transfer-org"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 41L))
+            .thenReturn(Optional.of("source-unit"));
+        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 42L))
+            .thenReturn(Optional.of("destination-unit"));
+
+        Organization organization = new Organization();
+        organization.id = 40L;
+        OrganizationalUnit source = new OrganizationalUnit();
+        source.id = 41L;
+        OrganizationalUnit destination = new OrganizationalUnit();
+        destination.id = 42L;
+
+        InventoryTransfer transfer = new InventoryTransfer();
+        transfer.organization = organization;
+        transfer.sourceUnit = source;
+        transfer.destinationUnit = destination;
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertTrue(synchronizer.synchronize(transfer));
+        assertEquals("transfer-org", transfer.organizationCanonicalId);
+        assertEquals("source-unit", transfer.sourceUnitCanonicalId);
+        assertEquals("destination-unit", transfer.destinationUnitCanonicalId);
     }
 
     @Test
