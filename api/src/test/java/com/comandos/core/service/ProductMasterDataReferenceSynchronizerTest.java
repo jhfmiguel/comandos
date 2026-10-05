@@ -405,15 +405,15 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertEquals("remaining-org", planning.organizationCanonicalId);
 
         PeriodicInspection inspection = new PeriodicInspection();
-        inspection.organization = organization;
-        inspection.unit = unit;
+        inspection.organizationLegacyId = organization.id;
+        inspection.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(inspection));
         assertEquals("remaining-org", inspection.organizationCanonicalId);
         assertEquals("remaining-unit", inspection.unitCanonicalId);
 
         ExceptionOccurrence occurrence = new ExceptionOccurrence();
-        occurrence.organization = organization;
-        occurrence.unit = unit;
+        occurrence.organizationLegacyId = organization.id;
+        occurrence.unitLegacyId = unit.id;
         assertTrue(synchronizer.synchronize(occurrence));
         assertEquals("remaining-org", occurrence.organizationCanonicalId);
         assertEquals("remaining-unit", occurrence.unitCanonicalId);
@@ -429,7 +429,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         organization.id = 100L;
 
         PurchasePlanning planning = new PurchasePlanning();
-        planning.organization = organization;
+        planning.organizationLegacyId = organization.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(references, false);
