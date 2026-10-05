@@ -3,6 +3,7 @@ package com.comandos.workflow.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.security.service.AccessPolicy;
 import com.fariamiguel.security.api.CurrentActor;
 import com.fariamiguel.security.api.CurrentActorProvider;
@@ -26,14 +27,24 @@ public class WorkflowService implements SensitiveWorkflowGateway {
     private final AuditService audit;
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
-            CurrentActorProvider actors, WorkflowPolicy policy) {
+            CurrentActorProvider actors, WorkflowPolicy policy,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.actors = actors;
         this.policy = policy;
+        this.masterDataReferences = masterDataReferences;
+    }
+
+    @Deprecated
+    WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
+            CurrentActorProvider actors, WorkflowPolicy policy) {
+        this(em, access, audit, actors, policy, null);
     }
 
     @Transactional
@@ -66,6 +77,9 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         CurrentActor actor = requiredActor();
         w.requestedById = actorId(actor);
         w.requestedByLogin = actor.displayName();
+        if (masterDataReferences != null) {
+            masterDataReferences.synchronize(w);
+        }
         em.persist(w);
         em.flush();
 
