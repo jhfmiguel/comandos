@@ -20,6 +20,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CanonicalPartyRoleDirectory {
 
+    public record ProductSpecificRole(
+        long assignmentId,
+        long personId,
+        String code,
+        String name,
+        String status,
+        long organizationId,
+        Long unitId,
+        java.time.LocalDate validFrom,
+        java.time.LocalDate validUntil,
+        Map<String, String> attributes
+    ) {}
+
     private final EntityManager entityManager;
 
     public CanonicalPartyRoleDirectory(EntityManager entityManager) {
@@ -51,11 +64,23 @@ public class CanonicalPartyRoleDirectory {
             .toList();
     }
 
-    public List<PersonRoleAssignment> productSpecificRoles(long personId) {
+    public List<ProductSpecificRole> productSpecificRoles(long personId) {
         if (personId <= 0) return List.of();
 
         return assignments(personId).stream()
             .filter(source -> CanonicalPartyRoleMapper.roleType(source.role).isEmpty())
+            .map(source -> new ProductSpecificRole(
+                source.id,
+                source.person.id,
+                source.role.code,
+                source.role.name,
+                source.status,
+                source.organization.id,
+                source.unit == null ? null : source.unit.id,
+                source.startDate,
+                source.endDate,
+                roleData(source.id)
+            ))
             .toList();
     }
 
