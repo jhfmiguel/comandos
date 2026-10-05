@@ -87,7 +87,7 @@
         "sourceUnit",
         "destinationUnit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "WorkOrder",
