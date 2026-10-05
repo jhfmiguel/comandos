@@ -17,7 +17,7 @@
         "organization",
         "unit"
       ],
-      "state": "legacy-jpa-association"
+      "state": "canonical-id-shadow"
     },
     {
       "entity": "StockMovement",
