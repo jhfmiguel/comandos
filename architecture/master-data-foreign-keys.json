@@ -156,10 +156,10 @@
       "entity": "InventoryCount",
       "path": "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
       "fields": [
-        "organization",
-        "unit"
+        "organizationLegacyId",
+        "unitLegacyId"
       ],
-      "state": "canonical-id-primary"
+      "state": "retired"
     },
     {
       "entity": "PurchasePlanning",
