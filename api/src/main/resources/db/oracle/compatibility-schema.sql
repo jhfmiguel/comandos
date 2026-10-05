@@ -205,3 +205,18 @@ alter table erp_equipment_receiving add receiving_organization_canonical_id varc
 
 create index ix_equipment_receiving_org_canonical
     on erp_equipment_receiving (receiving_organization_canonical_id);
+
+
+-- Canonical master-data shadow references for inventory transfer cutover.
+alter table erp_inventory_transfer add organization_canonical_id varchar2(128 char);
+alter table erp_inventory_transfer add source_unit_canonical_id varchar2(128 char);
+alter table erp_inventory_transfer add destination_unit_canonical_id varchar2(128 char);
+
+create index ix_inventory_transfer_org_canonical
+    on erp_inventory_transfer (organization_canonical_id);
+
+create index ix_inventory_transfer_source_unit_canonical
+    on erp_inventory_transfer (source_unit_canonical_id);
+
+create index ix_inventory_transfer_destination_unit_canonical
+    on erp_inventory_transfer (destination_unit_canonical_id);
