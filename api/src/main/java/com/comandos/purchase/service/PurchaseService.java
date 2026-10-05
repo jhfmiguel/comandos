@@ -35,7 +35,10 @@ public class PurchaseService {
   if(r.originPersonId()==null)throw new IllegalArgumentException("Acquisition origin person is required.");
   if(blank(r.purchaseNumber()))throw new IllegalArgumentException("Acquisition number is required.");
   if(r.items()==null||r.items().isEmpty())throw new IllegalArgumentException("Acquisition requires at least one item.");
-  Purchase p=new Purchase();p.buyerOrganization=org(r.buyerOrganizationId());p.supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());p.originPerson=person(r.originPersonId());
+  Organization buyerOrganization=org(r.buyerOrganizationId());Organization supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());Person originPerson=person(r.originPersonId());
+  Purchase p=new Purchase();p.buyerOrganization=buyerOrganization;p.supplierOrganization=supplierOrganization;p.originPerson=originPerson;
+  p.buyerOrganizationLegacyId=buyerOrganization.id;p.supplierOrganizationLegacyId=supplierOrganization==null?null:supplierOrganization.id;p.originPersonLegacyId=originPerson.id;
+  if(canonicalScope!=null){p.buyerOrganizationCanonicalId=canonicalScope.organization(buyerOrganization.id);p.supplierOrganizationCanonicalId=supplierOrganization==null?null:canonicalScope.organization(supplierOrganization.id);p.originPersonCanonicalId=canonicalScope.person(originPerson.id);}
   p.acquisitionType=r.acquisitionType()==null?AcquisitionType.ONEROUS:r.acquisitionType();p.originDescription=trim(r.originDescription());
   p.purchaseNumber=r.purchaseNumber().trim();p.purchaseDate=r.purchaseDate()==null?LocalDate.now():r.purchaseDate();
   p.discount=money(r.discount());p.freight=money(r.freight());p.taxes=money(r.taxes());p.otherCosts=money(r.otherCosts());
