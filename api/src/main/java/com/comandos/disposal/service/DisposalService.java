@@ -53,10 +53,10 @@ public class DisposalService {
         boolean canonical = canonicalScope != null && canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
-            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organization.id")
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
             + "=:organization"
             + (unitId == null ? "" : " and "
-                + (canonical ? "e.location.unitCanonicalId" : "e.location.unit.id")
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unitLegacyId")
                 + "=:unit")
             + (assets ? " and e.status='AVAILABLE'" : " and e.available>0")
             + (assets ? "" : " and e.reserved=0")
@@ -200,10 +200,10 @@ public class DisposalService {
                     process.unitCanonicalId)) {
                 bad("Every item must belong to the selected organization and unit.");
             }
-        } else if (!location.organization.id.equals(process.organizationLegacyId)
+        } else if (!location.organizationLegacyId.equals(process.organizationLegacyId)
                 || process.unitLegacyId != null
                     && (location.unit == null
-                        || !location.unit.id.equals(process.unitLegacyId))) {
+                        || !location.unitLegacyId.equals(process.unitLegacyId))) {
             bad("Every item must belong to the selected organization and unit.");
         }
         // Opening a count locks the same organization, so its snapshot cannot race this check.
