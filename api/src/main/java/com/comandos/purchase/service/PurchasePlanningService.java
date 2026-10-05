@@ -1,7 +1,6 @@
 package com.comandos.purchase.service;
 
 import com.comandos.core.model.Organization;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.purchase.dto.PurchasePlanningContract.CreateRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.StatusRequest;
@@ -20,17 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class PurchasePlanningService {
     private final PurchasePlanningRepository repository;
     private final EntityManager em;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
 
     public PurchasePlanningService(
             PurchasePlanningRepository repository,
             EntityManager em,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
             ProductCanonicalScopeResolver canonicalScope) {
         this.repository = repository;
         this.em = em;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
     }
 
@@ -52,7 +48,8 @@ public class PurchasePlanningService {
         }
 
         PurchasePlanning planning = new PurchasePlanning();
-        planning.organization = organization;
+        planning.organizationLegacyId = organization.id;
+        planning.organizationCanonicalId = canonicalScope.organization(organization.id);
         planning.processNumber = clean(request.processNumber());
         planning.requestingUnit = clean(request.requestingUnit());
         planning.objectDescription = required(request.objectDescription(), 2000, "Object description");
@@ -68,11 +65,6 @@ public class PurchasePlanningService {
         planning.notes = clean(request.notes());
         planning.status = PurchasePlanningStatus.DRAFT;
 
-        if (canonicalScope.enabled()) {
-            masterDataReferences.synchronizeForBackfill(planning);
-        } else {
-            masterDataReferences.synchronize(planning);
-        }
         return view(repository.save(planning));
     }
 
@@ -98,7 +90,7 @@ public class PurchasePlanningService {
             ? repository.findByOrganizationCanonicalIdOrderByCreatedAtDesc(
                 canonicalScope.organization(organizationId)
             )
-            : repository.findByOrganizationIdOrderByCreatedAtDesc(organizationId);
+            : repository.findByOrganizationLegacyIdOrderByCreatedAtDesc(organizationId);
 
         return rows.stream()
             .map(this::view)
@@ -113,7 +105,7 @@ public class PurchasePlanningService {
     private View view(PurchasePlanning p) {
         return new View(
             p.id,
-            p.organization.id,
+            p.organizationLegacyId,
             p.processNumber,
             p.requestingUnit,
             p.objectDescription,
