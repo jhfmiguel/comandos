@@ -539,7 +539,15 @@ public class TransferService {
     }
 
     private void requireSource(StockLocation source, InventoryTransfer transfer) {
-        access.requireScope("transfers", "CREATE", source.organization.id, source.unit == null ? null : source.unit.id);
+        access.requireScope("transfers", "CREATE", transfer.organization.id, transfer.sourceUnit.id);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            if (!source.matchesCanonicalScope(
+                    transfer.organizationCanonicalId,
+                    transfer.sourceUnitCanonicalId)) {
+                bad("Every item must belong to the selected source unit.");
+            }
+            return;
+        }
         if (!source.organization.id.equals(transfer.organization.id) || source.unit == null
                 || !source.unit.id.equals(transfer.sourceUnit.id)) {
             bad("Every item must belong to the selected source unit.");
