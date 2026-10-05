@@ -2,6 +2,7 @@ package com.comandos.core.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.model.Organization;
+import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.model.Person;
 import com.comandos.core.model.PersonAddress;
 import com.comandos.core.model.PersonCredential;
@@ -17,6 +18,7 @@ import com.fariamiguel.enterprise.party.PartyRoleRepository;
 import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.enterprise.people.ProfessionalQualificationRepository;
 import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.OrganizationalUnitRepository;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
@@ -41,6 +43,7 @@ public class CanonicalMasterDataMirrorService {
     private final EntityManager entityManager;
     private final PersonRepository people;
     private final OrganizationRepository organizations;
+    private final OrganizationalUnitRepository units;
     private final ContactRepository contacts;
     private final PartyRoleRepository roles;
     private final PartyDocumentRepository documents;
@@ -51,6 +54,7 @@ public class CanonicalMasterDataMirrorService {
             EntityManager entityManager,
             PersonRepository people,
             OrganizationRepository organizations,
+            OrganizationalUnitRepository units,
             ContactRepository contacts,
             PartyRoleRepository roles,
             PartyDocumentRepository documents,
@@ -59,6 +63,7 @@ public class CanonicalMasterDataMirrorService {
         this.entityManager = entityManager;
         this.people = people;
         this.organizations = organizations;
+        this.units = units;
         this.contacts = contacts;
         this.roles = roles;
         this.documents = documents;
@@ -83,6 +88,15 @@ public class CanonicalMasterDataMirrorService {
                 organization,
                 TENANT,
                 CompanyId.of("comandos:organization:" + organization.id)
+            ));
+            return true;
+        }
+
+        if (entity instanceof OrganizationalUnit unit) {
+            units.save(CanonicalMasterDataMapper.unit(
+                unit,
+                TENANT,
+                CompanyId.of("comandos:organization:" + unit.organization.id)
             ));
             return true;
         }
