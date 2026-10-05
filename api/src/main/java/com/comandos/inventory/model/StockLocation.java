@@ -11,12 +11,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_stock_location")
 public class StockLocation extends CoreEntity {
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
-    @ManyToOne(optional = true)
-    @JoinColumn(name = "unit_id", nullable = true)
-    public OrganizationalUnit unit;
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
+    @Column(name = "unit_id")
+    public Long unitLegacyId;
 
     @Column(name = "organization_canonical_id", length = 128)
     public String organizationCanonicalId;
