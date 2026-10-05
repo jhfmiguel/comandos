@@ -63,6 +63,8 @@ forbidden_local_contracts=(
   "api/src/main/java/com/comandos/core/api/IdGenerator.java"
   "api/src/main/java/com/comandos/core/api/PlatformClock.java"
   "api/src/main/java/com/comandos/core/api/PlatformPage.java"
+  "api/src/main/java/com/comandos/core/service/SystemPlatformClock.java"
+  "api/src/main/java/com/comandos/core/service/UuidGenerator.java"
   "api/src/main/java/com/comandos/audit/api/AuditRecorder.java"
   "api/src/main/java/com/comandos/documents/api/DocumentStorage.java"
   "api/src/main/java/com/comandos/documents/api/DocumentReference.java"
@@ -94,5 +96,6 @@ done
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
 printf 'Completed cutovers are guarded: id generation, platform clock/page, audit recorder, document storage/reference and notifications cannot be reintroduced locally.\n'
+printf 'Canonical Platform Core runtime implementations are wired from Faria Miguel; product-local clock/UUID implementations are forbidden.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
