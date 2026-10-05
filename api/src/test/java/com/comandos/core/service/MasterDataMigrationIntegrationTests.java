@@ -36,6 +36,7 @@ class MasterDataMigrationIntegrationTests {
 
     @Autowired EntityManager entityManager;
     @Autowired MasterDataMigrationService migration;
+    @Autowired MasterDataParityService parity;
     @Autowired PersonRepository people;
     @Autowired ProfessionalQualificationRepository qualifications;
 
@@ -82,5 +83,9 @@ class MasterDataMigrationIntegrationTests {
                 com.fariamiguel.enterprise.party.PartyKind.PERSON
             )
         )).hasSize(1);
+
+        var parityReport = parity.verify();
+        assertThat(parityReport.consistent()).isTrue();
+        assertThat(parityReport.mismatches()).isEmpty();
     }
 }
