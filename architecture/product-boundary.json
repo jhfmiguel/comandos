@@ -43,7 +43,13 @@
     "platform-clock",
     "pagination",
     "documents-contracts",
-    "notifications-contracts"
+    "notifications-contracts",
+    "platform-runtime-services",
+    "security-current-actor",
+    "security-access-denied",
+    "authorization-resource-policy",
+    "audit-sink",
+    "workflow-engine"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -53,7 +59,12 @@
     "integration-events",
     "published-contracts"
   ],
-  "forbiddenSiblingProducts": ["arnold", "digital-experience", "trator", "tubarao"],
+  "forbiddenSiblingProducts": [
+    "arnold",
+    "digital-experience",
+    "trator",
+    "tubarao"
+  ],
   "productOwns": [
     "armamento",
     "municoes",
@@ -81,7 +92,8 @@
     "No new shared implementation may be copied into COMANDOS.",
     "COMANDOS cannot depend on sibling product artifacts or source code.",
     "Compatibility packages may adapt legacy COMANDOS callers, but cannot introduce new generic domain behavior.",
+    "Purchasing, sales, finance, contracts, catalog and inventory primitives must use Faria Miguel canonical contracts; COMANDOS may add only security-domain overlays.",
     "Documents and notifications consume Faria Miguel contracts directly and cannot reintroduce COMANDOS-owned contracts.",
-    "Purchasing, sales, finance, contracts, catalog and inventory primitives must use Faria Miguel canonical contracts; COMANDOS may add only security-domain overlays."
+    "Security actor, access-denied, resource authorization, audit sink and workflow transition engine consume Faria Miguel contracts directly."
   ]
 }
