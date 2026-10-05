@@ -11,6 +11,10 @@ public class Donation extends CoreEntity {
     @ManyToOne @JoinColumn(name="unit_id") public OrganizationalUnit unit;
     @ManyToOne(optional=false) @JoinColumn(name="donor_id", nullable=false) public Person donor;
     @ManyToOne(optional=false) @JoinColumn(name="donee_id", nullable=false) public Person donee;
+    @Column(name="organization_canonical_id", length=128) public String organizationCanonicalId;
+    @Column(name="unit_canonical_id", length=128) public String unitCanonicalId;
+    @Column(name="donor_canonical_id", length=128) public String donorCanonicalId;
+    @Column(name="donee_canonical_id", length=128) public String doneeCanonicalId;
     @Column(nullable=false) public String organizationName;
     @Column public String unitName;
     @Column(nullable=false) public String donorName;
