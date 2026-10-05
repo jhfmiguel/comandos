@@ -118,10 +118,16 @@ public class ProductMasterDataReferenceSynchronizer {
             return true;
         }
         if (entity instanceof InventoryReservation reservation) {
-            synchronizeScope(reservation.organization, reservation.unit, ids -> {
-                reservation.organizationCanonicalId = ids.organization();
-                reservation.unitCanonicalId = ids.unit();
-            }, "inventory reservation");
+            reservation.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                reservation.organizationLegacyId,
+                "inventory reservation organization"
+            );
+            reservation.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                reservation.unitLegacyId,
+                "inventory reservation unit"
+            );
             return true;
         }
         if (entity instanceof InventoryCount count) {
