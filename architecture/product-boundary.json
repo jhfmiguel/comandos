@@ -183,7 +183,8 @@
       "loader",
       "table-standardizer",
       "auth-session-provider",
-      "preferences-provider"
+      "preferences-provider",
+      "searchable-select"
     ],
     "specializedLocalCapabilities": [
       "security-domain-input-masks",
