@@ -256,7 +256,7 @@ for package in '@faria-miguel/ui' '@faria-miguel/platform' '@faria-miguel/enterp
   grep -q "\"$package\"" "$MANIFEST" || fail "frontend foundation manifest must declare $package"
 done
 test -f "$ROOT_DIR/app/.npmrc" || fail "frontend must configure the Faria Miguel package registry"
-grep -q '@faria-miguel:registry=https://npm.pkg.github.com' "$ROOT_DIR/app/.npmrc" || fail "frontend registry must point to GitHub Packages"
+grep -q '@jhfmiguel:registry=https://npm.pkg.github.com' "$ROOT_DIR/app/.npmrc" || fail "frontend physical package registry must point to GitHub Packages"
 
 grep -q '@faria-miguel/ui/data-table' "$ROOT_DIR/app/src/platform/components/data-table.tsx" || fail "DataTable must delegate to @faria-miguel/ui"
 grep -q '@faria-miguel/ui/pagination' "$ROOT_DIR/app/src/platform/components/pagination.tsx" || fail "Pagination must delegate to @faria-miguel/ui"
