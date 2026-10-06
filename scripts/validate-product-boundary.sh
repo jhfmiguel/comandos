@@ -266,6 +266,8 @@ grep -q '@faria-miguel/ui/float-label-enhancer' "$ROOT_DIR/app/src/components/co
 grep -q '@faria-miguel/platform/admin-layout' "$ROOT_DIR/app/src/components/layout/index.tsx" || fail "administrative layout must compose @faria-miguel/platform AdminLayout"
 grep -q '@faria-miguel/platform/theme' "$ROOT_DIR/app/src/components/settings/preferences-provider.tsx" || fail "theme resolution must come from @faria-miguel/platform"
 grep -q '@faria-miguel/platform/notifications' "$ROOT_DIR/app/src/components/common/toast/index.tsx" || fail "notifications must delegate to @faria-miguel/platform"
+grep -q '@faria-miguel/ui/loader' "$ROOT_DIR/app/src/components/common/loader/index.tsx" || fail "Loader must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/table-standardizer' "$ROOT_DIR/app/src/platform/components/system-table-standardizer.tsx" || fail "TableStandardizer must delegate to @faria-miguel/ui"
 
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
