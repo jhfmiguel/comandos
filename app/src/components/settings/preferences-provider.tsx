@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { ThemeProvider as PlatformThemeProvider } from "@faria-miguel/platform/theme"
 
 import {
     type ComandosLocale,
@@ -13,7 +14,7 @@ import {
 
 export type { ComandosLocale } from "./i18n-catalog"
 
-export type ComandosTheme = "dark" | "light"
+export type ComandosTheme = "dark" | "light" | "mixed"
 export type ComandosPalette =
     | "green"
     | "blue"
@@ -228,7 +229,7 @@ const readClientSnapshot = (): PreferenceSnapshot => {
         customColor: normalizeHexColor(customColor),
         locale: locale === "en-US" ? "en-US" : "pt-BR",
         theme:
-            theme === "light" || theme === "dark"
+            theme === "light" || theme === "dark" || theme === "mixed"
                 ? theme
                 : defaults.theme,
         palette:
@@ -333,7 +334,6 @@ export function PreferencesProvider({
 
     React.useEffect(() => {
         document.documentElement.lang = locale
-        document.documentElement.dataset.theme = theme
         document.documentElement.dataset.palette = palette
         applyCustomPaletteVariables(customColor)
     }, [locale, theme, palette, customColor])
@@ -490,7 +490,9 @@ const toggleTheme = React.useCallback(() => {
 
     return (
         <PreferencesContext.Provider value={value}>
-            {children}
+            <PlatformThemeProvider theme={theme}>
+                {children}
+            </PlatformThemeProvider>
         </PreferencesContext.Provider>
     )
 }
