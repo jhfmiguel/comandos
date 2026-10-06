@@ -44,7 +44,8 @@ const emit = (severity: ComandosToastSeverity, options: ComandosToastOptions): C
     const notification: PlatformNotification = platformNotify[severityToTone(severity)](
         options.description,
         options.title,
-        options.duration ?? 5000
+        options.duration ?? 5000,
+        options.onDismiss ? (notification) => options.onDismiss?.({id:notification.id,severity,title:options.title,description:options.description,duration:options.duration ?? 5000,onDismiss:options.onDismiss}) : undefined
     )
     const item: ComandosToastItem = {
         id: notification.id,
