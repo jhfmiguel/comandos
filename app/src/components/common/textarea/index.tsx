@@ -1,4 +1,5 @@
 import { TextareaHTMLAttributes } from "react"
+import { FloatLabel, Textarea as SharedTextarea } from "@faria-miguel/ui"
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label: string
@@ -7,26 +8,10 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     error?: string
 }
 
-export const Textarea: React.FC<TextareaProps> = ({
-    label,
-    columnClasses,
-    id,
-    error,
-    ...textareaProps
-}) => (
-    <div className={`field ${columnClasses ?? ""}`}>
-        <label className="block font-semibold mb-2" htmlFor={id}>
-            {label}
-        </label>
-
-        <div className="w-full">
-            <textarea
-                id={id}
-                className="comandos-input w-full"
-                {...textareaProps}
-            />
-
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-        </div>
+export const Textarea: React.FC<TextareaProps> = ({label,columnClasses,id,error,required,...textareaProps}) => (
+    <div className={columnClasses ?? ""}>
+        <FloatLabel label={label} htmlFor={id} required={required} error={error}>
+            <SharedTextarea id={id} {...textareaProps} required={required} placeholder={textareaProps.placeholder ?? " "} invalid={Boolean(error)} />
+        </FloatLabel>
     </div>
 )

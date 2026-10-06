@@ -59,7 +59,15 @@
     "local-organization-api-removed",
     "workflow-adapters-reclassified",
     "security-adapters-reclassified",
-    "core-adapters-reclassified"
+    "core-adapters-reclassified",
+    "frontend-shared-table",
+    "frontend-shared-pagination",
+    "frontend-shared-form-field",
+    "frontend-shared-float-label",
+    "frontend-shared-modal",
+    "frontend-shared-admin-layout",
+    "frontend-shared-theme",
+    "frontend-shared-notifications"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -125,7 +133,9 @@
     "Canonical delete shadowing must remain transactionally aligned with legacy master-data deletion/archiving while shadow-write is enabled.",
     "Canonical master-data read cutover is feature-flagged and may only run with shadow-write enabled and zero-mismatch parity.",
     "Remaining local core code is limited to legacy master-data/admin compatibility during the persistence cutover; reusable Platform Core behavior is Faria Miguel-owned.",
-    "Legacy product foreign keys must migrate through the durable master-data reference crosswalk before erp_* master-data tables can be retired."
+    "Legacy product foreign keys must migrate through the durable master-data reference crosswalk before erp_* master-data tables can be retired.",
+    "Generic frontend tables, pagination, form fields, FloatLabel engine, modals, admin layout, themes and notifications are owned by Faria Miguel; COMANDOS may keep only thin compatibility or product-specific adapters.",
+    "Frontend session lifecycle and preference persistence must delegate to the Faria Miguel platform providers."
   ],
   "activeMigrationBridges": [
     "legacy-person-to-faria-enterprise-person",
@@ -143,5 +153,45 @@
     "legacy-master-data-canonical-delete-shadow",
     "canonical-master-data-controlled-read-cutover",
     "legacy-master-data-reference-crosswalk"
-  ]
+  ],
+  "frontendFoundation": {
+    "packages": [
+      "@faria-miguel/ui",
+      "@faria-miguel/platform",
+      "@faria-miguel/enterprise",
+      "@faria-miguel/builder-core"
+    ],
+    "genericUiOwnership": "faria-miguel",
+    "compatibilityAdaptersAllowed": true,
+    "themes": [
+      "light",
+      "dark",
+      "mixed"
+    ],
+    "migratedCapabilities": [
+      "tables",
+      "pagination",
+      "form-field",
+      "float-label",
+      "modal",
+      "admin-layout",
+      "themes",
+      "notifications",
+      "data-hooks",
+      "auth-contracts",
+      "common-ui",
+      "loader",
+      "table-standardizer",
+      "auth-session-provider",
+      "preferences-provider",
+      "searchable-select"
+    ],
+    "specializedLocalCapabilities": [
+      "security-domain-input-masks",
+      "product-navigation",
+      "product-palette",
+      "product-translations",
+      "product-session-routing-overlay"
+    ]
+  }
 }

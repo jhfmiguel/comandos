@@ -1,6 +1,12 @@
 "use client"
 
 import * as React from "react"
+import {
+    PreferencesProvider as SharedPreferencesProvider,
+    platformPreferencesStorageKey,
+    usePlatformPreferences
+} from "@faria-miguel/platform/preferences"
+import { ThemeProvider as PlatformThemeProvider } from "@faria-miguel/platform/theme"
 
 import {
     type ComandosLocale,
@@ -13,7 +19,7 @@ import {
 
 export type { ComandosLocale } from "./i18n-catalog"
 
-export type ComandosTheme = "dark" | "light"
+export type ComandosTheme = "dark" | "light" | "mixed"
 export type ComandosPalette =
     | "green"
     | "blue"
@@ -81,10 +87,7 @@ type PreferencesContextValue = PreferenceSnapshot & {
     tr: (text: string) => string
 }
 
-const uiTranslations: Record<
-    ComandosLocale,
-    Record<TranslationKey, string>
-> = {
+const uiTranslations: Record<ComandosLocale, Record<TranslationKey, string>> = {
     "pt-BR": {
         commandCenter: "Command Center",
         bot: "Bot",
@@ -108,8 +111,7 @@ const uiTranslations: Record<
         black: "Preta",
         gray: "Cinza",
         white: "Branco",
-        savedAutomatically:
-            "As preferências são salvas automaticamente neste navegador.",
+        savedAutomatically: "As preferências são salvas automaticamente neste navegador.",
         botWorking: "trabalhando",
         botWaiting: "aguardando",
         botPaused: "pausado",
@@ -146,8 +148,7 @@ const uiTranslations: Record<
         black: "Black",
         gray: "Gray",
         white: "White",
-        savedAutomatically:
-            "Preferences are saved automatically in this browser.",
+        savedAutomatically: "Preferences are saved automatically in this browser.",
         botWorking: "working",
         botWaiting: "waiting",
         botPaused: "paused",
@@ -162,7 +163,6 @@ const uiTranslations: Record<
         quickNavigation: "Comandos quick navigation"
     }
 }
-
 
 const normalizeHexColor = (value?: string | null): string => {
     const normalized = (value ?? "#ff9900").trim().toLowerCase()
@@ -212,86 +212,7 @@ const defaults: PreferenceSnapshot = {
     customColor: productDefinition.defaultAccent
 }
 
-const listeners = new Set<() => void>()
-let cachedSnapshot: PreferenceSnapshot | null = null
-let cachedKey = ""
-
-const readClientSnapshot = (): PreferenceSnapshot => {
-    if (typeof window === "undefined") return defaults
-
-    const locale = window.localStorage.getItem(productStorageKey("locale"))
-    const theme = window.localStorage.getItem(productStorageKey("theme"))
-    const palette = window.localStorage.getItem(productStorageKey("palette"))
-    const customColor = window.localStorage.getItem(productStorageKey("custom-color"))
-
-    return {
-        customColor: normalizeHexColor(customColor),
-        locale: locale === "en-US" ? "en-US" : "pt-BR",
-        theme:
-            theme === "light" || theme === "dark"
-                ? theme
-                : defaults.theme,
-        palette:
-            palette === "green" ||
-            palette === "blue" ||
-            palette === "lilac" ||
-            palette === "red" ||
-            palette === "yellow" ||
-            palette === "orange" ||
-            palette === "custom" ||
-            palette === "pink" ||
-            palette === "black" ||
-            palette === "gray" ||
-            palette === "white"
-                ? palette
-                : defaults.palette
-    }
-}
-
-const getSnapshot = (): PreferenceSnapshot => {
-    const next = readClientSnapshot()
-    const key = JSON.stringify(next)
-
-    if (!cachedSnapshot || cachedKey !== key) {
-        cachedSnapshot = next
-        cachedKey = key
-    }
-
-    return cachedSnapshot
-}
-
-const getServerSnapshot = (): PreferenceSnapshot => defaults
-
-const subscribe = (listener: () => void) => {
-    listeners.add(listener)
-
-    const onStorage = () => {
-        cachedSnapshot = null
-        cachedKey = ""
-        listener()
-    }
-
-    window.addEventListener("storage", onStorage)
-
-    return () => {
-        listeners.delete(listener)
-        window.removeEventListener("storage", onStorage)
-    }
-}
-
-const notify = () => {
-    cachedSnapshot = null
-    cachedKey = ""
-    listeners.forEach((listener) => listener())
-}
-
-const store = (key: string, value: string) => {
-    window.localStorage.setItem(key, value)
-    notify()
-}
-
-const PreferencesContext =
-    React.createContext<PreferencesContextValue | null>(null)
+const PreferencesContext = React.createContext<PreferencesContextValue | null>(null)
 
 const TRANSLATABLE_ATTRIBUTES = [
     "title",
@@ -313,18 +234,67 @@ const shouldIgnore = (element: Element): boolean =>
         )
     )
 
-export function PreferencesProvider({
-    children
-}: {
-    children: React.ReactNode
-}) {
-    const snapshot = React.useSyncExternalStore(
-        subscribe,
-        getSnapshot,
-        getServerSnapshot
-    )
+function normalizeLocale(value: unknown): ComandosLocale {
+    return value === "en-US" ? "en-US" : "pt-BR"
+}
 
-    const { locale, theme, palette, customColor } = snapshot
+function normalizeTheme(value: unknown): ComandosTheme {
+    return value === "light" || value === "dark" || value === "mixed"
+        ? value
+        : defaults.theme
+}
+
+function normalizePalette(value: unknown): ComandosPalette {
+    const allowed: ComandosPalette[] = [
+        "green", "blue", "lilac", "red", "yellow", "orange",
+        "black", "gray", "white", "pink", "custom"
+    ]
+
+    return allowed.includes(value as ComandosPalette)
+        ? value as ComandosPalette
+        : defaults.palette
+}
+
+function ComandosPreferencesBridge({ children }: { children: React.ReactNode }) {
+    const {
+        preferences,
+        setPreference,
+        patchPreferences
+    } = usePlatformPreferences()
+
+    const migratedRef = React.useRef(false)
+
+    React.useEffect(() => {
+        if (migratedRef.current) return
+        migratedRef.current = true
+
+        const sharedKey = platformPreferencesStorageKey(
+            productDefinition.storageNamespace
+        )
+
+        if (window.localStorage.getItem(sharedKey)) return
+
+        const legacyLocale = window.localStorage.getItem(productStorageKey("locale"))
+        const legacyTheme = window.localStorage.getItem(productStorageKey("theme"))
+        const legacyPalette = window.localStorage.getItem(productStorageKey("palette"))
+        const legacyColor = window.localStorage.getItem(productStorageKey("custom-color"))
+
+        patchPreferences({
+            locale: normalizeLocale(legacyLocale ?? defaults.locale),
+            theme: normalizeTheme(legacyTheme ?? defaults.theme),
+            palette: normalizePalette(legacyPalette ?? defaults.palette),
+            accent: normalizeHexColor(legacyColor ?? defaults.customColor)
+        })
+    }, [patchPreferences])
+
+    const locale = normalizeLocale(preferences.locale)
+    const theme = normalizeTheme(preferences.theme)
+    const palette = normalizePalette(preferences.palette)
+    const customColor = normalizeHexColor(
+        typeof preferences.accent === "string"
+            ? preferences.accent
+            : defaults.customColor
+    )
 
     const tr = React.useCallback(
         (text: string) => translateText(text, locale),
@@ -333,10 +303,9 @@ export function PreferencesProvider({
 
     React.useEffect(() => {
         document.documentElement.lang = locale
-        document.documentElement.dataset.theme = theme
         document.documentElement.dataset.palette = palette
         applyCustomPaletteVariables(customColor)
-    }, [locale, theme, palette, customColor])
+    }, [locale, palette, customColor])
 
     React.useEffect(() => {
         const translateElement = (element: Element) => {
@@ -344,11 +313,8 @@ export function PreferencesProvider({
 
             for (const attribute of TRANSLATABLE_ATTRIBUTES) {
                 const value = element.getAttribute(attribute)
-
                 if (!value) continue
-
                 const translated = tr(value)
-
                 if (translated !== value) {
                     element.setAttribute(attribute, translated)
                 }
@@ -356,10 +322,8 @@ export function PreferencesProvider({
 
             element.childNodes.forEach((node) => {
                 if (node.nodeType !== Node.TEXT_NODE) return
-
                 const value = node.textContent ?? ""
                 const translated = tr(value)
-
                 if (translated !== value) {
                     node.textContent = translated
                 }
@@ -367,23 +331,17 @@ export function PreferencesProvider({
         }
 
         const translateTree = (root: ParentNode) => {
-            if (root instanceof Element) {
-                translateElement(root)
-            }
-
+            if (root instanceof Element) translateElement(root)
             root.querySelectorAll("*").forEach(translateElement)
         }
 
-        const timer = window.setTimeout(
-            () => translateTree(document.body),
-            0
-        )
+        const timer = window.setTimeout(() => translateTree(document.body), 0)
 
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (
-                    mutation.type === "characterData" &&
-                    mutation.target.parentElement
+                    mutation.type === "characterData"
+                    && mutation.target.parentElement
                 ) {
                     translateElement(mutation.target.parentElement)
                     return
@@ -393,8 +351,8 @@ export function PreferencesProvider({
                     if (node instanceof HTMLElement) {
                         translateTree(node)
                     } else if (
-                        node.nodeType === Node.TEXT_NODE &&
-                        node.parentElement
+                        node.nodeType === Node.TEXT_NODE
+                        && node.parentElement
                     ) {
                         translateElement(node.parentElement)
                     }
@@ -414,31 +372,31 @@ export function PreferencesProvider({
         }
     }, [tr])
 
-    const setLocale = React.useCallback((value: ComandosLocale) => {
-        store(productStorageKey("locale"), value)
-    }, [])
+    const setLocale = React.useCallback(
+        (value: ComandosLocale) => setPreference("locale", value),
+        [setPreference]
+    )
 
-    const setTheme = React.useCallback((value: ComandosTheme) => {
-        store(productStorageKey("theme"), value)
-    }, [])
+    const setTheme = React.useCallback(
+        (value: ComandosTheme) => setPreference("theme", value),
+        [setPreference]
+    )
 
-    const setPalette = React.useCallback((value: ComandosPalette) => {
-        store(productStorageKey("palette"), value)
-    }, [])
+    const setPalette = React.useCallback(
+        (value: ComandosPalette) => setPreference("palette", value),
+        [setPreference]
+    )
 
-        const setCustomColor = React.useCallback((value: string) => {
-        const normalized = normalizeHexColor(value)
-        window.localStorage.setItem(productStorageKey("custom-color"), normalized)
-        window.localStorage.setItem(productStorageKey("palette"), "custom")
-        applyCustomPaletteVariables(normalized)
-        notify()
-    }, [])
-const toggleTheme = React.useCallback(() => {
-        store(
-            productStorageKey("theme"),
-            getSnapshot().theme === "dark" ? "light" : "dark"
-        )
-    }, [])
+    const setCustomColor = React.useCallback((value: string) => {
+        patchPreferences({
+            accent: normalizeHexColor(value),
+            palette: "custom"
+        })
+    }, [patchPreferences])
+
+    const toggleTheme = React.useCallback(() => {
+        setPreference("theme", theme === "dark" ? "light" : "dark")
+    }, [setPreference, theme])
 
     const t = React.useCallback(
         (key: TranslationKey) => {
@@ -490,8 +448,32 @@ const toggleTheme = React.useCallback(() => {
 
     return (
         <PreferencesContext.Provider value={value}>
-            {children}
+            <PlatformThemeProvider theme={theme}>
+                {children}
+            </PlatformThemeProvider>
         </PreferencesContext.Provider>
+    )
+}
+
+export function PreferencesProvider({
+    children
+}: {
+    children: React.ReactNode
+}) {
+    return (
+        <SharedPreferencesProvider
+            namespace={productDefinition.storageNamespace}
+            defaults={{
+                locale: defaults.locale,
+                theme: defaults.theme,
+                palette: defaults.palette,
+                accent: defaults.customColor
+            }}
+        >
+            <ComandosPreferencesBridge>
+                {children}
+            </ComandosPreferencesBridge>
+        </SharedPreferencesProvider>
     )
 }
 

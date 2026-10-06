@@ -247,6 +247,31 @@ for capability in audit documents identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
 done
 
+
+# Canonical shared frontend foundation.
+APP_PACKAGE="$ROOT_DIR/app/package.json"
+test -f "$APP_PACKAGE" || fail "app/package.json is missing"
+for package in '@faria-miguel/ui' '@faria-miguel/platform' '@faria-miguel/enterprise' '@faria-miguel/builder-core'; do
+  grep -q "\"$package\"" "$APP_PACKAGE" || fail "frontend must consume $package"
+  grep -q "\"$package\"" "$MANIFEST" || fail "frontend foundation manifest must declare $package"
+done
+test -f "$ROOT_DIR/app/.npmrc" || fail "frontend must configure the Faria Miguel package registry"
+grep -q '@jhfmiguel:registry=https://npm.pkg.github.com' "$ROOT_DIR/app/.npmrc" || fail "frontend physical package registry must point to GitHub Packages"
+
+grep -q '@faria-miguel/ui/data-table' "$ROOT_DIR/app/src/platform/components/data-table.tsx" || fail "DataTable must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/pagination' "$ROOT_DIR/app/src/platform/components/pagination.tsx" || fail "Pagination must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/form-field' "$ROOT_DIR/app/src/platform/components/form-field.tsx" || fail "FormField must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/confirm-dialog' "$ROOT_DIR/app/src/platform/components/confirm-dialog.tsx" || fail "ConfirmDialog must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/float-label-enhancer' "$ROOT_DIR/app/src/components/common/float-label-enhancer.tsx" || fail "FloatLabel enhancer must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/platform/admin-layout' "$ROOT_DIR/app/src/components/layout/index.tsx" || fail "administrative layout must compose @faria-miguel/platform AdminLayout"
+grep -q '@faria-miguel/platform/theme' "$ROOT_DIR/app/src/components/settings/preferences-provider.tsx" || fail "theme resolution must come from @faria-miguel/platform"
+grep -q '@faria-miguel/platform/notifications' "$ROOT_DIR/app/src/components/common/toast/index.tsx" || fail "notifications must delegate to @faria-miguel/platform"
+grep -q '@faria-miguel/platform/auth-session' "$ROOT_DIR/app/src/components/auth/session-provider.tsx" || fail "session lifecycle must delegate to @faria-miguel/platform"
+grep -q '@faria-miguel/platform/preferences' "$ROOT_DIR/app/src/components/settings/preferences-provider.tsx" || fail "preference persistence must delegate to @faria-miguel/platform"
+grep -q '@faria-miguel/ui/loader' "$ROOT_DIR/app/src/components/common/loader/index.tsx" || fail "Loader must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/table-standardizer' "$ROOT_DIR/app/src/platform/components/system-table-standardizer.tsx" || fail "TableStandardizer must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/searchable-select' "$ROOT_DIR/app/src/components/common/select-field.tsx" || fail "SearchableSelect must delegate to @faria-miguel/ui"
+
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
 printf 'Completed cutovers are guarded: id generation, platform clock/page, audit recorder, document storage/reference and notifications cannot be reintroduced locally.\n'
