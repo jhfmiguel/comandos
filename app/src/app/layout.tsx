@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
+import "@faria-miguel/ui/styles.css";
 import "components/common/loader/loader.css";
 import { SessionProvider } from "components/auth/session-provider";
 import { PreferencesProvider } from "components/settings/preferences-provider";
