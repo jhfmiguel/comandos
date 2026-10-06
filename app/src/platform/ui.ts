@@ -19,3 +19,5 @@ export { ConfirmDialog } from "./components/confirm-dialog"
 export { FormField } from "./components/form-field"
 export { DataTable } from "./components/data-table"
 export type { DataTableColumn } from "./components/data-table"
+
+export { Badge, FilterBar, FloatLabel, Modal, UploadField, Button as SharedButton, Input as SharedInput, Select as SharedSelect, Textarea as SharedTextarea } from "@faria-miguel/ui"
