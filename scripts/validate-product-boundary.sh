@@ -270,6 +270,7 @@ grep -q '@faria-miguel/platform/auth-session' "$ROOT_DIR/app/src/components/auth
 grep -q '@faria-miguel/platform/preferences' "$ROOT_DIR/app/src/components/settings/preferences-provider.tsx" || fail "preference persistence must delegate to @faria-miguel/platform"
 grep -q '@faria-miguel/ui/loader' "$ROOT_DIR/app/src/components/common/loader/index.tsx" || fail "Loader must delegate to @faria-miguel/ui"
 grep -q '@faria-miguel/ui/table-standardizer' "$ROOT_DIR/app/src/platform/components/system-table-standardizer.tsx" || fail "TableStandardizer must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/searchable-select' "$ROOT_DIR/app/src/components/common/select-field.tsx" || fail "SearchableSelect must delegate to @faria-miguel/ui"
 
 printf 'COMANDOS consumes the complete canonical Faria Miguel backend foundation.\n'
 printf 'Shared ownership mappings validated for core/master-data/security/audit/documents/workflow/notifications/procurement/sales/finance/contracts/catalog/inventory.\n'
