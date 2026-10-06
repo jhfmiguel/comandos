@@ -178,7 +178,9 @@
       "notifications",
       "data-hooks",
       "auth-contracts",
-      "common-ui"
+      "common-ui",
+      "loader",
+      "table-standardizer"
     ],
     "specializedLocalCapabilities": [
       "security-domain-input-masks",
