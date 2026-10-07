@@ -2,7 +2,7 @@ package com.comandos.sales.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-import com.comandos.model.PaymentMethod;
+import com.comandos.sales.model.PaymentMethod;
 
 public final class SalesContract {
     
