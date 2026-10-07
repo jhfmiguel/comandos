@@ -6,6 +6,7 @@ import com.comandos.inventory.model.EquipmentSet;
 import com.comandos.inventory.model.EquipmentSetOperation;
 import com.comandos.inventory.model.CertificationRecord;
 import com.comandos.inventory.model.ExpirationRecord;
+import com.comandos.inventory.model.Recall;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
@@ -114,6 +115,19 @@ public class ProductMasterDataReferenceSynchronizer {
                 MasterDataReferenceService.UNIT,
                 expiration.unitLegacyId,
                 "expiration unit"
+            );
+            return true;
+        }
+        if (entity instanceof Recall recall) {
+            recall.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                recall.organizationLegacyId,
+                "recall organization"
+            );
+            recall.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                recall.unitLegacyId,
+                "recall unit"
             );
             return true;
         }
