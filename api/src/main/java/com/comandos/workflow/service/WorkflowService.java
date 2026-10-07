@@ -1,8 +1,7 @@
 package com.comandos.workflow.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.security.service.AccessPolicy;
@@ -12,6 +11,9 @@ import com.comandos.workflow.api.*;
 import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.workflow.model.ApprovalWorkflowEvent;
 import com.fariamiguel.core.api.PlatformPage;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional(readOnly = true)
 public class WorkflowService implements SensitiveWorkflowGateway {
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
@@ -30,12 +33,14 @@ public class WorkflowService implements SensitiveWorkflowGateway {
     private final WorkflowPolicy policy;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
@@ -43,6 +48,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         this.policy = policy;
         this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
 
@@ -57,19 +63,14 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         String resource = WorkflowPolicy.normalizeResource(r.resource());
         access.requireScope(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
 
-        Organization organization = find(Organization.class, r.organizationId());
-        OrganizationalUnit unit = r.unitId() == null
-            ? null
-            : find(OrganizationalUnit.class, r.unitId());
-        if (unit != null && !unit.organization.id.equals(organization.id)) {
-            bad("Unit does not belong to organization.");
-        }
+        requireOrganization(r.organizationId());
+        requireUnit(r.organizationId(), r.unitId());
 
         var w = new ApprovalWorkflow();
-        w.organizationLegacyId = organization.id;
-        w.unitLegacyId = unit == null ? null : unit.id;
-        w.organizationCanonicalId = canonicalScope.organization(organization.id);
-        w.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        w.organizationLegacyId = r.organizationId();
+        w.unitLegacyId = r.unitId();
+        w.organizationCanonicalId = canonicalScope.organization(r.organizationId());
+        w.unitCanonicalId = canonicalScope.unit(r.unitId());
         if (r.recordId() != null && r.recordId() <= 0) {
             bad("Record id must be positive when informed.");
         }
@@ -249,6 +250,30 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         var value = em.find(type, id);
         if (value == null) notFound();
         return value;
+    }
+
+    private void requireOrganization(Long id) {
+        if (id == null || id <= 0) {
+            bad("A valid organization is required.");
+        }
+        var organization = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization not found."));
+        if (organization.status() != LifecycleStatus.ACTIVE) {
+            bad("Active organization is required.");
+        }
+    }
+
+    private void requireUnit(long organizationId, Long unitId) {
+        if (unitId == null) {
+            return;
+        }
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Select a unit in the selected organization."));
+        if (!unit.active()
+                || !CompanyId.of("comandos:organization:" + organizationId).equals(unit.companyId())) {
+            bad("Unit does not belong to organization.");
+        }
     }
 
     private CurrentActor requiredActor() {
