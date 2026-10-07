@@ -729,6 +729,20 @@
         "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
         "scripts/validate-product-boundary.sh"
       ]
+    },
+    {
+      "id": "consumption-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "AmmunitionConsumptionService and ConsumableUsageService resolve organization, unit, responsible person and authorizer through CanonicalMasterDataDirectory and use scalar legacy/canonical identifiers. COMANDOS retains only ammunition/consumable lifecycle, stock movement and regulatory rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/consumption/service/AmmunitionConsumptionService.java",
+        "api/src/main/java/com/comandos/consumption/service/ConsumableUsageService.java",
+        "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+        "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
