@@ -391,6 +391,11 @@ if grep -q 'ManyToOne' "$ROOT_DIR/api/src/main/java/com/comandos/purchase/model/
   fail "ProcurementProcess must not regain a legacy Organization JPA association"
 fi
 
+# Step 21.21: sales/alienation must not depend on legacy master-data entities directly.
+if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person)|em\.find\((Organization|OrganizationalUnit|Person)\.class|locked\((Organization|Person)\.class' "$ROOT_DIR/api/src/main/java/com/comandos/sales"; then
+  fail "sales/alienation code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
+fi
+
 # Steps 21.21-21.23: generic sales/finance/contracts are foundation-owned.
 for removed_sales_file in \
   "$ROOT_DIR/api/src/main/java/com/comandos/model/Sale.java" \
