@@ -262,7 +262,7 @@
       "classification": "blocked-retirement-backlog",
       "safeToDelete": false,
       "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.13 corrected the controlled baseline to 57 *LegacyId fields after surfacing hidden Master Data JPA associations including MaintenancePlan. The count may only decrease; physical deletion remains blocked by Step 21.12.",
+      "reason": "Step 21.13 baseline reconciled to 59 *LegacyId fields, including the already-existing CustodyResponsibility responsible-person and role-assignment bridges. This is an inventory correction, not new legacy growth. The count may only decrease; physical deletion remains blocked by Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "scripts/validate-product-boundary.sh"
@@ -649,7 +649,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 tracks a corrected 57-field *LegacyId baseline after surfacing and converting hidden Master Data JPA associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. The difference from 57 was caused by two already-existing CustodyResponsibility bridge fields omitted from the numeric baseline. Regression gates prevent growth; final deletion still depends on Step 21.12."
     },
     {
       "id": "final-step-closure",
