@@ -312,8 +312,11 @@ public class InventoryService {
                         ? "e.asset.location.organizationCanonicalId"
                         : "e.asset.location.organizationLegacyId";
                 case "expirations",
-                     "certifications",
-                     "recalls" ->
+                     "certifications" ->
+                    canonicalProductReferenceReadEnabled
+                        ? "e.organizationCanonicalId"
+                        : "e.organizationLegacyId";
+                case "recalls" ->
                     "e.organization.id";
                 case "recall-items" ->
                     "e.recall.organization.id";
@@ -486,7 +489,9 @@ public class InventoryService {
             "regulatory-controls",
             "lots",
             "equipment-sets",
-            "equipment-set-components"
+            "equipment-set-components",
+            "expirations",
+            "certifications"
         ).contains(resource);
     }
 
