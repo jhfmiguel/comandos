@@ -490,6 +490,10 @@ if grep -q '<artifactId>spring-security-crypto</artifactId>' "$ROOT_DIR/api/pom.
   fail "spring-security-crypto must not be declared directly; starter-security already provides it"
 fi
 
+if grep -q 'org.springframework.modulith' "$ROOT_DIR/api/pom.xml"; then
+  fail "unused Spring Modulith dependencies must remain removed from COMANDOS"
+fi
+
 for retired_frontend_package in '@faria-miguel/enterprise' '@faria-miguel/builder-core'; do
   if grep -q "\"$retired_frontend_package\"" "$ROOT_DIR/app/package.json"; then
     fail "retired unused frontend dependency returned: $retired_frontend_package"
