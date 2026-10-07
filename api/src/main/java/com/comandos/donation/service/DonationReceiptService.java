@@ -100,14 +100,12 @@ public class DonationReceiptService {
         donation.donorLegacyId = donor.id();
         donation.doneeLegacyId = donee.id();
 
-        if (canonicalScope != null) {
-            donation.organizationCanonicalId =
-                canonicalScope.organization(organization.id());
-            donation.unitCanonicalId =
-                canonicalScope.unit(unit == null ? null : unit.id());
-            donation.donorCanonicalId = canonicalScope.person(donor.id());
-            donation.doneeCanonicalId = canonicalScope.person(donee.id());
-        }
+        donation.organizationCanonicalId =
+            canonicalScope.organization(organization.id());
+        donation.unitCanonicalId =
+            canonicalScope.unit(unit == null ? null : unit.id());
+        donation.donorCanonicalId = canonicalScope.person(donor.id());
+        donation.doneeCanonicalId = canonicalScope.person(donee.id());
 
         donation.organizationName = organization.name();
         donation.unitName = unit == null ? null : unit.name();
@@ -375,7 +373,7 @@ public class DonationReceiptService {
             bad("Donation destination must be an active location in the selected organization.");
         }
 
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var scope = canonicalScope.scope(organizationId, unitId);
             if (!location.matchesCanonicalScope(
                     scope.organizationId(),
