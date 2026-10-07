@@ -81,13 +81,29 @@ public class CustodyService {
     public Page<EquipmentSetOption> equipmentSets(long organizationId, Long unitId, String search, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from EquipmentSet s where s.organization.id = :organization and s.active = true"
-            + (unitId == null ? "" : " and s.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from EquipmentSet s where "
+            + (canonical ? "s.organizationCanonicalId" : "s.organizationLegacyId")
+            + " = :organization and s.active = true"
+            + (unitId == null
+                ? ""
+                : " and "
+                    + (canonical ? "s.unitCanonicalId" : "s.unitLegacyId")
+                    + " = :unit")
             + " and (lower(s.code) like :search escape '!' or lower(s.name) like :search escape '!')";
         var candidates = em.createQuery("select s" + from + " order by s.id", EquipmentSet.class);
         for (var q : List.of(candidates)) {
-            q.setParameter("organization", organizationId).setParameter("search", escaped(search));
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter(
+                "organization",
+                canonical ? canonicalIds.organizationId() : organizationId
+            ).setParameter("search", escaped(search));
+            if (unitId != null) {
+                q.setParameter(
+                    "unit",
+                    canonical ? canonicalIds.unitId() : unitId
+                );
+            }
         }
         var available = candidates.getResultList().stream().filter(this::setCurrentlyAvailable).toList();
         var content = available.stream().skip((long) page * PAGE_SIZE).limit(PAGE_SIZE).map(set -> new EquipmentSetOption(set.id,
@@ -154,7 +170,7 @@ public class CustodyService {
         List<Map<String, Object>> stockChanges = new ArrayList<>();
         for (Long assetId : values(request.assetIds()).stream().sorted().toList()) {
             var asset = locked(AssetItem.class, assetId);
-            validateAsset(asset, organization.id, request.unitId(), false);
+            validateAsset(asset, organization.id(), request.unitId(), false);
             createAssetItem(custody, asset, null, null, deliveredAt);
             stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
                 "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
@@ -164,7 +180,7 @@ public class CustodyService {
         int expanded = selectedAssets.size();
         for (Long setId : values(request.equipmentSetIds()).stream().sorted().toList()) {
             var set = locked(EquipmentSet.class, setId);
-            validateSet(set, organization.id, request.unitId());
+            validateSet(set, organization.id(), request.unitId());
             var components = em.createQuery("select c from EquipmentSetComponent c where c.equipmentSet.id = :set order by c.id", EquipmentSetComponent.class)
                 .setParameter("set", set.id).getResultList();
             if (components.isEmpty()) bad("Equipment set " + set.code + " has no components.");
@@ -173,14 +189,14 @@ public class CustodyService {
             for (var component : components) {
                 if (component.asset != null) {
                     if (!selectedAssets.add(component.asset.id)) bad("The same individual asset was selected more than once.");
-                    var asset = locked(AssetItem.class, component.asset.id); validateAsset(asset, organization.id, request.unitId(), true);
+                    var asset = locked(AssetItem.class, component.asset.id); validateAsset(asset, organization.id(), request.unitId(), true);
                     createAssetItem(custody, asset, set, component.role, deliveredAt);
                     stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
                         "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
                     asset.status = AssetStatus.CUSTODIED.name();
                 } else {
                     var balance = locked(StockBalance.class, component.balance.id);
-                    validateBalance(balance, component.quantity, organization.id, request.unitId());
+                    validateBalance(balance, component.quantity, organization.id(), request.unitId());
                     createBalanceItem(custody, balance, set, component.role, component.quantity, deliveredAt);
                     balance.available = balance.available.subtract(component.quantity);
                     balance.lot.availableQuantity = balance.lot.availableQuantity.subtract(component.quantity);
@@ -348,9 +364,24 @@ public class CustodyService {
     }
 
     private void validateSet(EquipmentSet set, long organizationId, Long unitId) {
-        access.requireScope("custodies", "CREATE", set.organization.id, set.unit == null ? null : set.unit.id);
-        if (!set.organization.id.equals(organizationId) || unitId != null && (set.unit == null || !unitId.equals(set.unit.id)))
+        access.requireScope(
+            "custodies",
+            "CREATE",
+            set.organizationLegacyId,
+            set.unitLegacyId
+        );
+
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!Objects.equals(set.organizationCanonicalId, ids.organizationId())
+                    || !Objects.equals(set.unitCanonicalId, ids.unitId())) {
+                bad("Every equipment set must belong to the selected organization and unit.");
+            }
+        } else if (!Objects.equals(set.organizationLegacyId, organizationId)
+                || unitId != null && !Objects.equals(set.unitLegacyId, unitId)) {
             bad("Every equipment set must belong to the selected organization and unit.");
+        }
+
         if (!set.active) conflict("Equipment set " + set.code + " is no longer active.");
     }
 
