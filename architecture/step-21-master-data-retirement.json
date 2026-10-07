@@ -9,8 +9,8 @@
   "legacyIdRetirement": {
     "step": "21.13",
     "status": "blocked-by-21.12",
-    "baselineCount": 49,
-    "rule": "The corrected baseline is 49 after hidden EquipmentSet and EquipmentSetOperation Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
+    "baselineCount": 53,
+    "rule": "The corrected baseline is 53 after hidden CertificationRecord and ExpirationRecord Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
     "fields": [
       {
         "entity": "StockLocation",
@@ -255,6 +255,26 @@
       {
         "entity": "EquipmentSetOperation",
         "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "CertificationRecord",
+        "path": "api/src/main/java/com/comandos/inventory/model/CertificationRecord.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "CertificationRecord",
+        "path": "api/src/main/java/com/comandos/inventory/model/CertificationRecord.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "ExpirationRecord",
+        "path": "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "ExpirationRecord",
+        "path": "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java",
         "field": "unitLegacyId"
       }
     ]
