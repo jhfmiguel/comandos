@@ -31,7 +31,7 @@
       "id": "master-data-persistence-bridges",
       "classification": "migration-bridge",
       "safeToDelete": false,
-      "reason": "Step 21.12 is prepared but cannot safely delete migration bridges until a production-equivalent retirement validation passes. The COMANDOS Master Data retirement workflow now reaches its artifact prerequisite step and fails because canonical Faria Miguel Maven artifacts version 0.1.0-SNAPSHOT are unavailable from GitHub Packages. Upstream Faria Miguel publication workflows still require resolution before the cutover validation can execute. The code exposes an explicit retirement-validation-on-startup gate that calls MasterDataCutoverStatusService.requireReadyToRetireLegacyPersistence().",
+      "reason": "Step 21.12 remains blocked before COMANDOS cutover startup. The latest Oracle-backed validation proves the runner and Oracle service can initialize, but canonical Faria Miguel 0.1.0-SNAPSHOT Maven artifacts are unavailable and FARIA_MIGUEL_READ_TOKEN is not configured, so the workflow cannot install the foundation from source and never reaches the retirement gate. Upstream Faria Miguel private-repository jobs continue to terminate before runner steps execute (steps=[]). No exact GitHub administrative, billing or permission cause is asserted without evidence.",
       "evidence": [
         "architecture/master-data-foreign-keys.json",
         "api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java",
@@ -59,10 +59,14 @@
         "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback exists but FARIA_MIGUEL_READ_TOKEN is not configured. Separately, all observed Faria Miguel private-repository Actions jobs terminate before runner steps/logs are created (steps=null, logs_url=null), so upstream publication never starts.",
         "observedRuns": [
           "37615171522 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
-          "37576939731 Publish shared artifacts: upstream publication unresolved"
+          "37576939731 Publish shared artifacts: upstream publication unresolved",
+          "37630830186 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure"
         ],
         "diagnosis": "the workflow YAML/POM structure is not the immediate failure point. Resolve the private-repository Actions execution layer or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so COMANDOS can install the canonical foundation from source. Exact GitHub administrative/billing cause is not asserted because the available API does not expose it.",
-        "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e"
+        "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e",
+        "latestObservedComandosRun": "37630830186",
+        "latestObservedComandosJob": "112824335999",
+        "latestObservedResult": "Oracle service initialized and checkout/setup-java succeeded; Resolve canonical Faria Miguel Maven artifacts then failed because the canonical 0.1.0-SNAPSHOT artifacts are unavailable and FARIA_MIGUEL_READ_TOKEN is empty. Cutover application startup and legacy persistence retirement gate were therefore skipped."
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
