@@ -123,6 +123,27 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
+# Step 21.36: retired legacy/backup file names must not return.
+while IFS= read -r legacy_path; do
+  relative="${legacy_path#$ROOT_DIR/}"
+  case "$relative" in
+    "api/src/main/resources/db/oracle/compatibility-schema.sql" \
+    |"api/src/test/java/com/comandos/inventory/model/StockLocationMasterDataBridgeTest.java" \
+    |"api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceBackfillService.java")
+      ;;
+    *)
+      fail "unexpected legacy/backup compatibility file returned: $relative"
+      ;;
+  esac
+done < <(
+  find "$ROOT_DIR" -type f \
+    \( -iname '*legacy*' -o -iname '*backup*' -o -iname '*.bak' -o -iname '*deprecated*' -o -iname '*copy*' -o -iname '*compatibility*' -o -iname '*bridge*' -o -iname '*backfill*' \) \
+    -not -path '*/.git/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/target/*' \
+    | sort
+)
+
 # Steps 21.13-21.15: legacy master-data retirement backlog may only shrink.
 RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
