@@ -16,8 +16,6 @@ export {
 
 export { Layout } from "./layout"
 
-export { Sales } from "./sales"
-
 export { UserRegistration, UsersList } from "./users"
 
 export { WeaponsRegistration, WeaponsList } from "./weapons"
