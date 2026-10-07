@@ -93,8 +93,8 @@ public class InspectionChecklistService {
             inspection.asset.status = "BLOCKED";
             if (Boolean.TRUE.equals(request.generateMaintenance()) && inspection.generatedWorkOrderId == null) {
                 var workOrder = maintenance.open(new OpenRequest(
-                    UUID.randomUUID().toString(), inspection.organization.id,
-                    inspection.unit == null ? null : inspection.unit.id, null, inspection.asset.id,
+                    UUID.randomUUID().toString(), inspection.organizationLegacyId,
+                    inspection.unitLegacyId, null, inspection.asset.id,
                     "Periodic inspection checklist contains reproved item(s).", null, "CORRECTIVE", null, null));
                 inspection.generatedWorkOrderId = workOrder.id();
             }
@@ -184,7 +184,7 @@ public class InspectionChecklistService {
     }
 
     private void require(PeriodicInspection inspection, String action) {
-        access.requireScope("inventory/assets", action, inspection.organization.id, inspection.unit == null ? null : inspection.unit.id);
+        access.requireScope("inventory/assets", action, inspection.organizationLegacyId, inspection.unitLegacyId);
     }
 
     private static String limit(String value, int max, String label) {
