@@ -237,6 +237,13 @@ for nullable_collaborator in canonicalScope masterDataReferences masterDataMirro
   fi
 done
 
+# Step 21.15: ComplianceService validates organization/unit through canonical Master Data.
+COMPLIANCE_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/compliance/service/ComplianceService.java"
+if grep -qE 'em\.find\((Organization|OrganizationalUnit)\.class' "$COMPLIANCE_SERVICE"; then
+  fail "ComplianceService must not directly read legacy Organization/OrganizationalUnit"
+fi
+grep -q 'CanonicalMasterDataDirectory masterData' "$COMPLIANCE_SERVICE"   || fail "ComplianceService must depend on CanonicalMasterDataDirectory for scope validation"
+
 # Step 21.15: InventoryService canonical collaborators are mandatory.
 INVENTORY_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/inventory/service/InventoryService.java"
 if grep -qE 'canonicalReferences[[:space:]]*==[[:space:]]*null|masterData[[:space:]]*==[[:space:]]*null|canonicalInventoryLedger[[:space:]]*==[[:space:]]*null|canonicalStockLocations[[:space:]]*==[[:space:]]*null' "$INVENTORY_SERVICE"; then
