@@ -208,6 +208,10 @@ grep -q 'sensitive-operation/security workflow overlay' \
 grep -q '"workflow-adapters-reclassified"' "$MANIFEST" \
   || fail "workflow adapter reclassification is not declared"
 
+if grep -RInE --include='*.java' 'w\.organization\.id|w\.unit\.id|workflow\.organization\.id|workflow\.unit\.id' "$ROOT_DIR/api/src/main/java/com/comandos/workflow"; then
+  fail "workflow overlay must use scalar legacy/canonical scope ids; legacy Organization/Unit JPA associations are retired"
+fi
+
 [[ ! -e "$ROOT_DIR/api/src/main/java/com/comandos/security/api" ]] \
   || fail "local COMANDOS security API package is forbidden; use Faria Miguel security contracts"
 
