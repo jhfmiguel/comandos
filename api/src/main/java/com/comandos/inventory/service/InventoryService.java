@@ -74,25 +74,6 @@ public class InventoryService {
         this.canonicalStockLocations = canonicalStockLocations;
     }
 
-    InventoryService(
-            EntityManager em,
-            InventoryRules rules,
-            AccessPolicy access,
-            AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences) {
-        this(
-            em,
-            rules,
-            access,
-            audit,
-            masterDataReferences,
-            null,
-            null,
-            false,
-            null,
-            null
-        );
-    }
 
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
@@ -124,9 +105,6 @@ public class InventoryService {
         if ("assets".equals(resource) && unit != null && !unit.isBlank()) {
             if (organizationId == null) {
                 bad("Organization is required when filtering assets by unit.");
-            }
-            if (masterData == null) {
-                throw new IllegalStateException("Canonical Master Data directory is required to filter assets by unit.");
             }
             String normalizedUnit = unit.trim().toLowerCase(Locale.ROOT);
             List<Long> matchingUnitIds = masterData.listUnits(
@@ -373,11 +351,6 @@ public class InventoryService {
         if (scoped) {
             if (canonicalProductReferenceReadEnabled
                     && usesCanonicalLocationScope(resource)) {
-                if (canonicalReferences == null) {
-                    throw new IllegalStateException(
-                        "Canonical product-reference reads require MasterDataReferenceService."
-                    );
-                }
                 String canonicalOrganizationId = canonicalReferences.resolveCanonicalId(
                         MasterDataReferenceService.ORGANIZATION,
                         organizationId)
@@ -444,11 +417,6 @@ public class InventoryService {
                 || (!input.containsKey("organizationCanonicalId")
                     && !input.containsKey("unitCanonicalId"))) {
             return input;
-        }
-        if (canonicalReferences == null) {
-            throw new IllegalStateException(
-                "Canonical location input requires MasterDataReferenceService."
-            );
         }
 
         Map<String, Object> normalized = new LinkedHashMap<>(input);
@@ -825,9 +793,6 @@ public class InventoryService {
             String serialNumber,
             LocalDate expiresAt) {
 
-        if (canonicalInventoryLedger == null || canonicalStockLocations == null) {
-            return;
-        }
 
         mirrorCanonicalLocation(location);
 
@@ -852,7 +817,7 @@ public class InventoryService {
     }
 
     private void mirrorCanonicalLocation(StockLocation location) {
-        if (canonicalStockLocations == null || location == null || location.id == null) {
+        if (location == null || location.id == null) {
             return;
         }
 
@@ -1116,14 +1081,14 @@ public class InventoryService {
     }
 
     private String organizationLabel(Long legacyId) {
-        if (legacyId == null || masterData == null) return null;
+        if (legacyId == null) return null;
         return masterData.findOrganization(legacyId, TENANT)
             .map(com.fariamiguel.enterprise.organization.Organization::legalName)
             .orElse(null);
     }
 
     private String unitLabel(Long legacyId) {
-        if (legacyId == null || masterData == null) return null;
+        if (legacyId == null) return null;
         return masterData.findUnit(legacyId, TENANT)
             .map(com.fariamiguel.tenancy.api.OrganizationalUnit::name)
             .orElse(null);
