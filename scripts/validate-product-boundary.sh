@@ -144,13 +144,28 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
-# Step 21.36: explicit COMANDOS imports must resolve to real source files.
+# Step 21.36: explicit COMANDOS imports must resolve to a real top-level source file.
+# Nested-class imports are valid when one of their enclosing type prefixes exists.
 while IFS= read -r import_line; do
   imported="${import_line#import }"
   imported="${imported%;}"
   [[ "$imported" == *".*" ]] && continue
-  source_path="$ROOT_DIR/api/src/main/java/${imported//./\/}.java"
-  [[ -f "$source_path" ]] || fail "orphan COMANDOS import points to a missing source file: $imported"
+
+  candidate="$imported"
+  resolved=false
+  while [[ "$candidate" == com.comandos.* ]]; do
+    source_path="$ROOT_DIR/api/src/main/java/${candidate//./\/}.java"
+    if [[ -f "$source_path" ]]; then
+      resolved=true
+      break
+    fi
+    next="${candidate%.*}"
+    [[ "$next" != "$candidate" ]] || break
+    candidate="$next"
+  done
+
+  [[ "$resolved" == true ]] \
+    || fail "orphan COMANDOS import points to a missing source file: $imported"
 done < <(
   grep -RhoE --include='*.java' '^import[[:space:]]+com\.comandos\.[A-Za-z0-9_.]+;' "$ROOT_DIR/api/src" \
     | sort -u
