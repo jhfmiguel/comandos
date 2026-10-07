@@ -915,5 +915,17 @@
         "scripts/validate-product-boundary.sh"
       ]
     }
-  ]
+  ],
+  "postCutoverSequence": {
+    "prerequisite": "Step 21.12 PASS",
+    "order": [
+      "21.13",
+      "21.14",
+      "21.15",
+      "21.16",
+      "21.17"
+    ],
+    "rule": "No destructive retirement step may be marked completed or safeToDelete=true before the runtime cutover gate passes.",
+    "detail": "The executable retirement order is maintained in architecture/step-21-master-data-retirement.json under postCutoverRemovalPlan."
+  }
 }
