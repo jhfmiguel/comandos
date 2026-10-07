@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "step": "21",
+  "title": "Remocao definitiva dos codigos duplicados",
+  "foundation": "jhfmiguel/faria-miguel",
+  "product": "jhfmiguel/comandos",
+  "sequence": [
+    "create-in-faria-miguel",
+    "test-foundation",
+    "product-consumes",
+    "migrate-data-and-usage",
+    "validate-parity",
+    "delete-duplicate",
+    "run-tests-and-gates"
+  ],
+  "groups": [
+    {
+      "id": "obsolete-file-copies",
+      "classification": "removed",
+      "safeToDelete": true,
+      "reason": "Static backup/corrupted copies are not runtime dependencies and have canonical active files beside them.",
+      "files": [
+        "app/src/app/globals.css.backup-bot-light-20260914-001837",
+        "app/src/app/globals.css.backup-layout-v11-20260914-002343",
+        "app/src/app/globals.css.corrompido-20260914-001950",
+        "app/src/components/layout/index.tsx.backup-layout-v11-20260914-002343",
+        "app/src/components/layout/top-toolbar.tsx.backup-bot-light-20260914-001837"
+      ]
+    },
+    {
+      "id": "master-data-persistence-bridges",
+      "classification": "migration-bridge",
+      "safeToDelete": false,
+      "reason": "All direct product-domain master-data JPA associations are retired, but legacy scalar ids, crosswalk and synchronization services still support controlled database cutover and parity verification.",
+      "evidence": [
+        "architecture/master-data-foreign-keys.json",
+        "api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java",
+        "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceSynchronizer.java",
+        "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceParityService.java",
+        "api/src/main/java/com/comandos/core/service/MasterDataMigrationService.java",
+        "api/src/main/java/com/comandos/core/service/MasterDataParityService.java"
+      ],
+      "deleteOnlyAfter": [
+        "canonical read cutover enabled in production-equivalent validation",
+        "canonical write path active",
+        "zero-mismatch parity",
+        "legacy foreign keys and scalar ids no longer required for rollback",
+        "database cleanup migration prepared and verified"
+      ]
+    },
+    {
+      "id": "identity-compatibility-bridge",
+      "classification": "migration-bridge",
+      "safeToDelete": false,
+      "reason": "JpaIdentityDirectory implements the canonical Faria Miguel IdentityDirectory but still resolves subjects from legacy COMANDOS Person persistence.",
+      "evidence": [
+        "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
+      ],
+      "deleteOnlyAfter": [
+        "identity lookup no longer depends on legacy Person persistence",
+        "all callers resolve identity through canonical persistence/provider"
+      ]
+    },
+    {
+      "id": "audit-product-persistence",
+      "classification": "product-adapter",
+      "safeToDelete": false,
+      "reason": "AuditService already implements the canonical AuditSink, but keeps COMANDOS-specific persistence, query filters and reference enrichment used by the product audit UI.",
+      "evidence": [
+        "api/src/main/java/com/comandos/audit/service/AuditService.java"
+      ],
+      "deleteOnlyAfter": [
+        "shared audit persistence/query capability replaces COMANDOS-specific storage",
+        "product audit filters and reference enrichment have a central extension point",
+        "audit UI consumes the replacement"
+      ]
+    },
+    {
+      "id": "security-product-overlay",
+      "classification": "product-owned",
+      "safeToDelete": false,
+      "reason": "Authentication/session and product scope overlays are explicitly owned by COMANDOS; they adapt to canonical CurrentActor contracts and are not generic duplicate Platform Core code.",
+      "evidence": [
+        "api/src/main/java/com/comandos/security/service/SpringCurrentActorProvider.java",
+        "api/src/main/java/com/comandos/security/service/AccessPolicy.java",
+        "api/src/main/java/com/comandos/security/service/AccountService.java"
+      ]
+    },
+    {
+      "id": "workflow-sensitive-operation-overlay",
+      "classification": "product-owned",
+      "safeToDelete": false,
+      "reason": "Sensitive-operation approval rules remain a COMANDOS vertical specialization while generic workflow contracts are owned by the foundation.",
+      "evidence": [
+        "api/src/main/java/com/comandos/workflow/api/SensitiveWorkflowGateway.java",
+        "api/src/main/java/com/comandos/workflow/service/SensitiveOperationExecutor.java",
+        "api/src/main/java/com/comandos/workflow/service/WorkflowApprovalGuard.java"
+      ]
+    },
+    {
+      "id": "frontend-shared-wrappers",
+      "classification": "compatibility-wrapper",
+      "safeToDelete": false,
+      "reason": "Several local files are already thin re-exports/adapters over @faria-miguel packages, but deleting them requires call-site migration to direct shared imports.",
+      "evidence": [
+        "app/src/platform/components/data-table.tsx",
+        "app/src/platform/components/form-field.tsx",
+        "app/src/platform/components/pagination.tsx",
+        "app/src/platform/components/confirm-dialog.tsx",
+        "app/src/platform/data.ts",
+        "app/src/platform/hooks.ts",
+        "app/src/platform/shared-foundation.ts"
+      ],
+      "nextAction": "Migrate product call sites to direct @faria-miguel imports, then delete wrappers."
+    },
+    {
+      "id": "frontend-product-composition-adapters",
+      "classification": "product-owned-adapter",
+      "safeToDelete": false,
+      "reason": "These compose shared components with COMANDOS localization, CSS, selectors or product UX behavior and therefore are not pure duplicates.",
+      "evidence": [
+        "app/src/components/common/float-label-enhancer.tsx",
+        "app/src/components/common/select-field.tsx",
+        "app/src/components/common/loader/index.tsx",
+        "app/src/components/common/toast/index.tsx"
+      ]
+    },
+    {
+      "id": "messaging-local-publishers",
+      "classification": "review-required",
+      "safeToDelete": false,
+      "reason": "Local Spring event publishers may overlap with the shared integration/event fabric, but call-site and event-contract migration must be proven before deletion.",
+      "evidence": [
+        "api/src/main/java/com/comandos/messaging/SpringPlatformEventPublisher.java",
+        "api/src/main/java/com/comandos/messaging/DomainEventPublisher.java",
+        "api/src/main/java/com/comandos/messaging/DomainEventEnvelope.java"
+      ],
+      "nextAction": "Trace all call sites and migrate generic events to Faria Miguel Integration/Event Fabric."
+    }
+  ]
+}
