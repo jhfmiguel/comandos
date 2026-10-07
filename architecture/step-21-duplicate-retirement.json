@@ -720,7 +720,7 @@
       "classification": "removed",
       "safeToDelete": true,
       "stepStatus": "completed",
-      "reason": "Step 21.32/21.36 retired the obsolete generic /api/sales stack. The legacy /sales/new-sale URL now redirects to the product-specific /erp/sales implementation backed by InventorySalesService. The old frontend form/service/model and backend REST controller were removed.",
+      "reason": "Step 21.32/21.36 retired the obsolete generic /api/sales stack. The legacy /sales/new-sale URL now redirects to the product-specific /erp/sales implementation backed by InventorySalesService. The old frontend form/service/model and backend REST controller were removed. PaymentMethod now belongs to com.comandos.sales.model, stale security tests no longer reference retired /api/users, /api/weapons or /api/sales endpoints, and InventorySalesService no longer treats ProductCanonicalScopeResolver as nullable.",
       "removedFiles": [
         "app/src/components/sales/index.tsx",
         "app/src/components/sales/form.tsx",
