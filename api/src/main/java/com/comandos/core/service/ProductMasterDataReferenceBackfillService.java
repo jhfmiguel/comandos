@@ -16,6 +16,7 @@ import com.comandos.inventory.model.Recall;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
+import com.comandos.maintenance.model.MaintenancePlan;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.purchase.model.PurchasePlanning;
@@ -112,6 +113,10 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(InventorySale.class,
             "e.organizationCanonicalId is null or e.buyerCanonicalId is null or "
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
+        new Spec(MaintenancePlan.class,
+            "e.organizationCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(WorkOrder.class,
