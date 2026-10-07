@@ -392,6 +392,28 @@ for capability in audit documents identity; do
 done
 
 
+# Steps 21.27-21.30: dependency/config/script cleanup.
+if grep -q '<artifactId>spring-security-crypto</artifactId>' "$ROOT_DIR/api/pom.xml"; then
+  fail "spring-security-crypto must not be declared directly; starter-security already provides it"
+fi
+
+for retired_frontend_package in '@faria-miguel/enterprise' '@faria-miguel/builder-core'; do
+  if grep -q "\"$retired_frontend_package\"" "$ROOT_DIR/app/package.json"; then
+    fail "retired unused frontend dependency returned: $retired_frontend_package"
+  fi
+done
+
+if grep -qE '^DB_URL=jdbc:postgresql|^DB_USERNAME=postgres|^DB_PASSWORD=postgres' "$ROOT_DIR/.env.example"; then
+  fail ".env.example must remain aligned with Oracle; obsolete PostgreSQL defaults are forbidden"
+fi
+
+if grep -q 'jdbc:postgresql' "$ROOT_DIR/api/src/main/resources/application-demo.properties"; then
+  fail "demo profile must not own database configuration; Oracle/database selection belongs to the database profile"
+fi
+
+[[ ! -e "$ROOT_DIR/api/scripts/start-with-demo-data.ps1" ]] \
+  || fail "duplicate demo startup script returned; use scripts/run-oracle-demo.ps1"
+
 # Canonical shared frontend foundation.
 APP_PACKAGE="$ROOT_DIR/app/package.json"
 test -f "$APP_PACKAGE" || fail "app/package.json is missing"
