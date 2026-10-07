@@ -221,6 +221,10 @@ create index ix_recall_org_canonical
 create index ix_recall_unit_canonical
     on erp_recall (unit_canonical_id);
 
+alter table erp_custody_responsibility add responsible_person_canonical_id varchar2(128 char);
+create index ix_custody_resp_person_canonical
+    on erp_custody_responsibility (responsible_person_canonical_id);
+
 
 -- Canonical master-data shadow references for purchase and receiving cutover.
 alter table erp_purchase add buyer_organization_canonical_id varchar2(128 char);
