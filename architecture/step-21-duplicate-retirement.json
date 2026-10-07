@@ -650,6 +650,27 @@
       ]
     },
     {
+      "id": "legacy-generic-user-crud",
+      "classification": "removed",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.32/21.36 retired the obsolete generic com.comandos.model.User CRUD and /api/users endpoint. The old query/registration routes now redirect to the canonical Master Data people workspace at /erp/core?section=people&resource=people. SystemUser and access-control entities remain because they represent product authentication/access, not generic person master data.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/model/User.java",
+        "api/src/main/java/com/comandos/model/repository/UserRepository.java",
+        "api/src/main/java/com/comandos/rest/users/UserController.java",
+        "api/src/main/java/com/comandos/rest/users/UserFormRequest.java",
+        "app/src/components/users",
+        "app/src/api/services/user.service.ts",
+        "app/src/api/models/users"
+      ],
+      "canonicalRoute": "/erp/core?section=people&resource=people",
+      "legacyRouteCompatibility": [
+        "/queries/users redirects to canonical people",
+        "/registrations/users redirects to canonical people"
+      ]
+    },
+    {
       "id": "legacy-generic-sales-flow",
       "classification": "removed",
       "safeToDelete": true,
