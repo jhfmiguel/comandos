@@ -554,6 +554,13 @@ for capability in audit documents identity; do
 done
 
 
+# Step 21.16: Oracle retirement audit must remain read-only.
+ORACLE_RETIREMENT_AUDIT="$ROOT_DIR/scripts/oracle-step-21-retirement-audit.sql"
+test -f "$ORACLE_RETIREMENT_AUDIT" || fail "missing Step 21.16 Oracle retirement audit"
+if grep -Eiq '^[[:space:]]*(drop|truncate|delete|update|insert|merge|alter)[[:space:]]' "$ORACLE_RETIREMENT_AUDIT"; then
+  fail "Step 21.16 Oracle retirement audit must remain read-only"
+fi
+
 # Steps 21.27-21.30: dependency/config/script cleanup.
 if grep -q '<artifactId>spring-security-crypto</artifactId>' "$ROOT_DIR/api/pom.xml"; then
   fail "spring-security-crypto must not be declared directly; starter-security already provides it"
