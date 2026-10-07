@@ -31,7 +31,9 @@ public class ConsumableUsageLifecycleDemoVerifier implements ApplicationRunner {
 
         var usages = em.createQuery("select u from ConsumableUsage u order by u.id", ConsumableUsage.class).getResultList();
         for (var usage : usages) {
-            require(usage.organization != null && usage.responsible != null && usage.authorizer != null,
+            require(usage.organizationLegacyId != null
+                    && usage.responsibleLegacyId != null
+                    && usage.authorizerLegacyId != null,
                 "Consumable usage must preserve organization, responsible person and authorizer.");
             require("CLOSED".equals(usage.status), "Consumable usage must be closed after reconciliation.");
             require(usage.deliveredAt != null && usage.closedAt != null && !usage.closedAt.isBefore(usage.deliveredAt),
