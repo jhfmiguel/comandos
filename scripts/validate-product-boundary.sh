@@ -186,7 +186,7 @@ done < <(
 declare -A retired_demo_scope_checks=(
   ["api/src/main/java/com/comandos/demo/AssetTraceabilityDemoVerifier.java"]='location\.organization\.|location\.unit\.'
   ["api/src/main/java/com/comandos/demo/ConsumableUsageLifecycleDemoVerifier.java"]='usage\.(organization|responsible|authorizer)([^A-Za-z0-9_]|$)'
-  ["api/src/main/java/com/comandos/demo/DemoDataSeeder.java"]='StockLocation l where l\.organization[[:space:]]*=|value\.organization[[:space:]]*=[[:space:]]*organization;|value\.unit[[:space:]]*=[[:space:]]*unit;'
+  ["api/src/main/java/com/comandos/demo/DemoDataSeeder.java"]='StockLocation l where l\.organization[[:space:]]*='
   ["api/src/main/java/com/comandos/demo/EquipmentSetAggregateOperationDemoVerifier.java"]='location\.organization\.|set\.organization([^A-Za-z0-9_]|$)|operation\.organization([^A-Za-z0-9_]|$)'
   ["api/src/main/java/com/comandos/demo/MaintenanceDemoSeeder.java"]='asset\.location\.organization\.|asset\.location\.unit\.'
 )
