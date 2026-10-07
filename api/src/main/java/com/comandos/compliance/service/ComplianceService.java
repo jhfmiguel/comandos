@@ -2,8 +2,6 @@ package com.comandos.compliance.service;
 
 import com.comandos.compliance.dto.ComplianceContract.*;
 import com.comandos.compliance.model.CompliancePolicy;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.*;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
@@ -94,7 +92,6 @@ public class ComplianceService {
                 "Active organization is required."
             ));
 
-        OrganizationalUnit unit = null;
         if (unitId != null) {
             CompanyId companyId = CompanyId.of("comandos:organization:" + organizationId);
             boolean activeUnitInOrganization = masterData
@@ -104,15 +101,13 @@ public class ComplianceService {
             if (!activeUnitInOrganization) {
                 bad("Active unit in the selected organization is required.");
             }
-            unit = em.getReference(OrganizationalUnit.class, unitId);
         }
 
-        Organization organization = em.getReference(Organization.class, organizationId);
         CompliancePolicy value = exactPolicy(organizationId, unitId);
         if (value == null) {
             value = new CompliancePolicy();
-            value.organization = organization;
-            value.unit = unit;
+            value.organizationId = organizationId;
+            value.unitId = unitId;
             em.persist(value);
         }
         value.expirationWarningDays = expiration;
@@ -316,15 +311,15 @@ public class ComplianceService {
     }
 
     private CompliancePolicy exactPolicy(long org, Long unit) {
-        String jpql = "select p from CompliancePolicy p where p.organization.id=:org and " +
-            (unit == null ? "p.unit is null" : "p.unit.id=:unit");
+        String jpql = "select p from CompliancePolicy p where p.organizationId=:org and " +
+            (unit == null ? "p.unitId is null" : "p.unitId=:unit");
         var q = em.createQuery(jpql, CompliancePolicy.class).setParameter("org", org);
         if (unit != null) q.setParameter("unit", unit);
         return q.setMaxResults(1).getResultStream().findFirst().orElse(null);
     }
 
     private static PolicyView view(CompliancePolicy p) {
-        return new PolicyView(p.id, p.organization.id, p.unit == null ? null : p.unit.id, p.expirationWarningDays,
+        return new PolicyView(p.id, p.organizationId, p.unitId, p.expirationWarningDays,
             p.maintenanceWarningDays, p.regulatoryWarningDays, p.inspectionIntervalDays, p.active);
     }
 
