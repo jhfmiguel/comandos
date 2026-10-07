@@ -89,7 +89,7 @@ public class TransferService {
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
         String expiry = assets ? "e.validUntil" : "e.lot.validUntil";
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, sourceUnitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e"
             + " where "
@@ -150,11 +150,9 @@ public class TransferService {
         transfer.organizationLegacyId = organization.id();
         transfer.sourceUnitLegacyId = sourceUnit.id();
         transfer.destinationUnitLegacyId = destinationUnit.id();
-        if (canonicalScope != null) {
-            transfer.organizationCanonicalId = canonicalScope.organization(organization.id());
-            transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id());
-            transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id());
-        }
+        transfer.organizationCanonicalId = canonicalScope.organization(organization.id());
+        transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id());
+        transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id());
         transfer.destinationLocation = destinationLocation;
         transfer.organizationName = organization.name();
         transfer.sourceUnitName = sourceUnit.name();
@@ -272,7 +270,7 @@ public class TransferService {
         access.requireScope("transfers", "READ", organizationId, unitId);
         if (unitId != null) selectedUnit(organizationId, unitId);
         pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from InventoryTransfer t where "
             + (canonical ? "t.organizationCanonicalId" : "t.organizationLegacyId")
@@ -541,7 +539,7 @@ public class TransferService {
 
     private void requireSource(StockLocation source, InventoryTransfer transfer) {
         access.requireScope("transfers", "CREATE", transfer.organizationLegacyId, transfer.sourceUnitLegacyId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             if (!source.matchesCanonicalScope(
                     transfer.organizationCanonicalId,
                     transfer.sourceUnitCanonicalId)) {
