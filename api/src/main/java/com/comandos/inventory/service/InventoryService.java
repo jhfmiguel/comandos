@@ -63,14 +63,6 @@ public class InventoryService {
         this(em, rules, access, audit, masterDataReferences, null, false);
     }
 
-    /**
-     * Transitional constructor kept for focused unit tests that do not exercise
-     * canonical product-reference shadowing.
-     */
-    @Deprecated
-    InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) {
-        this(em, rules, access, audit, null, null, false);
-    }
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
 
