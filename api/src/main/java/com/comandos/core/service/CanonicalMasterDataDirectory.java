@@ -60,22 +60,6 @@ public class CanonicalMasterDataDirectory {
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
-    /**
-     * Transitional constructor for focused unit tests using legacy projection.
-     */
-    @Deprecated
-    public CanonicalMasterDataDirectory(
-            EntityManager entityManager,
-            CanonicalContactDirectory contacts) {
-        this.entityManager = entityManager;
-        this.contacts = contacts;
-        this.canonicalPeople = null;
-        this.canonicalOrganizations = null;
-        this.canonicalUnits = null;
-        this.canonicalContacts = null;
-        this.canonicalReadEnabled = false;
-    }
-
     public boolean canonicalReadEnabled() {
         return canonicalReadEnabled;
     }
