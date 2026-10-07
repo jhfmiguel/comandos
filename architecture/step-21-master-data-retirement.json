@@ -482,7 +482,7 @@
     ],
     "afterCutover": [
       "Canonical read/directory services and ProductCanonicalScopeResolver are retained if still used by product canonical access paths.",
-      "Migration runner/configuration guard/cutover status helpers are reviewed for retirement only after Step 21.12 PASS and rollback window closure."
+      "MasterDataMigrationRunner, MasterDataCutoverStatusService and MasterDataMigrationConfigurationGuard are temporary migration-only helpers and are removed in Step 21.17 after Step 21.15 bridge retirement and rollback-window closure."
     ]
   },
   "postCutoverRemovalPlan": {
@@ -583,7 +583,23 @@
           "MasterDataCutoverStatusService"
         ],
         "retainRule": "Retain any helper still required for normal canonical runtime behavior or rollback policy.",
-        "gate": "Final backend/frontend validation and Step 21.35/21.36 gates."
+        "gate": "Final backend/frontend validation and Step 21.35/21.36 gates.",
+        "order": [
+          "MasterDataMigrationRunner",
+          "MasterDataCutoverStatusService",
+          "MasterDataMigrationConfigurationGuard"
+        ],
+        "dependencyRationale": {
+          "MasterDataMigrationRunner": "Operational startup runner used only for readiness/backfill/parity/retirement validation.",
+          "MasterDataCutoverStatusService": "Aggregates migration/parity/shadow/reference readiness solely to decide whether legacy persistence may be retired.",
+          "MasterDataMigrationConfigurationGuard": "Protects the transitional invariant canonical-read => shadow-write; after shadow-write is retired this guard becomes obsolete."
+        },
+        "retirementPreconditions": [
+          "Step 21.12 PASS recorded",
+          "Step 21.15 migration/parity/reference/shadow-write services removed",
+          "No normal runtime bean depends on the three 21.17 helpers",
+          "Rollback policy no longer requires the migration bridge"
+        ]
       }
     ],
     "finalCondition": "Only after all phases pass may Step 21.37 be marked complete.",
