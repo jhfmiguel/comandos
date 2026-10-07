@@ -65,7 +65,7 @@ public class InventorySalesService {
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
         String expiry = assets ? "e.validUntil" : "e.lot.validUntil";
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
             + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
@@ -114,11 +114,9 @@ public class InventorySalesService {
         sale.organizationLegacyId = organization.id();
         sale.unitLegacyId = unit == null ? null : unit.id();
         sale.buyerLegacyId = buyer.id();
-        if (canonicalScope != null) {
-            sale.organizationCanonicalId = canonicalScope.organization(organization.id());
-            sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
-            sale.buyerCanonicalId = canonicalScope.person(buyer.id());
-        }
+        sale.organizationCanonicalId = canonicalScope.organization(organization.id());
+        sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+        sale.buyerCanonicalId = canonicalScope.person(buyer.id());
         sale.unitName = unit == null ? null : unit.name();
         sale.organizationName = organization.name();
         sale.buyerName = buyer.name();
@@ -208,7 +206,7 @@ public class InventorySalesService {
         access.requireScope("sales", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId);
         pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from InventorySale s where "
             + (canonical ? "s.organizationCanonicalId" : "s.organizationLegacyId")
@@ -394,7 +392,7 @@ public class InventorySalesService {
 
     private void validateLocation(StockLocation location, long organizationId, Long unitId) {
         access.requireScope("sales", "CREATE", organizationId, unitId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("All stock must belong to the selected organization and unit.");
