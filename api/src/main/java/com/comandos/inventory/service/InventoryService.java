@@ -318,9 +318,13 @@ public class InventoryService {
                 case "recall-items" ->
                     "e.recall.organization.id";
                 case "equipment-sets" ->
-                    "e.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.organizationCanonicalId"
+                        : "e.organizationLegacyId";
                 case "equipment-set-components" ->
-                    "e.equipmentSet.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.equipmentSet.organizationCanonicalId"
+                        : "e.equipmentSet.organizationLegacyId";
                 case "lots" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.openingLocation.organizationCanonicalId"
@@ -480,7 +484,9 @@ public class InventoryService {
             "balances",
             "movements",
             "regulatory-controls",
-            "lots"
+            "lots",
+            "equipment-sets",
+            "equipment-set-components"
         ).contains(resource);
     }
 
