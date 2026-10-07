@@ -15,6 +15,7 @@ import com.comandos.custody.model.CustodyResponsibility;
 import com.comandos.donation.model.Donation;
 import com.comandos.sales.model.InventorySale;
 import com.comandos.maintenance.model.WorkOrder;
+import com.comandos.maintenance.model.MaintenancePlan;
 import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.reservation.model.InventoryReservation;
@@ -170,6 +171,19 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof InventorySale sale) {
             synchronizeSale(sale);
+            return true;
+        }
+        if (entity instanceof MaintenancePlan maintenancePlan) {
+            maintenancePlan.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                maintenancePlan.organizationLegacyId,
+                "maintenance plan organization"
+            );
+            maintenancePlan.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                maintenancePlan.unitLegacyId,
+                "maintenance plan unit"
+            );
             return true;
         }
         if (entity instanceof WorkOrder workOrder) {
