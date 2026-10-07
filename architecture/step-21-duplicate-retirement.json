@@ -294,10 +294,14 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "local-cleanup-complete-blocked-by-21.12",
-      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation, custody, maintenance, reservation, reconciliation, consumption and lifecycle no longer perform direct generic Master Data reads; CanonicalCoreReadService now requires CanonicalMasterDataDirectory and no longer contains read-time masterData == null or CanonicalMasterDataMapper fallbacks. CanonicalMasterDataMapper remains only where required by Step 21.12 shadow-write/backfill/parity migration paths. CanonicalMasterDataDirectory no longer has its deprecated test-only constructor that nulls canonical repositories. WorkflowService, CoreService, InventorySalesService and LifecycleService no longer treat required canonical collaborators as nullable. LifecycleService also no longer exposes its deprecated compatibility constructor and no longer navigates removed StockLocation organization/unit associations. Only explicit cutover flags decide migration behavior. Remaining compatibility services/mappers are isolated behind the explicit retirement inventory and cutover gate.",
+      "reason": "Step 21.15 local cleanup is now closed against direct generic Master Data reads and nullable canonical collaborators. Workflow, purchase/receiving, transfer, donation, reservation, lifecycle, consumption, disposal, maintenance, custody, reconciliation and inventory paths require their canonical scope/reference collaborators. CompliancePolicy organization/unit persistence remains an explicit cutover exception until Step 21.12. Final bridge deletion still depends on the runtime retirement gate.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
-        "api/src/main/java/com/comandos/core/service/CoreService.java"
+        "api/src/main/java/com/comandos/core/service/CoreService.java",
+        "scripts/validate-product-boundary.sh",
+        "commit 4b67b8483a758fca3f89b6a6e28fb0a5b83f3ff9",
+        "commit 951f02351d095a201f6d3c1793d4ac3e795aef1c",
+        "commit a3bbaf3f6cfdb048fe83e77db9dc114ba9104327"
       ]
     },
     {
@@ -763,7 +767,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "completed-current-head-family",
-      "reason": "Step 21.35 automatic Product boundary and Faria Miguel architecture gates passed on the Step 21 cleanup line. They enforce no sibling product dependencies, no recreated shared roots/contracts, canonical frontend ownership and retirement regression guards.",
+      "reason": "Step 21.35 Product boundary and Faria Miguel architecture gates pass after fixing the regex matcher conflict that had masked direct legacy reads/null canonical collaborators. The gates now actively reject direct product Master Data reads, nullable canonicalScope/masterDataReferences/masterDataMirror fallbacks, sibling dependencies, recreated shared roots/contracts and LegacyId growth.",
       "evidence": [
         "GitHub Actions Product boundary run 37569660581: success",
         "GitHub Actions Faria Miguel automatic architecture gates run 37569660593: success"
@@ -774,7 +778,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "local-scan-complete-known-cutover-bridges-only",
-      "reason": "Step 21.36 local scan is complete pending cutover retirement. Repository filename scanning prevents old/backup/deprecated/legacy/copy artifacts from returning; explicit COMANDOS imports resolve to real source types; retired generic endpoint references, generic-root imports, nullable canonical collaborator fallbacks, direct product reads of legacy Master Data entities and obsolete demo associations are gated. The only allowed migration-named files remain db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Final source-level retirement still depends on Step 21.12."
+      "reason": "Step 21.36 local scan is complete pending cutover retirement. Demo association review found no removable legacy Master Data JPA association beyond known cutover exceptions; the corrected Product boundary regex then exposed and removed remaining nullable canonical collaborator fallbacks across scalarized product services. CompliancePolicy organization/unit, CoreAccessDemoSeeder compatibility paths and the controlled custody role bridge remain intentionally cutover-owned."
     },
     {
       "id": "final-legacy-scan-evidence",
