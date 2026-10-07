@@ -946,6 +946,21 @@ oracle_bridge_pair_count="$(
 [[ "$oracle_bridge_pair_count" == "59" ]]   || fail "Step 21.16 Oracle expected bridge inventory must contain exactly 59 table/column pairs before cutover"
 grep -q 'ERP_MASTER_DATA_REFERENCE' "$ORACLE_RETIREMENT_AUDIT"   || fail "Step 21.16 Oracle audit must include the Master Data reference crosswalk"
 
+# Step 21.17: migration-only helpers must remain transitional and tied only to cutover services.
+MIGRATION_RUNNER="$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataMigrationRunner.java"
+CUTOVER_STATUS="$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataCutoverStatusService.java"
+MIGRATION_GUARD="$ROOT_DIR/api/src/main/java/com/comandos/core/service/MasterDataMigrationConfigurationGuard.java"
+
+grep -q 'implements ApplicationRunner' "$MIGRATION_RUNNER"   || fail "MasterDataMigrationRunner must remain an operational cutover runner until Step 21.17"
+grep -q 'MasterDataCutoverStatusService cutoverStatus' "$MIGRATION_RUNNER"   || fail "MasterDataMigrationRunner must remain wired through cutover status"
+
+for required in MasterDataMigrationService MasterDataParityService CanonicalMasterDataMirrorService ProductMasterDataReferenceSynchronizer ProductMasterDataReferenceBackfillService ProductMasterDataReferenceParityService ProductCanonicalScopeResolver; do
+  grep -q "$required" "$CUTOVER_STATUS"     || fail "MasterDataCutoverStatusService lost required transitional dependency: $required"
+done
+
+grep -q 'CanonicalMasterDataMirrorService mirror' "$MIGRATION_GUARD"   || fail "MasterDataMigrationConfigurationGuard must remain bound to shadow-write during cutover"
+grep -q 'canonicalReadEnabled && !mirror.enabled()' "$MIGRATION_GUARD"   || fail "MasterDataMigrationConfigurationGuard must preserve canonical-read => shadow-write invariant until Step 21.17"
+
 # Step 21.16: Oracle retirement audit must remain read-only.
 ORACLE_RETIREMENT_AUDIT="$ROOT_DIR/scripts/oracle-step-21-retirement-audit.sql"
 test -f "$ORACLE_RETIREMENT_AUDIT" || fail "missing Step 21.16 Oracle retirement audit"
