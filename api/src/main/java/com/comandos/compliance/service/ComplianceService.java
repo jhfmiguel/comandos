@@ -5,6 +5,7 @@ import com.comandos.compliance.model.CompliancePolicy;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.inventory.model.*;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
 import com.comandos.security.service.AccessPolicy;
@@ -28,10 +29,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class ComplianceService {
     private final EntityManager em;
     private final AccessPolicy access;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public ComplianceService(EntityManager em, AccessPolicy access) {
+    public ComplianceService(EntityManager em, AccessPolicy access, ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
+        this.canonicalScope = canonicalScope;
     }
 
     public SummaryView summary(long organizationId, Long unitId) {
@@ -206,18 +209,40 @@ public class ComplianceService {
     }
 
     private List<AssetItem> assets(long org, Long unit) {
-        String jpql = "select a from AssetItem a where a.location.organization.id=:org" +
-            (unit == null ? "" : " and a.location.unit.id=:unit");
-        var q = em.createQuery(jpql, AssetItem.class).setParameter("org", org);
-        if (unit != null) q.setParameter("unit", unit);
+        boolean canonical = canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(org, unit) : null;
+        String organizationField = canonical
+            ? "a.location.organizationCanonicalId"
+            : "a.location.organizationLegacyId";
+        String unitField = canonical
+            ? "a.location.unitCanonicalId"
+            : "a.location.unitLegacyId";
+        String jpql = "select a from AssetItem a where " + organizationField + "=:org"
+            + (unit == null ? "" : " and " + unitField + "=:unit");
+        var q = em.createQuery(jpql, AssetItem.class)
+            .setParameter("org", canonical ? scope.organizationId() : org);
+        if (unit != null) {
+            q.setParameter("unit", canonical ? scope.unitId() : unit);
+        }
         return q.getResultList();
     }
 
     private List<StockLot> lots(long org, Long unit) {
-        String jpql = "select distinct b.lot from StockBalance b where b.location.organization.id=:org" +
-            (unit == null ? "" : " and b.location.unit.id=:unit");
-        var q = em.createQuery(jpql, StockLot.class).setParameter("org", org);
-        if (unit != null) q.setParameter("unit", unit);
+        boolean canonical = canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(org, unit) : null;
+        String organizationField = canonical
+            ? "b.location.organizationCanonicalId"
+            : "b.location.organizationLegacyId";
+        String unitField = canonical
+            ? "b.location.unitCanonicalId"
+            : "b.location.unitLegacyId";
+        String jpql = "select distinct b.lot from StockBalance b where " + organizationField + "=:org"
+            + (unit == null ? "" : " and " + unitField + "=:unit");
+        var q = em.createQuery(jpql, StockLot.class)
+            .setParameter("org", canonical ? scope.organizationId() : org);
+        if (unit != null) {
+            q.setParameter("unit", canonical ? scope.unitId() : unit);
+        }
         return q.getResultList();
     }
 
