@@ -197,6 +197,11 @@ for (const modelPath of scalarizedMasterDataModels) {
     violations.push('scalarized Master Data model must remain retired from legacy JPA association: ' + modelPath + ' state=' + reference.state);
   }
 }
+for (const reference of foreignKeyInventory.references ?? []) {
+  if (reference.state !== 'retired') {
+    violations.push('Step 21 Master Data FK retirement regressed: ' + reference.entity + ' state=' + reference.state);
+  }
+}
 
 if (violations.length) {
   console.error('Faria Miguel automatic gate violations:');
@@ -210,3 +215,4 @@ console.log('Step 21 *LegacyId inventory: ' + detectedLegacyIds.size + '/' + bas
 console.log('Step 21 scalarized Master Data models guarded: ' + scalarizedMasterDataModels.size + '.');
 console.log('Step 21 Oracle legacy bridge columns guarded: ' + oracleBridgePairs.size + '.');
 console.log('Step 21 FK retirement manifest covers scalarized models: ' + scalarizedMasterDataModels.size + '.');
+console.log('Step 21 FK retirement entries locked retired: ' + (foreignKeyInventory.references ?? []).length + '.');
