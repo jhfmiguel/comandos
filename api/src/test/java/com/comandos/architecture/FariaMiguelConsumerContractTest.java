@@ -9,11 +9,16 @@ import com.fariamiguel.enterprise.catalog.CatalogItem;
 import com.fariamiguel.enterprise.contact.PhoneContact;
 import com.fariamiguel.enterprise.contracts.Contract;
 import com.fariamiguel.enterprise.finance.FinancialEntry;
+import com.fariamiguel.enterprise.inventory.InventoryLedger;
+import com.fariamiguel.enterprise.inventory.PhysicalInventoryService;
+import com.fariamiguel.enterprise.inventory.StockLocationRepository;
 import com.fariamiguel.enterprise.inventory.StockMovement;
 import com.fariamiguel.enterprise.organization.Organization;
 import com.fariamiguel.enterprise.party.PartyRoleType;
 import com.fariamiguel.enterprise.people.Person;
+import com.fariamiguel.enterprise.procurement.ProcurementService;
 import com.fariamiguel.enterprise.procurement.PurchaseOrder;
+import com.fariamiguel.enterprise.procurement.PurchaseOrderRepository;
 import com.fariamiguel.enterprise.sales.SalesOrder;
 import com.fariamiguel.identity.api.IdentityDirectory;
 import com.fariamiguel.messaging.api.PlatformEventPublisher;
@@ -42,11 +47,16 @@ class FariaMiguelConsumerContractTest {
         assertShared(PhoneContact.class, "com.fariamiguel.enterprise.contact");
         assertShared(PartyRoleType.class, "com.fariamiguel.enterprise.party");
         assertShared(PurchaseOrder.class, "com.fariamiguel.enterprise.procurement");
+        assertShared(ProcurementService.class, "com.fariamiguel.enterprise.procurement");
+        assertShared(PurchaseOrderRepository.class, "com.fariamiguel.enterprise.procurement");
         assertShared(SalesOrder.class, "com.fariamiguel.enterprise.sales");
         assertShared(FinancialEntry.class, "com.fariamiguel.enterprise.finance");
         assertShared(Contract.class, "com.fariamiguel.enterprise.contracts");
         assertShared(CatalogItem.class, "com.fariamiguel.enterprise.catalog");
         assertShared(StockMovement.class, "com.fariamiguel.enterprise.inventory");
+        assertShared(InventoryLedger.class, "com.fariamiguel.enterprise.inventory");
+        assertShared(StockLocationRepository.class, "com.fariamiguel.enterprise.inventory");
+        assertShared(PhysicalInventoryService.class, "com.fariamiguel.enterprise.inventory");
     }
 
     private static void assertShared(Class<?> type, String expectedPackage) {
