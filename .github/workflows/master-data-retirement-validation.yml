@@ -47,12 +47,36 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Require canonical Faria Miguel Maven artifacts
+      - name: Resolve canonical Faria Miguel Maven artifacts
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FARIA_MIGUEL_REPOSITORY_TOKEN: ${{ secrets.FARIA_MIGUEL_REPOSITORY_TOKEN }}
         run: |
           set -euo pipefail
+
+          if bash scripts/check-faria-miguel-artifacts.sh api/pom.xml; then
+            echo "Canonical Faria Miguel Maven artifacts are available from GitHub Packages."
+            exit 0
+          fi
+
+          if [[ -z "${FARIA_MIGUEL_REPOSITORY_TOKEN:-}" ]]; then
+            echo "::error::Canonical Faria Miguel Maven artifacts are not published and FARIA_MIGUEL_REPOSITORY_TOKEN is not configured."
+            echo "::error::Configure a read token for jhfmiguel/faria-miguel so this workflow can install the canonical foundation from source."
+            exit 1
+          fi
+
+          echo "Canonical packages are unavailable; installing the Faria Miguel foundation from source."
+          rm -rf /tmp/faria-miguel
+          git clone --depth 1 \
+            "https://x-access-token:${FARIA_MIGUEL_REPOSITORY_TOKEN}@github.com/jhfmiguel/faria-miguel.git" \
+            /tmp/faria-miguel
+
+          mvn -B -ntp -DskipTests \
+            -f /tmp/faria-miguel/pom.xml \
+            -pl backend/platform,backend/platform-migrations,backend/tenancy,backend/enterprise,backend/enterprise-persistence-jpa,backend/commerce \
+            -am install
+
           bash scripts/check-faria-miguel-artifacts.sh api/pom.xml
 
       - name: Start COMANDOS with full master-data cutover validation
