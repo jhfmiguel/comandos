@@ -40,7 +40,7 @@ public class InspectionApprovalService {
     public InspectionView approve(long id) {
         PeriodicInspection inspection = em.find(PeriodicInspection.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (inspection == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inspection not found.");
-        access.requireScope("inventory/assets", "UPDATE", inspection.organization.id, inspection.unit == null ? null : inspection.unit.id);
+        access.requireScope("inventory/assets", "UPDATE", inspection.organizationLegacyId, inspection.unitLegacyId);
         if (inspection.approvedAt != null) return view(inspection);
 
         List<PeriodicInspectionItem> items = items(id);
@@ -61,8 +61,8 @@ public class InspectionApprovalService {
             inspection.asset.status = "BLOCKED";
             if (inspection.generatedWorkOrderId == null) {
                 var workOrder = maintenance.open(new OpenRequest(
-                    UUID.randomUUID().toString(), inspection.organization.id,
-                    inspection.unit == null ? null : inspection.unit.id, null, inspection.asset.id,
+                    UUID.randomUUID().toString(), inspection.organizationLegacyId,
+                    inspection.unitLegacyId, null, inspection.asset.id,
                     "Corrective maintenance automatically generated from periodic inspection " + inspection.id + ".",
                     null, "CORRECTIVE", null, null));
                 inspection.generatedWorkOrderId = workOrder.id();
