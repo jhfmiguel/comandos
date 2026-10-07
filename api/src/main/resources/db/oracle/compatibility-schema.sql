@@ -221,6 +221,13 @@ create index ix_recall_org_canonical
 create index ix_recall_unit_canonical
     on erp_recall (unit_canonical_id);
 
+alter table erp_maintenance_plan add organization_canonical_id varchar2(128 char);
+alter table erp_maintenance_plan add unit_canonical_id varchar2(128 char);
+create index ix_maintenance_plan_org_canonical
+    on erp_maintenance_plan (organization_canonical_id);
+create index ix_maintenance_plan_unit_canonical
+    on erp_maintenance_plan (unit_canonical_id);
+
 alter table erp_custody_responsibility add responsible_person_canonical_id varchar2(128 char);
 create index ix_custody_resp_person_canonical
     on erp_custody_responsibility (responsible_person_canonical_id);
