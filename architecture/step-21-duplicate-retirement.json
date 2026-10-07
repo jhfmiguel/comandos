@@ -822,7 +822,20 @@
       "classification": "closure",
       "safeToDelete": false,
       "stepStatus": "blocked",
-      "reason": "Step 21.37 cannot be closed until canonical artifacts are published, Step 21.12 runtime retirement gate passes, Steps 21.13-21.17 remove the remaining Master Data legacy structures, and final backend/frontend validations succeed."
+      "reason": "Step 21.37 cannot be closed until canonical artifacts are published, Step 21.12 runtime retirement gate passes, Steps 21.13-21.17 remove the remaining Master Data legacy structures, and final backend/frontend validations succeed.",
+      "prerequisites": [
+        "master-data-persistence-bridges",
+        "legacy-id-retirement",
+        "legacy-master-data-entities",
+        "legacy-master-data-code",
+        "oracle-legacy-structures",
+        "temporary-master-data-migrations",
+        "final-backend-tests",
+        "final-frontend-tests",
+        "automatic-gates",
+        "final-legacy-scan"
+      ],
+      "closureRule": "Step 21.37 may only be marked completed when Step 21.12 has passed, Steps 21.13-21.17 are no longer blocked, final backend/frontend validations have succeeded, automatic gates are green, and the final legacy scan has no cutover-owned residue left."
     },
     {
       "id": "custody-role-cutover",
