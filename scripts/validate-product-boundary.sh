@@ -146,6 +146,14 @@ if [[ -n "$legacy_scope_navigation_hits" ]]; then
   fail "product code still navigates legacy organization/unit entity associations"
 fi
 
+unit_scope_guard_hits="$(
+  grep -RInE --include='*UnitScopeGuard.java' '\.(organization|unit|sourceUnit|destinationUnit|recipientUnit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/service/UnitScopeGuard.java'     || true
+)"
+if [[ -n "$unit_scope_guard_hits" ]]; then
+  printf '%s\n' "$unit_scope_guard_hits"
+  fail "UnitScopeGuard implementation regressed to legacy Master Data association navigation"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
