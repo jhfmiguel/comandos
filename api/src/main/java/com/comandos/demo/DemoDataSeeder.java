@@ -449,17 +449,17 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private StockLocation location(Organization organization, OrganizationalUnit unit, String code, String name, String type, boolean controlled) {
         var existing = entityManager.createQuery(
-                "select l from StockLocation l where l.organization = :organization and l.code = :code",
+                "select l from StockLocation l where l.organizationLegacyId = :organizationId and l.code = :code",
                 StockLocation.class)
-            .setParameter("organization", organization)
+            .setParameter("organizationId", organization.id)
             .setParameter("code", code)
             .setMaxResults(1)
             .getResultList();
         if (!existing.isEmpty()) return existing.getFirst();
 
         StockLocation value = new StockLocation();
-        value.organization = organization;
-        value.unit = unit;
+        value.organizationLegacyId = organization.id;
+        value.unitLegacyId = unit == null ? null : unit.id;
         value.code = code;
         value.name = name;
         value.type = type;
