@@ -447,6 +447,12 @@ if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.
   fail "sales/alienation code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
 fi
 
+# Step 21.32: empty generic package markers must not return.
+for retired_generic_root in enterprise personnel procurement; do
+  [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$retired_generic_root" ]] \
+    || fail "empty generic COMANDOS root returned: $retired_generic_root"
+done
+
 # Steps 21.21-21.23: generic sales/finance/contracts are foundation-owned.
 for removed_sales_file in \
   "$ROOT_DIR/api/src/main/java/com/comandos/model/Sale.java" \
