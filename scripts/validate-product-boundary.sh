@@ -245,6 +245,33 @@ if [[ -n "$null_constructor_hits" ]]; then
   fail "product compatibility constructor still injects null into canonical collaborators"
 fi
 
+# Step 21.12-21.17: destructive retirement must remain blocked until runtime cutover PASS.
+RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
+DUPLICATE_RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-duplicate-retirement.json"
+node - "$RETIREMENT_MANIFEST" "$DUPLICATE_RETIREMENT_MANIFEST" <<'NODE'
+const fs = require('fs');
+const retirement = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const duplicate = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+
+if (retirement.blocker?.step !== '21.12') {
+  throw new Error('Master Data retirement blocker must remain Step 21.12 until runtime cutover PASS');
+}
+if (retirement.postCutoverRemovalPlan?.status !== 'prepared-blocked-by-21.12') {
+  throw new Error('Post-cutover removal plan must remain blocked by Step 21.12 before runtime PASS');
+}
+const expectedOrder = ['21.13','21.14','21.15','21.16','21.17'];
+const actualOrder = duplicate.postCutoverSequence?.order || [];
+if (JSON.stringify(actualOrder) !== JSON.stringify(expectedOrder)) {
+  throw new Error('Post-cutover retirement order changed unexpectedly');
+}
+for (const group of duplicate.groups || []) {
+  if (['master-data-persistence-bridges','legacy-master-data-code'].includes(group.id)
+      && group.safeToDelete === true) {
+    throw new Error(group.id + ' cannot be safeToDelete before Step 21.12 PASS');
+  }
+}
+NODE
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
