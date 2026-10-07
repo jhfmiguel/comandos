@@ -4,11 +4,8 @@ import com.fariamiguel.core.api.IdGenerator;
 import com.fariamiguel.core.api.PlatformClock;
 import com.fariamiguel.core.service.SystemPlatformClock;
 import com.fariamiguel.core.service.UuidGenerator;
-import com.fariamiguel.messaging.api.PlatformEventPublisher;
-import com.fariamiguel.messaging.service.SpringPlatformEventPublisher;
 import com.fariamiguel.workflow.api.WorkflowEngine;
 import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,9 +33,4 @@ public class FariaMiguelPlatformConfiguration {
         return new DefaultWorkflowEngine();
     }
 
-    @Bean
-    PlatformEventPublisher platformEventPublisher(
-            ApplicationEventPublisher applicationEventPublisher) {
-        return new SpringPlatformEventPublisher(applicationEventPublisher);
-    }
 }
