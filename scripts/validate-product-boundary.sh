@@ -102,8 +102,10 @@ grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR
 # Step 21.15: canonical Core reads must not keep a legacy fallback constructor.
 CANONICAL_CORE_READS="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalCoreReadService.java"
 if grep -q '@Deprecated' "$CANONICAL_CORE_READS" \
-   || grep -q 'this\.masterData = null' "$CANONICAL_CORE_READS"; then
-  fail "CanonicalCoreReadService must not keep a legacy constructor that bypasses CanonicalMasterDataDirectory"
+   || grep -q 'this\.masterData = null' "$CANONICAL_CORE_READS" \
+   || grep -q 'masterData[[:space:]]*==[[:space:]]*null' "$CANONICAL_CORE_READS" \
+   || grep -q 'CanonicalMasterDataMapper\.' "$CANONICAL_CORE_READS"; then
+  fail "CanonicalCoreReadService must not keep legacy Master Data read fallbacks"
 fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
