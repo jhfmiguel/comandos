@@ -49,8 +49,8 @@ public class GovernanceLifecycleDemoSeeder implements ApplicationRunner {
     private void seedMaintenancePlan(Organization org, OrganizationalUnit unit) {
         if (count(MaintenancePlan.class) > 0) return;
         MaintenancePlan plan = new MaintenancePlan();
-        plan.organization = org;
-        plan.unit = unit;
+        plan.organizationLegacyId = org.id;
+        plan.unitLegacyId = unit.id;
         plan.name = "Plano semestral de manutenção preventiva - demonstração";
         plan.type = "PREVENTIVE";
         plan.periodicityDays = 180;
@@ -63,8 +63,8 @@ public class GovernanceLifecycleDemoSeeder implements ApplicationRunner {
         if (existing != null) return existing;
 
         ApprovalWorkflow workflow = new ApprovalWorkflow();
-        workflow.organization = org;
-        workflow.unit = unit;
+        workflow.organizationLegacyId = org.id;
+        workflow.unitLegacyId = unit.id;
         workflow.operationType = "INVENTORY_ADJUSTMENT";
         workflow.resource = "inventory-count";
         workflow.recordId = 1L;
@@ -99,8 +99,8 @@ public class GovernanceLifecycleDemoSeeder implements ApplicationRunner {
     private void seedInspection(Organization org, OrganizationalUnit unit, AssetItem asset) {
         if (count(PeriodicInspection.class) > 0) return;
         PeriodicInspection inspection = new PeriodicInspection();
-        inspection.organization = org;
-        inspection.unit = unit;
+        inspection.organizationLegacyId = org.id;
+        inspection.unitLegacyId = unit.id;
         inspection.asset = asset;
         inspection.checklist = "Número de série; integridade; limpeza; funcionamento; carregadores; acessórios.";
         inspection.result = "APPROVED";
@@ -116,8 +116,8 @@ public class GovernanceLifecycleDemoSeeder implements ApplicationRunner {
     private void seedOccurrence(Organization org, OrganizationalUnit unit, StockLot lot, StockBalance balance) {
         if (count(ExceptionOccurrence.class) > 0) return;
         ExceptionOccurrence occurrence = new ExceptionOccurrence();
-        occurrence.organization = org;
-        occurrence.unit = unit;
+        occurrence.organizationLegacyId = org.id;
+        occurrence.unitLegacyId = unit.id;
         occurrence.lot = lot;
         occurrence.balance = balance;
         occurrence.type = "DIVERGENCE";
