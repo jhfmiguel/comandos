@@ -534,11 +534,23 @@
           "ProductMasterDataReferenceParityService",
           "ProductMasterDataReferenceSynchronizer",
           "CanonicalMasterDataMirrorService",
-          "legacy projection/write compatibility retained in CoreController/CoreService/PersonRegistrationService where no longer needed"
+          "legacy projection/write compatibility retained in CoreController/CoreService/PersonRegistrationService where no longer needed",
+          "CanonicalMasterDataMapper",
+          "CanonicalContactMapper",
+          "CanonicalPartyRoleMapper",
+          "CanonicalPartyDocumentMapper",
+          "CanonicalProfessionalQualificationMapper"
         ],
         "retain": [
           "Canonical read/directory services still used by product modules",
-          "ProductCanonicalScopeResolver if canonical product scope resolution still requires it"
+          "ProductCanonicalScopeResolver if canonical product scope resolution still requires it",
+          "CanonicalMasterDataDirectory",
+          "CanonicalContactDirectory",
+          "CanonicalPartyRoleDirectory",
+          "CanonicalPartyDocumentDirectory",
+          "CanonicalPartySnapshotDirectory",
+          "CanonicalProfessionalQualificationDirectory",
+          "CanonicalCoreReadService"
         ],
         "gate": "Application startup and product flows must work without bridge bean creation."
       },
@@ -559,6 +571,40 @@
         "gate": "Final backend/frontend validation and Step 21.35/21.36 gates."
       }
     ],
-    "finalCondition": "Only after all phases pass may Step 21.37 be marked complete."
+    "finalCondition": "Only after all phases pass may Step 21.37 be marked complete.",
+    "compatibilityDisposition": {
+      "removeAfter21_12": [
+        "CoreController compatibility endpoints/paths no longer needed after canonical writes",
+        "CoreService legacy write/projection compatibility no longer needed after canonical writes",
+        "PersonRegistrationService legacy write orchestration",
+        "CanonicalMasterDataMapper",
+        "CanonicalContactMapper",
+        "CanonicalPartyRoleMapper",
+        "CanonicalPartyDocumentMapper",
+        "CanonicalProfessionalQualificationMapper",
+        "CanonicalMasterDataMirrorService",
+        "MasterDataMigrationService",
+        "MasterDataParityService",
+        "MasterDataReferenceService",
+        "ProductMasterDataReferenceBackfillService",
+        "ProductMasterDataReferenceParityService",
+        "ProductMasterDataReferenceSynchronizer"
+      ],
+      "retainAfterCutoverIfStillUsed": [
+        "CanonicalCoreReadService",
+        "CanonicalMasterDataDirectory",
+        "CanonicalContactDirectory",
+        "CanonicalPartyRoleDirectory",
+        "CanonicalPartyDocumentDirectory",
+        "CanonicalPartySnapshotDirectory",
+        "CanonicalProfessionalQualificationDirectory",
+        "ProductCanonicalScopeResolver"
+      ],
+      "reviewAt21_17": [
+        "MasterDataMigrationRunner",
+        "MasterDataMigrationConfigurationGuard",
+        "MasterDataCutoverStatusService"
+      ]
+    }
   }
 }
