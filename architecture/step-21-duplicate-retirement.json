@@ -318,10 +318,10 @@
     },
     {
       "id": "catalog-generic-primitives",
-      "classification": "partially-removed",
-      "safeToDelete": false,
-      "stepStatus": "in-progress",
-      "reason": "Step 21.18 promoted four generic catalog primitives into Faria Miguel Enterprise Core and removed the COMANDOS copies. JPA mapped-superclass compatibility bases remain temporarily because Brand, ItemCategory and ItemModel still persist in COMANDOS tables; armament/ammunition/security-equipment specialization remains product-owned.",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.18 completed: generic catalog primitives were promoted to Faria Miguel and all COMANDOS code under com.comandos.enterprise.catalog was retired. The remaining Brand/ItemCategory/ItemModel persistence is explicitly located under the inventory product overlay.",
       "removedFiles": [
         "api/src/main/java/com/comandos/enterprise/catalog/CatalogIdentity.java",
         "api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingMode.java",
@@ -334,10 +334,11 @@
         "com.fariamiguel.enterprise.catalog.CatalogTrackingPolicy",
         "com.fariamiguel.enterprise.catalog.UnitOfMeasureCode"
       ],
-      "remainingCompatibility": [
-        "api/src/main/java/com/comandos/enterprise/catalog/model/BrandBase.java",
-        "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogCategoryBase.java",
-        "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogItemBase.java"
+      "remainingCompatibility": [],
+      "productPersistence": [
+        "api/src/main/java/com/comandos/inventory/model/InventoryBrandBase.java",
+        "api/src/main/java/com/comandos/inventory/model/InventoryCategoryBase.java",
+        "api/src/main/java/com/comandos/inventory/model/InventoryItemModelBase.java"
       ]
     },
     {
