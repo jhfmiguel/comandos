@@ -182,6 +182,27 @@ done < <(
     | sort -u
 )
 
+# Step 21.32/21.36: migrated inventory/consumption demos must use scalar scope identifiers.
+for retired_demo_scope in \
+  'location.organization' \
+  'location.unit' \
+  'usage.organization' \
+  'usage.responsible' \
+  'usage.authorizer' \
+  'StockLocation l where l.organization =' \
+  'value.organization = organization;' \
+  'value.unit = unit;'
+do
+  retired_demo_scope_hits="$(
+    grep -RFn --include='*.java' "$retired_demo_scope" \
+      "$ROOT_DIR/api/src/main/java/com/comandos/demo" 2>/dev/null || true
+  )"
+  if [[ -n "$retired_demo_scope_hits" ]]; then
+    printf '%s\n' "$retired_demo_scope_hits"
+    fail "demo code still uses retired scalarized scope association: $retired_demo_scope"
+  fi
+done
+
 # Step 21.32/21.36: demo seeders must not use retired Master Data JPA associations.
 for retired_demo_assignment in \
   'donation.organization =' \
