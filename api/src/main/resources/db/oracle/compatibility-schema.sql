@@ -200,6 +200,20 @@ create index ix_equipment_set_operation_org_canonical
 create index ix_equipment_set_operation_unit_canonical
     on erp_equipment_set_operation (unit_canonical_id);
 
+alter table erp_certification_record add organization_canonical_id varchar2(128 char);
+alter table erp_certification_record add unit_canonical_id varchar2(128 char);
+create index ix_certification_record_org_canonical
+    on erp_certification_record (organization_canonical_id);
+create index ix_certification_record_unit_canonical
+    on erp_certification_record (unit_canonical_id);
+
+alter table erp_expiration_record add organization_canonical_id varchar2(128 char);
+alter table erp_expiration_record add unit_canonical_id varchar2(128 char);
+create index ix_expiration_record_org_canonical
+    on erp_expiration_record (organization_canonical_id);
+create index ix_expiration_record_unit_canonical
+    on erp_expiration_record (unit_canonical_id);
+
 
 -- Canonical master-data shadow references for purchase and receiving cutover.
 alter table erp_purchase add buyer_organization_canonical_id varchar2(128 char);
