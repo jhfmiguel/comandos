@@ -12,6 +12,6 @@ permissions:
 
 jobs:
   core-ownership:
-    uses: jhfmiguel/faria-miguel/.github/workflows/product-core-ownership-gates.yml@main
+    uses: jhfmiguel/faria-miguel/.github/workflows/product-core-ownership-gates.yml@7499512faf315c4be90792b60ffa61e11c04ab3f
     with:
       product_repository: jhfmiguel/comandos
