@@ -226,6 +226,25 @@ grep -q 'implements ResourceAccessPolicy' \
 grep -q '"security-adapters-reclassified"' "$MANIFEST" \
   || fail "security adapter reclassification is not declared"
 
+# Step 21 closure guards for messaging, audit and identity.
+if [[ -d "$ROOT_DIR/api/src/main/java/com/comandos" ]]; then
+  messaging_refs="$(grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.messaging(\.api)?\.(PlatformEvent|PlatformEventPublisher|SpringPlatformEventPublisher|DomainEventEnvelope|DomainEventPublisher)|\b(DomainEventPublisher|DomainEventEnvelope)\b' "$ROOT_DIR/api/src/main/java/com/comandos"     | grep -v '/com/comandos/messaging/' || true)"
+  [[ -z "$messaging_refs" ]] || {
+    echo "$messaging_refs" >&2
+    fail "legacy COMANDOS messaging contracts still have callers outside the compatibility package"
+  }
+
+  identity_refs="$(grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.identity\.service\.JpaIdentityDirectory|EntityManager.*Person|find\(Person\.class' "$ROOT_DIR/api/src/main/java/com/comandos"     | grep -v '/com/comandos/identity/service/JpaIdentityDirectory.java' || true)"
+  [[ -z "$identity_refs" ]] || {
+    echo "$identity_refs" >&2
+    fail "identity callers still depend on the legacy COMANDOS identity implementation or Person persistence"
+  }
+fi
+
+if grep -q 'implements[[:space:]]\+AuditSink' "$ROOT_DIR/api/src/main/java/com/comandos/audit/service/AuditService.java"; then
+  fail "COMANDOS AuditService must not implement the generic Faria Miguel AuditSink"
+fi
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
