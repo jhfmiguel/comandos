@@ -447,10 +447,10 @@ if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.
   fail "sales/alienation code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
 fi
 
-# Step 21.32: empty generic package markers must not return.
-for retired_generic_root in enterprise personnel procurement; do
+# Step 21.32: retired generic/legacy package roots must not return.
+for retired_generic_root in enterprise personnel procurement model rest; do
   [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/$retired_generic_root" ]] \
-    || fail "empty generic COMANDOS root returned: $retired_generic_root"
+    || fail "retired generic/legacy COMANDOS root returned: $retired_generic_root"
 done
 
 # Step 21.32/21.36: the obsolete generic user/person CRUD must not return.
