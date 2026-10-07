@@ -73,6 +73,11 @@
 			<artifactId>faria-miguel-commerce</artifactId>
 			<version>${faria-miguel.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fariamiguel</groupId>
+			<artifactId>faria-miguel-integration</artifactId>
+			<version>${faria-miguel.version}</version>
+		</dependency>
 
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
