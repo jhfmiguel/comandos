@@ -132,6 +132,23 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
+# Step 21.32/21.36: retired generic Java package roots must have no remaining imports.
+for retired_java_package in \
+  'com.comandos.model.' \
+  'com.comandos.rest.' \
+  'com.comandos.enterprise.' \
+  'com.comandos.personnel.' \
+  'com.comandos.procurement.'
+do
+  retired_package_hits="$(
+    grep -RFn --include='*.java' "import $retired_java_package" "$ROOT_DIR/api/src" 2>/dev/null || true
+  )"
+  if [[ -n "$retired_package_hits" ]]; then
+    printf '%s\n' "$retired_package_hits"
+    fail "retired generic Java package import returned: $retired_java_package"
+  fi
+done
+
 # Step 21.32/21.36: sales must not depend on the retired generic model package.
 retired_payment_method_hits="$(
   grep -RFn --include='*.java' 'com.comandos.model.PaymentMethod' "$ROOT_DIR/api/src" 2>/dev/null || true
