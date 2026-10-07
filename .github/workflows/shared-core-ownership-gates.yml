@@ -1,17 +1,45 @@
-name: Shared core ownership gates
+name: Faria Miguel automatic architecture gates
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - "api/**"
+      - "app/**"
+      - "src/**"
+      - "pom.xml"
+      - "package.json"
+      - "architecture/**"
+      - "scripts/faria-miguel-architecture-gates.mjs"
+      - ".github/workflows/shared-core-ownership-gates.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "api/**"
+      - "app/**"
+      - "src/**"
+      - "pom.xml"
+      - "package.json"
+      - "architecture/**"
+      - "scripts/faria-miguel-architecture-gates.mjs"
+      - ".github/workflows/shared-core-ownership-gates.yml"
 
 permissions:
   contents: read
 
 jobs:
-  core-ownership:
-    uses: jhfmiguel/faria-miguel/.github/workflows/product-core-ownership-gates.yml@7499512faf315c4be90792b60ffa61e11c04ab3f
-    with:
-      product_repository: jhfmiguel/comandos
+  architecture-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout product
+        uses: actions/checkout@v4
+
+      - name: Configure Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Validate Faria Miguel architecture gates
+        run: node scripts/faria-miguel-architecture-gates.mjs

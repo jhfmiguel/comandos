@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "foundationRepository": "jhfmiguel/faria-miguel",
+  "foundationSha": "7499512faf315c4be90792b60ffa61e11c04ab3f",
+  "mavenVersion": "0.1.0-SNAPSHOT",
+  "frontendVersion": "0.1.0",
+  "product": {
+    "id": "comandos",
+    "repository": "jhfmiguel/comandos",
+    "javaNamespaces": [
+      "com.comandos",
+      "com.fariamiguel.comandos"
+    ],
+    "frontendPackagePrefixes": [
+      "@comandos/",
+      "@faria-miguel/comandos"
+    ]
+  },
+  "products": [
+    {
+      "id": "comandos",
+      "repository": "jhfmiguel/comandos",
+      "javaNamespaces": [
+        "com.comandos",
+        "com.fariamiguel.comandos"
+      ],
+      "mavenGroupPrefixes": [
+        "com.comandos",
+        "com.fariamiguel.comandos"
+      ],
+      "frontendPackagePrefixes": [
+        "@comandos/",
+        "@faria-miguel/comandos"
+      ]
+    },
+    {
+      "id": "trator",
+      "repository": "jhfmiguel/trator",
+      "javaNamespaces": [
+        "com.trator",
+        "com.fariamiguel.trator"
+      ],
+      "mavenGroupPrefixes": [
+        "com.trator",
+        "com.fariamiguel.trator"
+      ],
+      "frontendPackagePrefixes": [
+        "@trator/",
+        "@faria-miguel/trator"
+      ]
+    },
+    {
+      "id": "tubarao",
+      "repository": "jhfmiguel/tubarao",
+      "javaNamespaces": [
+        "com.tubarao",
+        "com.fariamiguel.tubarao"
+      ],
+      "mavenGroupPrefixes": [
+        "com.tubarao",
+        "com.fariamiguel.tubarao"
+      ],
+      "frontendPackagePrefixes": [
+        "@tubarao/",
+        "@faria-miguel/tubarao"
+      ]
+    },
+    {
+      "id": "arnold",
+      "repository": "jhfmiguel/arnold",
+      "javaNamespaces": [
+        "com.arnold",
+        "com.fariamiguel.arnold"
+      ],
+      "mavenGroupPrefixes": [
+        "com.arnold",
+        "com.fariamiguel.arnold"
+      ],
+      "frontendPackagePrefixes": [
+        "@arnold/",
+        "@faria-miguel/arnold"
+      ]
+    },
+    {
+      "id": "digital-experience",
+      "repository": "jhfmiguel/digital-experience",
+      "javaNamespaces": [
+        "com.fariamiguel.digitalexperience",
+        "com.fariamiguel.digital_experience"
+      ],
+      "mavenGroupPrefixes": [
+        "com.fariamiguel.digitalexperience",
+        "com.fariamiguel.digital_experience"
+      ],
+      "frontendPackagePrefixes": [
+        "@faria-miguel/digital-experience"
+      ]
+    }
+  ]
+}
