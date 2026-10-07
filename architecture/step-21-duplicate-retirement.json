@@ -305,7 +305,7 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "local-cleanup-complete-blocked-by-21.12",
-      "reason": "Step 21.15 local cleanup remains closed. ComplianceService now validates active organization/unit through CanonicalMasterDataDirectory; only CompliancePolicy JPA persistence stays legacy until Step 21.12. AccessPolicy core security scope navigation remains a separate product-security compatibility overlay, not generic Master Data ownership.",
+      "reason": "Step 21.15 local cleanup remains closed. CompliancePolicy no longer holds Organization/OrganizationalUnit JPA associations; compliance scope is scalar and validated canonically. No production code outside core retains a legacy Master Data entity association. Remaining controlled compatibility is limited to core/security/demo/cutover bridges required until Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java",
@@ -318,7 +318,11 @@
         "commit 993059c3221426cbb16d0982b51f65d3127cdc6f",
         "commit cd841c69d697661a3fdb76637306ea971ff538af",
         "commit fb6f2bbc91074b87864c7b9ba14496f481ce2a3f",
-        "commit e1593199c4bb3848b180f1b99c87d7abbc11036e"
+        "commit e1593199c4bb3848b180f1b99c87d7abbc11036e",
+        "commit 3892b8652aa48652398327d381e006f5dcd14935",
+        "commit cb65212ef600bf19c2d56ed28e7d641522872105",
+        "commit 45fa34e7cb6861593752512fd6f03df3db08cabd",
+        "commit 37aa3654a8b4200bd36da43801f25dacba8b095f"
       ]
     },
     {
@@ -802,7 +806,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "local-scan-complete-known-cutover-bridges-only",
-      "reason": "Step 21.36 local scan is complete against the broadened production patterns. No retired Master Data navigation remains outside explicit cutover-owned exceptions. The scan now covers Organization/Unit object navigation, person/party roles such as buyer/donor/recipient/authorizer/sourceUnit/destinationUnit/responsible, UnitScopeGuard implementations, null-delegating canonical constructors and alternative nullable collaborator idioms. CompliancePolicy/ComplianceService persistence scope, AccessPolicy security overlay, CoreAccessDemoSeeder compatibility paths and the controlled custody role bridge remain intentionally cutover-owned."
+      "reason": "Step 21.36 local scan is complete against broadened production patterns. No retired Master Data navigation remains outside controlled core/security/demo/cutover bridges. Compliance is no longer an exception: CompliancePolicy is scalar and ComplianceService validates through CanonicalMasterDataDirectory. AccessPolicy security scope, CoreAccessDemoSeeder, custody role compatibility and migration bridges remain intentionally cutover-owned."
     },
     {
       "id": "final-legacy-scan-evidence",
