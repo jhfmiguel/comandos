@@ -132,6 +132,17 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
+# Step 21.32/21.36: sales must not depend on the retired generic model package.
+if grep -RFn --include='*.java' 'com.comandos.model.PaymentMethod' \
+    "$ROOT_DIR/api/src" >/dev/null 2>&1; then
+  fail "sales still depends on retired com.comandos.model.PaymentMethod"
+fi
+
+SALES_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/sales/service/InventorySalesService.java"
+if grep -q 'canonicalScope[[:space:]]*!=[[:space:]]*null' "$SALES_SERVICE"; then
+  fail "InventorySalesService must not keep nullable ProductCanonicalScopeResolver fallbacks"
+fi
+
 # Step 21.36: retired generic API endpoints must not return.
 for retired_endpoint in '/api/users' '/api/weapons' '/api/sales'; do
   retired_endpoint_hits="$(
