@@ -40,7 +40,7 @@ public class DisposalLifecycleDemoVerifier implements ApplicationRunner {
     }
 
     private void verifyProcess(DisposalProcess process, Set<String> requestIds, Set<String> processKeys) {
-        require(process.organization != null, "Disposal must preserve organization provenance.");
+        require(process.organizationLegacyId != null, "Disposal must preserve organization provenance.");
         require(notBlank(process.organizationName), "Disposal must preserve organization snapshot.");
         require(notBlank(process.processNumber), "Disposal process number is required.");
         require(notBlank(process.reason), "Disposal reason is required.");
@@ -51,7 +51,7 @@ public class DisposalLifecycleDemoVerifier implements ApplicationRunner {
         UUID.fromString(process.requestId);
         require(process.requestFingerprint.length() == 64, "Disposal request fingerprint must use the canonical 64-character hash.");
         require(requestIds.add(process.requestId), "Disposal request ID must be globally unique.");
-        require(processKeys.add(process.organization.id + "|" + process.processNumber), "Disposal process number must be unique inside the organization.");
+        require(processKeys.add(process.organizationLegacyId + "|" + process.processNumber), "Disposal process number must be unique inside the organization.");
 
         var items = em.createQuery("select i from DisposalItem i where i.process.id=:id order by i.id", DisposalItem.class)
             .setParameter("id", process.id).getResultList();
