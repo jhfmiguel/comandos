@@ -3,8 +3,10 @@
   "step": "21.13-21.15",
   "blocker": {
     "step": "21.12",
-    "reason": "Runtime retirement proof cannot execute until canonical Faria Miguel Maven artifacts are available to COMANDOS.",
-    "requiredGate": "legacy persistence retirement gate=PASS"
+    "reason": "Runtime retirement proof still cannot execute because canonical Faria Miguel Maven artifacts are unavailable to COMANDOS and FARIA_MIGUEL_READ_TOKEN is not configured. Latest observed run 37636516313 initialized Oracle, checkout and Java successfully, then failed in Resolve canonical Faria Miguel Maven artifacts before COMANDOS startup.",
+    "requiredGate": "legacy persistence retirement gate=PASS",
+    "latestRun": "37636516313",
+    "latestJob": "112844057045"
   },
   "legacyIdRetirement": {
     "step": "21.13",
@@ -378,7 +380,8 @@
       "InventoryService unit filtering no longer navigates removed StockLocation.unit association",
       "InventoryService reduced compatibility constructor and null fallbacks for canonicalReferences/masterData/canonicalInventoryLedger/canonicalStockLocations removed",
       "Global Product boundary scan now rejects retired party/person/unit association navigation including buyer, donor, donee, recipient, authorizer, sourceUnit, destinationUnit, responsible, roleAssignment and related paths.",
-      "Scalar scope cleanup verified by Product boundary at HEAD 916389a0d8aa9fe94829f1ef707b51f408965864."
+      "Scalar scope cleanup verified by Product boundary at HEAD 916389a0d8aa9fe94829f1ef707b51f408965864.",
+      "ComplianceService now validates active organization/unit membership through CanonicalMasterDataDirectory and only materializes legacy JPA references required by CompliancePolicy persistence."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -409,6 +412,14 @@
       "productBoundary": "success",
       "ci": "success",
       "caveat": "CI success does not prove canonical Maven/Yarn verification executed while Faria Miguel artifacts remain unavailable."
+    },
+    "complianceException": {
+      "status": "persistence-association-only-until-21.12",
+      "model": "api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java",
+      "service": "api/src/main/java/com/comandos/compliance/service/ComplianceService.java",
+      "remaining": "CompliancePolicy still maps Organization/OrganizationalUnit through JPA because its physical persistence has not been cut over.",
+      "completed": "ComplianceService organization/unit validation now uses CanonicalMasterDataDirectory; direct em.find reads of legacy Organization/OrganizationalUnit are forbidden by Product boundary.",
+      "retirementCondition": "Remove the remaining CompliancePolicy legacy JPA association only after Step 21.12 PASS and physical cutover preparation."
     }
   },
   "demoAssociationSweep": {
