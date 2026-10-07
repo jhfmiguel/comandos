@@ -31,9 +31,9 @@ public class AmmunitionBoxService {
         var clauses = new java.util.ArrayList<String>();
         var parameters = new LinkedHashMap<String, Object>();
         clauses.add(access.predicate("inventory/lots", "READ", "b",
-            new AccessPolicy.Scope("location.organization.id", "location.unit.id")));
+            new AccessPolicy.Scope("location.organizationLegacyId", "location.unitLegacyId")));
         if (organizationId != null) {
-            clauses.add("b.location.organization.id = :organizationId");
+            clauses.add("b.location.organizationLegacyId = :organizationId");
             parameters.put("organizationId", organizationId);
         }
         if (lotId != null) {
@@ -63,8 +63,8 @@ public class AmmunitionBoxService {
         access.requireAny("inventory/lots", "READ");
         AmmunitionBox box = em.find(AmmunitionBox.class, id);
         if (box == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ammunition box not found.");
-        access.requireScope("inventory/lots", "READ", box.location.organization.id,
-            box.location.unit == null ? null : box.location.unit.id);
+        access.requireScope("inventory/lots", "READ", box.location.organizationLegacyId,
+            box.location.unitLegacyId);
         return view(box);
     }
 
