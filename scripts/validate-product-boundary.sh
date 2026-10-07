@@ -228,6 +228,16 @@ for nullable_collaborator in canonicalScope masterDataReferences masterDataMirro
   fi
 done
 
+for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror canonicalReferences canonicalInventoryLedger canonicalStockLocations; do
+  alternative_nullable_hits="$(
+    grep -RnE --include='*.java'       "Optional\.ofNullable\([[:space:]]*$nullable_collaborator|Objects\.(isNull|nonNull)\([[:space:]]*$nullable_collaborator"       "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
+  )"
+  if [[ -n "$alternative_nullable_hits" ]]; then
+    printf '%s\n' "$alternative_nullable_hits"
+    fail "required canonical collaborator still has Optional/Objects nullable fallback: $nullable_collaborator"
+  fi
+done
+
 # Step 21.15: InventoryService canonical collaborators are mandatory.
 INVENTORY_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/inventory/service/InventoryService.java"
 if grep -qE 'canonicalReferences[[:space:]]*==[[:space:]]*null|masterData[[:space:]]*==[[:space:]]*null|canonicalInventoryLedger[[:space:]]*==[[:space:]]*null|canonicalStockLocations[[:space:]]*==[[:space:]]*null' "$INVENTORY_SERVICE"; then
