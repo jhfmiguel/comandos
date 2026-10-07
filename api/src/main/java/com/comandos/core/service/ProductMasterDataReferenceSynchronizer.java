@@ -2,6 +2,8 @@ package com.comandos.core.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.inventory.model.StockLocation;
+import com.comandos.inventory.model.EquipmentSet;
+import com.comandos.inventory.model.EquipmentSetOperation;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
@@ -59,6 +61,32 @@ public class ProductMasterDataReferenceSynchronizer {
     private boolean synchronizeNow(CoreEntity entity) {
         if (entity instanceof StockLocation location) {
             synchronizeLocation(location);
+            return true;
+        }
+        if (entity instanceof EquipmentSet equipmentSet) {
+            equipmentSet.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                equipmentSet.organizationLegacyId,
+                "equipment set organization"
+            );
+            equipmentSet.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                equipmentSet.unitLegacyId,
+                "equipment set unit"
+            );
+            return true;
+        }
+        if (entity instanceof EquipmentSetOperation operation) {
+            operation.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                operation.organizationLegacyId,
+                "equipment set operation organization"
+            );
+            operation.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                operation.unitLegacyId,
+                "equipment set operation unit"
+            );
             return true;
         }
         if (entity instanceof Purchase purchase) {
