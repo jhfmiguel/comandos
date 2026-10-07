@@ -1,6 +1,5 @@
-import { WeaponsRegistration } from "components";
-import { Suspense } from "react";
+import { redirect } from "next/navigation"
 
-export default function WeaponsRegistrationPage() {
-    return <Suspense fallback={<p role="status">Loading weapon registration…</p>}><WeaponsRegistration /></Suspense>;
+export default function LegacyWeaponsRedirect() {
+    redirect("/erp/inventory?section=catalog&resource=item-models")
 }
