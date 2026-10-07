@@ -170,6 +170,43 @@ if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
   fail "product code still navigates retired Master Data objects"
 fi
 
+# Step 21.15: product constructors must not inject null into canonical cutover collaborators.
+null_constructor_hits="$(
+  node - "$ROOT_DIR/api/src/main/java/com/comandos" <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const root = process.argv[2];
+const canonicalSignals = /(CanonicalMasterData|ProductCanonicalScope|MasterDataReference|ProductMasterDataReference|InventoryLedger|StockLocationRepository)/;
+function walk(dir) {
+  for (const entry of fs.readdirSync(dir, {withFileTypes:true})) {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) walk(file);
+    else if (entry.name.endsWith('.java')) {
+      const relative = file.replaceAll('\\', '/').split('/api/src/main/java/')[1];
+      if (!relative
+          || relative.includes('/core/')
+          || relative.includes('/demo/')
+          || relative.includes('/compliance/')
+          || relative.endsWith('/security/service/AccessPolicy.java')) continue;
+      const src = fs.readFileSync(file, 'utf8');
+      if (!canonicalSignals.test(src)) continue;
+      for (const match of src.matchAll(/this\([\s\S]{0,500}?\);/g)) {
+        if (/\bnull\b/.test(match[0])) {
+          process.stdout.write(relative + ': constructor delegates null into canonical-capable service\n');
+          break;
+        }
+      }
+    }
+  }
+}
+walk(root);
+NODE
+)"
+if [[ -n "$null_constructor_hits" ]]; then
+  printf '%s\n' "$null_constructor_hits"
+  fail "product compatibility constructor still injects null into canonical collaborators"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
