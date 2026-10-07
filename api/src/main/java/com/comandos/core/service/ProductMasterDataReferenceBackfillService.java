@@ -11,6 +11,7 @@ import com.comandos.inventory.model.EquipmentSet;
 import com.comandos.inventory.model.EquipmentSetOperation;
 import com.comandos.inventory.model.CertificationRecord;
 import com.comandos.inventory.model.ExpirationRecord;
+import com.comandos.inventory.model.Recall;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
@@ -76,6 +77,10 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
         new Spec(ExpirationRecord.class,
+            "e.organizationCanonicalId is null or "
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
+        new Spec(Recall.class,
             "e.organizationCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
