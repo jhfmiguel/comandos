@@ -453,6 +453,20 @@ for retired_generic_root in enterprise personnel procurement; do
     || fail "empty generic COMANDOS root returned: $retired_generic_root"
 done
 
+# Step 21.32/21.36: the obsolete generic sales stack must not return.
+retired_sales_paths=(
+  "api/src/main/java/com/comandos/rest/sales"
+  "app/src/components/sales"
+  "app/src/api/services/sale.service.ts"
+  "app/src/api/models/sales"
+)
+for retired_sales_path in "${retired_sales_paths[@]}"; do
+  [[ ! -e "$ROOT_DIR/$retired_sales_path" ]] \
+    || fail "legacy generic sales flow returned: $retired_sales_path"
+done
+grep -q 'redirect("/erp/sales")' "$ROOT_DIR/app/src/app/sales/new-sale/page.tsx" \
+  || fail "legacy sales URL must redirect to canonical /erp/sales"
+
 # Steps 21.21-21.23: generic sales/finance/contracts are foundation-owned.
 for removed_sales_file in \
   "$ROOT_DIR/api/src/main/java/com/comandos/model/Sale.java" \
