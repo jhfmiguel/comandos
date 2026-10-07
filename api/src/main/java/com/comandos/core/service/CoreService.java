@@ -366,9 +366,7 @@ public class CoreService {
         validate(entity);
         if (id == null) em.persist(entity);
         em.flush();
-        if (masterDataMirror != null) {
-            masterDataMirror.mirror(entity);
-        }
+        masterDataMirror.mirror(entity);
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
@@ -736,9 +734,7 @@ public class CoreService {
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
-        if (masterDataMirror != null) {
-            masterDataMirror.delete(entity);
-        }
+        masterDataMirror.delete(entity);
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 
