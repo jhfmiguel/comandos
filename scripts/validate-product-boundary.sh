@@ -172,7 +172,7 @@ if [[ -n "$deprecated_hits" ]]; then
 fi
 
 # Step 21.15: required canonical collaborators are never optional after constructor migration.
-for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror; do
+for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror canonicalReferences canonicalInventoryLedger canonicalStockLocations; do
   nullable_hits="$(
     grep -RnE --include='*.java' "$nullable_collaborator[[:space:]]*!=[[:space:]]*null|$nullable_collaborator[[:space:]]*==[[:space:]]*null" \
       "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
