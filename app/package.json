@@ -14,8 +14,6 @@
     "selects:audit": "node scripts/check-select-standard.mjs"
   },
   "dependencies": {
-    "@faria-miguel/builder-core": "npm:@jhfmiguel/faria-miguel-builder-core@0.1.0",
-    "@faria-miguel/enterprise": "npm:@jhfmiguel/faria-miguel-enterprise@0.1.0",
     "@faria-miguel/platform": "npm:@jhfmiguel/faria-miguel-platform@0.1.0",
     "@faria-miguel/ui": "npm:@jhfmiguel/faria-miguel-ui@0.1.0",
     "@4us-dev/utils": "^0.0.15",
