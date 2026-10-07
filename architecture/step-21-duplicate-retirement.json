@@ -651,14 +651,19 @@
       "classification": "boundary-validation",
       "safeToDelete": false,
       "stepStatus": "advanced-blocked-by-master-data-retirement",
-      "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, and the empty generic enterprise, personnel and procurement package markers were removed. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific role assignment bridges.",
+      "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, retired generic package roots have no surviving imports, and demo seeders/verifiers were aligned to scalar cutover identifiers instead of removed Master Data JPA associations. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific migration bridges.",
       "completedCleanup": [
         "removed empty com.comandos.enterprise package marker",
         "removed empty com.comandos.personnel package marker",
         "removed empty com.comandos.procurement package marker",
         "removed empty com.comandos.model legacy compatibility package marker",
         "removed empty com.comandos.rest legacy compatibility package marker",
-        "added regression gate preventing those generic/legacy roots from returning"
+        "added regression gate preventing those generic/legacy roots from returning",
+        "added static gate rejecting imports from retired generic Java roots",
+        "added static gate resolving explicit com.comandos imports to existing source types",
+        "aligned purchase, custody, consumption, reservation, transfer, reconciliation, maintenance, disposal, governance and dashboard demo code to scalar cutover ids",
+        "removed StoredDocumentBlob verifier residue after DocumentStorage became canonical",
+        "migrated audit tests from retired com.comandos.security.api actor contracts to com.fariamiguel.security.api"
       ],
       "allowedProductOverlays": [
         "armament/ammunition",
@@ -762,7 +767,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "advanced-known-bridges-only",
-      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository filename scanning now enforces that old/backup/deprecated/legacy/copy artifacts cannot return. The only allowed migration-named files are db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Regression gates prevent both filename residue and *LegacyId growth; final source-level retirement still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository filename scanning prevents old/backup/deprecated/legacy/copy artifacts from returning; explicit COMANDOS imports are checked against real source types; retired generic endpoint references, generic-root imports, nullable canonical collaborator fallbacks and obsolete demo Master Data associations are also gated. The only allowed migration-named files remain db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Final source-level retirement still depends on Step 21.12."
     },
     {
       "id": "final-legacy-scan-evidence",
