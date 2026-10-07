@@ -1,7 +1,7 @@
 package com.comandos.sales.model;
 
 import com.comandos.core.model.*;
-import com.comandos.model.PaymentMethod;
+import com.comandos.sales.model.PaymentMethod;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
