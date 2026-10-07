@@ -687,12 +687,10 @@ public class InventoryService {
         // Product entities keep their existing JPA relations during cutover, but
         // direct master-data owners (currently StockLocation) receive stable
         // canonical identifiers before persistence.
-        if (masterDataReferences != null) {
-            if (canonicalProductReferenceReadEnabled) {
-                masterDataReferences.synchronizeForBackfill(entity);
-            } else {
-                masterDataReferences.synchronize(entity);
-            }
+        if (canonicalProductReferenceReadEnabled) {
+            masterDataReferences.synchronizeForBackfill(entity);
+        } else {
+            masterDataReferences.synchronize(entity);
         }
 
         if (id == null) {
