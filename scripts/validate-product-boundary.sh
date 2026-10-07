@@ -175,6 +175,15 @@ for nullable_collaborator in canonicalScope masterDataReferences masterDataMirro
   fi
 done
 
+# Step 21.15: InventoryService canonical collaborators are mandatory.
+INVENTORY_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/inventory/service/InventoryService.java"
+if grep -qE 'canonicalReferences[[:space:]]*==[[:space:]]*null|masterData[[:space:]]*==[[:space:]]*null|canonicalInventoryLedger[[:space:]]*==[[:space:]]*null|canonicalStockLocations[[:space:]]*==[[:space:]]*null' "$INVENTORY_SERVICE"; then
+  fail "InventoryService must not keep nullable canonical collaborator fallbacks"
+fi
+if grep -q 'ProductMasterDataReferenceSynchronizer masterDataReferences)[[:space:]]*{' "$INVENTORY_SERVICE"; then
+  fail "InventoryService must not regain the reduced compatibility constructor"
+fi
+
 # Step 21.15: CanonicalMasterDataDirectory must not keep test-only null constructors.
 CANONICAL_MASTER_DATA_DIRECTORY="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java"
 if grep -q '@Deprecated' "$CANONICAL_MASTER_DATA_DIRECTORY" \
