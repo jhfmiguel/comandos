@@ -54,7 +54,7 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         if (existing != null) return existing;
 
         PurchasePlanning value = new PurchasePlanning();
-        value.organization = organization;
+        value.organizationLegacyId = organization.id;
         value.processNumber = "PLANEJ-DEMO-2026-001";
         value.requestingUnit = "Gerência de Armamento";
         value.objectDescription = "Aquisição fictícia de munição 9 mm para treinamento institucional.";
@@ -132,9 +132,9 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         if (existing != null) return existing;
 
         Purchase value = new Purchase();
-        value.buyerOrganization = buyer;
-        value.supplierOrganization = supplier;
-        value.originPerson = origin;
+        value.buyerOrganizationLegacyId = buyer.id;
+        value.supplierOrganizationLegacyId = supplier.id;
+        value.originPersonLegacyId = origin.id;
         value.procurementProcess = process;
         value.acquisitionType = AcquisitionType.ONEROUS;
         value.originDescription = "Compra decorrente do processo demonstrativo PROC-DEMO-2026-0001.";
@@ -208,7 +208,8 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         EquipmentReceiving receiving = new EquipmentReceiving();
         receiving.sourceType = ReceivingSourceType.ACQUISITION;
         receiving.acquisition = purchase;
-        receiving.receivingOrganization = organization;
+        receiving.receivingOrganizationLegacyId = organization.id;
+        receiving.receivingOrganizationName = organization.name;
         receiving.receivingUnit = "Gerência de Armamento";
         receiving.receivingLocation = location.name;
         receiving.deliveryDocumentNumber = "ROMANEIO-DEMO-001";
