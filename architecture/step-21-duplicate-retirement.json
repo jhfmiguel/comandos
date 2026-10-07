@@ -146,7 +146,15 @@
         "app/src/platform/hooks.ts",
         "app/src/platform/shared-foundation.ts",
         "app/src/platform/error-boundary.tsx"
-      ]
+      ],
+      "stepStatus": "completed",
+      "validation": {
+        "sourceBoundary": "passed",
+        "productBoundary": "passed",
+        "architectureGates": "passed",
+        "lintBuild": "deferred-to-21.34",
+        "reason": "COMANDOS CI cannot install canonical @faria-miguel/platform and @faria-miguel/ui because the physical GitHub Packages are not currently published. The Faria Miguel private repository publish workflow fails before executing job steps, so this is an external artifact-publication blocker rather than an unresolved Step 21.4 import/wrapper issue."
+      }
     },
     {
       "id": "frontend-product-composition-adapters",
