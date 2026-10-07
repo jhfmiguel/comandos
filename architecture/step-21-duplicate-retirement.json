@@ -224,6 +224,31 @@
         "api/src/main/java/com/comandos/messaging/package-info.java",
         "api/src/test/java/com/comandos/messaging/api/PlatformEventContractTests.java"
       ]
+    },
+    {
+      "id": "master-data-canonical-domain-cutover",
+      "classification": "canonical-consumer",
+      "safeToDelete": false,
+      "evidence": [
+        "api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java",
+        "api/src/main/java/com/comandos/core/service/CanonicalContactDirectory.java",
+        "api/src/main/java/com/comandos/core/service/CanonicalPartyRoleDirectory.java",
+        "api/src/main/java/com/comandos/core/service/CanonicalPartyDocumentDirectory.java",
+        "api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java",
+        "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
+      ],
+      "stepStatus": "completed",
+      "reason": "Step 21.11 completed: Person, Organization, Organizational Unit, contacts, generic party roles, documents, professional qualifications and identity all expose/consume canonical Faria Miguel contracts. When canonical master-data reads are enabled, reusable master-data reads use the canonical repositories; COMANDOS-specific role extensions remain product-owned.",
+      "completed": [
+        "person canonical repository read cutover",
+        "organization canonical repository read cutover",
+        "organizational unit canonical repository read cutover",
+        "contact canonical repository read cutover",
+        "generic party-role canonical repository read cutover",
+        "party-document canonical repository read cutover",
+        "professional-qualification canonical repository read cutover",
+        "identity routed through canonical master-data directory"
+      ]
     }
   ]
 }
