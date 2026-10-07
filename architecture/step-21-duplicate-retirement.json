@@ -52,7 +52,7 @@
       "id": "identity-compatibility-bridge",
       "classification": "compatibility-bridge",
       "safeToDelete": false,
-      "reason": "Step 21.8 direct legacy Person dependency removed. JpaIdentityDirectory now resolves people through CanonicalMasterDataDirectory, which switches between legacy projection and canonical persistence according to the controlled master-data read cutover.",
+      "reason": "Step 21.8 completed: identity callers consume the canonical IdentityDirectory contract and JpaIdentityDirectory no longer reads legacy Person persistence directly. The remaining COMANDOS provider/subject adapter is product-specific and its final removal is governed by the Master Data bridge retirement in Step 21.12.",
       "evidence": [
         "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
       ],
@@ -65,13 +65,15 @@
         "direct EntityManager/legacy Person read removed from JpaIdentityDirectory",
         "identity resolution delegated to CanonicalMasterDataDirectory"
       ],
-      "nextAction": "Remove the identity bridge only when provider/subject mapping is supplied directly by canonical identity persistence and no COMANDOS-specific compatibility mapping remains."
+      "nextAction": "Remove the identity bridge only when provider/subject mapping is supplied directly by canonical identity persistence and no COMANDOS-specific compatibility mapping remains.",
+      "stepStatus": "completed",
+      "followUpOwner": "21.12"
     },
     {
       "id": "audit-product-persistence",
       "classification": "product-adapter",
       "safeToDelete": false,
-      "reason": "Step 21.7 separation completed: generic Faria Miguel AuditRecorder persists through the canonical enterprise JpaAuditSink; COMANDOS AuditService no longer implements AuditSink and remains only for product-specific audit recording/query/filter/reference enrichment.",
+      "reason": "Step 21.7 completed: generic audit sink/persistence ownership is Faria Miguel; COMANDOS AuditService no longer implements AuditSink and retains only product-specific recording/query/filter/reference enrichment behavior.",
       "evidence": [
         "api/src/main/java/com/comandos/audit/service/AuditService.java"
       ],
@@ -85,7 +87,8 @@
         "generic audit persistence remains owned by Faria Miguel enterprise persistence",
         "COMANDOS-specific query filters and reference enrichers preserved"
       ],
-      "nextAction": "Retire local erp_audit_* persistence only after the product audit UI and product-specific record() callers have an equivalent central query/enrichment extension point."
+      "nextAction": "Retire local erp_audit_* persistence only after the product audit UI and product-specific record() callers have an equivalent central query/enrichment extension point.",
+      "stepStatus": "completed"
     },
     {
       "id": "security-product-overlay",
@@ -175,15 +178,14 @@
     },
     {
       "id": "messaging-local-publishers",
-      "classification": "compatibility-bridge",
-      "safeToDelete": false,
-      "reason": "Generic runtime publishing now delegates to the canonical Faria Miguel PlatformEventPublisher supplied by Platform Core auto-configuration. Local event types/publishers remain only as compatibility bridges until all legacy callers are migrated.",
+      "classification": "removed",
+      "safeToDelete": true,
+      "reason": "Step 21.6 completed: all local generic messaging contracts/publishers were retired after boundary gates proved there were no callers outside the compatibility package. COMANDOS now consumes only the canonical Faria Miguel messaging publisher.",
       "evidence": [
         "api/src/main/java/com/comandos/messaging/SpringPlatformEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventEnvelope.java"
       ],
-      "nextAction": "Trace and migrate remaining callers, then remove local PlatformEvent, PlatformEventPublisher, SpringPlatformEventPublisher, DomainEventPublisher and DomainEventEnvelope.",
       "foundationTargets": [
         "com.fariamiguel.messaging.api.PlatformEvent",
         "com.fariamiguel.messaging.api.PlatformEventPublisher",
@@ -195,6 +197,17 @@
         "local SpringPlatformEventPublisher delegates to canonical publisher",
         "DomainEventPublisher routes through the compatibility publisher",
         "manual duplicate publisher bean removed from COMANDOS configuration"
+      ],
+      "stepStatus": "completed",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/messaging/DomainEventEnvelope.java",
+        "api/src/main/java/com/comandos/messaging/DomainEventPublisher.java",
+        "api/src/main/java/com/comandos/messaging/SpringPlatformEventPublisher.java",
+        "api/src/main/java/com/comandos/messaging/api/PlatformEvent.java",
+        "api/src/main/java/com/comandos/messaging/api/PlatformEventPublisher.java",
+        "api/src/main/java/com/comandos/messaging/api/package-info.java",
+        "api/src/main/java/com/comandos/messaging/package-info.java",
+        "api/src/test/java/com/comandos/messaging/api/PlatformEventContractTests.java"
       ]
     }
   ]
