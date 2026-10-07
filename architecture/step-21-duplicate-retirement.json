@@ -436,6 +436,68 @@
         "com.fariamiguel.enterprise.contracts.ContractRepository",
         "com.fariamiguel.enterprise.contracts.Contract"
       ]
+    },
+    {
+      "id": "documents-shared-cutover",
+      "classification": "product-policy-overlay",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Step 21.24 completed generic document cleanup: DocumentStorage and JPA blob persistence are now foundation-owned. COMANDOS keeps only process-specific attachment metadata, permissions, compliance and document-type policies.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/documents/storage/JpaDocumentStorage.java",
+        "api/src/main/java/com/comandos/documents/model/StoredDocumentBlob.java",
+        "api/src/main/java/com/comandos/documents/api/package-info.java"
+      ],
+      "canonicalContracts": [
+        "com.fariamiguel.documents.api.DocumentStorage",
+        "com.fariamiguel.documents.api.DocumentReference",
+        "com.fariamiguel.documents.api.DocumentWrite"
+      ],
+      "productSpecializations": [
+        "ProcessAttachment",
+        "ProcessAttachmentService",
+        "ProcessDocumentPolicy"
+      ]
+    },
+    {
+      "id": "notifications-shared-cutover",
+      "classification": "canonical-only",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.25 completed: no local COMANDOS notifications package remains. NotificationSender/NotificationDispatcher are foundation-owned.",
+      "canonicalContracts": [
+        "com.fariamiguel.notifications.api.NotificationSender",
+        "com.fariamiguel.notifications.service.NotificationDispatcher"
+      ]
+    },
+    {
+      "id": "platform-infrastructure-cutover",
+      "classification": "canonical-core-with-product-config",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Step 21.26 completed the generic infrastructure cleanup covered by current duplicates: local metrics API/implementation and manual PlatformClock/IdGenerator/WorkflowEngine wiring were removed. Faria Miguel auto-configuration owns metrics, clock, IDs, workflow, correlation, request metrics and platform wiring. Product-specific ERP configuration and protocol handling remain local.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/analytics/MicrometerMetricRecorder.java",
+        "api/src/main/java/com/comandos/analytics/api/MetricPoint.java",
+        "api/src/main/java/com/comandos/analytics/api/MetricRecorder.java",
+        "api/src/main/java/com/comandos/analytics/api/package-info.java",
+        "api/src/main/java/com/comandos/analytics/package-info.java",
+        "api/src/test/java/com/comandos/analytics/MicrometerMetricRecorderTests.java",
+        "api/src/test/java/com/comandos/analytics/api/MetricApiContractTests.java",
+        "api/src/main/java/com/comandos/core/config/FariaMiguelPlatformConfiguration.java"
+      ],
+      "canonicalContracts": [
+        "com.fariamiguel.analytics.api.MetricRecorder",
+        "com.fariamiguel.core.api.PlatformClock",
+        "com.fariamiguel.core.api.IdGenerator",
+        "com.fariamiguel.workflow.api.WorkflowEngine",
+        "com.fariamiguel.core.api.CorrelationIdProvider"
+      ],
+      "productSpecificRemaining": [
+        "com.comandos.core.config.PlatformProperties",
+        "com.comandos.core.web.ApiProblems",
+        "com.comandos.core.web.HttpProtocolExceptionHandler"
+      ]
     }
   ]
 }
