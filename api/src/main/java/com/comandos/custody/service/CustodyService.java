@@ -1,8 +1,8 @@
 package com.comandos.custody.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
@@ -18,16 +18,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Service
 @Transactional(readOnly = true)
 public class CustodyService {
     private static final int PAGE_SIZE = 20;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public CustodyService(
@@ -35,17 +40,14 @@ public class CustodyService {
             AccessPolicy access,
             AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null, null);
+        this.masterData = masterData;
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -417,13 +419,53 @@ public class CustodyService {
     }
     private void lockCatalog() { em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
         .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList(); }
-    private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
+    private UnitSnapshot selectedUnit(long organizationId, Long unitId) {
         if (unitId == null) return null;
-        var unit = em.find(OrganizationalUnit.class, unitId);
-        if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
-        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
-        return unit;
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Select a unit in the selected organization."
+            ));
+        if (!unit.active()
+                || !CompanyId.of("comandos:organization:" + organizationId)
+                    .equals(unit.companyId())) {
+            bad("Select a unit in the selected organization.");
+        }
+        return new UnitSnapshot(unitId, unit.name(), true);
     }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private PersonSnapshot person(Long id) {
+        if (id == null || id <= 0) bad("A valid person is required.");
+        var value = masterData.findPerson(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Person not found."
+            ));
+        return new PersonSnapshot(
+            id,
+            value.name(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name, boolean active) {}
+    private record PersonSnapshot(Long id, String name, boolean active) {}
+
     private void validateIssue(IssueRequest request) {
         if (request == null || request.organizationId() == null || request.authorizerId() == null
                 || request.purpose() == null || request.purpose().isBlank()) bad("Organization, recipient, authorizer and purpose are required.");
