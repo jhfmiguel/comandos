@@ -577,6 +577,19 @@ public class InventoryService {
             if (id != null && (entity instanceof Recall || entity instanceof RecallItem)
                     && field.name().equals("description") && !data.containsKey("description")) continue;
             Object raw = data.get(field.name());
+            if (entity instanceof EquipmentSet equipmentSet
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                Long legacyId = raw == null ? null : integer(raw, false);
+                if (legacyId == null && field.required()) {
+                    bad(field.label() + " is required.");
+                }
+                if ("organizationId".equals(field.name())) {
+                    equipmentSet.organizationLegacyId = legacyId;
+                } else {
+                    equipmentSet.unitLegacyId = legacyId;
+                }
+                continue;
+            }
             if (entity instanceof StockLocation location
                     && Set.of("organizationId", "unitId").contains(field.name())) {
                 Long legacyId = raw == null ? null : integer(raw, false);
