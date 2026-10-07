@@ -567,7 +567,7 @@
       "classification": "dependency-cleanup",
       "safeToDelete": true,
       "stepStatus": "advanced-local-cleanup-complete-final-build-blocked",
-      "reason": "Step 21.28 now has a source-based dependency audit enforced by Product boundary. The audit proved seven runtime packages unused; they were removed from package.json and their direct Yarn lock entries were removed after confirming no surviving lock consumer. Product boundary and Faria Miguel architecture gates passed. Final install/lint/build dependency validation remains in Step 21.34 because canonical frontend packages are not currently published.",
+      "reason": "Step 21.28 now has a source-based dependency audit enforced by Product boundary. The audit first proved seven runtime packages unused; retiring the obsolete generic user CRUD then made Formik unused as well, they were removed from package.json and their direct Yarn lock entries were removed after confirming no surviving lock consumer. Product boundary and Faria Miguel architecture gates passed. Final install/lint/build dependency validation remains in Step 21.34 because canonical frontend packages are not currently published.",
       "removed": [
         "@faria-miguel/enterprise",
         "@faria-miguel/builder-core",
@@ -577,7 +577,8 @@
         "react-number-format",
         "swr",
         "tailwind-merge",
-        "tw-animate-css"
+        "tw-animate-css",
+        "formik"
       ],
       "evidence": [
         "scripts/audit-frontend-dependencies.mjs",
