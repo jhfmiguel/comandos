@@ -110,6 +110,12 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15: CoreService master-data mirror is a required collaborator.
+CORE_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"
+if grep -q 'masterDataMirror[[:space:]]*!=[[:space:]]*null' "$CORE_SERVICE"; then
+  fail "CoreService must not keep nullable CanonicalMasterDataMirrorService fallbacks"
+fi
+
 # Step 21.15: required workflow cutover collaborators must not be nullable fallbacks.
 WORKFLOW_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/workflow/service/WorkflowService.java"
 if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVICE" \
