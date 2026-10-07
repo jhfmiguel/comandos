@@ -381,7 +381,10 @@
       "InventoryService reduced compatibility constructor and null fallbacks for canonicalReferences/masterData/canonicalInventoryLedger/canonicalStockLocations removed",
       "Global Product boundary scan now rejects retired party/person/unit association navigation including buyer, donor, donee, recipient, authorizer, sourceUnit, destinationUnit, responsible, roleAssignment and related paths.",
       "Scalar scope cleanup verified by Product boundary at HEAD 916389a0d8aa9fe94829f1ef707b51f408965864.",
-      "ComplianceService now validates active organization/unit membership through CanonicalMasterDataDirectory and only materializes legacy JPA references required by CompliancePolicy persistence."
+      "ComplianceService now validates active organization/unit membership through CanonicalMasterDataDirectory and only materializes legacy JPA references required by CompliancePolicy persistence.",
+      "AccessPolicy security-scope compatibility is frozen to four enumerated legacy path occurrences.",
+      "CoreAccessDemoSeeder compatibility surface is frozen to eight enumerated Master Data references.",
+      "CustodyResponsibility bridge is frozen to two approved legacy identifiers with mandatory canonical person reference and canonical validation directories."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -404,7 +407,8 @@
     ],
     "securityScopeCompatibilityException": {
       "file": "api/src/main/java/com/comandos/security/service/AccessPolicy.java",
-      "reason": "Local authorization remains a COMANDOS product overlay during the Master Data cutover. Its UserProfile/personRole scope queries still traverse core compatibility entities and are not product-domain Master Data ownership.",
+      "reason": "Local authorization remains a COMANDOS product overlay during the Master Data cutover. The exception is frozen to exactly four legacy scope-path occurrences: the UserProfile grant query plus core/units, core/person-roles and core/role-data scope paths.",
+      "enforcement": "Product boundary fails if the AccessPolicy exception surface differs from the four enumerated occurrences.",
       "retireOrRefactorAfter": "Step 21.12 PASS plus security-scope persistence cutover"
     },
     "latestValidation": {
@@ -420,6 +424,18 @@
       "remaining": "CompliancePolicy still maps Organization/OrganizationalUnit through JPA because its physical persistence has not been cut over.",
       "completed": "ComplianceService organization/unit validation now uses CanonicalMasterDataDirectory; direct em.find reads of legacy Organization/OrganizationalUnit are forbidden by Product boundary.",
       "retirementCondition": "Remove the remaining CompliancePolicy legacy JPA association only after Step 21.12 PASS and physical cutover preparation."
+    },
+    "custodyResponsibilityException": {
+      "status": "controlled-product-role-bridge-until-cutover",
+      "model": "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
+      "service": "api/src/main/java/com/comandos/custody/service/CustodyIssueFacade.java",
+      "legacyFields": [
+        "responsiblePersonLegacyId",
+        "roleAssignmentLegacyId"
+      ],
+      "canonicalCoverage": "responsiblePersonCanonicalId is persisted; organization/unit/person validation uses CanonicalMasterDataDirectory; responsibility assignment validation uses CanonicalPartyRoleDirectory.",
+      "reason": "The responsibility assignment is a COMANDOS-specific product role, and CanonicalPartyRoleDirectory intentionally exposes it as ProductSpecificRole with the local assignmentId rather than a canonical generic-party-role id.",
+      "enforcement": "Product boundary freezes the bridge at exactly two approved legacy identifiers and requires canonical validation/reference collaborators."
     }
   },
   "demoAssociationSweep": {
@@ -441,9 +457,9 @@
     ],
     "result": "No removable legacy Master Data JPA association remains in this sweep. References through StockLocation, StockMovement, StockLot, StockBalance, InventoryTransferItem and AmmunitionBox are product inventory associations still present in the current operational model, not retired generic Master Data navigation.",
     "preservedUntilCutover": [
-      "CompliancePolicy organization/unit compatibility",
-      "CoreAccessDemoSeeder compatibility paths required by the cutover",
-      "CustodyResponsibility / PersonRoleAssignment compatibility required by the cutover"
+      "CompliancePolicy organization/unit persistence compatibility",
+      "CoreAccessDemoSeeder exactly 8 enumerated security-demo Master Data references; Product boundary fails if the surface changes",
+      "CustodyResponsibility exactly responsiblePersonLegacyId + roleAssignmentLegacyId; responsible person canonical id and canonical directory validation are mandatory"
     ]
   },
   "cutoverRuntimeSupport": {
