@@ -575,8 +575,8 @@
       "id": "maven-dependency-cleanup",
       "classification": "dependency-cleanup",
       "safeToDelete": true,
-      "stepStatus": "advanced-external-resolution-blocked",
-      "reason": "Step 21.27 removed the redundant direct spring-security-crypto dependency. A broader Spring Modulith removal was evaluated and reverted after package-info.java source inspection proved active use of @ApplicationModule and @NamedInterface across COMANDOS domains; Modulith therefore remains an intentional dependency. Remaining Faria Miguel artifacts are canonical dependencies, but full Maven resolution/verify is still blocked because the private foundation artifacts are not published to GitHub Packages.",
+      "stepStatus": "local-cleanup-complete-final-maven-validation-blocked",
+      "reason": "Step 21.27 local cleanup is complete. The redundant direct spring-security-crypto dependency was removed. Spring Modulith was explicitly retained after source inspection proved active @ApplicationModule/@NamedInterface usage. The remaining direct dependencies in api/pom.xml are intentional framework, Oracle/Flyway, observability, test or canonical Faria Miguel dependencies. Final dependency:analyze/test/verify still requires the canonical foundation to resolve.",
       "removed": [
         "org.springframework.security:spring-security-crypto"
       ],
@@ -613,8 +613,8 @@
       "id": "temporary-config-cleanup",
       "classification": "configuration-cleanup",
       "safeToDelete": false,
-      "stepStatus": "in-progress-blocked-by-21.12",
-      "reason": "Step 21.29 removed obsolete PostgreSQL demo/environment defaults and aligned examples with Oracle. Master-data shadow/backfill/parity/read-cutover flags remain intentionally until Step 21.12 passes, after which those temporary migration controls can be retired.",
+      "stepStatus": "local-cleanup-complete-blocked-by-21.12",
+      "reason": "Step 21.29 local cleanup is complete. Obsolete PostgreSQL demo/environment defaults were removed and examples are Oracle-aligned. The remaining ten Master Data controls are all actively consumed by readiness, backfill, parity, shadow-write, canonical-read or retirement validation and therefore remain intentionally until Step 21.12 passes.",
       "completed": [
         "application-demo.properties no longer owns PostgreSQL datasource configuration",
         ".env.example aligned to Oracle",
@@ -736,15 +736,15 @@
       "id": "final-backend-tests",
       "classification": "validation",
       "safeToDelete": false,
-      "stepStatus": "blocked-by-artifact-publication",
-      "reason": "Step 21.33 remains blocked: the COMANDOS CI backend job is green only because Maven verification is explicitly deferred when the canonical Faria Miguel Maven artifacts are unavailable. Product-boundary and architecture checks pass, but mvn test/mvn verify against the canonical foundation have not executed."
+      "stepStatus": "blocked-by-foundation-resolution",
+      "reason": "Step 21.33 remains blocked: product-boundary/architecture checks pass, but final Maven test/verify still cannot execute until the canonical foundation resolves. The retirement workflow now supports either GitHub Packages or source installation; the source fallback is currently blocked only because FARIA_MIGUEL_REPOSITORY_TOKEN is not configured."
     },
     {
       "id": "final-frontend-tests",
       "classification": "validation",
       "safeToDelete": false,
-      "stepStatus": "blocked-by-artifact-publication",
-      "reason": "Step 21.34 remains blocked: the COMANDOS CI frontend job is green only because install/lint/build are explicitly skipped when @faria-miguel/platform and @faria-miguel/ui physical packages are unavailable. The Step 21.28 source dependency audit and product boundary pass, but final yarn install/lint/build have not executed."
+      "stepStatus": "blocked-by-frontend-package-resolution",
+      "reason": "Step 21.34 remains blocked: the Step 21.28 source dependency audit and product boundary pass, but final yarn install/lint/build still require @faria-miguel/platform and @faria-miguel/ui physical packages to resolve."
     },
     {
       "id": "automatic-gates",
