@@ -19,6 +19,7 @@ import com.fariamiguel.enterprise.inventory.InventoryLedger;
 import com.fariamiguel.enterprise.inventory.StockLocationRepository;
 import com.fariamiguel.enterprise.inventory.StockLocationType;
 import com.fariamiguel.enterprise.inventory.StockMovementType;
+import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -118,11 +119,31 @@ public class InventoryService {
             parameters.put("resourceDiscriminator", spec.discriminator());
         }
 
-        // Assets inherit their organizational unit from their current location.
+        // Assets inherit their organizational unit from their current scalarized location.
         String unit = requestParams.get("filter.unit");
         if ("assets".equals(resource) && unit != null && !unit.isBlank()) {
-            clauses.add("(lower(e.location.unit.name) like :assetUnit escape '!' or lower(e.location.unit.code) like :assetUnit escape '!')");
-            parameters.put("assetUnit", likeTerm(unit));
+            if (organizationId == null) {
+                bad("Organization is required when filtering assets by unit.");
+            }
+            if (masterData == null) {
+                throw new IllegalStateException("Canonical Master Data directory is required to filter assets by unit.");
+            }
+            String normalizedUnit = unit.trim().toLowerCase(Locale.ROOT);
+            List<Long> matchingUnitIds = masterData.listUnits(
+                    organizationId,
+                    TENANT,
+                    CompanyId.of("comandos:organization:" + organizationId))
+                .stream()
+                .filter(candidate -> candidate.name().toLowerCase(Locale.ROOT).contains(normalizedUnit)
+                    || candidate.id().value().toLowerCase(Locale.ROOT).contains(normalizedUnit))
+                .map(candidate -> CanonicalMasterDataDirectory.legacyUnitId(candidate.id()))
+                .toList();
+            if (matchingUnitIds.isEmpty()) {
+                clauses.add("1 = 0");
+            } else {
+                clauses.add("e.location.unitLegacyId in :assetUnitIds");
+                parameters.put("assetUnitIds", matchingUnitIds);
+            }
         }
         String assetId = requestParams.get("assetId");
         if ("movements".equals(resource) && assetId != null) {
