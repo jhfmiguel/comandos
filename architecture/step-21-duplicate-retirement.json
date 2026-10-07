@@ -652,6 +652,18 @@
       "safeToDelete": false,
       "stepStatus": "blocked",
       "reason": "Step 21.37 cannot be closed until canonical artifacts are published, Step 21.12 runtime retirement gate passes, Steps 21.13-21.17 remove the remaining Master Data legacy structures, and final backend/frontend validations succeed."
+    },
+    {
+      "id": "custody-role-cutover",
+      "classification": "product-role-overlay",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Custody responsibility assignment lookup no longer depends directly on legacy PersonRoleAssignment. CustodyIssueFacade resolves COMANDOS-specific responsibility roles through CanonicalPartyRoleDirectory.productSpecificRoles(), while CustodyResponsibility keeps only legacy/canonical scalar identifiers and immutable snapshots.",
+      "evidence": [
+        "api/src/main/java/com/comandos/custody/service/CustodyIssueFacade.java",
+        "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
