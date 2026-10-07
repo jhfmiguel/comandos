@@ -149,10 +149,11 @@ public class AssetTraceabilityDemoVerifier implements ApplicationRunner {
 
         require(referenceExists(event.id, resource, recordId),
             "Audit event lost inventory reference: " + event.id);
-        require(location.organization != null && referenceExists(event.id, "organization", location.organization.id),
+        require(location.organizationLegacyId != null
+                && referenceExists(event.id, "organization", location.organizationLegacyId),
             "Audit event lost historical organization reference: " + event.id);
-        if (location.unit != null) {
-            require(referenceExists(event.id, "unit", location.unit.id),
+        if (location.unitLegacyId != null) {
+            require(referenceExists(event.id, "unit", location.unitLegacyId),
                 "Audit event lost historical unit reference: " + event.id);
         }
     }
