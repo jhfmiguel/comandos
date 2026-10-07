@@ -636,7 +636,9 @@
         "removed empty com.comandos.enterprise package marker",
         "removed empty com.comandos.personnel package marker",
         "removed empty com.comandos.procurement package marker",
-        "added regression gate preventing those generic roots from returning"
+        "removed empty com.comandos.model legacy compatibility package marker",
+        "removed empty com.comandos.rest legacy compatibility package marker",
+        "added regression gate preventing those generic/legacy roots from returning"
       ],
       "allowedProductOverlays": [
         "armament/ammunition",
