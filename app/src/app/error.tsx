@@ -1,6 +1,6 @@
 "use client"
 
-import { PlatformErrorFallback } from "platform/error-boundary"
+import { PlatformErrorFallback } from "@faria-miguel/platform/error-boundary"
 
 export default function Error({
     error,
