@@ -11,7 +11,6 @@ import com.comandos.core.model.PersonPhone;
 import com.comandos.core.model.PersonQualification;
 import com.comandos.security.service.AccessPolicy;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
-import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
@@ -237,12 +236,10 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> personView(Person source) {
-        var canonical = masterData == null
-            ? CanonicalMasterDataMapper.person(source, TENANT)
-            : masterData.findPerson(source.id, TENANT)
-                .orElseThrow(() -> new IllegalStateException(
-                    "Canonical person is missing for legacy id " + source.id
-                ));
+        var canonical = masterData.findPerson(source.id, TENANT)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical person is missing for legacy id " + source.id
+            ));
         Map<String, Object> result = metadata(source, canonical.name());
 
         result.put(
@@ -275,16 +272,10 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> organizationView(Organization source) {
-        var canonical = masterData == null
-            ? CanonicalMasterDataMapper.organization(
-                source,
-                TENANT,
-                CompanyId.of("comandos:organization:" + source.id)
-            )
-            : masterData.findOrganization(source.id, TENANT)
-                .orElseThrow(() -> new IllegalStateException(
-                    "Canonical organization is missing for legacy id " + source.id
-                ));
+        var canonical = masterData.findOrganization(source.id, TENANT)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical organization is missing for legacy id " + source.id
+            ));
         Map<String, Object> result = metadata(source, canonical.legalName());
 
         result.put("natureId", source.nature == null ? null : source.nature.id);
@@ -321,17 +312,11 @@ public class CanonicalCoreReadService {
     }
 
     private Map<String, Object> unitView(OrganizationalUnit source) {
-        var canonical = masterData == null
-            ? CanonicalMasterDataMapper.unit(
-                source,
-                TENANT,
-                CompanyId.of("comandos:organization:" + source.organization.id)
-            )
-            : masterData.findUnit(source.id, TENANT)
-                .orElseThrow(() -> new IllegalStateException(
-                    "Canonical organizational unit is missing for legacy id "
-                        + source.id
-                ));
+        var canonical = masterData.findUnit(source.id, TENANT)
+            .orElseThrow(() -> new IllegalStateException(
+                "Canonical organizational unit is missing for legacy id "
+                    + source.id
+            ));
         Map<String, Object> result = metadata(source, canonical.name());
 
         result.put("organizationId", source.organization.id);
