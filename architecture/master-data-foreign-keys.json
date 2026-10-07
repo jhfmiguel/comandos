@@ -246,6 +246,16 @@
       ],
       "state": "retired",
       "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
+    },
+    {
+      "entity": "Recall",
+      "path": "api/src/main/java/com/comandos/inventory/model/Recall.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
