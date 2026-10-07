@@ -13,6 +13,7 @@ import com.comandos.maintenance.model.WorkOrder;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.purchase.model.PurchasePlanning;
+import com.comandos.purchase.model.ProcurementProcess;
 import com.comandos.reconciliation.model.InventoryCount;
 import com.comandos.reservation.model.InventoryReservation;
 import com.comandos.sales.model.InventorySale;
@@ -65,6 +66,8 @@ public class ProductMasterDataReferenceBackfillService {
         new Spec(EquipmentReceiving.class,
             "(e.receivingOrganizationLegacyId is not null and e.receivingOrganizationCanonicalId is null) or "
                 + "(e.receivingOrganizationLegacyId is null and e.receivingOrganizationCanonicalId is not null)"),
+        new Spec(ProcurementProcess.class,
+            "e.organizationCanonicalId is null"),
         new Spec(InventoryTransfer.class,
             "e.organizationCanonicalId is null or e.sourceUnitCanonicalId is null or e.destinationUnitCanonicalId is null"),
         new Spec(Custody.class,
