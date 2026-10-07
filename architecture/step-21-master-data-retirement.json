@@ -374,6 +374,17 @@
       "PersonRegistrationService legacy write orchestration",
       "canonical mappers used by legacy projection, shadow-write, backfill or parity",
       "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
+    ],
+    "explicitProductionExceptionsUntilCutover": [
+      "api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java",
+      "api/src/main/java/com/comandos/compliance/service/ComplianceService.java",
+      "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
+    ],
+    "enforcement": [
+      "No product model outside core/model may import Organization, OrganizationalUnit, Person or PersonRoleAssignment; CompliancePolicy is the sole model exception until Step 21.12.",
+      "No production code outside core may import those legacy Master Data entities except ComplianceService and JpaIdentityDirectory until Step 21.12.",
+      "All scalarized models remain guarded against JPA association regression.",
+      "All 59 *LegacyId fields, 59 physical Oracle bridge columns, and 26 FK-retirement entries are cross-checked by automatic gates."
     ]
   },
   "demoAssociationSweep": {
