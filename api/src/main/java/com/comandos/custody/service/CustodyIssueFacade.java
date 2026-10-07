@@ -158,7 +158,7 @@ public class CustodyIssueFacade {
         value.custody = custody;
         value.responsiblePersonLegacyId = responsible.id();
         value.responsiblePersonCanonicalId =
-            canonicalScope == null ? null : canonicalScope.person(responsible.id());
+            canonicalScope.person(responsible.id());
         value.roleAssignmentLegacyId = assignment.assignmentId();
         value.responsiblePersonName = responsible.name();
         value.roleCode = assignment.code();
