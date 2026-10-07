@@ -51,7 +51,7 @@ public class AmmunitionConsumptionService {
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("ammunition-consumptions", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from StockBalance b where "
             + (canonical ? "b.location.organizationCanonicalId" : "b.location.organizationLegacyId")
@@ -101,12 +101,10 @@ public class AmmunitionConsumptionService {
         consumption.unitLegacyId = unit == null ? null : unit.id();
         consumption.responsibleLegacyId = responsible.id();
         consumption.authorizerLegacyId = authorizer.id();
-        if (canonicalScope != null) {
-            consumption.organizationCanonicalId = canonicalScope.organization(organization.id());
-            consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
-            consumption.responsibleCanonicalId = canonicalScope.person(responsible.id());
-            consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id());
-        }
+        consumption.organizationCanonicalId = canonicalScope.organization(organization.id());
+        consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+        consumption.responsibleCanonicalId = canonicalScope.person(responsible.id());
+        consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id());
         consumption.organizationName = organization.name(); consumption.unitName = unit == null ? null : unit.name();
         consumption.responsibleName = responsible.name(); consumption.authorizerName = authorizer.name();
         consumption.purpose = request.purpose().trim();
@@ -147,7 +145,7 @@ public class AmmunitionConsumptionService {
     public Page<ConsumptionView> list(long organizationId, Long unitId, int page) {
         access.requireScope("ammunition-consumptions", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from AmmunitionConsumption c where "
             + (canonical ? "c.organizationCanonicalId" : "c.organizationLegacyId")
@@ -184,7 +182,7 @@ public class AmmunitionConsumptionService {
         b.lot.validUntil == null ? null : b.lot.validUntil.toString()); }
     private void validateStock(StockBalance b, StockLot lot, long organizationId, Long unitId, BigDecimal quantity) {
         access.requireScope("ammunition-consumptions", "CREATE", organizationId, unitId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!b.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every ammunition lot must belong to the selected organization and unit.");
