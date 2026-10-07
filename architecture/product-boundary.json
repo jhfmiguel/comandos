@@ -80,7 +80,9 @@
     "frontend-boundary-gate-aligned",
     "messaging-local-layer-removed",
     "audit-generic-cleanup-complete",
-    "identity-generic-cleanup-complete"
+    "identity-generic-cleanup-complete",
+    "frontend-import-migration-complete",
+    "frontend-final-build-validation-deferred-to-21.34"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
