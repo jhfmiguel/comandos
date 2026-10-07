@@ -46,8 +46,8 @@ public class DisposalLifecycleDemoSeeder implements ApplicationRunner {
 
         LocalDateTime finalizedAt = LocalDateTime.now().minusDays(90);
         DisposalProcess process = new DisposalProcess();
-        process.organization = org;
-        process.unit = unit;
+        process.organizationLegacyId = org.id;
+        process.unitLegacyId = unit.id;
         process.organizationName = org.name;
         process.unitName = unit.name;
         process.processNumber = "PROC-DEMO-DESFAZIMENTO-001";
