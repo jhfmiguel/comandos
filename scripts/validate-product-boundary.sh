@@ -245,6 +245,28 @@ if [[ -n "$null_constructor_hits" ]]; then
   fail "product compatibility constructor still injects null into canonical collaborators"
 fi
 
+# Step 21.15-21.17: every declared compatibility/runtime-support file must have an explicit post-cutover disposition.
+node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" <<'NODE'
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const compat = manifest.legacyMasterDataCode?.compatibilityFiles || [];
+const runtime = manifest.cutoverRuntimeSupport?.files || [];
+const disposition = manifest.postCutoverRemovalPlan?.compatibilityDisposition || {};
+const buckets = [
+  ...(disposition.removeAfter21_12 || []),
+  ...(disposition.retainAfterCutoverIfStillUsed || []),
+  ...(disposition.reviewAt21_17 || [])
+].join('\n');
+
+const basename = p => p.split('/').pop().replace(/\.java$/, '');
+for (const file of [...compat, ...runtime]) {
+  const name = basename(file);
+  if (!buckets.includes(name)) {
+    throw new Error('Missing post-cutover disposition for ' + file);
+  }
+}
+NODE
+
 # Step 21.12-21.17: destructive retirement must remain blocked until runtime cutover PASS.
 RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 DUPLICATE_RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-duplicate-retirement.json"
