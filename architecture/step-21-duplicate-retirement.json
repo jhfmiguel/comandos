@@ -498,6 +498,53 @@
         "com.comandos.core.web.ApiProblems",
         "com.comandos.core.web.HttpProtocolExceptionHandler"
       ]
+    },
+    {
+      "id": "maven-dependency-cleanup",
+      "classification": "dependency-cleanup",
+      "safeToDelete": true,
+      "stepStatus": "in-progress-external-resolution-blocked",
+      "reason": "Step 21.27 removed the redundant direct spring-security-crypto dependency. Remaining Faria Miguel artifacts are intentional canonical dependencies, but full Maven resolution/verify is still blocked because the private foundation artifacts are not published to GitHub Packages.",
+      "removed": [
+        "org.springframework.security:spring-security-crypto"
+      ],
+      "blocker": "canonical Faria Miguel Maven artifacts unavailable in GitHub Packages"
+    },
+    {
+      "id": "frontend-dependency-cleanup",
+      "classification": "dependency-cleanup",
+      "safeToDelete": true,
+      "stepStatus": "in-progress-external-resolution-blocked",
+      "reason": "Step 21.28 previously removed unused @faria-miguel/enterprise and @faria-miguel/builder-core dependencies. No further package is removed without source-use proof; final install/build dependency validation remains in Step 21.34 because canonical frontend packages are not currently published.",
+      "removed": [
+        "@faria-miguel/enterprise",
+        "@faria-miguel/builder-core"
+      ],
+      "blocker": "@faria-miguel/platform and @faria-miguel/ui physical packages unavailable"
+    },
+    {
+      "id": "temporary-config-cleanup",
+      "classification": "configuration-cleanup",
+      "safeToDelete": false,
+      "stepStatus": "in-progress-blocked-by-21.12",
+      "reason": "Step 21.29 removed obsolete PostgreSQL demo/environment defaults and aligned examples with Oracle. Master-data shadow/backfill/parity/read-cutover flags remain intentionally until Step 21.12 passes, after which those temporary migration controls can be retired.",
+      "completed": [
+        "application-demo.properties no longer owns PostgreSQL datasource configuration",
+        ".env.example aligned to Oracle",
+        "master-data migration flags explicitly documented as temporary"
+      ],
+      "blocker": "Step 21.12 runtime retirement proof"
+    },
+    {
+      "id": "temporary-script-cleanup",
+      "classification": "script-cleanup",
+      "safeToDelete": true,
+      "stepStatus": "completed-current-known-duplicates",
+      "reason": "Step 21.30 consolidated duplicate demo startup automation into scripts/run-oracle-demo.ps1 and removed api/scripts/start-with-demo-data.ps1. Docker/bootstrap/verification scripts remain because they still implement distinct supported workflows.",
+      "removed": [
+        "api/scripts/start-with-demo-data.ps1"
+      ],
+      "canonicalScript": "scripts/run-oracle-demo.ps1"
     }
   ]
 }
