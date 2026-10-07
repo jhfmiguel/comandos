@@ -376,6 +376,12 @@ for domain in donation custody; do
   fi
 done
 
+# Custody responsibility roles must be resolved through the canonical party-role directory.
+if grep -q 'com\.comandos\.core\.model\.PersonRoleAssignment' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/custody/service/CustodyIssueFacade.java"; then
+  fail "CustodyIssueFacade must not depend directly on legacy PersonRoleAssignment"
+fi
+
 # Step 21.20: purchase/procurement must not depend on legacy master-data entities directly.
 if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|Person|OrganizationalUnit)' "$ROOT_DIR/api/src/main/java/com/comandos/purchase"; then
   fail "purchase/procurement code must consume canonical Master Data instead of legacy Organization/Person/Unit entities"
