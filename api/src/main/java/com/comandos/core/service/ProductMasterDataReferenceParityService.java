@@ -4,6 +4,7 @@ import com.comandos.consumption.model.AmmunitionConsumption;
 import com.comandos.consumption.model.ConsumableUsage;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.custody.model.Custody;
+import com.comandos.custody.model.CustodyResponsibility;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.donation.model.Donation;
 import com.comandos.inventory.model.StockLocation;
@@ -113,6 +114,9 @@ public class ProductMasterDataReferenceParityService {
             ref("recipientLegacyId", "recipientCanonicalId", MasterDataReferenceService.PERSON),
             ref("recipientUnitLegacyId", "recipientUnitCanonicalId", MasterDataReferenceService.UNIT),
             ref("authorizerLegacyId", "authorizerCanonicalId", MasterDataReferenceService.PERSON)
+        )),
+        new Spec(CustodyResponsibility.class, List.of(
+            ref("responsiblePersonLegacyId", "responsiblePersonCanonicalId", MasterDataReferenceService.PERSON)
         )),
         new Spec(Donation.class, List.of(
             ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
