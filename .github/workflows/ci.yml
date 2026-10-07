@@ -40,7 +40,7 @@ jobs:
           fi
 
       - name: Verify COMANDOS API against canonical Faria Miguel artifacts
-        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true'
         working-directory: api
         env:
           GITHUB_ACTOR: ${{ github.actor }}
