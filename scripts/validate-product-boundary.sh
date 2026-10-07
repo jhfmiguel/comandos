@@ -171,6 +171,51 @@ done < <(
     | sort -u
 )
 
+# Step 21.32/21.36: demo seeders must not use retired Master Data JPA associations.
+for retired_demo_assignment in \
+  'donation.organization =' \
+  'donation.unit =' \
+  'donation.donor =' \
+  'donation.donee =' \
+  'sale.organization =' \
+  'sale.unit =' \
+  'sale.buyer =' \
+  'process.organization =' \
+  'process.unit =' \
+  'custody.organization =' \
+  'custody.unit =' \
+  'custody.recipient =' \
+  'custody.authorizer =' \
+  'consumption.organization =' \
+  'consumption.unit =' \
+  'consumption.responsible =' \
+  'consumption.authorizer =' \
+  'reservation.organization =' \
+  'reservation.unit =' \
+  'transfer.organization =' \
+  'transfer.sourceUnit =' \
+  'transfer.destinationUnit =' \
+  'inventory.organization =' \
+  'inventory.unit =' \
+  'plan.organization =' \
+  'plan.unit =' \
+  'workOrder.organization =' \
+  'workOrder.unit =' \
+  'value.buyerOrganization =' \
+  'value.supplierOrganization =' \
+  'value.originPerson =' \
+  'receiving.receivingOrganization ='
+do
+  retired_demo_hits="$(
+    grep -RFn --include='*.java' "$retired_demo_assignment" \
+      "$ROOT_DIR/api/src/main/java/com/comandos/demo" 2>/dev/null || true
+  )"
+  if [[ -n "$retired_demo_hits" ]]; then
+    printf '%s\n' "$retired_demo_hits"
+    fail "demo seeder still uses retired Master Data association: $retired_demo_assignment"
+  fi
+done
+
 # Step 21.32/21.36: retired generic Java package roots must have no remaining imports.
 for retired_java_package in \
   'com.comandos.model.' \
