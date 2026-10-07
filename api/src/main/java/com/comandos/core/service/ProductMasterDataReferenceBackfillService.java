@@ -4,6 +4,7 @@ import com.comandos.consumption.model.AmmunitionConsumption;
 import com.comandos.consumption.model.ConsumableUsage;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.custody.model.Custody;
+import com.comandos.custody.model.CustodyResponsibility;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.donation.model.Donation;
 import com.comandos.inventory.model.StockLocation;
@@ -103,6 +104,8 @@ public class ProductMasterDataReferenceBackfillService {
                 + "(e.recipientLegacyId is null and e.recipientCanonicalId is not null) or "
                 + "(e.recipientUnitLegacyId is not null and e.recipientUnitCanonicalId is null) or "
                 + "(e.recipientUnitLegacyId is null and e.recipientUnitCanonicalId is not null)"),
+        new Spec(CustodyResponsibility.class,
+            "e.responsiblePersonCanonicalId is null"),
         new Spec(Donation.class,
             "e.organizationCanonicalId is null or e.donorCanonicalId is null or e.doneeCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
