@@ -95,8 +95,7 @@ walk(root, file => {
         && !relative.includes('/core/')
         && !relative.includes('/demo/')
         && relative !== 'api/src/main/java/com/comandos/compliance/service/ComplianceService.java'
-        && relative !== 'api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java'
-        && relative !== 'api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java') {
+        && relative !== 'api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java') {
       const legacyMasterDataProductionImport = /^\s*import\s+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person|PersonRoleAssignment)\s*;/m;
       if (legacyMasterDataProductionImport.test(src)) {
         violations.push(relative + ' imports legacy Master Data outside an explicit Step 21 cutover exception');
