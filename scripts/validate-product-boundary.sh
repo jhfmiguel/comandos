@@ -365,6 +365,27 @@ done
 [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/finance" ]] || fail "generic finance must remain foundation-owned"
 [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/contracts" ]] || fail "generic contracts must remain foundation-owned"
 
+# Steps 21.24-21.26: shared documents, notifications and platform infrastructure are foundation-owned.
+for retired_path in \
+  "$ROOT_DIR/api/src/main/java/com/comandos/documents/storage/JpaDocumentStorage.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/documents/model/StoredDocumentBlob.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/documents/api" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/analytics" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/core/config/FariaMiguelPlatformConfiguration.java"; do
+  [[ ! -e "$retired_path" ]] || fail "shared infrastructure returned to COMANDOS: ${retired_path#$ROOT_DIR/}"
+done
+
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/notifications" ]] \
+  || fail "generic notifications must remain foundation-owned"
+
+grep -q 'com.fariamiguel.documents.api.DocumentStorage' \
+  "$ROOT_DIR/api/src/main/java/com/comandos/documents/service/ProcessAttachmentService.java" \
+  || fail "process attachments must consume canonical Faria Miguel DocumentStorage"
+
+grep -q 'com.fariamiguel.analytics.api.MetricRecorder' \
+  "$ROOT_DIR/api/src/test/java/com/comandos/architecture/FariaMiguelConsumerContractTest.java" \
+  || fail "metrics must remain owned by Faria Miguel Platform Core"
+
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
 for capability in audit documents identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
