@@ -11,6 +11,12 @@ const legacyIdInventory = retirement.legacyIdRetirement;
 const expectedLegacyIds = new Set((legacyIdInventory.fields ?? []).map(({path: filePath, field}) => `${filePath}#${field}`));
 const detectedLegacyIds = new Set();
 const scalarizedMasterDataModels = new Set((legacyIdInventory.fields ?? []).map(({path: filePath}) => filePath));
+const oracleRetirementAuditPath = path.join(root, 'scripts', 'oracle-step-21-retirement-audit.sql');
+const oracleRetirementAudit = fs.readFileSync(oracleRetirementAuditPath, 'utf8');
+const oracleBridgePairs = new Set(
+  [...oracleRetirementAudit.matchAll(/select '([^']+)'[,\s]*'([^']+)' from dual/g)]
+    .map(match => match[1] + '#' + match[2])
+);
 
 function walk(dir, visit) {
   if (!fs.existsSync(dir)) return;
@@ -178,6 +184,9 @@ if (detectedLegacyIds.size > baselineCount) {
 if (detectedLegacyIds.size !== currentCount) {
   violations.push('detected *LegacyId field count=' + detectedLegacyIds.size + ' differs from locked currentCount=' + currentCount);
 }
+if (oracleBridgePairs.size !== currentCount) {
+  violations.push('Oracle Step 21 retirement audit tracks ' + oracleBridgePairs.size + ' unique legacy bridge columns, expected currentCount=' + currentCount);
+}
 
 if (violations.length) {
   console.error('Faria Miguel automatic gate violations:');
@@ -189,3 +198,4 @@ console.log('Foundation SHA: ' + lock.foundationSha);
 console.log('Maven version: ' + lock.mavenVersion + ' | Frontend version: ' + lock.frontendVersion);
 console.log('Step 21 *LegacyId inventory: ' + detectedLegacyIds.size + '/' + baselineCount + ' (current/baseline).');
 console.log('Step 21 scalarized Master Data models guarded: ' + scalarizedMasterDataModels.size + '.');
+console.log('Step 21 Oracle legacy bridge columns guarded: ' + oracleBridgePairs.size + '.');
