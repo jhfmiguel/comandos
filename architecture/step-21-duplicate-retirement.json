@@ -64,9 +64,9 @@
         ],
         "diagnosis": "the workflow YAML/POM structure is not the immediate failure point. Resolve the private-repository Actions execution layer or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so COMANDOS can install the canonical foundation from source. Exact GitHub administrative/billing cause is not asserted because the available API does not expose it.",
         "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e",
-        "latestObservedComandosRun": "37630830186",
-        "latestObservedComandosJob": "112824335999",
-        "latestObservedResult": "Oracle service initialized and checkout/setup-java succeeded; Resolve canonical Faria Miguel Maven artifacts then failed because the canonical 0.1.0-SNAPSHOT artifacts are unavailable and FARIA_MIGUEL_READ_TOKEN is empty. Cutover application startup and legacy persistence retirement gate were therefore skipped."
+        "latestObservedComandosRun": "37636516313",
+        "latestObservedComandosJob": "112844057045",
+        "latestObservedResult": "Oracle, checkout and Java setup succeeded; canonical Faria Miguel Maven artifact resolution failed before COMANDOS startup, so the Step 21.12 retirement gate did not execute."
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
@@ -298,7 +298,7 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "local-cleanup-complete-blocked-by-21.12",
-      "reason": "Step 21.15 local cleanup is closed against direct generic Master Data reads, retired object navigation and nullable canonical collaborators. Product services no longer navigate scalarized Organization/OrganizationalUnit/Person associations; UnitScopeGuard implementations, compliance stock reads, reports, inspections, ammunition boxes, inventory audit enrichment and InventoryService use scalar/canonical scope. CompliancePolicy organization/unit persistence and the AccessPolicy security-scope overlay remain explicit cutover-owned exceptions until Step 21.12.",
+      "reason": "Step 21.15 local cleanup remains closed. ComplianceService now validates active organization/unit through CanonicalMasterDataDirectory; only CompliancePolicy JPA persistence stays legacy until Step 21.12. AccessPolicy core security scope navigation remains a separate product-security compatibility overlay, not generic Master Data ownership.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java",
@@ -309,7 +309,9 @@
         "commit 7b35393122674619c9637f652a070543689b2b99",
         "commit 4f71ddcc1d2bb97f1dc98fae666c4c981becc350",
         "commit 993059c3221426cbb16d0982b51f65d3127cdc6f",
-        "commit cd841c69d697661a3fdb76637306ea971ff538af"
+        "commit cd841c69d697661a3fdb76637306ea971ff538af",
+        "commit fb6f2bbc91074b87864c7b9ba14496f481ce2a3f",
+        "commit e1593199c4bb3848b180f1b99c87d7abbc11036e"
       ]
     },
     {
