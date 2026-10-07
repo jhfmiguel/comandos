@@ -262,7 +262,7 @@
       "classification": "blocked-retirement-backlog",
       "safeToDelete": false,
       "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.13 corrected the controlled baseline to 57 *LegacyId fields after surfacing and converting hidden Master Data JPA associations, including CustodyResponsibility. The count may only decrease; physical deletion remains blocked by Step 21.12.",
+      "reason": "Step 21.13 corrected the controlled baseline to 57 *LegacyId fields after surfacing hidden Master Data JPA associations including MaintenancePlan. The count may only decrease; physical deletion remains blocked by Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "scripts/validate-product-boundary.sh"
@@ -692,6 +692,18 @@
         "api/src/main/java/com/comandos/disposal/service/DisposalService.java",
         "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
         "scripts/validate-product-boundary.sh"
+      ]
+    },
+    {
+      "id": "maintenance-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "MaintenancePlan, WorkOrder, stock-location scope and custody-origin scope use scalar legacy/canonical identifiers. MaintenanceService resolves organization/unit through CanonicalMasterDataDirectory and no longer reads Organization/OrganizationalUnit directly. Maintenance-specific diagnosis, workshop, gunsmith, parts and functional-test rules remain product-owned.",
+      "evidence": [
+        "api/src/main/java/com/comandos/maintenance/model/MaintenancePlan.java",
+        "api/src/main/java/com/comandos/maintenance/service/MaintenanceService.java",
+        "api/src/main/java/com/comandos/maintenance/service/MaintenanceUnitScopeGuard.java"
       ]
     }
   ]
