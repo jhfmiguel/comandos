@@ -71,7 +71,11 @@
     "frontend-import-cutover",
     "frontend-compatibility-review",
     "frontend-error-boundary",
-    "messaging-publisher-delegation"
+    "messaging-publisher-delegation",
+    "messaging-canonical-publisher-delegation",
+    "audit-generic-sink-separation",
+    "identity-canonical-master-data-resolution",
+    "security-canonical-contract-review"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
