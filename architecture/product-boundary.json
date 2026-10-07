@@ -107,7 +107,11 @@
     "duplicate-demo-script-removed",
     "procurement-master-data-direct-read-removed",
     "procurement-process-organization-association-retired",
-    "procurement-reference-parity-covered"
+    "procurement-reference-parity-covered",
+    "donation-canonical-master-data-read-cutover",
+    "custody-canonical-master-data-read-cutover",
+    "custody-responsibility-person-association-retired",
+    "inventory-access-policy-scope-aligned"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
