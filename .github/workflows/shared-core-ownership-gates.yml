@@ -1,0 +1,17 @@
+name: Shared core ownership gates
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  core-ownership:
+    uses: jhfmiguel/faria-miguel/.github/workflows/product-core-ownership-gates.yml@main
+    with:
+      product_repository: jhfmiguel/comandos
