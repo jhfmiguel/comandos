@@ -83,12 +83,10 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         CurrentActor actor = requiredActor();
         w.requestedById = actorId(actor);
         w.requestedByLogin = actor.displayName();
-        if (masterDataReferences != null) {
-            if (canonicalScope != null && canonicalScope.enabled()) {
-                masterDataReferences.synchronizeForBackfill(w);
-            } else {
-                masterDataReferences.synchronize(w);
-            }
+        if (canonicalScope.enabled()) {
+            masterDataReferences.synchronizeForBackfill(w);
+        } else {
+            masterDataReferences.synchronize(w);
         }
         em.persist(w);
         em.flush();
@@ -156,7 +154,7 @@ public class WorkflowService implements SensitiveWorkflowGateway {
 
     public PlatformPage<WorkflowView> list(long org, Long unit, String status, int page) {
         access.requireScope("inventory/assets", "READ", org, unit);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(org, unit) : null;
         String where = " where "
             + (canonical ? "w.organizationCanonicalId" : "w.organizationLegacyId")
