@@ -56,12 +56,13 @@
       "executionBlocker": {
         "repository": "jhfmiguel/faria-miguel",
         "visibility": "private",
-        "symptom": "COMANDOS retirement validation stops at the canonical Maven artifact prerequisite because 0.1.0-SNAPSHOT foundation artifacts are unavailable from GitHub Packages",
+        "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback now exists but FARIA_MIGUEL_REPOSITORY_TOKEN is not configured in the COMANDOS repository",
         "observedRuns": [
-          "37577824473 Master Data retirement validation: Require canonical Faria Miguel Maven artifacts = failure",
+          "37615171522 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
           "37576939731 Publish shared artifacts: upstream publication unresolved"
         ],
-        "diagnosis": "publish the canonical Faria Miguel Maven artifacts successfully, then rerun the Oracle cutover validation"
+        "diagnosis": "either publish the canonical Faria Miguel Maven artifacts successfully or configure FARIA_MIGUEL_REPOSITORY_TOKEN with read access to jhfmiguel/faria-miguel so the workflow can install the canonical foundation from source",
+        "sourceFallbackCommit": "86276aebaa9ecf1782eeaddc634237f0c77b5c40"
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
