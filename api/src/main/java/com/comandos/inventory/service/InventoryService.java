@@ -644,7 +644,13 @@ public class InventoryService {
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
             // share this check under the catalog lock, before stock or audit writes.
-            if (entity instanceof AssetItem asset) {
+            if (entity instanceof EquipmentSet equipmentSet) {
+            result.put("organizationCanonicalId", equipmentSet.organizationCanonicalId);
+            result.put("unitCanonicalId", equipmentSet.unitCanonicalId);
+            result.put("organizationId", equipmentSet.organizationLegacyId);
+            result.put("unitId", equipmentSet.unitLegacyId);
+        }
+        if (entity instanceof AssetItem asset) {
                 var errors = AssetIdentity.conflicts(em.createQuery("select a from AssetItem a", AssetItem.class)
                     .getResultList(), asset.assetCode, asset.serialNumber, asset.internalCode);
                 if (!errors.isEmpty()) conflict(String.join(" ", errors));
@@ -1012,7 +1018,7 @@ public class InventoryService {
             if (unit != null) labels.put("unitId", label(unit));
         }
         for (var field : spec.fields()) {
-            if (entity instanceof StockLocation
+            if ((entity instanceof StockLocation || entity instanceof EquipmentSet)
                     && Set.of("organizationId", "unitId").contains(field.name())) {
                 continue;
             }
