@@ -1,3 +1,5 @@
-import { ArmamentQuery } from 'components/erp/armament-query'
+import { redirect } from "next/navigation"
 
-export default ArmamentQuery
+export default function LegacyWeaponsRedirect() {
+    redirect("/erp/inventory?section=catalog&resource=item-models")
+}
