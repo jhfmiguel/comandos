@@ -65,14 +65,23 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
         issue.notes = "Saída fictícia para manutenção preventiva";
         entityManager.persist(issue);
 
+        var organization = entityManager.find(
+            com.comandos.core.model.Organization.class,
+            asset.location.organizationLegacyId
+        );
+        var unit = asset.location.unitLegacyId == null ? null : entityManager.find(
+            com.comandos.core.model.OrganizationalUnit.class,
+            asset.location.unitLegacyId
+        );
+
         WorkOrder workOrder = new WorkOrder();
         workOrder.organizationLegacyId = asset.location.organizationLegacyId;
         workOrder.unitLegacyId = asset.location.unitLegacyId;
         workOrder.plan = plan;
         workOrder.asset = asset;
         workOrder.issueMovement = issue;
-        workOrder.organizationName = asset.location.organization.name;
-        workOrder.unitName = asset.location.unit == null ? null : asset.location.unit.name;
+        workOrder.organizationName = organization == null ? "Demo organization" : organization.name;
+        workOrder.unitName = unit == null ? null : unit.name;
         workOrder.assetCode = asset.assetCode;
         workOrder.modelName = asset.model.name;
         workOrder.locationName = asset.location.name;
