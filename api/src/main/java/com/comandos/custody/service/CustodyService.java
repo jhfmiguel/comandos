@@ -100,8 +100,8 @@ public class CustodyService {
         validateIssue(request);
         access.requireScope("custodies", "CREATE", request.organizationId(), request.unitId());
         lockCatalog();
-        var organization = locked(Organization.class, request.organizationId());
-        var unit = selectedUnit(organization.id, request.unitId());
+        var organization = organization(request.organizationId());
+        var unit = selectedUnit(organization.id(), request.unitId());
         String fingerprint = issueFingerprint(request);
         var existing = em.createQuery("select c from Custody c where c.requestId = :requestId", Custody.class)
             .setParameter("requestId", request.requestId()).getResultStream().findFirst();
@@ -110,33 +110,37 @@ public class CustodyService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different custody.");
             return view(existing.get());
         }
-        var recipient = request.recipientId() == null ? null : locked(Person.class, request.recipientId());
-        var recipientUnit = request.recipientUnitId() == null ? null : locked(OrganizationalUnit.class, request.recipientUnitId());
-        var authorizer = locked(Person.class, request.authorizerId());
-        if (recipient != null) access.requireEntity("core/people", "READ", recipient);
-        if (recipientUnit != null) {
-            access.requireEntity("core/units", "READ", recipientUnit);
-            if (!recipientUnit.organization.id.equals(organization.id)) bad("The receiving unit must belong to the selected organization.");
+        var recipient = request.recipientId() == null ? null : person(request.recipientId());
+        var recipientUnit = request.recipientUnitId() == null
+            ? null
+            : selectedUnit(organization.id(), request.recipientUnitId());
+        var authorizer = person(request.authorizerId());
+        access.requireAny("core/people", "READ");
+        if (!organization.active()
+                || unit != null && !unit.active()
+                || recipient != null && !recipient.active()
+                || !authorizer.active()) {
+            bad("Organization, unit, recipient and authorizer must be active.");
         }
-        access.requireEntity("core/people", "READ", authorizer);
-        if (!organization.active || unit != null && !Boolean.TRUE.equals(unit.active) || recipient != null && !recipient.active || !authorizer.active) bad("Organization, unit, recipient and authorizer must be active.");
         var deliveredAt = LocalDateTime.now();
         var dueAt = parseDueAt(request.dueAt(), deliveredAt);
         var custody = new Custody();
-        custody.organizationLegacyId = organization.id;
-        custody.unitLegacyId = unit == null ? null : unit.id;
-        custody.recipientLegacyId = recipient == null ? null : recipient.id;
-        custody.recipientUnitLegacyId = recipientUnit == null ? null : recipientUnit.id;
-        custody.authorizerLegacyId = authorizer.id;
+        custody.organizationLegacyId = organization.id();
+        custody.unitLegacyId = unit == null ? null : unit.id();
+        custody.recipientLegacyId = recipient == null ? null : recipient.id();
+        custody.recipientUnitLegacyId = recipientUnit == null ? null : recipientUnit.id();
+        custody.authorizerLegacyId = authorizer.id();
         if (canonicalScope != null) {
-            custody.organizationCanonicalId = canonicalScope.organization(organization.id);
-            custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-            custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id);
-            custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id);
-            custody.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+            custody.organizationCanonicalId = canonicalScope.organization(organization.id());
+            custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+            custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id());
+            custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id());
+            custody.authorizerCanonicalId = canonicalScope.person(authorizer.id());
         }
-        custody.organizationName = organization.name; custody.unitName = unit == null ? null : unit.name;
-        custody.recipientName = recipient == null ? recipientUnit.name : recipient.fullName; custody.authorizerName = authorizer.fullName;
+        custody.organizationName = organization.name();
+        custody.unitName = unit == null ? null : unit.name();
+        custody.recipientName = recipient == null ? recipientUnit.name() : recipient.name();
+        custody.authorizerName = authorizer.name();
         custody.purpose = request.purpose().trim(); custody.deliveredAt = deliveredAt; custody.dueAt = dueAt;
         custody.recipientType = request.recipientType() == null || request.recipientType().isBlank() ? (recipient == null ? "UNIT" : "PERSON") : request.recipientType().trim().toUpperCase(Locale.ROOT);
         custody.custodyScope = request.custodyScope() == null || request.custodyScope().isBlank() ? "INDIVIDUAL" : request.custodyScope().trim().toUpperCase(Locale.ROOT);
