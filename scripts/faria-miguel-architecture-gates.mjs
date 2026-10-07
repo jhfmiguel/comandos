@@ -83,6 +83,14 @@ walk(root, file => {
         violations.push(relative + ' reintroduces a legacy Master Data JPA association after scalarization');
       }
     }
+    if (relative.includes('/model/')
+        && !relative.includes('/core/model/')
+        && relative !== 'api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java') {
+      const legacyMasterDataModelImport = /^\s*import\s+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person|PersonRoleAssignment)\s*;/m;
+      if (legacyMasterDataModelImport.test(src)) {
+        violations.push(relative + ' introduces a product-model dependency on legacy Master Data');
+      }
+    }
     const pkg=src.match(/^\s*package\s+([\w.]+)\s*;/m)?.[1];
     if (pkg) {
       for (const reserved of reservedJava) {
@@ -227,3 +235,4 @@ console.log('Step 21 Oracle legacy bridge columns guarded: ' + oracleBridgePairs
 console.log('Step 21 FK retirement manifest covers scalarized models: ' + scalarizedMasterDataModels.size + '.');
 console.log('Step 21 FK retirement entries locked retired: ' + (foreignKeyInventory.references ?? []).length + '.');
 console.log('Step 21 required cutover/compatibility files guarded: ' + requiredCutoverFiles.size + '.');
+console.log('Step 21 product models globally guarded from legacy Master Data imports (CompliancePolicy explicitly excepted).');
