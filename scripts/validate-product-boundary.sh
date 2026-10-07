@@ -110,6 +110,22 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15/21.32: product services must not directly read legacy Master Data entities.
+legacy_master_data_read_hits="$(
+  grep -RFnE --include='*.java' \
+    'find\((Person|Organization|OrganizationalUnit)\.class|locked\((Person|Organization|OrganizationalUnit)\.class|from[[:space:]]+(Person|Organization|OrganizationalUnit)[[:space:]]' \
+    "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null \
+    | grep -v '/core/service/' \
+    | grep -v '/core/model/' \
+    | grep -v '/demo/' \
+    | grep -v '/identity/service/JpaIdentityDirectory.java' \
+    || true
+)"
+if [[ -n "$legacy_master_data_read_hits" ]]; then
+  printf '%s\n' "$legacy_master_data_read_hits"
+  fail "product code still reads legacy Master Data entities directly"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
