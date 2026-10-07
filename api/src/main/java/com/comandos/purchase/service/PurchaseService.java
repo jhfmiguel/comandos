@@ -1,8 +1,7 @@
 package com.comandos.purchase.service;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.Person;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.purchase.dto.PurchaseContract.*;
 import com.comandos.purchase.model.*;
@@ -16,14 +15,17 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.TenantId;
 @Service
 public class PurchaseService {
  private final PurchaseRepository purchases; private final ProcurementProcessRepository procurements; private final EntityManager em;
- private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
+ private static final TenantId TENANT = TenantId.of("comandos");
+ private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
 
  @org.springframework.beans.factory.annotation.Autowired
- public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){
-  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;
+ public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
+  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;
  }
 
 
@@ -32,10 +34,10 @@ public class PurchaseService {
   if(r.originPersonId()==null)throw new IllegalArgumentException("Acquisition origin person is required.");
   if(blank(r.purchaseNumber()))throw new IllegalArgumentException("Acquisition number is required.");
   if(r.items()==null||r.items().isEmpty())throw new IllegalArgumentException("Acquisition requires at least one item.");
-  Organization buyerOrganization=org(r.buyerOrganizationId());Organization supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());Person originPerson=person(r.originPersonId());
+  OrganizationSnapshot buyerOrganization=org(r.buyerOrganizationId());OrganizationSnapshot supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());PersonSnapshot originPerson=person(r.originPersonId());
   Purchase p=new Purchase();
-  p.buyerOrganizationLegacyId=buyerOrganization.id;p.supplierOrganizationLegacyId=supplierOrganization==null?null:supplierOrganization.id;p.originPersonLegacyId=originPerson.id;
-  if(canonicalScope!=null){p.buyerOrganizationCanonicalId=canonicalScope.organization(buyerOrganization.id);p.supplierOrganizationCanonicalId=supplierOrganization==null?null:canonicalScope.organization(supplierOrganization.id);p.originPersonCanonicalId=canonicalScope.person(originPerson.id);}
+  p.buyerOrganizationLegacyId=buyerOrganization.legacyId();p.supplierOrganizationLegacyId=supplierOrganization==null?null:supplierOrganization.legacyId();p.originPersonLegacyId=originPerson.legacyId();
+  if(canonicalScope!=null){p.buyerOrganizationCanonicalId=canonicalScope.organization(buyerOrganization.legacyId());p.supplierOrganizationCanonicalId=supplierOrganization==null?null:canonicalScope.organization(supplierOrganization.legacyId());p.originPersonCanonicalId=canonicalScope.person(originPerson.legacyId());}
   p.acquisitionType=r.acquisitionType()==null?AcquisitionType.ONEROUS:r.acquisitionType();p.originDescription=trim(r.originDescription());
   p.purchaseNumber=r.purchaseNumber().trim();p.purchaseDate=r.purchaseDate()==null?LocalDate.now():r.purchaseDate();
   p.discount=money(r.discount());p.freight=money(r.freight());p.taxes=money(r.taxes());p.otherCosts=money(r.otherCosts());
@@ -54,7 +56,7 @@ public class PurchaseService {
   return view(purchases.save(p));
  }
  @Transactional public PurchaseView configureProcurement(Long id,CreateProcurementRequest r){
-  Purchase p=find(id);assertMutableBeforeReceiving(p);Organization buyerOrganization=org(p.buyerOrganizationLegacyId);boolean pub=Boolean.TRUE.equals(buyerOrganization.publicOrganization);
+  Purchase p=find(id);assertMutableBeforeReceiving(p);OrganizationSnapshot buyerOrganization=org(p.buyerOrganizationLegacyId);boolean pub=buyerOrganization.publicOrganization();
   if(r==null||r.procurementMethod()==null)throw new IllegalArgumentException("Procurement method is required.");
   if(!pub&&r.procurementMethod()!=ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Private acquisition must not be forced into public procurement.");
   if(pub&&p.acquisitionType==AcquisitionType.ONEROUS&&r.procurementMethod()==ProcurementMethod.NOT_REQUIRED)throw new IllegalArgumentException("Public onerous acquisition requires an applicable procurement/direct-contracting process.");
@@ -66,7 +68,7 @@ public class PurchaseService {
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.supplierChoiceReason()))throw new IllegalArgumentException("Supplier choice reason is required for direct contracting.");
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.priceJustification()))throw new IllegalArgumentException("Price justification is required for direct contracting.");
   if(r.procurementMethod()==ProcurementMethod.NOT_REQUIRED){p.procurementProcess=null;p.status=PurchaseStatus.AUTHORIZED;return view(purchases.save(p));}
-  ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organization=buyerOrganization;x.processNumber=r.processNumber().trim();
+  ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organizationLegacyId=buyerOrganization.legacyId();x.organizationCanonicalId=canonicalScope==null?null:canonicalScope.organization(buyerOrganization.legacyId());x.processNumber=r.processNumber().trim();
   x.objectDescription=r.objectDescription();x.justification=r.justification();x.procurementMethod=r.procurementMethod();x.biddingModality=r.procurementMethod()==ProcurementMethod.BIDDING?r.biddingModality():null;
   x.directContractingType=r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING?r.directContractingType():null;x.estimatedValue=r.estimatedValue()==null?p.total:r.estimatedValue();
   x.legalBasis=r.legalBasis();x.supplierChoiceReason=r.supplierChoiceReason();x.priceJustification=r.priceJustification();p.procurementProcess=procurements.save(x);p.status=PurchaseStatus.PROCUREMENT_IN_PROGRESS;
@@ -107,7 +109,7 @@ public class PurchaseService {
  @Transactional public PurchaseView authorize(Long id){
   Purchase p=find(id);assertMutableBeforeReceiving(p);
   if(p.status==PurchaseStatus.AUTHORIZED||p.status==PurchaseStatus.ORDERED)return view(p);
-  boolean publicOnerous=Boolean.TRUE.equals(org(p.buyerOrganizationLegacyId).publicOrganization)&&p.acquisitionType==AcquisitionType.ONEROUS;
+  boolean publicOnerous=org(p.buyerOrganizationLegacyId).publicOrganization()&&p.acquisitionType==AcquisitionType.ONEROUS;
   if(publicOnerous){
    if(p.procurementProcess==null)throw new IllegalStateException("Public onerous acquisition requires a procurement process before authorization.");
    if(!Set.of(ProcurementStatus.HOMOLOGATED,ProcurementStatus.CONTRACTED).contains(p.procurementProcess.status))
@@ -132,15 +134,42 @@ public class PurchaseService {
   ProcurementView pv=null;if(p.procurementProcess!=null){var x=p.procurementProcess;pv=new ProcurementView(x.id,x.processNumber,x.procurementMethod,x.biddingModality,x.directContractingType,x.status,x.estimatedValue,x.legalBasis);}
   var iv=p.items.stream().map(i->new PurchaseItemView(i.id,i.itemModel.id,i.itemModel.name,i.quantity,i.receivedQuantity,i.unitPrice,i.discount,i.calculateTotal(),i.conditionDescription)).toList();
   var dv=p.documents.stream().map(d->new DocumentView(d.id,d.documentType,d.documentNumber,d.issueDate,d.issuer,d.amount,d.storageReference,d.notes)).toList();
-  Organization buyerOrganization=org(p.buyerOrganizationLegacyId);
-  Organization supplierOrganization=p.supplierOrganizationLegacyId==null?null:org(p.supplierOrganizationLegacyId);
-  Person originPerson=personRecord(p.originPersonLegacyId);
-  return new PurchaseView(p.id,p.buyerOrganizationLegacyId,buyerOrganization.name,buyerOrganization.publicOrganization,p.supplierOrganizationLegacyId,supplierOrganization==null?null:supplierOrganization.name,
-   p.originPersonLegacyId,originPerson.fullName,originPerson.personType,originPerson.taxId,p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
+  OrganizationSnapshot buyerOrganization=org(p.buyerOrganizationLegacyId);
+  OrganizationSnapshot supplierOrganization=p.supplierOrganizationLegacyId==null?null:org(p.supplierOrganizationLegacyId);
+  PersonSnapshot originPerson=personRecord(p.originPersonLegacyId);
+  return new PurchaseView(p.id,p.buyerOrganizationLegacyId,buyerOrganization.name(),buyerOrganization.publicOrganization(),p.supplierOrganizationLegacyId,supplierOrganization==null?null:supplierOrganization.name(),
+   p.originPersonLegacyId,originPerson.name(),originPerson.personType(),originPerson.taxId(),p.acquisitionType,p.originDescription,p.purchaseNumber,p.purchaseDate,p.status,p.subtotal,p.discount,p.freight,p.taxes,p.otherCosts,p.total,p.paymentConditions,p.deliveryConditions,p.warrantyConditions,p.notes,pv,iv,dv);
  }
- private Organization org(Long id){Organization o=em.find(Organization.class,id);if(o==null)throw new EntityNotFoundException("Organization not found: "+id);return o;}
- private Person person(Long id){Person p=em.find(Person.class,id);if(p==null)throw new EntityNotFoundException("Person not found: "+id);if(!Boolean.TRUE.equals(p.active))throw new IllegalArgumentException("Acquisition origin person must be active.");return p;}
- private Person personRecord(Long id){Person p=em.find(Person.class,id);if(p==null)throw new EntityNotFoundException("Person not found: "+id);return p;}
+ private record OrganizationSnapshot(Long legacyId,String name,boolean publicOrganization) {}
+ private record PersonSnapshot(Long legacyId,String name,String personType,String taxId,boolean active) {}
+
+ private OrganizationSnapshot org(Long id){
+  if(id==null||id<=0)throw new EntityNotFoundException("Organization not found: "+id);
+  var o=masterData.findOrganization(id,TENANT).orElseThrow(()->new EntityNotFoundException("Organization not found: "+id));
+  return new OrganizationSnapshot(
+   id,
+   o.legalName(),
+   Boolean.parseBoolean(o.attributes().getOrDefault("publicOrganization","false"))
+  );
+ }
+
+ private PersonSnapshot person(Long id){
+  PersonSnapshot p=personRecord(id);
+  if(!p.active())throw new IllegalArgumentException("Acquisition origin person must be active.");
+  return p;
+ }
+
+ private PersonSnapshot personRecord(Long id){
+  if(id==null||id<=0)throw new EntityNotFoundException("Person not found: "+id);
+  var p=masterData.findPerson(id,TENANT).orElseThrow(()->new EntityNotFoundException("Person not found: "+id));
+  return new PersonSnapshot(
+   id,
+   p.name(),
+   p.attributes().get("legacyPersonType"),
+   p.taxId(),
+   p.status()==LifecycleStatus.ACTIVE
+  );
+ }
  private Purchase find(Long id){return purchases.findById(id).orElseThrow(()->new EntityNotFoundException("Purchase not found: "+id));}
  private void assertMutableBeforeReceiving(Purchase p){if(p.status==PurchaseStatus.CANCELLED)throw new IllegalStateException("Cancelled acquisition cannot be changed.");if(p.items.stream().anyMatch(i->nz(i.receivedQuantity).signum()>0))throw new IllegalStateException("Acquisition cannot change contracting or authorization after receiving has started.");}
  private BigDecimal nz(BigDecimal v){return v==null?BigDecimal.ZERO:v;}
