@@ -369,7 +369,14 @@
       "scalarized purchase, receiving, transfer, donation, reservation, lifecycle, consumption, disposal, maintenance, custody, reconciliation and inventory services no longer treat canonicalScope/masterDataReferences as nullable",
       "ComplianceService/CompliancePolicy organization-unit association remains an explicit Step 21.12 cutover exception",
       "JpaIdentityDirectory exception removed: it consumes canonical com.fariamiguel.enterprise.people.Person through CanonicalMasterDataDirectory and no longer needs any legacy Master Data import allowance",
-      "ComplianceService stock reads no longer navigate removed StockLocation.organization/unit associations; stock scope uses scalar/canonical location identifiers while CompliancePolicy remains the explicit cutover association exception"
+      "ComplianceService stock reads no longer navigate removed StockLocation.organization/unit associations; stock scope uses scalar/canonical location identifiers while CompliancePolicy remains the explicit cutover association exception",
+      "All product UnitScopeGuard implementations now query scalar legacy scope ids instead of legacy Organization/OrganizationalUnit associations",
+      "InventoryAuditReferenceEnricher now records StockLocation organization/unit references from scalar ids",
+      "Periodic inspection checklist/approval services now use PeriodicInspection organizationLegacyId/unitLegacyId",
+      "Armament reports now query scalar/canonical organization-unit scope and resolve unit labels through CanonicalMasterDataDirectory",
+      "AmmunitionBoxService now scopes through StockLocation organizationLegacyId/unitLegacyId",
+      "InventoryService unit filtering no longer navigates removed StockLocation.unit association",
+      "InventoryService reduced compatibility constructor and null fallbacks for canonicalReferences/masterData/canonicalInventoryLedger/canonicalStockLocations removed"
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -385,8 +392,16 @@
       "No product model outside core/model may import Organization, OrganizationalUnit, Person or PersonRoleAssignment; CompliancePolicy is the sole model exception until Step 21.12.",
       "No production code outside core may import those legacy Master Data entities except ComplianceService and JpaIdentityDirectory until Step 21.12.",
       "All scalarized models remain guarded against JPA association regression.",
-      "All 59 *LegacyId fields, 59 physical Oracle bridge columns, and 26 FK-retirement entries are cross-checked by automatic gates."
-    ]
+      "All 59 *LegacyId fields, 59 physical Oracle bridge columns, and 26 FK-retirement entries are cross-checked by automatic gates.",
+      "Product boundary globally rejects production navigation through retired .organization.id/.unit.id associations outside core/compliance/security overlay exceptions.",
+      "All product *UnitScopeGuard implementations are gated against legacy association navigation.",
+      "InventoryService canonical dependencies are guarded as mandatory and the reduced compatibility constructor is forbidden."
+    ],
+    "securityScopeCompatibilityException": {
+      "file": "api/src/main/java/com/comandos/security/service/AccessPolicy.java",
+      "reason": "Local authorization remains a COMANDOS product overlay during the Master Data cutover. Its UserProfile/personRole scope queries still traverse core compatibility entities and are not product-domain Master Data ownership.",
+      "retireOrRefactorAfter": "Step 21.12 PASS plus security-scope persistence cutover"
+    }
   },
   "demoAssociationSweep": {
     "step": "21.36",
