@@ -33,7 +33,7 @@ public class InspectionLifecycleDemoVerifier implements ApplicationRunner {
         long totalPhotos = 0;
 
         for (PeriodicInspection inspection : inspections) {
-            if (inspection.organization == null || inspection.asset == null) fail("Inspection provenance is incomplete.");
+            if (inspection.organizationLegacyId == null || inspection.asset == null) fail("Inspection provenance is incomplete.");
             if (blank(inspection.checklist)) fail("Inspection legacy checklist snapshot is required for compatibility/history.");
             if (!INSPECTION_RESULTS.contains(inspection.result)) fail("Inspection result is invalid.");
             if (inspection.inspectedAt == null || inspection.responsibleId == null || blank(inspection.responsibleLogin)) fail("Inspection responsibility trail is incomplete.");
