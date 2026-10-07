@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "step": "21.13-21.15",
+  "blocker": {
+    "step": "21.12",
+    "reason": "Runtime retirement proof cannot execute until canonical Faria Miguel Maven artifacts are available to COMANDOS.",
+    "requiredGate": "legacy persistence retirement gate=PASS"
+  },
+  "legacyIdRetirement": {
+    "step": "21.13",
+    "status": "blocked-by-21.12",
+    "baselineCount": 44,
+    "rule": "The count may only decrease. No new file may introduce *LegacyId fields.",
+    "fields": [
+      {
+        "entity": "StockLocation",
+        "path": "api/src/main/java/com/comandos/inventory/model/StockLocation.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "StockLocation",
+        "path": "api/src/main/java/com/comandos/inventory/model/StockLocation.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "Purchase",
+        "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
+        "field": "buyerOrganizationLegacyId"
+      },
+      {
+        "entity": "Purchase",
+        "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
+        "field": "supplierOrganizationLegacyId"
+      },
+      {
+        "entity": "Purchase",
+        "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
+        "field": "originPersonLegacyId"
+      },
+      {
+        "entity": "EquipmentReceiving",
+        "path": "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java",
+        "field": "receivingOrganizationLegacyId"
+      },
+      {
+        "entity": "Custody",
+        "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "Custody",
+        "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "Custody",
+        "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+        "field": "recipientLegacyId"
+      },
+      {
+        "entity": "Custody",
+        "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+        "field": "recipientUnitLegacyId"
+      },
+      {
+        "entity": "Custody",
+        "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+        "field": "authorizerLegacyId"
+      },
+      {
+        "entity": "Donation",
+        "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "Donation",
+        "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "Donation",
+        "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+        "field": "donorLegacyId"
+      },
+      {
+        "entity": "Donation",
+        "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+        "field": "doneeLegacyId"
+      },
+      {
+        "entity": "InventorySale",
+        "path": "api/src/main/java/com/comandos/sales/model/InventorySale.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "InventorySale",
+        "path": "api/src/main/java/com/comandos/sales/model/InventorySale.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "InventorySale",
+        "path": "api/src/main/java/com/comandos/sales/model/InventorySale.java",
+        "field": "buyerLegacyId"
+      },
+      {
+        "entity": "InventoryTransfer",
+        "path": "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "InventoryTransfer",
+        "path": "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java",
+        "field": "sourceUnitLegacyId"
+      },
+      {
+        "entity": "InventoryTransfer",
+        "path": "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java",
+        "field": "destinationUnitLegacyId"
+      },
+      {
+        "entity": "WorkOrder",
+        "path": "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "WorkOrder",
+        "path": "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "ApprovalWorkflow",
+        "path": "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "ApprovalWorkflow",
+        "path": "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "AmmunitionConsumption",
+        "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "AmmunitionConsumption",
+        "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "AmmunitionConsumption",
+        "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+        "field": "responsibleLegacyId"
+      },
+      {
+        "entity": "AmmunitionConsumption",
+        "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+        "field": "authorizerLegacyId"
+      },
+      {
+        "entity": "ConsumableUsage",
+        "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "ConsumableUsage",
+        "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "ConsumableUsage",
+        "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+        "field": "responsibleLegacyId"
+      },
+      {
+        "entity": "ConsumableUsage",
+        "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+        "field": "authorizerLegacyId"
+      },
+      {
+        "entity": "DisposalProcess",
+        "path": "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "DisposalProcess",
+        "path": "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "InventoryReservation",
+        "path": "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "InventoryReservation",
+        "path": "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "InventoryCount",
+        "path": "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "InventoryCount",
+        "path": "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "PurchasePlanning",
+        "path": "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "PeriodicInspection",
+        "path": "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "PeriodicInspection",
+        "path": "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "ExceptionOccurrence",
+        "path": "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "ExceptionOccurrence",
+        "path": "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+        "field": "unitLegacyId"
+      }
+    ]
+  },
+  "legacyMasterDataEntities": {
+    "step": "21.14",
+    "status": "blocked-by-21.12",
+    "rule": "These compatibility entities may only be deleted after canonical runtime parity passes.",
+    "files": [
+      "api/src/main/java/com/comandos/core/model/Person.java",
+      "api/src/main/java/com/comandos/core/model/Organization.java",
+      "api/src/main/java/com/comandos/core/model/OrganizationalUnit.java",
+      "api/src/main/java/com/comandos/core/model/PersonAddress.java",
+      "api/src/main/java/com/comandos/core/model/PersonPhone.java",
+      "api/src/main/java/com/comandos/core/model/PersonEmail.java",
+      "api/src/main/java/com/comandos/core/model/PersonCredential.java",
+      "api/src/main/java/com/comandos/core/model/PersonQualification.java",
+      "api/src/main/java/com/comandos/core/model/PersonRole.java",
+      "api/src/main/java/com/comandos/core/model/PersonRoleAssignment.java",
+      "api/src/main/java/com/comandos/core/model/RoleData.java",
+      "api/src/main/java/com/comandos/core/model/PersonType.java",
+      "api/src/main/java/com/comandos/core/model/PersonContactType.java",
+      "api/src/main/java/com/comandos/core/model/OrganizationNature.java",
+      "api/src/main/java/com/comandos/core/model/OrganizationalUnitType.java",
+      "api/src/main/java/com/comandos/core/model/EconomicActivity.java",
+      "api/src/main/java/com/comandos/core/model/MasterDataReference.java"
+    ]
+  },
+  "legacyMasterDataCode": {
+    "step": "21.15",
+    "status": "in-progress-blocked-by-21.12",
+    "noRepositoryPackage": true,
+    "compatibilityFiles": [
+      "api/src/main/java/com/comandos/core/controller/CoreController.java",
+      "api/src/main/java/com/comandos/core/service/CoreCatalog.java",
+      "api/src/main/java/com/comandos/core/service/CoreService.java",
+      "api/src/main/java/com/comandos/core/service/PersonRegistrationService.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalMasterDataMapper.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalContactMapper.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalPartyRoleMapper.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalPartyDocumentMapper.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationMapper.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalMasterDataMirrorService.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataMigrationService.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataParityService.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java",
+      "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceBackfillService.java",
+      "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceParityService.java",
+      "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceSynchronizer.java"
+    ],
+    "completedCleanup": [
+      "local core repository package absent",
+      "obsolete CoreService compatibility constructor removed",
+      "obsolete WorkflowService compatibility constructor removed",
+      "generic master-data reads routed through canonical read services"
+    ]
+  }
+}
