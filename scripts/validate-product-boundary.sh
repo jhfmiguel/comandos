@@ -162,6 +162,14 @@ if [[ -n "$legacy_party_navigation_hits" ]]; then
   fail "product code still navigates retired Master Data person/party/unit associations"
 fi
 
+legacy_master_data_object_navigation_hits="$(
+  grep -RInE --include='*.java' '\.(organization|unit|buyerOrganization|supplierOrganization|originPerson|receivingOrganization|recipient|recipientUnit|authorizer|donor|donee|buyer|sourceUnit|destinationUnit|responsible|responsiblePerson|roleAssignment)\.'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
+)"
+if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
+  printf '%s\n' "$legacy_master_data_object_navigation_hits"
+  fail "product code still navigates retired Master Data objects"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
