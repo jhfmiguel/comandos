@@ -1,6 +1,8 @@
 package com.comandos.custody.service;
 
-import com.comandos.core.model.*;
+import com.comandos.core.model.PersonRoleAssignment;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
 import jakarta.persistence.EntityManager;
@@ -12,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Service
 public class CustodyIssueFacade {
@@ -25,12 +30,22 @@ public class CustodyIssueFacade {
     private static final Set<String> INSTITUTIONAL_SCOPES = Set.of("COLLECTIVE", "TEAM", "OPERATION");
     private static final Set<String> DURATION_TYPES = Set.of("TEMPORARY", "PERMANENT");
 
+    private static final TenantId TENANT = TenantId.of("comandos");
+
     private final EntityManager em;
     private final CustodyService custodyService;
+    private final CanonicalMasterDataDirectory masterData;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public CustodyIssueFacade(EntityManager em, CustodyService custodyService) {
+    public CustodyIssueFacade(
+            EntityManager em,
+            CustodyService custodyService,
+            CanonicalMasterDataDirectory masterData,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.custodyService = custodyService;
+        this.masterData = masterData;
+        this.canonicalScope = canonicalScope;
     }
 
     @Transactional
