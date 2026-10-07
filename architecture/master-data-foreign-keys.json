@@ -206,6 +206,26 @@
       ],
       "state": "retired",
       "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "EquipmentSet",
+      "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSet.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical ids are primary."
+    },
+    {
+      "entity": "EquipmentSetOperation",
+      "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; operation snapshots now carry scalar legacy/canonical scope ids."
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
