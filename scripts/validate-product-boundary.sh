@@ -134,8 +134,12 @@ fi
 
 # Step 21.36: retired generic API endpoints must not return.
 for retired_endpoint in '/api/users' '/api/weapons' '/api/sales'; do
-  if grep -RFn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=target \
-      "$retired_endpoint" "$ROOT_DIR/api/src" "$ROOT_DIR/app/src" >/dev/null 2>&1; then
+  retired_endpoint_hits="$(
+    grep -RFn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=target \
+      "$retired_endpoint" "$ROOT_DIR/api/src" "$ROOT_DIR/app/src" 2>/dev/null || true
+  )"
+  if [[ -n "$retired_endpoint_hits" ]]; then
+    printf '%s\n' "$retired_endpoint_hits"
     fail "retired generic API endpoint returned: $retired_endpoint"
   fi
 done
