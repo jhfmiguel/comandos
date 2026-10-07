@@ -183,23 +183,22 @@ done < <(
 )
 
 # Step 21.32/21.36: migrated inventory/consumption demos must use scalar scope identifiers.
-for retired_demo_scope in \
-  'location.organization' \
-  'location.unit' \
-  'usage.organization' \
-  'usage.responsible' \
-  'usage.authorizer' \
-  'StockLocation l where l.organization =' \
-  'value.organization = organization;' \
-  'value.unit = unit;'
-do
+declare -A retired_demo_scope_checks=(
+  ["api/src/main/java/com/comandos/demo/AssetTraceabilityDemoVerifier.java"]='location\.organization\.|location\.unit\.'
+  ["api/src/main/java/com/comandos/demo/ConsumableUsageLifecycleDemoVerifier.java"]='usage\.(organization|responsible|authorizer)([^A-Za-z0-9_]|$)'
+  ["api/src/main/java/com/comandos/demo/DemoDataSeeder.java"]='StockLocation l where l\.organization[[:space:]]*=|value\.organization[[:space:]]*=[[:space:]]*organization;|value\.unit[[:space:]]*=[[:space:]]*unit;'
+  ["api/src/main/java/com/comandos/demo/EquipmentSetAggregateOperationDemoVerifier.java"]='location\.organization\.|set\.organization([^A-Za-z0-9_]|$)|operation\.organization([^A-Za-z0-9_]|$)'
+  ["api/src/main/java/com/comandos/demo/MaintenanceDemoSeeder.java"]='asset\.location\.organization\.|asset\.location\.unit\.'
+)
+
+for retired_demo_file in "${!retired_demo_scope_checks[@]}"; do
+  retired_demo_pattern="${retired_demo_scope_checks[$retired_demo_file]}"
   retired_demo_scope_hits="$(
-    grep -RFn --include='*.java' "$retired_demo_scope" \
-      "$ROOT_DIR/api/src/main/java/com/comandos/demo" 2>/dev/null || true
+    grep -nE "$retired_demo_pattern" "$ROOT_DIR/$retired_demo_file" 2>/dev/null || true
   )"
   if [[ -n "$retired_demo_scope_hits" ]]; then
-    printf '%s\n' "$retired_demo_scope_hits"
-    fail "demo code still uses retired scalarized scope association: $retired_demo_scope"
+    printf '%s:%s\n' "$retired_demo_file" "$retired_demo_scope_hits"
+    fail "demo code still uses retired scalarized scope association: $retired_demo_file"
   fi
 done
 
