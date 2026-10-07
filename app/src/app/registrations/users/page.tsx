@@ -1,6 +1,5 @@
-import { UserRegistration } from 'components'
-import { Suspense } from 'react'
+import { redirect } from "next/navigation"
 
-export default function UserRegistrationPage() {
-    return <Suspense fallback={<p role="status">Loading user registration…</p>}><UserRegistration /></Suspense>
+export default function LegacyUsersRedirect() {
+    redirect("/erp/core?section=people&resource=people")
 }
