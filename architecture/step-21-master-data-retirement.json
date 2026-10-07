@@ -361,12 +361,12 @@
       "obsolete WorkflowService compatibility constructor removed",
       "generic master-data reads routed through canonical read services",
       "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory"
-      ,"remainingCompatibilityConfirmedRequiredUntilCutover": [
-        "CoreController/CoreService write compatibility",
-        "PersonRegistrationService legacy write orchestration",
-        "canonical mappers used by legacy projection, shadow-write, backfill or parity",
-        "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
-      ]
+    ],
+    "remainingCompatibilityConfirmedRequiredUntilCutover": [
+      "CoreController/CoreService write compatibility",
+      "PersonRegistrationService legacy write orchestration",
+      "canonical mappers used by legacy projection, shadow-write, backfill or parity",
+      "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
     ]
   }
 }
