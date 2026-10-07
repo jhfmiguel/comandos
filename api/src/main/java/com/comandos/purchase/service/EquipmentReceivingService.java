@@ -1,8 +1,8 @@
 package com.comandos.purchase.service;
 
-import com.comandos.core.model.Organization;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.purchase.dto.EquipmentReceivingContract;
 import com.comandos.purchase.model.*;
@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Service
 public class EquipmentReceivingService {
@@ -27,7 +28,9 @@ public class EquipmentReceivingService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public EquipmentReceivingService(
@@ -39,7 +42,8 @@ public class EquipmentReceivingService {
         PurchaseItemRepository purchaseItemRepository,
         EntityManager em,
         ProductMasterDataReferenceSynchronizer masterDataReferences,
-        ProductCanonicalScopeResolver canonicalScope
+        ProductCanonicalScopeResolver canonicalScope,
+        CanonicalMasterDataDirectory masterData
     ) {
         this.receivingRepository = receivingRepository;
         this.itemRepository = itemRepository;
@@ -50,29 +54,7 @@ public class EquipmentReceivingService {
         this.em = em;
         this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    EquipmentReceivingService(
-        EquipmentReceivingRepository receivingRepository,
-        EquipmentReceivingItemRepository itemRepository,
-        ReceivingSerialRepository serialRepository,
-        ReceivingIncorporationRepository incorporationRepository,
-        PurchaseRepository purchaseRepository,
-        PurchaseItemRepository purchaseItemRepository,
-        EntityManager em
-    ) {
-        this(
-            receivingRepository,
-            itemRepository,
-            serialRepository,
-            incorporationRepository,
-            purchaseRepository,
-            purchaseItemRepository,
-            em,
-            null,
-            null
-        );
+        this.masterData = masterData;
     }
 
     public List<EquipmentReceivingContract.View> list(Long acquisitionId) {
@@ -128,14 +110,15 @@ public class EquipmentReceivingService {
         receiving.acquisition = acquisition;
 
         if (request.receivingOrganizationId() != null) {
-            Organization organization = em.find(Organization.class, request.receivingOrganizationId());
-            if (organization == null) {
-                throw new IllegalArgumentException("Organization not found: " + request.receivingOrganizationId());
-            }
-            receiving.receivingOrganizationLegacyId = organization.id;
-            receiving.receivingOrganizationName = organization.name;
+            long organizationId = request.receivingOrganizationId();
+            var organization = masterData.findOrganization(organizationId, TENANT)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Organization not found: " + organizationId
+                ));
+            receiving.receivingOrganizationLegacyId = organizationId;
+            receiving.receivingOrganizationName = organization.legalName();
             if (canonicalScope != null) {
-                receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organization.id);
+                receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organizationId);
             } else if (masterDataReferences != null) {
                 masterDataReferences.synchronizeForBackfill(receiving);
             }
@@ -387,13 +370,10 @@ public class EquipmentReceivingService {
 
         String receivingOrganizationName = receiving.receivingOrganizationName;
         if (receivingOrganizationName == null && receiving.receivingOrganizationLegacyId != null) {
-            Organization legacyOrganization = em.find(
-                Organization.class,
-                receiving.receivingOrganizationLegacyId
-            );
-            receivingOrganizationName = legacyOrganization == null
-                ? null
-                : legacyOrganization.name;
+            receivingOrganizationName = masterData
+                .findOrganization(receiving.receivingOrganizationLegacyId, TENANT)
+                .map(com.fariamiguel.enterprise.organization.Organization::legalName)
+                .orElse(null);
         }
 
         return new EquipmentReceivingContract.View(
