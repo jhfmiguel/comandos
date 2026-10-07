@@ -9,8 +9,8 @@
   "legacyIdRetirement": {
     "step": "21.13",
     "status": "blocked-by-21.12",
-    "baselineCount": 57,
-    "rule": "The corrected baseline is 57 after the MaintenancePlan Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
+    "baselineCount": 59,
+    "rule": "The corrected baseline is 59 after reconciling the existing CustodyResponsibility responsiblePersonLegacyId and roleAssignmentLegacyId fields with the retirement inventory. The count may only decrease from this corrected baseline.",
     "fields": [
       {
         "entity": "StockLocation",
