@@ -15,7 +15,10 @@ import com.fariamiguel.enterprise.party.PartyRoleType;
 import com.fariamiguel.enterprise.people.Person;
 import com.fariamiguel.enterprise.procurement.PurchaseOrder;
 import com.fariamiguel.enterprise.sales.SalesOrder;
+import com.fariamiguel.identity.api.IdentityDirectory;
+import com.fariamiguel.messaging.api.PlatformEventPublisher;
 import com.fariamiguel.notifications.api.NotificationSender;
+import com.fariamiguel.security.api.CurrentActorProvider;
 import com.fariamiguel.security.api.ResourceAccessPolicy;
 import com.fariamiguel.workflow.api.WorkflowEngine;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,9 @@ class FariaMiguelConsumerContractTest {
     void consumesCanonicalSharedFoundationInsteadOfOwningGenericContracts() {
         assertShared(IdGenerator.class, "com.fariamiguel.core.api");
         assertShared(ResourceAccessPolicy.class, "com.fariamiguel.security.api");
+        assertShared(CurrentActorProvider.class, "com.fariamiguel.security.api");
+        assertShared(IdentityDirectory.class, "com.fariamiguel.identity.api");
+        assertShared(PlatformEventPublisher.class, "com.fariamiguel.messaging.api");
         assertShared(AuditRecorder.class, "com.fariamiguel.audit.api");
         assertShared(DocumentStorage.class, "com.fariamiguel.documents.api");
         assertShared(WorkflowEngine.class, "com.fariamiguel.workflow.api");
