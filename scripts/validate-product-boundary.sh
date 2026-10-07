@@ -144,6 +144,18 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
+# Step 21.36: explicit COMANDOS imports must resolve to real source files.
+while IFS= read -r import_line; do
+  imported="${import_line#import }"
+  imported="${imported%;}"
+  [[ "$imported" == *".*" ]] && continue
+  source_path="$ROOT_DIR/api/src/main/java/${imported//./\/}.java"
+  [[ -f "$source_path" ]] || fail "orphan COMANDOS import points to a missing source file: $imported"
+done < <(
+  grep -RhoE --include='*.java' '^import[[:space:]]+com\.comandos\.[A-Za-z0-9_.]+;' "$ROOT_DIR/api/src" \
+    | sort -u
+)
+
 # Step 21.32/21.36: retired generic Java package roots must have no remaining imports.
 for retired_java_package in \
   'com.comandos.model.' \
