@@ -44,7 +44,7 @@ public class EquipmentSetAggregateOperationDemoVerifier implements ApplicationRu
     }
 
     private void verifySet(EquipmentSet set) {
-        require(set.organization != null, "Equipment set must belong to an organization.");
+        require(set.organizationLegacyId != null, "Equipment set must belong to an organization.");
         require(notBlank(set.code) && notBlank(set.name), "Equipment set must preserve code and name.");
         var components = em.createQuery("select c from EquipmentSetComponent c where c.equipmentSet.id=:id order by c.id", EquipmentSetComponent.class)
             .setParameter("id", set.id).getResultList();
@@ -55,18 +55,18 @@ public class EquipmentSetAggregateOperationDemoVerifier implements ApplicationRu
             require(notBlank(component.role), "Equipment set component role is required.");
             if (component.asset != null) {
                 require(component.quantity.compareTo(BigDecimal.ONE) == 0, "Serialized equipment set component quantity must be one.");
-                require(component.asset.location.organization.id.equals(set.organization.id), "Equipment set asset must belong to the same organization.");
+                require(java.util.Objects.equals(component.asset.location.organizationLegacyId, set.organizationLegacyId), "Equipment set asset must belong to the same organization.");
                 require(inventoryKeys.add("A" + component.asset.id), "Equipment set cannot duplicate an asset.");
             } else {
-                require(component.balance.location.organization.id.equals(set.organization.id), "Equipment set balance must belong to the same organization.");
+                require(java.util.Objects.equals(component.balance.location.organizationLegacyId, set.organizationLegacyId), "Equipment set balance must belong to the same organization.");
                 require(inventoryKeys.add("B" + component.balance.id), "Equipment set cannot duplicate a stock balance.");
             }
         }
     }
 
     private void verifyOperation(EquipmentSetOperation operation) {
-        require(operation.equipmentSet != null && operation.organization != null, "Aggregate kit operation must preserve set and organization.");
-        require(operation.equipmentSet.organization.id.equals(operation.organization.id), "Aggregate kit operation organization must match the set.");
+        require(operation.equipmentSet != null && operation.organizationLegacyId != null, "Aggregate kit operation must preserve set and organization.");
+        require(java.util.Objects.equals(operation.equipmentSet.organizationLegacyId, operation.organizationLegacyId), "Aggregate kit operation organization must match the set.");
         require(notBlank(operation.setCode) && notBlank(operation.setName), "Aggregate kit operation must preserve set snapshots.");
         require(Set.of("DONATION", "DISPOSAL", "CONSUMPTION", "MAINTENANCE").contains(operation.operationType), "Unsupported aggregate kit operation type.");
         require("COMPLETED".equals(operation.status), "Aggregate kit operation must be completed atomically.");
