@@ -256,6 +256,38 @@
         "professional-qualification canonical repository read cutover",
         "identity routed through canonical master-data directory"
       ]
+    },
+    {
+      "id": "legacy-id-retirement",
+      "classification": "blocked-retirement-backlog",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-21.12",
+      "reason": "Step 21.13 inventoried exactly 44 remaining *LegacyId fields. They are now regression-gated and may only decrease. Physical deletion remains blocked until Step 21.12 runtime retirement validation passes.",
+      "evidence": [
+        "architecture/step-21-master-data-retirement.json",
+        "scripts/validate-product-boundary.sh"
+      ]
+    },
+    {
+      "id": "legacy-master-data-entities",
+      "classification": "blocked-retirement-backlog",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-21.12",
+      "reason": "Step 21.14 has an explicit closed inventory of legacy Person/Organization/OrganizationalUnit/contact/document/qualification/role helper entities. They remain compatibility persistence only until Step 21.12 passes.",
+      "evidence": [
+        "architecture/step-21-master-data-retirement.json"
+      ]
+    },
+    {
+      "id": "legacy-master-data-code",
+      "classification": "retirement-in-progress",
+      "safeToDelete": false,
+      "stepStatus": "in-progress-blocked-by-21.12",
+      "reason": "Step 21.15 cleanup progressed: no generic core repository package exists, obsolete compatibility constructors were removed, and the remaining controller/service/mapper list is explicitly inventoried. Final deletion depends on Step 21.12.",
+      "evidence": [
+        "architecture/step-21-master-data-retirement.json",
+        "api/src/main/java/com/comandos/core/service/CoreService.java"
+      ]
     }
   ]
 }
