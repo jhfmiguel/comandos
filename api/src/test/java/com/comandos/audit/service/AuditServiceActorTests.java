@@ -1,7 +1,7 @@
 package com.comandos.audit.service;
 
-import com.comandos.security.api.CurrentActor;
-import com.comandos.security.api.CurrentActorProvider;
+import com.fariamiguel.security.api.CurrentActor;
+import com.fariamiguel.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -16,9 +16,11 @@ class AuditServiceActorTests {
     @Test
     void mapsAuthenticatedActor() {
         var actors = mock(CurrentActorProvider.class);
-        when(actors.current()).thenReturn(
-            new CurrentActor(42L, "operator", true)
-        );
+        var current = mock(CurrentActor.class);
+        when(current.authenticated()).thenReturn(true);
+        when(current.id()).thenReturn("42");
+        when(current.displayName()).thenReturn("operator");
+        when(actors.currentActor()).thenReturn(current);
 
         var service = new AuditService(
             mock(EntityManager.class),
@@ -37,7 +39,7 @@ class AuditServiceActorTests {
     @Test
     void mapsAnonymousActor() {
         var actors = mock(CurrentActorProvider.class);
-        when(actors.current()).thenReturn(CurrentActor.anonymous());
+        when(actors.currentActor()).thenReturn(CurrentActor.anonymous());
 
         var service = new AuditService(
             mock(EntityManager.class),
