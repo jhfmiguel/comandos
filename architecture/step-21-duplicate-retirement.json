@@ -651,7 +651,7 @@
       "classification": "boundary-validation",
       "safeToDelete": false,
       "stepStatus": "local-cleanup-complete-pending-cutover-retirement",
-      "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, retired generic package roots have no surviving imports, and demo seeders/verifiers were aligned to scalar cutover identifiers instead of removed Master Data JPA associations. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific migration bridges.",
+      "reason": "Step 21.32 local cleanup is complete pending cutover retirement: product code outside the authorized core/migration adapters is now gated against direct Person/Organization/OrganizationalUnit reads; retired generic package roots have no surviving imports; frontend legacy user/weapon/sales modules are gone except intentional redirects; and demo seeders/verifiers were aligned to scalar cutover identifiers instead of removed Master Data JPA associations. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific migration bridges.",
       "completedCleanup": [
         "removed empty com.comandos.enterprise package marker",
         "removed empty com.comandos.personnel package marker",
@@ -663,7 +663,10 @@
         "added static gate resolving explicit com.comandos imports to existing source types",
         "aligned purchase, custody, consumption, reservation, transfer, reconciliation, maintenance, disposal, governance and dashboard demo code to scalar cutover ids",
         "removed StoredDocumentBlob verifier residue after DocumentStorage became canonical",
-        "migrated audit tests from retired com.comandos.security.api actor contracts to com.fariamiguel.security.api"
+        "migrated audit tests from retired com.comandos.security.api actor contracts to com.fariamiguel.security.api",
+        "added regression gate preventing product services from directly reading legacy Person/Organization/OrganizationalUnit entities",
+        "aligned transfer, workflow, disposal, occurrence, inspection, consumable usage, equipment-set and traceability demo verifiers to scalar cutover ids",
+        "verified frontend legacy user/weapon/sales artifacts are reduced to intentional route redirects only"
       ],
       "allowedProductOverlays": [
         "armament/ammunition",
@@ -767,7 +770,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "local-scan-complete-known-cutover-bridges-only",
-      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository filename scanning prevents old/backup/deprecated/legacy/copy artifacts from returning; explicit COMANDOS imports are checked against real source types; retired generic endpoint references, generic-root imports, nullable canonical collaborator fallbacks and obsolete demo Master Data associations are also gated. The only allowed migration-named files remain db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Final source-level retirement still depends on Step 21.12."
+      "reason": "Step 21.36 local scan is complete pending cutover retirement. Repository filename scanning prevents old/backup/deprecated/legacy/copy artifacts from returning; explicit COMANDOS imports resolve to real source types; retired generic endpoint references, generic-root imports, nullable canonical collaborator fallbacks, direct product reads of legacy Master Data entities and obsolete demo associations are gated. The only allowed migration-named files remain db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Final source-level retirement still depends on Step 21.12."
     },
     {
       "id": "final-legacy-scan-evidence",
