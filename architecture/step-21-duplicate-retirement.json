@@ -671,14 +671,14 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "blocked-by-artifact-publication",
-      "reason": "Step 21.33 cannot run Maven test/verify end-to-end because the canonical Faria Miguel Maven artifacts are unavailable from GitHub Packages. Repository-level architecture/product-boundary gates do pass."
+      "reason": "Step 21.33 remains blocked: the COMANDOS CI backend job is green only because Maven verification is explicitly deferred when the canonical Faria Miguel Maven artifacts are unavailable. Product-boundary and architecture checks pass, but mvn test/mvn verify against the canonical foundation have not executed."
     },
     {
       "id": "final-frontend-tests",
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "blocked-by-artifact-publication",
-      "reason": "Step 21.34 cannot run yarn install/lint/build end-to-end because @faria-miguel/platform and @faria-miguel/ui physical packages are unavailable from GitHub Packages. Source/import boundary validation is already passing."
+      "reason": "Step 21.34 remains blocked: the COMANDOS CI frontend job is green only because install/lint/build are explicitly skipped when @faria-miguel/platform and @faria-miguel/ui physical packages are unavailable. The Step 21.28 source dependency audit and product boundary pass, but final yarn install/lint/build have not executed."
     },
     {
       "id": "automatic-gates",
