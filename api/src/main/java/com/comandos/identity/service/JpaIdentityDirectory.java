@@ -1,8 +1,9 @@
 package com.comandos.identity.service;
 
-import com.comandos.core.model.Person;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.enterprise.people.Person;
 import com.fariamiguel.identity.api.IdentitySubject;
-import jakarta.persistence.EntityManager;
+import com.fariamiguel.tenancy.api.TenantId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -10,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Compatibility bridge between the legacy COMANDOS person identity lookup and
- * the canonical Faria Miguel identity contract.
+ * Compatibility bridge between COMANDOS identity subjects and the canonical
+ * Faria Miguel identity contract.
  *
- * <p>The legacy interface remains implemented while callers are migrated. New
- * integrations should depend on {@link com.fariamiguel.identity.api.IdentityDirectory}.</p>
+ * <p>Identity resolution no longer reads the legacy COMANDOS Person entity
+ * directly. The canonical master-data directory decides whether reads come
+ * from legacy projection or canonical persistence according to the controlled
+ * master-data cutover.</p>
  */
 @Service
 @Transactional(readOnly = true)
@@ -22,11 +25,12 @@ public class JpaIdentityDirectory
     implements com.fariamiguel.identity.api.IdentityDirectory {
 
     public static final String LOCAL_PROVIDER = "COMANDOS";
+    private static final TenantId TENANT = TenantId.of("comandos");
 
-    private final EntityManager entityManager;
+    private final CanonicalMasterDataDirectory masterData;
 
-    public JpaIdentityDirectory(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    public JpaIdentityDirectory(CanonicalMasterDataDirectory masterData) {
+        this.masterData = masterData;
     }
 
     @Override
@@ -38,24 +42,27 @@ public class JpaIdentityDirectory
         Long personId = numericSubject(subject);
         if (personId == null) return Optional.empty();
 
-        Person person = entityManager.find(Person.class, personId);
-        if (person == null) return Optional.empty();
+        return masterData.findPerson(personId, TENANT)
+            .map(person -> identitySubject(personId, person));
+    }
 
-        Map<String, String> attributes = new LinkedHashMap<>();
-        put(attributes, "legacyPersonId", String.valueOf(person.id));
-        put(attributes, "personType", person.personType);
-        put(attributes, "taxId", person.taxId);
-        put(attributes, "birthDate", person.birthDate == null ? null : person.birthDate.toString());
-        put(attributes, "phone", person.phone);
-        put(attributes, "active", String.valueOf(Boolean.TRUE.equals(person.active)));
+    private static IdentitySubject identitySubject(long legacyPersonId, Person person) {
+        Map<String, String> attributes = new LinkedHashMap<>(person.attributes());
+        put(attributes, "legacyPersonId", String.valueOf(legacyPersonId));
+        put(attributes, "taxId", person.taxId());
+        put(attributes, "birthDate", person.birthDate() == null ? null : person.birthDate().toString());
+        put(attributes, "phone", person.phones().stream().findFirst().orElse(null));
+        put(attributes, "active", String.valueOf(person.status() == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE));
 
-        return Optional.of(new IdentitySubject(
+        String email = person.emails().stream().findFirst().orElse(null);
+
+        return new IdentitySubject(
             LOCAL_PROVIDER,
-            String.valueOf(person.id),
-            person.fullName,
-            person.email,
+            String.valueOf(legacyPersonId),
+            person.name(),
+            email,
             attributes
-        ));
+        );
     }
 
     private static Long numericSubject(String value) {
