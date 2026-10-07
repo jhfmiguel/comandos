@@ -2,6 +2,13 @@ name: Master Data retirement validation
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/master-data-retirement-validation.yml"
+      - "api/src/main/java/com/comandos/core/service/**"
+      - "api/src/main/resources/application.properties"
+      - "architecture/step-21-duplicate-retirement.json"
 
 permissions:
   contents: read
