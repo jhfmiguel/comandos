@@ -16,6 +16,7 @@ import com.comandos.reconciliation.model.InventoryCount;
 import com.comandos.consumption.model.AmmunitionConsumption;
 import com.comandos.consumption.model.ConsumableUsage;
 import com.comandos.purchase.model.PurchasePlanning;
+import com.comandos.purchase.model.ProcurementProcess;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,6 +67,14 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof EquipmentReceiving receiving) {
             synchronizeReceiving(receiving);
+            return true;
+        }
+        if (entity instanceof ProcurementProcess procurement) {
+            procurement.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                procurement.organizationLegacyId,
+                "procurement process organization"
+            );
             return true;
         }
         if (entity instanceof InventoryTransfer transfer) {
