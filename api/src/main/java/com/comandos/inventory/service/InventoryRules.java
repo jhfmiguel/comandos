@@ -1,15 +1,15 @@
 package com.comandos.inventory.service;
 
-import com.comandos.core.model.*;
-import com.comandos.enterprise.catalog.CatalogTrackingPolicy;
-import com.comandos.enterprise.catalog.UnitOfMeasureCode;
+import com.comandos.core.model.CoreEntity;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.enterprise.catalog.CatalogTrackingPolicy;
+import com.fariamiguel.enterprise.catalog.UnitOfMeasureCode;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.*;
 import com.comandos.sales.model.*;
 import com.comandos.custody.model.*;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,18 +17,31 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.*;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Component
 public class InventoryRules {
+    private static final TenantId TENANT = TenantId.of("comandos");
+
     private final EntityManager em;
-    public InventoryRules(EntityManager em) { this.em = em; }
+    private final CanonicalMasterDataDirectory masterData;
+
+    public InventoryRules(EntityManager em, CanonicalMasterDataDirectory masterData) {
+        this.em = em;
+        this.masterData = masterData;
+    }
 
     public void lockOrganization(InventoryCatalog.Resource spec, Map<String, Object> data) {
         if (spec.entity() != StockLocation.class && spec.entity() != EquipmentSet.class) return;
         try {
             long id = new BigDecimal(String.valueOf(data.get("organizationId"))).longValueExact();
-            if (em.find(Organization.class, id, LockModeType.PESSIMISTIC_WRITE) == null) bad("Organization not found.");
-        } catch (NumberFormatException | ArithmeticException ex) { bad("Organization is required."); }
+            if (masterData.findOrganization(id, TENANT).isEmpty()) {
+                bad("Organization not found.");
+            }
+        } catch (NumberFormatException | ArithmeticException ex) {
+            bad("Organization is required.");
+        }
     }
 
     public void validate(CoreEntity entity, Map<String, Object> previous) {
@@ -241,7 +254,7 @@ public class InventoryRules {
         }
         if (entity instanceof ExpirationRecord expiration) {
             requireOne(expiration.asset, expiration.lot, "Expiration control");
-            validateScope(expiration.organization, expiration.unit, expiration.asset, expiration.lot);
+            validateScope(expiration.organizationLegacyId, expiration.unitLegacyId, expiration.asset, expiration.lot);
             if ("VALID".equals(expiration.status) && expiration.expirationDate.isBefore(LocalDate.now()))
                 bad("A past expiration cannot remain valid.");
             if ("EXPIRED".equals(expiration.status) && expiration.asset != null && AssetStatus.AVAILABLE.name().equals(expiration.asset.status))
@@ -249,19 +262,25 @@ public class InventoryRules {
         }
         if (entity instanceof CertificationRecord certification) {
             requireOne(certification.asset, certification.lot, "Certification");
-            validateScope(certification.organization, certification.unit, certification.asset, certification.lot);
+            validateScope(certification.organizationLegacyId, certification.unitLegacyId, certification.asset, certification.lot);
             if ("ACTIVE".equals(certification.status) && certification.validUntil.isBefore(LocalDate.now()))
                 bad("An expired certification cannot remain active.");
             if ("EXPIRED".equals(certification.status) && certification.asset != null && AssetStatus.AVAILABLE.name().equals(certification.asset.status))
                 certification.asset.status = AssetStatus.BLOCKED.name();
         }
-        if (entity instanceof Recall recall && recall.unit != null
-                && !recall.unit.organization.id.equals(recall.organization.id)) bad("Recall unit must belong to its organization.");
+        if (entity instanceof Recall recall) {
+            requireUnitBelongsToOrganization(recall.organizationLegacyId, recall.unitLegacyId);
+        }
         if (entity instanceof RecallItem item) {
             requireOne(item.asset, item.lot, "Recall item");
             if (!Set.of("OPEN", "IN_PROGRESS").contains(item.recall.status))
                 bad("Items can only be added to an open or in-progress recall.");
-            validateScope(item.recall.organization, item.recall.unit, item.asset, item.lot);
+            validateScope(
+                item.recall.organizationLegacyId,
+                item.recall.unitLegacyId,
+                item.asset,
+                item.lot
+            );
             if (item.asset != null && AssetStatus.AVAILABLE.name().equals(item.asset.status)) item.asset.status = AssetStatus.BLOCKED.name();
         }
         if (entity instanceof ReservationStatusType status) {
@@ -296,20 +315,21 @@ public class InventoryRules {
                 bad("System protection cannot be removed.");
         }
         if (entity instanceof StockLocation location) {
-            if (location.unitLegacyId != null) {
-                OrganizationalUnit unit = em.find(OrganizationalUnit.class, location.unitLegacyId);
-                if (unit == null || !Objects.equals(unit.organization.id, location.organizationLegacyId))
-                    bad("Unit must belong to the selected organization.");
-            }
+            requireUnitBelongsToOrganization(
+                location.organizationLegacyId,
+                location.unitLegacyId
+            );
             if (!previous.isEmpty() && !Objects.equals(previous.get("organizationId"), location.organizationLegacyId))
                 bad("Location organization cannot be changed. Register a new location instead.");
         }
         if (entity instanceof EquipmentSet set) {
-            if (set.unit != null && !Objects.equals(set.unit.organization.id, set.organization.id))
-                bad("Unit must belong to the selected organization.");
-            if (!previous.isEmpty() && !Objects.equals(previous.get("organizationId"), set.organization.id))
+            requireUnitBelongsToOrganization(
+                set.organizationLegacyId,
+                set.unitLegacyId
+            );
+            if (!previous.isEmpty() && !Objects.equals(previous.get("organizationId"), set.organizationLegacyId))
                 bad("Equipment set organization cannot be changed. Register a new set instead.");
-            if (!previous.isEmpty() && !Objects.equals(previous.get("unitId"), set.unit == null ? null : set.unit.id))
+            if (!previous.isEmpty() && !Objects.equals(previous.get("unitId"), set.unitLegacyId))
                 bad("Equipment set unit cannot be changed after registration.");
             if (set.active && (set.id == null || count("select count(c) from EquipmentSetComponent c where c.equipmentSet.id = :id", set.id) == 0))
                 bad("An equipment set must contain at least one component before activation.");
@@ -437,9 +457,9 @@ public class InventoryRules {
 
     private static void validateSetComponentScope(EquipmentSet set, AssetItem asset, StockBalance balance) {
         StockLocation location = asset == null ? balance.location : asset.location;
-        if (!Objects.equals(location.organization.id, set.organization.id))
+        if (!Objects.equals(location.organizationLegacyId, set.organizationLegacyId))
             bad("The component must belong to the equipment set organization.");
-        if (set.unit != null && (location.unit == null || !Objects.equals(location.unit.id, set.unit.id)))
+        if (set.unitLegacyId != null && !Objects.equals(location.unitLegacyId, set.unitLegacyId))
             bad("The component must belong to the equipment set unit.");
     }
 
@@ -561,12 +581,36 @@ public class InventoryRules {
         return total;
     }
 
-    private static void validateScope(Organization organization, OrganizationalUnit unit, AssetItem asset, StockLot lot) {
+    private void validateScope(Long organizationId, Long unitId, AssetItem asset, StockLot lot) {
         StockLocation location = asset != null ? asset.location : lot.openingLocation;
-        if (!location.organizationLegacyId.equals(organization.id)) bad("The controlled item must belong to the selected organization.");
-        if (unit != null && !Objects.equals(location.unitLegacyId, unit.id))
+        if (!Objects.equals(location.organizationLegacyId, organizationId))
+            bad("The controlled item must belong to the selected organization.");
+        if (unitId != null && !Objects.equals(location.unitLegacyId, unitId))
             bad("The controlled item must belong to the selected unit.");
-        if (unit != null && !unit.organization.id.equals(organization.id)) bad("Unit must belong to the selected organization.");
+        requireUnitBelongsToOrganization(organizationId, unitId);
+    }
+
+    private void requireUnitBelongsToOrganization(Long organizationId, Long unitId) {
+        if (organizationId == null || organizationId <= 0) {
+            bad("Organization is required.");
+        }
+        if (masterData.findOrganization(organizationId, TENANT).isEmpty()) {
+            bad("Organization not found.");
+        }
+        if (unitId == null) return;
+
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organizational unit not found."
+            ));
+
+        CompanyId expectedCompany = CompanyId.of(
+            "comandos:organization:" + organizationId
+        );
+        if (!expectedCompany.equals(unit.companyId())) {
+            bad("Unit must belong to the selected organization.");
+        }
     }
     private long count(String query, long id) { return em.createQuery(query, Long.class).setParameter("id", id).getSingleResult(); }
     private static boolean workflowStatus(Object status) {
