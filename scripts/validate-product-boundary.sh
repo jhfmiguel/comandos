@@ -546,6 +546,7 @@ retired_unused_frontend_packages=(
   'swr'
   'tailwind-merge'
   'tw-animate-css'
+  'formik'
 )
 for retired_package in "${retired_unused_frontend_packages[@]}"; do
   grep -q "\"${retired_package}@[^\"]*\":" "$ROOT_DIR/app/yarn.lock" \
