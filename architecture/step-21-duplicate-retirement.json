@@ -324,10 +324,26 @@
       "id": "temporary-master-data-migrations",
       "classification": "retirement-plan",
       "safeToDelete": false,
-      "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.17 mapped temporary migration content inside the Oracle compatibility schema. Cleanup is deferred until the legacy persistence retirement gate passes so installation history and rollback support are not destroyed prematurely.",
+      "stepStatus": "mapped-blocked-by-21.12",
+      "reason": "Step 21.17 mapped temporary migration content inside the Oracle compatibility schema. The durable legacy-to-canonical crosswalk is temporary and may be retired only after cutover PASS. Canonical-id columns and their indexes are not temporary by default: once canonical IDs become the primary product references they must be retained, while legacy scalar IDs, legacy foreign keys and rollback-only support structures are the retirement targets.",
       "evidence": [
-        "api/src/main/resources/db/oracle/compatibility-schema.sql"
+        "api/src/main/resources/db/oracle/compatibility-schema.sql",
+        "scripts/oracle-step-21-retirement-audit.sql"
+      ],
+      "temporaryObjectsAfterCutoverPass": [
+        "ERP_MASTER_DATA_REFERENCE",
+        "UK_MASTER_DATA_REFERENCE_LEGACY",
+        "UK_MASTER_DATA_REFERENCE_CANONICAL",
+        "IX_MASTER_DATA_REFERENCE_ACTIVE"
+      ],
+      "retainAfterCutoverUnlessReplaced": [
+        "*_CANONICAL_ID product reference columns",
+        "indexes supporting *_CANONICAL_ID primary read paths"
+      ],
+      "retireAfterCutoverPass": [
+        "*_LEGACY_ID scalar reference columns after zero-reference validation",
+        "legacy foreign keys and constraints tied only to retired Master Data persistence",
+        "rollback-only migration support objects no longer required"
       ]
     },
     {
