@@ -251,9 +251,15 @@ done
 # Canonical shared frontend foundation.
 APP_PACKAGE="$ROOT_DIR/app/package.json"
 test -f "$APP_PACKAGE" || fail "app/package.json is missing"
-for package in '@faria-miguel/ui' '@faria-miguel/platform' '@faria-miguel/enterprise' '@faria-miguel/builder-core'; do
+for package in '@faria-miguel/ui' '@faria-miguel/platform'; do
   grep -q "\"$package\"" "$APP_PACKAGE" || fail "frontend must consume $package"
   grep -q "\"$package\"" "$MANIFEST" || fail "frontend foundation manifest must declare $package"
+done
+
+for package in '@faria-miguel/enterprise' '@faria-miguel/builder-core'; do
+  if grep -q "\"$package\"" "$APP_PACKAGE"; then
+    fail "frontend declares unused shared package $package; add it only when product source imports it"
+  fi
 done
 test -f "$ROOT_DIR/app/.npmrc" || fail "frontend must configure the Faria Miguel package registry"
 grep -q '@jhfmiguel:registry=https://npm.pkg.github.com' "$ROOT_DIR/app/.npmrc" || fail "frontend physical package registry must point to GitHub Packages"
@@ -291,7 +297,7 @@ printf 'Canonical security CurrentActor contracts are consumed from Faria Miguel
 printf 'Canonical security AccessDeniedException is consumed from Faria Miguel; product-local copies are forbidden.\n'
 printf 'Local security code is restricted to COMANDOS authentication/session and product-specific scope overlays.\n'
 printf 'COMANDOS authorization now consumes the canonical Faria Miguel ResourceAccessPolicy directly; redundant local authorization adapters are forbidden.\n'
-printf 'COMANDOS audit service implements the canonical Faria Miguel AuditSink directly; redundant audit adapters are forbidden.\n'
+printf 'Generic audit persistence is owned by Faria Miguel; COMANDOS audit code is restricted to product-specific recording/query/enrichment behavior.\n'
 printf 'COMANDOS workflow transition validation consumes the canonical Faria Miguel WorkflowEngine; local generic engine/definition copies are forbidden.\n'
 printf 'Local workflow code is restricted to the product-specific sensitive-operation overlay.\n'
 printf 'Duplicate workflow DTO contracts are forbidden; COMANDOS keeps only its product-specific workflow API surface.\n'
