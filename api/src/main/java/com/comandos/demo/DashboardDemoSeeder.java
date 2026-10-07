@@ -103,10 +103,10 @@ public class DashboardDemoSeeder implements ApplicationRunner {
         LocalDateTime returnedAt = deliveredAt.plusDays(2);
 
         Custody custody = new Custody();
-        custody.organization = organization;
-        custody.unit = unit;
-        custody.recipient = recipient;
-        custody.authorizer = authorizer;
+        custody.organizationLegacyId = organization.id;
+        custody.unitLegacyId = unit.id;
+        custody.recipientLegacyId = recipient.id;
+        custody.authorizerLegacyId = authorizer.id;
         custody.organizationName = organization.name;
         custody.unitName = unit.name;
         custody.recipientName = recipient.fullName;
