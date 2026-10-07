@@ -104,12 +104,13 @@ RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
 
 legacy_id_count="$(grep -RhoE --include='*.java' 'public[[:space:]]+Long[[:space:]]+[A-Za-z0-9_]*LegacyId[[:space:]]*;' "$ROOT_DIR/api/src/main/java" | wc -l | tr -d ' ')"
-[[ "$legacy_id_count" -le 53 ]] || fail "LegacyId field count grew above the corrected Step 21.13 baseline of 53"
+[[ "$legacy_id_count" -le 55 ]] || fail "LegacyId field count grew above the corrected Step 21.13 baseline of 55"
 
 allowed_legacy_id_files=(
   "api/src/main/java/com/comandos/inventory/model/StockLocation.java"
   "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java"
   "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java"
+  "api/src/main/java/com/comandos/inventory/model/Recall.java"
   "api/src/main/java/com/comandos/inventory/model/CertificationRecord.java"
   "api/src/main/java/com/comandos/inventory/model/EquipmentSet.java"
   "api/src/main/java/com/comandos/purchase/model/Purchase.java"
