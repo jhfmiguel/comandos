@@ -56,12 +56,12 @@
       "executionBlocker": {
         "repository": "jhfmiguel/faria-miguel",
         "visibility": "private",
-        "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback now exists but FARIA_MIGUEL_READ_TOKEN is not configured in the COMANDOS repository",
+        "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback exists but FARIA_MIGUEL_READ_TOKEN is not configured. Separately, all observed Faria Miguel private-repository Actions jobs terminate before runner steps/logs are created (steps=null, logs_url=null), so upstream publication never starts.",
         "observedRuns": [
           "37615171522 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
           "37576939731 Publish shared artifacts: upstream publication unresolved"
         ],
-        "diagnosis": "either publish the canonical Faria Miguel Maven artifacts successfully or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so the workflow can install the canonical foundation from source",
+        "diagnosis": "the workflow YAML/POM structure is not the immediate failure point. Resolve the private-repository Actions execution layer or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so COMANDOS can install the canonical foundation from source. Exact GitHub administrative/billing cause is not asserted because the available API does not expose it.",
         "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e"
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
@@ -294,7 +294,7 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "local-cleanup-complete-blocked-by-21.12",
-      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation, custody, maintenance, reservation, reconciliation, consumption and lifecycle no longer perform direct generic Master Data reads; CanonicalCoreReadService now requires CanonicalMasterDataDirectory and no longer contains read-time masterData == null or CanonicalMasterDataMapper fallbacks. CanonicalMasterDataMapper remains only where required by Step 21.12 shadow-write/backfill/parity migration paths. CanonicalMasterDataDirectory no longer has its deprecated test-only constructor that nulls canonical repositories. WorkflowService no longer treats ProductMasterDataReferenceSynchronizer or ProductCanonicalScopeResolver as nullable migration collaborators; CoreService no longer treats CanonicalMasterDataMirrorService as nullable either. Only explicit cutover flags decide migration behavior. Remaining compatibility services/mappers are isolated behind the explicit retirement inventory and cutover gate.",
+      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation, custody, maintenance, reservation, reconciliation, consumption and lifecycle no longer perform direct generic Master Data reads; CanonicalCoreReadService now requires CanonicalMasterDataDirectory and no longer contains read-time masterData == null or CanonicalMasterDataMapper fallbacks. CanonicalMasterDataMapper remains only where required by Step 21.12 shadow-write/backfill/parity migration paths. CanonicalMasterDataDirectory no longer has its deprecated test-only constructor that nulls canonical repositories. WorkflowService, CoreService, InventorySalesService and LifecycleService no longer treat required canonical collaborators as nullable. LifecycleService also no longer exposes its deprecated compatibility constructor and no longer navigates removed StockLocation organization/unit associations. Only explicit cutover flags decide migration behavior. Remaining compatibility services/mappers are isolated behind the explicit retirement inventory and cutover gate.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java"
