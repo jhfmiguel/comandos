@@ -934,6 +934,18 @@ for capability in audit documents identity; do
 done
 
 
+# Step 21.16: Oracle physical bridge inventory must stay aligned with the 59-field Java baseline before cutover.
+ORACLE_RETIREMENT_AUDIT="$ROOT_DIR/scripts/oracle-step-21-retirement-audit.sql"
+oracle_bridge_pair_count="$(
+  awk '
+    /with expected_bridge_columns \(table_name, column_name\) as \(/ {block++; next}
+    block == 1 && /select '\''ERP_/ {count++}
+    block == 1 && /^\)/ {print count; exit}
+  ' "$ORACLE_RETIREMENT_AUDIT"
+)"
+[[ "$oracle_bridge_pair_count" == "59" ]]   || fail "Step 21.16 Oracle expected bridge inventory must contain exactly 59 table/column pairs before cutover"
+grep -q 'ERP_MASTER_DATA_REFERENCE' "$ORACLE_RETIREMENT_AUDIT"   || fail "Step 21.16 Oracle audit must include the Master Data reference crosswalk"
+
 # Step 21.16: Oracle retirement audit must remain read-only.
 ORACLE_RETIREMENT_AUDIT="$ROOT_DIR/scripts/oracle-step-21-retirement-audit.sql"
 test -f "$ORACLE_RETIREMENT_AUDIT" || fail "missing Step 21.16 Oracle retirement audit"
