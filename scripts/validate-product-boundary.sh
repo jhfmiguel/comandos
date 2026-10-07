@@ -169,6 +169,19 @@ if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
   fail "product code still navigates retired Master Data objects"
 fi
 
+# Step 21.36: CoreAccessDemoSeeder may keep only the enumerated security demo compatibility references until cutover.
+CORE_ACCESS_DEMO="$ROOT_DIR/api/src/main/java/com/comandos/demo/CoreAccessDemoSeeder.java"
+core_access_demo_hits="$(
+  grep -nE '\b(Person|Organization|OrganizationalUnit)\b|\.person[[:space:]]*=|\.organization[[:space:]]*=|\.unit[[:space:]]*=' "$CORE_ACCESS_DEMO" 2>/dev/null || true
+)"
+core_access_demo_count="$(
+  printf '%s\n' "$core_access_demo_hits" | sed '/^$/d' | wc -l | tr -d ' '
+)"
+[[ "$core_access_demo_count" == "8" ]]   || fail "CoreAccessDemoSeeder compatibility surface changed; expected exactly 8 legacy Master Data references"
+grep -q 'Person person = one(Person.class, "taxId", "22222222222");' "$CORE_ACCESS_DEMO"   || fail "CoreAccessDemoSeeder person compatibility seed changed unexpectedly"
+grep -q 'Organization org = one(Organization.class, "acronym", "SSP-DEMO");' "$CORE_ACCESS_DEMO"   || fail "CoreAccessDemoSeeder organization compatibility seed changed unexpectedly"
+grep -q 'OrganizationalUnit unit = one(OrganizationalUnit.class, "code", "ARM-CENTRAL");' "$CORE_ACCESS_DEMO"   || fail "CoreAccessDemoSeeder unit compatibility seed changed unexpectedly"
+
 # Step 21.15: AccessPolicy may keep only the enumerated security-overlay Master Data paths until cutover.
 ACCESS_POLICY="$ROOT_DIR/api/src/main/java/com/comandos/security/service/AccessPolicy.java"
 access_policy_legacy_paths="$(
