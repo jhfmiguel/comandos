@@ -293,7 +293,7 @@
       "id": "legacy-master-data-code",
       "classification": "retirement-in-progress",
       "safeToDelete": false,
-      "stepStatus": "in-progress-blocked-by-21.12",
+      "stepStatus": "local-cleanup-complete-blocked-by-21.12",
       "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation, custody, maintenance, reservation, reconciliation, consumption and lifecycle no longer perform direct generic Master Data reads; CanonicalCoreReadService now requires CanonicalMasterDataDirectory and no longer contains read-time masterData == null or CanonicalMasterDataMapper fallbacks. CanonicalMasterDataMapper remains only where required by Step 21.12 shadow-write/backfill/parity migration paths. CanonicalMasterDataDirectory no longer has its deprecated test-only constructor that nulls canonical repositories. WorkflowService no longer treats ProductMasterDataReferenceSynchronizer or ProductCanonicalScopeResolver as nullable migration collaborators; CoreService no longer treats CanonicalMasterDataMirrorService as nullable either. Only explicit cutover flags decide migration behavior. Remaining compatibility services/mappers are isolated behind the explicit retirement inventory and cutover gate.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
@@ -650,7 +650,7 @@
       "id": "product-specific-only-validation",
       "classification": "boundary-validation",
       "safeToDelete": false,
-      "stepStatus": "advanced-blocked-by-master-data-retirement",
+      "stepStatus": "local-cleanup-complete-pending-cutover-retirement",
       "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, retired generic package roots have no surviving imports, and demo seeders/verifiers were aligned to scalar cutover identifiers instead of removed Master Data JPA associations. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific migration bridges.",
       "completedCleanup": [
         "removed empty com.comandos.enterprise package marker",
@@ -766,7 +766,7 @@
       "id": "final-legacy-scan",
       "classification": "validation",
       "safeToDelete": false,
-      "stepStatus": "advanced-known-bridges-only",
+      "stepStatus": "local-scan-complete-known-cutover-bridges-only",
       "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository filename scanning prevents old/backup/deprecated/legacy/copy artifacts from returning; explicit COMANDOS imports are checked against real source types; retired generic endpoint references, generic-root imports, nullable canonical collaborator fallbacks and obsolete demo Master Data associations are also gated. The only allowed migration-named files remain db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Final source-level retirement still depends on Step 21.12."
     },
     {
