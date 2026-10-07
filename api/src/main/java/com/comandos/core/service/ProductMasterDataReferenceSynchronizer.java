@@ -11,6 +11,7 @@ import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
 import com.comandos.custody.model.Custody;
+import com.comandos.custody.model.CustodyResponsibility;
 import com.comandos.donation.model.Donation;
 import com.comandos.sales.model.InventorySale;
 import com.comandos.maintenance.model.WorkOrder;
@@ -153,6 +154,14 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof Custody custody) {
             synchronizeCustody(custody);
+            return true;
+        }
+        if (entity instanceof CustodyResponsibility responsibility) {
+            responsibility.responsiblePersonCanonicalId = require(
+                MasterDataReferenceService.PERSON,
+                responsibility.responsiblePersonLegacyId,
+                "custody responsibility person"
+            );
             return true;
         }
         if (entity instanceof Donation donation) {
