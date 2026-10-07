@@ -14,7 +14,7 @@ import { useSession } from "components/auth/session-provider";
 import { Layout } from "components/layout";
 import { Message } from "components/common/message";
 import styles from "components/erp/shared/workspace.module.css";
-import { Pagination as PlatformPagination } from "platform/components/pagination";
+import { Pagination as PlatformPagination } from "@faria-miguel/ui/pagination";
 
 const inventory = createErpService("inventory");
 const fields = [
