@@ -2,9 +2,10 @@ import { readdir, readFile } from "node:fs/promises"
 import { extname, join, relative, resolve } from "node:path"
 
 const root = resolve(import.meta.dirname, "..")
-const platformRoot = resolve(root, "src", "platform")
+const srcRoot = resolve(root, "src")
+const platformRoot = resolve(srcRoot, "platform")
 
-const forbidden = [
+const forbiddenPlatformTokens = [
     "components/erp/",
     "components/weapons/",
     "components/sales/",
@@ -22,6 +23,17 @@ const forbidden = [
     "api/services/sale",
     "api/services/transfer",
     "api/services/weapon"
+]
+
+const retiredFrontendImports = [
+    "platform/components/data-table",
+    "platform/components/form-field",
+    "platform/components/pagination",
+    "platform/components/confirm-dialog",
+    "platform/data",
+    "platform/hooks",
+    "platform/shared-foundation",
+    "platform/error-boundary"
 ]
 
 async function filesUnder(directory) {
@@ -45,14 +57,26 @@ async function filesUnder(directory) {
 }
 
 const violations = []
+const sourceFiles = await filesUnder(srcRoot)
 
-for (const file of await filesUnder(platformRoot)) {
+for (const file of sourceFiles) {
     const source = await readFile(file, "utf8")
+    const relativePath = relative(root, file)
 
-    for (const token of forbidden) {
+    for (const token of retiredFrontendImports) {
         if (source.includes(token)) {
             violations.push(
-                `${relative(root, file)} imports forbidden domain token: ${token}`
+                `${relativePath} references retired frontend import: ${token}`
+            )
+        }
+    }
+
+    if (!file.startsWith(platformRoot)) continue
+
+    for (const token of forbiddenPlatformTokens) {
+        if (source.includes(token)) {
+            violations.push(
+                `${relativePath} imports forbidden domain token: ${token}`
             )
         }
     }
