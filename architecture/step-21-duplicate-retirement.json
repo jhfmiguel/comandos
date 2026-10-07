@@ -545,6 +545,77 @@
         "api/scripts/start-with-demo-data.ps1"
       ],
       "canonicalScript": "scripts/run-oracle-demo.ps1"
+    },
+    {
+      "id": "architectural-manifests",
+      "classification": "architecture-governance",
+      "safeToDelete": false,
+      "stepStatus": "completed",
+      "reason": "Step 21.31 completed: product-boundary, master-data foreign-key inventory, duplicate-retirement inventory and master-data retirement inventory are synchronized with the current cutovers and blockers.",
+      "evidence": [
+        "architecture/product-boundary.json",
+        "architecture/master-data-foreign-keys.json",
+        "architecture/step-21-duplicate-retirement.json",
+        "architecture/step-21-master-data-retirement.json"
+      ]
+    },
+    {
+      "id": "product-specific-only-validation",
+      "classification": "boundary-validation",
+      "safeToDelete": false,
+      "stepStatus": "in-progress-blocked-by-master-data-retirement",
+      "reason": "Step 21.32 validates that generic finance/contracts/notifications/messaging/analytics and obsolete sales infrastructure are absent, while inventory/procurement/sales/documents are explicitly product overlays. Final purity cannot be declared until legacy Master Data compatibility code from Steps 21.12-21.17 is retired.",
+      "allowedProductOverlays": [
+        "armament/ammunition",
+        "custody",
+        "controlled inventory/regulatory traceability",
+        "controlled-material procurement/receiving",
+        "controlled-asset alienation",
+        "maintenance/disposal/donation",
+        "escort/intelligence/operations/transport",
+        "security public/private rules",
+        "process document policies",
+        "local authentication/session and scope overlays"
+      ]
+    },
+    {
+      "id": "final-backend-tests",
+      "classification": "validation",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-artifact-publication",
+      "reason": "Step 21.33 cannot run Maven test/verify end-to-end because the canonical Faria Miguel Maven artifacts are unavailable from GitHub Packages. Repository-level architecture/product-boundary gates do pass."
+    },
+    {
+      "id": "final-frontend-tests",
+      "classification": "validation",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-artifact-publication",
+      "reason": "Step 21.34 cannot run yarn install/lint/build end-to-end because @faria-miguel/platform and @faria-miguel/ui physical packages are unavailable from GitHub Packages. Source/import boundary validation is already passing."
+    },
+    {
+      "id": "automatic-gates",
+      "classification": "validation",
+      "safeToDelete": false,
+      "stepStatus": "completed-current-head-family",
+      "reason": "Step 21.35 automatic Product boundary and Faria Miguel architecture gates passed on the Step 21 cleanup line. They enforce no sibling product dependencies, no recreated shared roots/contracts, canonical frontend ownership and retirement regression guards.",
+      "evidence": [
+        "GitHub Actions Product boundary run 37569660581: success",
+        "GitHub Actions Faria Miguel automatic architecture gates run 37569660593: success"
+      ]
+    },
+    {
+      "id": "final-legacy-scan",
+      "classification": "validation",
+      "safeToDelete": false,
+      "stepStatus": "in-progress-known-bridges-only",
+      "reason": "Step 21.36 has a controlled known-legacy baseline: 44 *LegacyId fields plus the explicit Master Data migration/shadow/backfill/crosswalk services. Regression gates prevent growth. Final zero/allowed-only scan depends on Step 21.12 runtime retirement and Steps 21.13-21.17 deletion."
+    },
+    {
+      "id": "final-step-closure",
+      "classification": "closure",
+      "safeToDelete": false,
+      "stepStatus": "blocked",
+      "reason": "Step 21.37 cannot be closed until canonical artifacts are published, Step 21.12 runtime retirement gate passes, Steps 21.13-21.17 remove the remaining Master Data legacy structures, and final backend/frontend validations succeed."
     }
   ]
 }
