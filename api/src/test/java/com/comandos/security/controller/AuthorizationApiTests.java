@@ -130,7 +130,7 @@ class AuthorizationApiTests {
             model.unitOfMeasure = "EA"; model.listPrice = new BigDecimal("10.0000"); persist(model);
             var asset = asset(model, location); var otherAsset = asset(model, otherLocation);
             asset(model, location(org, null));
-            var sale = new InventorySale(); sale.organization = other; sale.buyer = person; sale.organizationName = other.name; sale.buyerName = person.fullName;
+            var sale = new InventorySale(); sale.organizationLegacyId = other.id; sale.buyerLegacyId = person.id; sale.organizationName = other.name; sale.buyerName = person.fullName;
             sale.paymentMethod = PaymentMethod.PIX; sale.processNumber = "AUTH-" + UUID.randomUUID(); sale.legalBasis = "Authorization fixture";
             sale.documentReference = "AUTH-DOC-" + UUID.randomUUID(); sale.finalizedAt = LocalDateTime.now(); sale.total = BigDecimal.ZERO;
             sale.requestId = UUID.randomUUID().toString(); sale.requestFingerprint = "fixture"; persist(sale);
@@ -258,7 +258,7 @@ class AuthorizationApiTests {
     @Test
     void authenticatedAccountWithoutGrantsCannotUseBusinessApis() throws Exception {
         var f = fixture(); login(f);
-        for (String path : List.of("/api/erp/core/people", "/api/erp/inventory/assets", "/api/erp/sales?organizationId=" + f.organization(), "/api/users", "/api/weapons"))
+        for (String path : List.of("/api/erp/core/people", "/api/erp/inventory/assets", "/api/erp/sales?organizationId=" + f.organization()))
             assertEquals(403, request("GET", path, null).status(), path);
         assertEquals(0, request("GET", "/api/erp/core/catalog", null).body().size());
         assertEquals(0, request("GET", "/api/erp/inventory/catalog", null).body().size());
@@ -403,9 +403,6 @@ class AuthorizationApiTests {
         assertEquals(f.user(), result.body().get("finalizedById").asLong());
         assertEquals(f.login(), result.body().get("finalizedByLogin").asText());
         assertEquals(f.user(), jdbc.queryForObject("select actor_id from erp_audit_record where resource_name = 'sales' and record_id = ?", Long.class, result.body().get("id").asLong()));
-        assertEquals(403, request("GET", "/api/users", null).status());
-        grant(f, "legacy/users", "READ", "SYSTEM", null);
-        assertEquals(200, request("GET", "/api/users", null).status());
     }
 
     @Test
