@@ -497,7 +497,13 @@
           "Update architecture inventory and Oracle bridge inventory in the same commit.",
           "Do not remove CustodyResponsibility.roleAssignmentLegacyId as part of generic Master Data retirement unless a product-owned replacement is explicitly introduced."
         ],
-        "gate": "Product boundary + architecture gates must pass with the new lower LegacyId count."
+        "gate": "Product boundary + architecture gates must pass with the new lower LegacyId count.",
+        "completionEvidence": [
+          "legacyIdRetirement.currentCount updated to the detected Java count",
+          "No removed *LegacyId declaration remains in source",
+          "Oracle physical bridge inventory reduced in the same change for every physically dropped field",
+          "Product boundary and architecture gates pass"
+        ]
       },
       {
         "step": "21.14",
@@ -521,7 +527,13 @@
           "EconomicActivity",
           "MasterDataReference"
         ],
-        "gate": "No production import, JPQL path or demo dependency may reference a removed entity."
+        "gate": "No production import, JPQL path or demo dependency may reference a removed entity.",
+        "completionEvidence": [
+          "Retired legacy entity files are absent",
+          "No production/test/demo import or JPQL reference targets a removed entity",
+          "CoreCatalog/Core write compatibility is updated to canonical contracts",
+          "Product boundary and backend compilation pass"
+        ]
       },
       {
         "step": "21.15",
@@ -553,7 +565,13 @@
           "CanonicalProfessionalQualificationDirectory",
           "CanonicalCoreReadService"
         ],
-        "gate": "Application startup and product flows must work without bridge bean creation."
+        "gate": "Application startup and product flows must work without bridge bean creation.",
+        "completionEvidence": [
+          "Migration/parity/reference/shadow-write bridge beans selected for retirement are absent",
+          "No constructor or service still depends on retired bridge types",
+          "Normal application startup succeeds without bridge bean creation",
+          "Canonical product read/write flows remain functional"
+        ]
       },
       {
         "step": "21.16",
@@ -572,7 +590,14 @@
             "known retired generic CRUD tables USER/WEAPON if still present"
           ],
           "rule": "The audit is read-only. Destructive DDL is generated only after Step 21.12 PASS and after Java 21.13-21.15 references are removed."
-        }
+        },
+        "completionEvidence": [
+          "Read-only Oracle audit captured before DDL",
+          "Only approved legacy bridge columns/constraints/indexes/tables are dropped",
+          "Canonical *_CANONICAL_ID structures required by primary reads remain",
+          "Post-DDL Oracle audit reports no unintended legacy objects",
+          "Application startup and Master Data smoke validation pass"
+        ]
       },
       {
         "step": "21.17",
@@ -599,6 +624,13 @@
           "Step 21.15 migration/parity/reference/shadow-write services removed",
           "No normal runtime bean depends on the three 21.17 helpers",
           "Rollback policy no longer requires the migration bridge"
+        ],
+        "completionEvidence": [
+          "MasterDataMigrationRunner removed",
+          "MasterDataCutoverStatusService removed when no rollback policy consumes it",
+          "MasterDataMigrationConfigurationGuard removed after shadow-write retirement",
+          "No migration-only configuration property is required by normal runtime",
+          "Final backend/frontend/gate/legacy-scan validations pass"
         ]
       }
     ],
@@ -643,6 +675,7 @@
       "foreignKeyRetirementInventory": "architecture/master-data-foreign-keys.json",
       "oraclePhysicalInventory": "scripts/oracle-step-21-retirement-audit.sql",
       "invariant": "Java legacy-id inventory and Oracle expected bridge-column inventory must remain aligned at 59 before cutover and may only decrease together after Step 21.12 PASS, except product-specific fields explicitly retained."
-    }
+    },
+    "executionEvidenceRule": "A phase may leave blocked/pending state only when every completionEvidence item for that phase is satisfied and recorded in the Step 21 manifests or CI evidence."
   }
 }
