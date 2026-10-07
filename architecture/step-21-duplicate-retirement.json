@@ -669,6 +669,18 @@
         "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
         "scripts/validate-product-boundary.sh"
       ]
+    },
+    {
+      "id": "donation-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "DonationService and DonationReceiptService resolve organization, unit, donor and donee through CanonicalMasterDataDirectory and use scalar legacy/canonical identifiers. Donation retains only product-specific transfer, receiving, ownership and stock-movement rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/donation/service/DonationService.java",
+        "api/src/main/java/com/comandos/donation/service/DonationReceiptService.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
