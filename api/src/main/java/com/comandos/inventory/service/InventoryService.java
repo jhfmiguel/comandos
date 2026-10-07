@@ -4,6 +4,7 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.MasterDataReferenceService;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.InventoryCountResultType;
@@ -39,6 +40,7 @@ public class InventoryService {
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final MasterDataReferenceService canonicalReferences;
+    private final CanonicalMasterDataDirectory masterData;
     private static final TenantId TENANT = TenantId.of("comandos");
 
     private final boolean canonicalProductReferenceReadEnabled;
@@ -53,6 +55,7 @@ public class InventoryService {
             AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
             MasterDataReferenceService canonicalReferences,
+            CanonicalMasterDataDirectory masterData,
             @org.springframework.beans.factory.annotation.Value(
                 "${comandos.master-data.product-reference-primary-read.enabled:false}"
             ) boolean canonicalProductReferenceReadEnabled,
@@ -64,6 +67,7 @@ public class InventoryService {
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
         this.canonicalReferences = canonicalReferences;
+        this.masterData = masterData;
         this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
         this.canonicalInventoryLedger = canonicalInventoryLedger;
         this.canonicalStockLocations = canonicalStockLocations;
@@ -81,6 +85,7 @@ public class InventoryService {
             access,
             audit,
             masterDataReferences,
+            null,
             null,
             false,
             null,
@@ -1043,12 +1048,10 @@ public class InventoryService {
             result.put("unitCanonicalId", location.unitCanonicalId);
             result.put("organizationId", location.organizationLegacyId);
             result.put("unitId", location.unitLegacyId);
-            Organization organization = location.organizationLegacyId == null
-                ? null : em.find(Organization.class, location.organizationLegacyId);
-            OrganizationalUnit unit = location.unitLegacyId == null
-                ? null : em.find(OrganizationalUnit.class, location.unitLegacyId);
-            if (organization != null) labels.put("organizationId", label(organization));
-            if (unit != null) labels.put("unitId", label(unit));
+            String organizationLabel = organizationLabel(location.organizationLegacyId);
+            String unitLabel = unitLabel(location.unitLegacyId);
+            if (organizationLabel != null) labels.put("organizationId", organizationLabel);
+            if (unitLabel != null) labels.put("unitId", unitLabel);
         }
         if (entity instanceof CertificationRecord certification) {
             result.put("organizationCanonicalId", certification.organizationCanonicalId);
@@ -1071,12 +1074,10 @@ public class InventoryService {
         if (entity instanceof AssetItem asset) {
             result.put("organizationId", asset.location.organizationLegacyId);
             result.put("unitId", asset.location.unitLegacyId);
-            Organization organization = asset.location.organizationLegacyId == null
-                ? null : em.find(Organization.class, asset.location.organizationLegacyId);
-            OrganizationalUnit unit = asset.location.unitLegacyId == null
-                ? null : em.find(OrganizationalUnit.class, asset.location.unitLegacyId);
-            if (organization != null) labels.put("organizationId", label(organization));
-            if (unit != null) labels.put("unitId", label(unit));
+            String organizationLabel = organizationLabel(asset.location.organizationLegacyId);
+            String unitLabel = unitLabel(asset.location.unitLegacyId);
+            if (organizationLabel != null) labels.put("organizationId", organizationLabel);
+            if (unitLabel != null) labels.put("unitId", unitLabel);
         }
         for (var field : spec.fields()) {
             if ((entity instanceof StockLocation
@@ -1093,6 +1094,20 @@ public class InventoryService {
         }
         result.put("referenceLabels", labels);
         return result;
+    }
+
+    private String organizationLabel(Long legacyId) {
+        if (legacyId == null || masterData == null) return null;
+        return masterData.findOrganization(legacyId, TENANT)
+            .map(com.fariamiguel.enterprise.organization.Organization::legalName)
+            .orElse(null);
+    }
+
+    private String unitLabel(Long legacyId) {
+        if (legacyId == null || masterData == null) return null;
+        return masterData.findUnit(legacyId, TENANT)
+            .map(com.fariamiguel.tenancy.api.OrganizationalUnit::name)
+            .orElse(null);
     }
 
     private String label(CoreEntity entity) {
