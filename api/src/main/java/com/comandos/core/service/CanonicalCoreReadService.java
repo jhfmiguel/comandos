@@ -64,15 +64,6 @@ public class CanonicalCoreReadService {
         this.masterData = masterData;
     }
 
-    @Deprecated
-    CanonicalCoreReadService(
-            EntityManager entityManager,
-            AccessPolicy access) {
-        this.entityManager = entityManager;
-        this.access = access;
-        this.masterData = null;
-    }
-
     public boolean supports(String resource) {
         return SUPPORTED.contains(resource);
     }
