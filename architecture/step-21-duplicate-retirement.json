@@ -650,6 +650,23 @@
       ]
     },
     {
+      "id": "legacy-generic-sales-flow",
+      "classification": "removed",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.32/21.36 retired the obsolete generic /api/sales stack. The legacy /sales/new-sale URL now redirects to the product-specific /erp/sales implementation backed by InventorySalesService. The old frontend form/service/model and backend REST controller were removed.",
+      "removedFiles": [
+        "app/src/components/sales/index.tsx",
+        "app/src/components/sales/form.tsx",
+        "app/src/api/services/sale.service.ts",
+        "app/src/api/models/sales/index.ts",
+        "api/src/main/java/com/comandos/rest/sales/SalesController.java",
+        "api/src/main/java/com/comandos/model/PaymentMethod.java"
+      ],
+      "canonicalRoute": "/erp/sales",
+      "legacyRouteCompatibility": "/sales/new-sale redirects to /erp/sales"
+    },
+    {
       "id": "final-backend-tests",
       "classification": "validation",
       "safeToDelete": false,
