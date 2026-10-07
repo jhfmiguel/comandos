@@ -84,7 +84,12 @@
     "frontend-import-migration-complete",
     "frontend-final-build-validation-deferred-to-21.34",
     "workflow-generic-cleanup-complete",
-    "workflow-canonical-scope-cutover-aligned"
+    "workflow-canonical-scope-cutover-aligned",
+    "canonical-contacts-read-cutover",
+    "canonical-party-roles-read-cutover",
+    "canonical-party-documents-read-cutover",
+    "canonical-professional-qualifications-read-cutover",
+    "master-data-canonical-domain-finalization"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
