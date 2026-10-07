@@ -369,6 +369,13 @@ if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.
   fail "inventory code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
 fi
 
+# Donation and custody product overlays must not read generic Master Data entities directly.
+for domain in donation custody; do
+  if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person)|em\.find\((Organization|OrganizationalUnit|Person)\.class|locked\((Organization|OrganizationalUnit|Person)\.class' "$ROOT_DIR/api/src/main/java/com/comandos/$domain"; then
+    fail "$domain must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
+  fi
+done
+
 # Step 21.20: purchase/procurement must not depend on legacy master-data entities directly.
 if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|Person|OrganizationalUnit)' "$ROOT_DIR/api/src/main/java/com/comandos/purchase"; then
   fail "purchase/procurement code must consume canonical Master Data instead of legacy Organization/Person/Unit entities"
