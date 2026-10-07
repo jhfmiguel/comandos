@@ -117,11 +117,7 @@ public class EquipmentReceivingService {
                 ));
             receiving.receivingOrganizationLegacyId = organizationId;
             receiving.receivingOrganizationName = organization.legalName();
-            if (canonicalScope != null) {
-                receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organizationId);
-            } else if (masterDataReferences != null) {
-                masterDataReferences.synchronizeForBackfill(receiving);
-            }
+            receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organizationId);
         }
 
         receiving.receivingUnit = clean(request.receivingUnit());
