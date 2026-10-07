@@ -262,7 +262,7 @@
       "classification": "blocked-retirement-backlog",
       "safeToDelete": false,
       "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.13 corrected the controlled baseline to 49 *LegacyId fields after hidden ProcurementProcess, EquipmentSet and EquipmentSetOperation JPA associations were surfaced and converted to scalar bridges. The count may only decrease; physical deletion remains blocked by Step 21.12.",
+      "reason": "Step 21.13 corrected the controlled baseline to 53 *LegacyId fields after hidden ProcurementProcess, EquipmentSet/Operation, CertificationRecord and ExpirationRecord JPA associations were surfaced and converted to scalar bridges. The count may only decrease; physical deletion remains blocked by Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "scripts/validate-product-boundary.sh"
@@ -371,7 +371,10 @@
         "obsolete InventoryService compatibility constructor removed",
         "EquipmentSet Organization/Unit JPA associations removed",
         "EquipmentSetOperation Organization/Unit JPA associations removed",
-        "equipment set scopes covered by canonical backfill/parity"
+        "equipment set scopes covered by canonical backfill/parity",
+        "CertificationRecord Organization/Unit JPA associations removed",
+        "ExpirationRecord Organization/Unit JPA associations removed",
+        "certification/expiration scopes covered by canonical synchronization/backfill/parity"
       ]
     },
     {
@@ -629,7 +632,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 currently tracks a corrected 49-field *LegacyId baseline after surfacing and converting hidden JPA master-data associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a corrected 53-field *LegacyId baseline after surfacing and converting hidden Master Data JPA associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
     },
     {
       "id": "final-step-closure",
