@@ -363,7 +363,11 @@
       "obsolete WorkflowService compatibility constructor removed",
       "generic master-data reads routed through canonical read services",
       "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory",
-      "CanonicalCoreReadService read-time masterData == null / CanonicalMasterDataMapper fallbacks removed; the mapper remains only in migration shadow-write/backfill/parity paths until Step 21.12"
+      "CanonicalCoreReadService read-time masterData == null / CanonicalMasterDataMapper fallbacks removed; the mapper remains only in migration shadow-write/backfill/parity paths until Step 21.12",
+      "Product boundary regex matcher conflict removed; direct legacy Master Data and nullable canonical collaborator scans now execute as intended",
+      "WorkflowService no longer directly loads Organization/OrganizationalUnit; validation goes through CanonicalMasterDataDirectory",
+      "scalarized purchase, receiving, transfer, donation, reservation, lifecycle, consumption, disposal, maintenance, custody, reconciliation and inventory services no longer treat canonicalScope/masterDataReferences as nullable",
+      "ComplianceService/CompliancePolicy organization-unit association remains an explicit Step 21.12 cutover exception"
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
