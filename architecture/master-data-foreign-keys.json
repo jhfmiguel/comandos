@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "updatedAt": "2026-10-07",
-  "purpose": "Track product-domain foreign keys that still depend on legacy COMANDOS master-data JPA entities before canonical persistence retirement.",
+  "purpose": "Track Step 21 Master Data association retirement: scalarized product models that formerly referenced COMANDOS Master Data entities, their remaining scalar compatibility bridges, and any operational association retained only to derive product scope.",
   "canonicalReferenceCrosswalk": "erp_master_data_reference",
   "states": [
     "legacy-jpa-association",
@@ -278,5 +278,12 @@
       "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
     }
   ],
-  "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
+  "retirementRule": "All scalarized Master Data model entries must remain retired from legacy JPA association. Scalar compatibility bridge fields may only be removed after Step 21.12 PASS. Operational product associations such as StockMovement.location are not legacy Master Data bridges.",
+  "summary": {
+    "scalarizedModelCount": 25,
+    "legacyScalarBridgeFieldCount": 59,
+    "operationalDerivedReferenceCount": 1,
+    "operationalDerivedReference": "StockMovement.location",
+    "rule": "Every scalarized model listed by architecture/step-21-master-data-retirement.json must remain state=retired here. The 59 scalar bridge fields may only shrink after Step 21.12 PASS; StockMovement.location is operational inventory structure and is not part of the 59 LegacyId baseline."
+  }
 }
