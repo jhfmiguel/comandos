@@ -670,7 +670,19 @@ public class InventoryService {
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
             // share this check under the catalog lock, before stock or audit writes.
-            if (entity instanceof EquipmentSet equipmentSet) {
+            if (entity instanceof CertificationRecord certification) {
+            result.put("organizationCanonicalId", certification.organizationCanonicalId);
+            result.put("unitCanonicalId", certification.unitCanonicalId);
+            result.put("organizationId", certification.organizationLegacyId);
+            result.put("unitId", certification.unitLegacyId);
+        }
+        if (entity instanceof ExpirationRecord expiration) {
+            result.put("organizationCanonicalId", expiration.organizationCanonicalId);
+            result.put("unitCanonicalId", expiration.unitCanonicalId);
+            result.put("organizationId", expiration.organizationLegacyId);
+            result.put("unitId", expiration.unitLegacyId);
+        }
+        if (entity instanceof EquipmentSet equipmentSet) {
             result.put("organizationCanonicalId", equipmentSet.organizationCanonicalId);
             result.put("unitCanonicalId", equipmentSet.unitCanonicalId);
             result.put("organizationId", equipmentSet.organizationLegacyId);
@@ -1044,7 +1056,10 @@ public class InventoryService {
             if (unit != null) labels.put("unitId", label(unit));
         }
         for (var field : spec.fields()) {
-            if ((entity instanceof StockLocation || entity instanceof EquipmentSet)
+            if ((entity instanceof StockLocation
+                    || entity instanceof EquipmentSet
+                    || entity instanceof CertificationRecord
+                    || entity instanceof ExpirationRecord)
                     && Set.of("organizationId", "unitId").contains(field.name())) {
                 continue;
             }
