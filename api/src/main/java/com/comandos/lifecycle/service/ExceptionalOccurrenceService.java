@@ -1,8 +1,8 @@
 package com.comandos.lifecycle.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.AssetItem;
 import com.comandos.inventory.model.AssetStatus;
 import com.comandos.inventory.model.StockBalance;
@@ -20,6 +20,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Set;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional(readOnly = true)
 public class ExceptionalOccurrenceService {
+    private static final TenantId TENANT = TenantId.of("comandos");
     private static final Set<String> TYPES = Set.of(
         "LOSS", "LOST", "THEFT", "ROBBERY", "SEIZURE", "RECOVERY", "RECOVERED",
         "DAMAGE", "ACCIDENT", "RECALL", "INVESTIGATION", "DIVERGENCE", "BLOCK"
@@ -40,26 +44,39 @@ public class ExceptionalOccurrenceService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final CanonicalMasterDataDirectory masterData;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public ExceptionalOccurrenceService(EntityManager em, AccessPolicy access, AuditService audit) {
+    public ExceptionalOccurrenceService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            CanonicalMasterDataDirectory masterData,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
         this.audit = audit;
+        this.masterData = masterData;
+        this.canonicalScope = canonicalScope;
     }
 
     @Transactional
     public OccurrenceView occur(OccurrenceRequest request) {
         validateRequest(request);
         access.requireScope("inventory/assets", "UPDATE", request.organizationId(), request.unitId());
-        Organization organization = locked(Organization.class, request.organizationId());
-        OrganizationalUnit unit = unit(organization.id, request.unitId());
+        OrganizationSnapshot organization = organization(request.organizationId());
+        UnitSnapshot unit = unit(organization.id(), request.unitId());
         String type = canonical(request.type());
         if (!TYPES.contains(type)) bad("Unsupported exceptional occurrence type.");
         if (LEGAL_DOCUMENT_TYPES.contains(type) && blank(request.documentReference())) bad("This occurrence type requires a document reference.");
 
         ExceptionOccurrence occurrence = new ExceptionOccurrence();
-        occurrence.organization = organization;
-        occurrence.unit = unit;
+        occurrence.organizationLegacyId = organization.id();
+        occurrence.unitLegacyId = unit == null ? null : unit.id();
+        if (canonicalScope != null) {
+            occurrence.organizationCanonicalId = canonicalScope.organization(organization.id());
+            occurrence.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+        }
         occurrence.type = type;
         occurrence.description = request.description().trim();
         occurrence.investigation = clean(request.investigation());
@@ -72,7 +89,7 @@ public class ExceptionalOccurrenceService {
 
         if (request.assetId() != null) {
             AssetItem asset = locked(AssetItem.class, request.assetId());
-            scope(asset.location, organization.id, request.unitId());
+            scope(asset.location, organization.id(), request.unitId());
             if (AssetStatus.terminalCodes().contains(asset.status)) conflict("Terminal assets cannot receive new lifecycle occurrences.");
             occurrence.asset = asset;
             occurrence.previousItemStatus = asset.status;
@@ -84,7 +101,7 @@ public class ExceptionalOccurrenceService {
             StockBalance balance = request.balanceId() == null ? null : locked(StockBalance.class, request.balanceId());
             if (balance != null && !balance.lot.id.equals(lot.id)) bad("Balance does not belong to selected lot.");
             StockLocation location = balance == null ? lot.openingLocation : balance.location;
-            scope(location, organization.id, request.unitId());
+            scope(location, organization.id(), request.unitId());
             if (AssetStatus.terminalCodes().contains(lot.status)) conflict("Terminal lots cannot receive new lifecycle occurrences.");
             occurrence.lot = lot;
             occurrence.balance = balance;
@@ -167,11 +184,22 @@ public class ExceptionalOccurrenceService {
         if (page < 0) bad("Invalid page.");
         access.requireScope("inventory/assets", "READ", organizationId, unitId);
         unit(organizationId, unitId);
-        String where = " where x.organization.id=:organization" + (unitId == null ? "" : " and x.unit.id=:unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String where = " where "
+            + (canonical ? "x.organizationCanonicalId" : "x.organizationLegacyId")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "x.unitCanonicalId" : "x.unitLegacyId")
+                + "=:unit");
         var query = em.createQuery("select x from ExceptionOccurrence x" + where + " order by x.id desc", ExceptionOccurrence.class);
         var count = em.createQuery("select count(x) from ExceptionOccurrence x" + where, Long.class);
-        query.setParameter("organization", organizationId); count.setParameter("organization", organizationId);
-        if (unitId != null) { query.setParameter("unit", unitId); count.setParameter("unit", unitId); }
+        query.setParameter("organization", canonical ? scope.organizationId() : organizationId);
+        count.setParameter("organization", canonical ? scope.organizationId() : organizationId);
+        if (unitId != null) {
+            query.setParameter("unit", canonical ? scope.unitId() : unitId);
+            count.setParameter("unit", canonical ? scope.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * 20).setMaxResults(20).getResultList().stream().map(this::view).toList(), count.getSingleResult(), page, 20);
     }
 
@@ -223,21 +251,55 @@ public class ExceptionalOccurrenceService {
     }
 
     private void require(ExceptionOccurrence occurrence, String action) {
-        access.requireScope("inventory/assets", action, occurrence.organization.id, occurrence.unit == null ? null : occurrence.unit.id);
+        access.requireScope("inventory/assets", action, occurrence.organizationLegacyId, occurrence.unitLegacyId);
     }
 
-    private OrganizationalUnit unit(long organizationId, Long id) {
+    private UnitSnapshot unit(long organizationId, Long id) {
         if (id == null) return null;
-        OrganizationalUnit value = em.find(OrganizationalUnit.class, id);
-        if (value == null || !value.organization.id.equals(organizationId)) bad("Unit does not belong to organization.");
-        if (!Boolean.TRUE.equals(value.active)) bad("Selected unit must be active.");
-        return value;
+        var value = masterData.findUnit(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Unit does not belong to organization."
+            ));
+        if (!value.active()
+                || !CompanyId.of("comandos:organization:" + organizationId)
+                    .equals(value.companyId())) {
+            bad("Select an active unit in the organization.");
+        }
+        return new UnitSnapshot(id, value.name());
+    }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
     }
 
     private void scope(StockLocation location, long organizationId, Long unitId) {
         if (location == null || !Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
-        if (!location.organization.id.equals(organizationId) || unitId != null && (location.unit == null || !location.unit.id.equals(unitId))) bad("Item is outside selected scope.");
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Item is outside selected scope.");
+            }
+            return;
+        }
+        if (!java.util.Objects.equals(location.organizationLegacyId, organizationId)
+                || unitId != null && !java.util.Objects.equals(location.unitLegacyId, unitId)) {
+            bad("Item is outside selected scope.");
+        }
     }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name) {}
 
     private <T> T locked(Class<T> type, long id) {
         T value = em.find(type, id, LockModeType.PESSIMISTIC_WRITE);
