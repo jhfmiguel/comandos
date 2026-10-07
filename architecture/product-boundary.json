@@ -77,7 +77,10 @@
     "identity-canonical-master-data-resolution",
     "security-canonical-contract-review",
     "frontend-unused-package-cleanup",
-    "frontend-boundary-gate-aligned"
+    "frontend-boundary-gate-aligned",
+    "messaging-local-layer-removed",
+    "audit-generic-cleanup-complete",
+    "identity-generic-cleanup-complete"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
