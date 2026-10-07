@@ -46,8 +46,8 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
         LocalDateTime completedAt = LocalDateTime.now().minusMinutes(30);
 
         MaintenancePlan plan = new MaintenancePlan();
-        plan.organization = asset.location.organization;
-        plan.unit = asset.location.unit;
+        plan.organizationLegacyId = asset.location.organizationLegacyId;
+        plan.unitLegacyId = asset.location.unitLegacyId;
         plan.name = "Plano preventivo demo";
         plan.type = "PREVENTIVE";
         plan.periodicityDays = 180;
@@ -66,8 +66,8 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
         entityManager.persist(issue);
 
         WorkOrder workOrder = new WorkOrder();
-        workOrder.organization = asset.location.organization;
-        workOrder.unit = asset.location.unit;
+        workOrder.organizationLegacyId = asset.location.organizationLegacyId;
+        workOrder.unitLegacyId = asset.location.unitLegacyId;
         workOrder.plan = plan;
         workOrder.asset = asset;
         workOrder.issueMovement = issue;
