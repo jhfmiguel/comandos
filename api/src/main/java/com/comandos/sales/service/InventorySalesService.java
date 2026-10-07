@@ -345,13 +345,53 @@ public class InventorySalesService {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.toString().getBytes(StandardCharsets.UTF_8))); }
         catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
     }
-    private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
+    private UnitSnapshot selectedUnit(long organizationId, Long unitId) {
         if (unitId == null) return null;
-        var unit = em.find(OrganizationalUnit.class, unitId);
-        if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
-        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
-        return unit;
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Select a unit in the selected organization."
+            ));
+        if (!unit.active()
+                || !CompanyId.of("comandos:organization:" + organizationId)
+                    .equals(unit.companyId())) {
+            bad("Select an active unit in the selected organization.");
+        }
+        return new UnitSnapshot(unitId, unit.name());
     }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private PersonSnapshot person(Long id) {
+        if (id == null || id <= 0) bad("A valid buyer is required.");
+        var value = masterData.findPerson(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Buyer not found."
+            ));
+        return new PersonSnapshot(
+            id,
+            value.name(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name) {}
+    private record PersonSnapshot(Long id, String name, boolean active) {}
+
     private void validateLocation(StockLocation location, long organizationId, Long unitId) {
         access.requireScope("sales", "CREATE", organizationId, unitId);
         if (canonicalScope != null && canonicalScope.enabled()) {
