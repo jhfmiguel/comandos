@@ -262,7 +262,7 @@
       "classification": "blocked-retirement-backlog",
       "safeToDelete": false,
       "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.13 corrected the controlled baseline to 53 *LegacyId fields after hidden ProcurementProcess, EquipmentSet/Operation, CertificationRecord and ExpirationRecord JPA associations were surfaced and converted to scalar bridges. The count may only decrease; physical deletion remains blocked by Step 21.12.",
+      "reason": "Step 21.13 corrected the controlled baseline to 55 *LegacyId fields after hidden ProcurementProcess, EquipmentSet/Operation, CertificationRecord, ExpirationRecord and Recall JPA associations were surfaced and converted to scalar bridges. The count may only decrease; physical deletion remains blocked by Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "scripts/validate-product-boundary.sh"
@@ -374,7 +374,11 @@
         "equipment set scopes covered by canonical backfill/parity",
         "CertificationRecord Organization/Unit JPA associations removed",
         "ExpirationRecord Organization/Unit JPA associations removed",
-        "certification/expiration scopes covered by canonical synchronization/backfill/parity"
+        "certification/expiration scopes covered by canonical synchronization/backfill/parity",
+        "Recall Organization/Unit JPA associations removed",
+        "Recall scope covered by canonical synchronization/backfill/parity",
+        "InventoryRules no longer reads legacy Organization/Unit entities directly",
+        "InventoryService labels resolved through CanonicalMasterDataDirectory"
       ]
     },
     {
@@ -632,7 +636,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 tracks a corrected 53-field *LegacyId baseline after surfacing and converting hidden Master Data JPA associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a corrected 55-field *LegacyId baseline after surfacing and converting hidden Master Data JPA associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
     },
     {
       "id": "final-step-closure",
