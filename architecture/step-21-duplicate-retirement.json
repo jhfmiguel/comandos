@@ -604,7 +604,7 @@
       "id": "product-specific-only-validation",
       "classification": "boundary-validation",
       "safeToDelete": false,
-      "stepStatus": "in-progress-blocked-by-master-data-retirement",
+      "stepStatus": "advanced-blocked-by-master-data-retirement",
       "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, and the empty generic enterprise, personnel and procurement package markers were removed. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific role assignment bridges.",
       "completedCleanup": [
         "removed empty com.comandos.enterprise package marker",
@@ -655,7 +655,20 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. The difference from 57 was caused by two already-existing CustodyResponsibility bridge fields omitted from the numeric baseline. Regression gates prevent growth; final deletion still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository path-name scanning found no files named legacy; compatibility remains only in db/oracle/compatibility-schema.sql, bridge remains only in StockLocationMasterDataBridgeTest, and backfill remains only in ProductMasterDataReferenceBackfillService. Regression gates prevent *LegacyId growth; final source-level retirement still depends on Step 21.12."
+    },
+    {
+      "id": "final-legacy-scan-evidence",
+      "classification": "validation-evidence",
+      "safeToDelete": false,
+      "stepStatus": "current-known-bridges-only",
+      "evidence": [
+        "api/src/main/resources/db/oracle/compatibility-schema.sql",
+        "api/src/test/java/com/comandos/inventory/model/StockLocationMasterDataBridgeTest.java",
+        "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceBackfillService.java",
+        "scripts/validate-product-boundary.sh"
+      ],
+      "note": "No repository path currently contains legacy in its filename; source-level *LegacyId usage is controlled by the 59-field retirement baseline."
     },
     {
       "id": "final-step-closure",
