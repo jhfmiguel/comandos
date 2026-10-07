@@ -383,6 +383,17 @@ if grep -q 'com\.comandos\.core\.model\.PersonRoleAssignment' \
   fail "CustodyIssueFacade must not depend directly on legacy PersonRoleAssignment"
 fi
 
+# Custody responsibility persistence must remain scalar/canonical for people.
+CUSTODY_RESPONSIBILITY_MODEL="$ROOT_DIR/api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java"
+if grep -qE 'com\.comandos\.core\.model\.Person|[[:space:]]Person[[:space:]]+responsiblePerson' \
+  "$CUSTODY_RESPONSIBILITY_MODEL"; then
+  fail "CustodyResponsibility must not regain a direct legacy Person JPA association"
+fi
+grep -q 'responsiblePersonLegacyId' "$CUSTODY_RESPONSIBILITY_MODEL" \
+  || fail "CustodyResponsibility must retain the controlled responsiblePersonLegacyId bridge until final Master Data cutover"
+grep -q 'responsiblePersonCanonicalId' "$CUSTODY_RESPONSIBILITY_MODEL" \
+  || fail "CustodyResponsibility must retain the canonical responsible person identifier"
+
 # Step 21.20: purchase/procurement must not depend on legacy master-data entities directly.
 if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|Person|OrganizationalUnit)' "$ROOT_DIR/api/src/main/java/com/comandos/purchase"; then
   fail "purchase/procurement code must consume canonical Master Data instead of legacy Organization/Person/Unit entities"
