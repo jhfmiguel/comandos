@@ -122,6 +122,7 @@ allowed_legacy_id_files=(
   "api/src/main/java/com/comandos/sales/model/InventorySale.java"
   "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java"
   "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java"
+  "api/src/main/java/com/comandos/maintenance/model/MaintenancePlan.java"
   "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java"
   "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java"
   "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java"
