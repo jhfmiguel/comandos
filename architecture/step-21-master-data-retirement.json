@@ -376,7 +376,9 @@
       "Armament reports now query scalar/canonical organization-unit scope and resolve unit labels through CanonicalMasterDataDirectory",
       "AmmunitionBoxService now scopes through StockLocation organizationLegacyId/unitLegacyId",
       "InventoryService unit filtering no longer navigates removed StockLocation.unit association",
-      "InventoryService reduced compatibility constructor and null fallbacks for canonicalReferences/masterData/canonicalInventoryLedger/canonicalStockLocations removed"
+      "InventoryService reduced compatibility constructor and null fallbacks for canonicalReferences/masterData/canonicalInventoryLedger/canonicalStockLocations removed",
+      "Global Product boundary scan now rejects retired party/person/unit association navigation including buyer, donor, donee, recipient, authorizer, sourceUnit, destinationUnit, responsible, roleAssignment and related paths.",
+      "Scalar scope cleanup verified by Product boundary at HEAD 916389a0d8aa9fe94829f1ef707b51f408965864."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -401,6 +403,12 @@
       "file": "api/src/main/java/com/comandos/security/service/AccessPolicy.java",
       "reason": "Local authorization remains a COMANDOS product overlay during the Master Data cutover. Its UserProfile/personRole scope queries still traverse core compatibility entities and are not product-domain Master Data ownership.",
       "retireOrRefactorAfter": "Step 21.12 PASS plus security-scope persistence cutover"
+    },
+    "latestValidation": {
+      "head": "916389a0d8aa9fe94829f1ef707b51f408965864",
+      "productBoundary": "success",
+      "ci": "success",
+      "caveat": "CI success does not prove canonical Maven/Yarn verification executed while Faria Miguel artifacts remain unavailable."
     }
   },
   "demoAssociationSweep": {
