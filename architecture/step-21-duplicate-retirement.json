@@ -743,6 +743,18 @@
         "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
         "scripts/validate-product-boundary.sh"
       ]
+    },
+    {
+      "id": "lifecycle-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "ExceptionalOccurrenceService resolves organization and unit through CanonicalMasterDataDirectory, persists scalar legacy/canonical scope identifiers, queries by canonical scope when enabled, and validates StockLocation through scalar/canonical scope. Lifecycle retains only product-specific loss/theft/recovery/seizure/damage/investigation rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/lifecycle/service/ExceptionalOccurrenceService.java",
+        "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
