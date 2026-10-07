@@ -360,7 +360,8 @@
       "obsolete CoreService compatibility constructor removed",
       "obsolete WorkflowService compatibility constructor removed",
       "generic master-data reads routed through canonical read services",
-      "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory"
+      "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory",
+    "CanonicalCoreReadService read-time masterData == null / CanonicalMasterDataMapper fallbacks removed; the mapper remains only in migration shadow-write/backfill/parity paths until Step 21.12"
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
