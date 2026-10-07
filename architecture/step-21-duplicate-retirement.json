@@ -288,6 +288,57 @@
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java"
       ]
+    },
+    {
+      "id": "oracle-legacy-structures",
+      "classification": "retirement-plan",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-21.12",
+      "reason": "Step 21.16 mapped the Oracle legacy/cutover structures. Physical drops are forbidden until the Step 21.12 runtime retirement gate passes.",
+      "evidence": [
+        "api/src/main/resources/db/oracle/compatibility-schema.sql",
+        "architecture/step-21-master-data-retirement.json"
+      ],
+      "targets": [
+        "erp_master_data_reference crosswalk table and indexes",
+        "legacy master-data tables after entity retirement",
+        "legacy scalar id columns and foreign keys",
+        "temporary canonical shadow/backfill support indexes only when no longer required"
+      ]
+    },
+    {
+      "id": "temporary-master-data-migrations",
+      "classification": "retirement-plan",
+      "safeToDelete": false,
+      "stepStatus": "blocked-by-21.12",
+      "reason": "Step 21.17 mapped temporary migration content inside the Oracle compatibility schema. Cleanup is deferred until the legacy persistence retirement gate passes so installation history and rollback support are not destroyed prematurely.",
+      "evidence": [
+        "api/src/main/resources/db/oracle/compatibility-schema.sql"
+      ]
+    },
+    {
+      "id": "catalog-generic-primitives",
+      "classification": "partially-removed",
+      "safeToDelete": false,
+      "stepStatus": "in-progress",
+      "reason": "Step 21.18 promoted four generic catalog primitives into Faria Miguel Enterprise Core and removed the COMANDOS copies. JPA mapped-superclass compatibility bases remain temporarily because Brand, ItemCategory and ItemModel still persist in COMANDOS tables; armament/ammunition/security-equipment specialization remains product-owned.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/enterprise/catalog/CatalogIdentity.java",
+        "api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingMode.java",
+        "api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingPolicy.java",
+        "api/src/main/java/com/comandos/enterprise/catalog/UnitOfMeasureCode.java"
+      ],
+      "foundationTargets": [
+        "com.fariamiguel.enterprise.catalog.CatalogIdentity",
+        "com.fariamiguel.enterprise.catalog.CatalogTrackingMode",
+        "com.fariamiguel.enterprise.catalog.CatalogTrackingPolicy",
+        "com.fariamiguel.enterprise.catalog.UnitOfMeasureCode"
+      ],
+      "remainingCompatibility": [
+        "api/src/main/java/com/comandos/enterprise/catalog/model/BrandBase.java",
+        "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogCategoryBase.java",
+        "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogItemBase.java"
+      ]
     }
   ]
 }
