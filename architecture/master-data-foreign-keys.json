@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-05",
+  "updatedAt": "2026-10-07",
   "purpose": "Track product-domain foreign keys that still depend on legacy COMANDOS master-data JPA entities before canonical persistence retirement.",
   "canonicalReferenceCrosswalk": "erp_master_data_reference",
   "states": [
@@ -39,6 +39,15 @@
       ],
       "state": "retired",
       "note": "Legacy buyer/supplier Organization and origin Person JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "ProcurementProcess",
+      "path": "api/src/main/java/com/comandos/purchase/model/ProcurementProcess.java",
+      "fields": [
+        "organizationLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization JPA association was removed. organization_id remains as scalar compatibility bridge while organizationCanonicalId is primary."
     },
     {
       "entity": "EquipmentReceiving",
