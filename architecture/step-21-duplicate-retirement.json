@@ -99,45 +99,69 @@
     },
     {
       "id": "frontend-shared-wrappers",
-      "classification": "partially-removed",
-      "safeToDelete": false,
-      "reason": "Pure re-export wrappers for shared UI/data/hooks were removed after the COMANDOS platform barrel was redirected to @faria-miguel packages. shared-foundation.ts remains until its call sites are fully traced.",
+      "classification": "removed",
+      "safeToDelete": true,
+      "reason": "Pure shared frontend wrappers and duplicate platform error boundary were retired after callers moved to canonical @faria-miguel imports and a source-wide regression gate was added.",
       "evidence": [
-        "app/src/platform/shared-foundation.ts"
+        "app/scripts/check-platform-boundaries.mjs",
+        "app/src/platform/index.ts"
       ],
-      "nextAction": "Trace shared-foundation.ts call sites; remove it only if no product-specific compatibility surface depends on it.",
       "removedFiles": [
         "app/src/platform/components/data-table.tsx",
         "app/src/platform/components/form-field.tsx",
         "app/src/platform/components/pagination.tsx",
         "app/src/platform/components/confirm-dialog.tsx",
         "app/src/platform/data.ts",
-        "app/src/platform/hooks.ts"
+        "app/src/platform/hooks.ts",
+        "app/src/platform/shared-foundation.ts",
+        "app/src/platform/error-boundary.tsx"
       ]
     },
     {
       "id": "frontend-product-composition-adapters",
-      "classification": "product-owned-adapter",
+      "classification": "validated-product-adapters",
       "safeToDelete": false,
-      "reason": "These compose shared components with COMANDOS localization, CSS, selectors or product UX behavior and therefore are not pure duplicates.",
+      "reason": "Step 21.5 review completed: local frontend code remains only where it adds COMANDOS-specific localization, masks, CSS/selectors, navigation, palette, session routing or UX behavior on top of canonical Faria Miguel components.",
       "evidence": [
         "app/src/components/common/float-label-enhancer.tsx",
         "app/src/components/common/select-field.tsx",
         "app/src/components/common/loader/index.tsx",
         "app/src/components/common/toast/index.tsx"
-      ]
+      ],
+      "reviewStatus": "completed",
+      "decisions": {
+        "Loader": "keep-product-adapter",
+        "Toast/Notifications": "keep-product-adapter",
+        "FloatLabel": "consume-canonical-directly-or-keep-product-enhancer",
+        "Select": "keep-product-adapter",
+        "Button": "keep-product-specific-action-behavior",
+        "Input": "keep-product-masks-and-formatting",
+        "Modal": "canonical-faria-miguel",
+        "tables": "canonical-faria-miguel",
+        "forms": "product-specific-composition",
+        "admin-layout": "canonical-core-with-product-navigation-overlay",
+        "themes": "canonical-provider-with-product-palette-overlay",
+        "preferences": "canonical-provider-with-product-migration-overlay",
+        "session/authentication": "canonical-session-provider-with-product-routing-overlay"
+      }
     },
     {
       "id": "messaging-local-publishers",
-      "classification": "review-required",
+      "classification": "migration-bridge",
       "safeToDelete": false,
-      "reason": "Local Spring event publishers may overlap with the shared integration/event fabric, but call-site and event-contract migration must be proven before deletion.",
+      "reason": "Step 21.6 cutover started: local publishing contracts are compatibility bridges while dispatch is moved behind the canonical Faria Miguel messaging publisher; local contracts are deleted only after all callers migrate.",
       "evidence": [
         "api/src/main/java/com/comandos/messaging/SpringPlatformEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventEnvelope.java"
       ],
-      "nextAction": "Trace all call sites and migrate generic events to Faria Miguel Integration/Event Fabric."
+      "nextAction": "Delegate local publishers to the canonical Faria Miguel publisher, migrate remaining callers, then retire DomainEventEnvelope, DomainEventPublisher and local PlatformEvent contracts.",
+      "foundationTargets": [
+        "com.fariamiguel.messaging.api.PlatformEvent",
+        "com.fariamiguel.messaging.api.PlatformEventPublisher",
+        "com.fariamiguel.messaging.service.SpringPlatformEventPublisher",
+        "com.fariamiguel.integration.events.EventFabric"
+      ]
     }
   ]
 }
