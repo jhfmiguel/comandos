@@ -504,6 +504,20 @@ done
 
 node "$ROOT_DIR/scripts/audit-frontend-dependencies.mjs"
 
+retired_unused_frontend_packages=(
+  '@base-ui/react'
+  'class-variance-authority'
+  'clsx'
+  'react-number-format'
+  'swr'
+  'tailwind-merge'
+  'tw-animate-css'
+)
+for retired_package in "${retired_unused_frontend_packages[@]}"; do
+  grep -q "\"${retired_package}@[^\"]*\":" "$ROOT_DIR/app/yarn.lock" \
+    && fail "retired unused Yarn entry returned: $retired_package" || true
+done
+
 if grep -qE '^DB_URL=jdbc:postgresql|^DB_USERNAME=postgres|^DB_PASSWORD=postgres' "$ROOT_DIR/.env.example"; then
   fail ".env.example must remain aligned with Oracle; obsolete PostgreSQL defaults are forbidden"
 fi
