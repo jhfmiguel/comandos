@@ -99,6 +99,32 @@ grep -q 'PartyDocumentRepository canonicalDocuments' "$ROOT_DIR/api/src/main/jav
 grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java" \
   || fail "professional qualifications must read from canonical repository after cutover"
 
+# Step 21.14: legacy generic Master Data entity inventory is frozen until Step 21.12 PASS.
+node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" "$ROOT_DIR" <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const root = process.argv[3];
+const entities = manifest.legacyMasterDataEntities?.files || [];
+if (manifest.legacyMasterDataEntities?.status !== 'blocked-by-21.12') {
+  throw new Error('Step 21.14 must remain blocked by Step 21.12 before runtime cutover PASS');
+}
+if (entities.length !== 17) {
+  throw new Error('Step 21.14 legacy Master Data entity inventory must contain exactly 17 files before cutover');
+}
+if (new Set(entities).size !== entities.length) {
+  throw new Error('Step 21.14 legacy Master Data entity inventory contains duplicates');
+}
+for (const file of entities) {
+  if (!file.startsWith('api/src/main/java/com/comandos/core/model/') || !file.endsWith('.java')) {
+    throw new Error('Invalid Step 21.14 legacy entity path: ' + file);
+  }
+  if (!fs.existsSync(path.join(root, file))) {
+    throw new Error('Step 21.14 legacy entity removed before cutover PASS: ' + file);
+  }
+}
+NODE
+
 # Step 21.15: canonical Core reads must not keep a legacy fallback constructor.
 CANONICAL_CORE_READS="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalCoreReadService.java"
 if grep -q '@Deprecated' "$CANONICAL_CORE_READS" \
