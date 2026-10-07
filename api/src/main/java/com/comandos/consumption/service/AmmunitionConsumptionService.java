@@ -5,6 +5,7 @@ import com.comandos.consumption.dto.AmmunitionConsumptionContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
@@ -14,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
 import java.util.*;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,22 +27,25 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class AmmunitionConsumptionService {
     private static final int PAGE_SIZE = 20;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null, null);
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -73,8 +80,8 @@ public class AmmunitionConsumptionService {
         validate(request);
         access.requireScope("ammunition-consumptions", "CREATE", request.organizationId(), request.unitId());
         lockCatalog();
-        var organization = locked(Organization.class, request.organizationId());
-        var unit = selectedUnit(organization.id, request.unitId());
+        var organization = organization(request.organizationId());
+        var unit = selectedUnit(organization.id(), request.unitId());
         String fingerprint = fingerprint(request);
         var existing = em.createQuery("select c from AmmunitionConsumption c where c.requestId = :requestId", AmmunitionConsumption.class)
             .setParameter("requestId", request.requestId()).getResultStream().findFirst();
@@ -83,26 +90,25 @@ public class AmmunitionConsumptionService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different consumption.");
             return view(existing.get());
         }
-        var responsible = locked(Person.class, request.responsibleId());
-        var authorizer = locked(Person.class, request.authorizerId());
-        access.requireEntity("core/people", "READ", responsible);
-        access.requireEntity("core/people", "READ", authorizer);
-        if (!organization.active || !responsible.active || !authorizer.active)
+        var responsible = person(request.responsibleId());
+        var authorizer = person(request.authorizerId());
+        access.requireAny("core/people", "READ");
+        if (!organization.active() || !responsible.active() || !authorizer.active())
             bad("Organization, responsible person and authorizer must be active.");
         var now = LocalDateTime.now();
         var consumption = new AmmunitionConsumption();
-        consumption.organizationLegacyId = organization.id;
-        consumption.unitLegacyId = unit == null ? null : unit.id;
-        consumption.responsibleLegacyId = responsible.id;
-        consumption.authorizerLegacyId = authorizer.id;
+        consumption.organizationLegacyId = organization.id();
+        consumption.unitLegacyId = unit == null ? null : unit.id();
+        consumption.responsibleLegacyId = responsible.id();
+        consumption.authorizerLegacyId = authorizer.id();
         if (canonicalScope != null) {
-            consumption.organizationCanonicalId = canonicalScope.organization(organization.id);
-            consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-            consumption.responsibleCanonicalId = canonicalScope.person(responsible.id);
-            consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+            consumption.organizationCanonicalId = canonicalScope.organization(organization.id());
+            consumption.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+            consumption.responsibleCanonicalId = canonicalScope.person(responsible.id());
+            consumption.authorizerCanonicalId = canonicalScope.person(authorizer.id());
         }
-        consumption.organizationName = organization.name; consumption.unitName = unit == null ? null : unit.name;
-        consumption.responsibleName = responsible.fullName; consumption.authorizerName = authorizer.fullName;
+        consumption.organizationName = organization.name(); consumption.unitName = unit == null ? null : unit.name();
+        consumption.responsibleName = responsible.name(); consumption.authorizerName = authorizer.name();
         consumption.purpose = request.purpose().trim();
         consumption.activityType = request.activityType() == null || request.activityType().isBlank() ? "OPERATION" : request.activityType().trim().toUpperCase(Locale.ROOT);
         consumption.operationTraining = request.operationTraining() == null || request.operationTraining().isBlank() ? null : request.operationTraining().trim();
@@ -118,7 +124,7 @@ public class AmmunitionConsumptionService {
             BigDecimal returned = line.returnedQuantity() == null ? delivered.subtract(used) : line.returnedQuantity();
             if (delivered == null || used == null || returned == null || delivered.signum() <= 0 || used.signum() < 0 || returned.signum() < 0
                     || used.add(returned).compareTo(delivered) != 0) bad("Delivered quantity must equal used plus returned quantity.");
-            validateStock(balance, lot, organization.id, request.unitId(), used);
+            validateStock(balance, lot, organization.id(), request.unitId(), used);
             BigDecimal oldBalance = balance.available; BigDecimal oldLot = lot.availableQuantity;
             balance.available = oldBalance.subtract(used); lot.availableQuantity = oldLot.subtract(used);
             var movement = new StockMovement(); movement.lot = lot; movement.location = balance.location;
@@ -211,10 +217,52 @@ public class AmmunitionConsumptionService {
     }
     private void lockCatalog() { em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
         .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList(); }
-    private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
-        if (unitId == null) return null; var unit = em.find(OrganizationalUnit.class, unitId);
-        if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization."); return unit;
+    private UnitSnapshot selectedUnit(long organizationId, Long unitId) {
+        if (unitId == null) return null;
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Select a unit in the selected organization."
+            ));
+        if (!unit.active()
+                || !CompanyId.of("comandos:organization:" + organizationId)
+                    .equals(unit.companyId())) {
+            bad("Select an active unit in the selected organization.");
+        }
+        return new UnitSnapshot(unitId, unit.name());
     }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private PersonSnapshot person(Long id) {
+        if (id == null || id <= 0) bad("A valid person is required.");
+        var value = masterData.findPerson(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Person not found."
+            ));
+        return new PersonSnapshot(
+            id,
+            value.name(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name) {}
+    private record PersonSnapshot(Long id, String name, boolean active) {}
     private static String fingerprint(FinalizeRequest r) {
         String lines = r.items().stream().sorted(Comparator.comparing(LineRequest::balanceId))
             .map(i -> i.balanceId() + ":" + i.quantity().stripTrailingZeros().toPlainString() + ":" + i.result().trim()).toList().toString();
