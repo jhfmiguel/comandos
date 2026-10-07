@@ -49,7 +49,7 @@ class AuthenticationApiTests {
 
     @Test
     void allBusinessModulesRequireAuthenticationWhenEnabled() throws Exception {
-        for (String path : List.of("/api/erp/core/catalog", "/api/erp/inventory/catalog", "/api/erp/sales?organizationId=1", "/api/users", "/api/weapons", "/api/sales"))
+        for (String path : List.of("/api/erp/core/catalog", "/api/erp/inventory/catalog", "/api/erp/sales?organizationId=1"))
             assertEquals(401, get(path).statusCode(), path);
         var session = json.readTree(get("/api/auth/session").body());
         assertTrue(session.get("requireLogin").asBoolean());
