@@ -78,10 +78,13 @@ public class CustodyIssueFacade {
         if ("COLLECTIVE".equals(scope) && !blank(request.teamOperation()))
             bad("Collective unit custody must not use a team/operation identification.");
 
-        Organization organization = locked(Organization.class, request.organizationId());
-        OrganizationalUnit recipientUnit = locked(OrganizationalUnit.class, request.recipientUnitId());
-        Person responsible = locked(Person.class, request.responsiblePersonId());
-        PersonRoleAssignment assignment = locked(PersonRoleAssignment.class, request.responsibilityRoleAssignmentId());
+        OrganizationSnapshot organization = organization(request.organizationId());
+        UnitSnapshot recipientUnit = unit(organization.id(), request.recipientUnitId());
+        PersonSnapshot responsible = person(request.responsiblePersonId());
+        PersonRoleAssignment assignment = locked(
+            PersonRoleAssignment.class,
+            request.responsibilityRoleAssignmentId()
+        );
         validateResponsibility(organization, recipientUnit, responsible, assignment);
 
         IssueRequest delegated = new IssueRequest(
@@ -104,17 +107,18 @@ public class CustodyIssueFacade {
         return view(value);
     }
 
-    private void validateResponsibility(Organization organization, OrganizationalUnit unit, Person responsible,
+    private void validateResponsibility(
+            OrganizationSnapshot organization,
+            UnitSnapshot unit,
+            PersonSnapshot responsible,
             PersonRoleAssignment assignment) {
-        if (!Boolean.TRUE.equals(organization.active) || !Boolean.TRUE.equals(unit.active) || !Boolean.TRUE.equals(responsible.active))
+        if (!organization.active() || !unit.active() || !responsible.active())
             bad("Organization, receiving unit and responsible person must be active.");
-        if (unit.organization == null || !Objects.equals(unit.organization.id, organization.id))
-            bad("The receiving unit must belong to the selected organization.");
-        if (assignment.person == null || !Objects.equals(assignment.person.id, responsible.id))
+        if (assignment.person == null || !Objects.equals(assignment.person.id, responsible.id()))
             bad("The responsibility assignment must belong to the selected responsible person.");
-        if (assignment.organization == null || !Objects.equals(assignment.organization.id, organization.id))
+        if (assignment.organization == null || !Objects.equals(assignment.organization.id, organization.id()))
             bad("The responsibility assignment must belong to the selected organization.");
-        if (assignment.unit == null || !Objects.equals(assignment.unit.id, unit.id))
+        if (assignment.unit == null || !Objects.equals(assignment.unit.id, unit.id()))
             bad("Institutional custody responsibility requires a role assignment in the receiving unit.");
         if (assignment.role == null || blank(assignment.role.code)
                 || !INSTITUTIONAL_RESPONSIBILITY_ROLES.contains(assignment.role.code.trim().toUpperCase(Locale.ROOT)))
@@ -127,7 +131,11 @@ public class CustodyIssueFacade {
             bad("The responsibility role assignment must be currently valid.");
     }
 
-    private void bindResponsibility(long custodyId, Organization organization, OrganizationalUnit unit, Person responsible,
+    private void bindResponsibility(
+            long custodyId,
+            OrganizationSnapshot organization,
+            UnitSnapshot unit,
+            PersonSnapshot responsible,
             PersonRoleAssignment assignment) {
         Custody custody = em.find(Custody.class, custodyId, LockModeType.PESSIMISTIC_WRITE);
         if (custody == null) throw new IllegalStateException("Issued custody not found.");
@@ -136,20 +144,22 @@ public class CustodyIssueFacade {
             .setParameter("custody", custodyId).setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .getResultStream().findFirst().orElse(null);
         if (existing != null) {
-            if (!Objects.equals(existing.responsiblePerson.id, responsible.id)
-                    || !Objects.equals(existing.roleAssignment.id, assignment.id))
+            if (!Objects.equals(existing.responsiblePersonLegacyId, responsible.id())
+                    || !Objects.equals(existing.roleAssignmentLegacyId, assignment.id))
                 conflict("This custody request is already bound to a different institutional responsibility.");
             return;
         }
         CustodyResponsibility value = new CustodyResponsibility();
         value.custody = custody;
-        value.responsiblePerson = responsible;
-        value.roleAssignment = assignment;
-        value.responsiblePersonName = responsible.fullName;
+        value.responsiblePersonLegacyId = responsible.id();
+        value.responsiblePersonCanonicalId =
+            canonicalScope == null ? null : canonicalScope.person(responsible.id());
+        value.roleAssignmentLegacyId = assignment.id;
+        value.responsiblePersonName = responsible.name();
         value.roleCode = assignment.role.code;
         value.roleName = assignment.role.name;
-        value.organizationName = organization.name;
-        value.unitName = unit.name;
+        value.organizationName = organization.name();
+        value.unitName = unit.name();
         value.recordedAt = LocalDateTime.now();
         em.persist(value);
     }
@@ -165,10 +175,63 @@ public class CustodyIssueFacade {
     }
 
     private CustodyResponsibilityView view(CustodyResponsibility value) {
-        return new CustodyResponsibilityView(value.custody.id, value.responsiblePerson.id, value.responsiblePersonName,
-            value.roleAssignment.id, value.roleCode, value.roleName, value.organizationName, value.unitName,
+        return new CustodyResponsibilityView(
+            value.custody.id,
+            value.responsiblePersonLegacyId,
+            value.responsiblePersonName,
+            value.roleAssignmentLegacyId,
+            value.roleCode,
+            value.roleName,
+            value.organizationName,
+            value.unitName,
             value.recordedAt.toString());
     }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private UnitSnapshot unit(long organizationId, Long id) {
+        if (id == null || id <= 0) bad("A valid receiving unit is required.");
+        var value = masterData.findUnit(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Receiving unit not found."
+            ));
+        if (!CompanyId.of("comandos:organization:" + organizationId)
+                .equals(value.companyId())) {
+            bad("The receiving unit must belong to the selected organization.");
+        }
+        return new UnitSnapshot(id, value.name(), value.active());
+    }
+
+    private PersonSnapshot person(Long id) {
+        if (id == null || id <= 0) bad("A valid responsible person is required.");
+        var value = masterData.findPerson(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Responsible person not found."
+            ));
+        return new PersonSnapshot(
+            id,
+            value.name(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name, boolean active) {}
+    private record PersonSnapshot(Long id, String name, boolean active) {}
 
     private <T> T locked(Class<T> type, Long id) {
         if (id == null || id <= 0) bad("A valid record ID is required.");
