@@ -354,6 +354,17 @@ grep -q '"core-adapters-reclassified"' "$MANIFEST" \
 grep -q '"legacy-master-data-admin-compatibility"' "$MANIFEST" \
   || fail "remaining local core compatibility ownership is not declared"
 
+# Steps 21.21-21.23: generic sales/finance/contracts are foundation-owned.
+for removed_sales_file in \
+  "$ROOT_DIR/api/src/main/java/com/comandos/model/Sale.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/model/SaleItem.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/model/repository/SaleRepository.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/model/repository/SaleItemRepository.java"; do
+  [[ ! -e "$removed_sales_file" ]] || fail "obsolete generic sales persistence returned: ${removed_sales_file#$ROOT_DIR/}"
+done
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/finance" ]] || fail "generic finance must remain foundation-owned"
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/contracts" ]] || fail "generic contracts must remain foundation-owned"
+
 # Transitional roots may contain product adapters only; ownership remains Faria Miguel.
 for capability in audit documents identity; do
   grep -q "\"${capability}\"" "$MANIFEST" || fail "compatibility adapter root '${capability}' is not declared"
