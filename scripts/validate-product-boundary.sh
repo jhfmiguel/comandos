@@ -99,6 +99,56 @@ grep -q 'PartyDocumentRepository canonicalDocuments' "$ROOT_DIR/api/src/main/jav
 grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java" \
   || fail "professional qualifications must read from canonical repository after cutover"
 
+# Steps 21.13-21.15: legacy master-data retirement backlog may only shrink.
+RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
+test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
+
+legacy_id_count="$(grep -RhoE --include='*.java' 'public[[:space:]]+Long[[:space:]]+[A-Za-z0-9_]*LegacyId[[:space:]]*;' "$ROOT_DIR/api/src/main/java" | wc -l | tr -d ' ')"
+[[ "$legacy_id_count" -le 44 ]] || fail "LegacyId field count grew above the Step 21.13 baseline of 44"
+
+allowed_legacy_id_files=(
+  "api/src/main/java/com/comandos/inventory/model/StockLocation.java"
+  "api/src/main/java/com/comandos/purchase/model/Purchase.java"
+  "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java"
+  "api/src/main/java/com/comandos/custody/model/Custody.java"
+  "api/src/main/java/com/comandos/donation/model/Donation.java"
+  "api/src/main/java/com/comandos/sales/model/InventorySale.java"
+  "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java"
+  "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java"
+  "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java"
+  "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java"
+  "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java"
+  "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java"
+  "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java"
+  "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java"
+  "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java"
+  "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java"
+  "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java"
+)
+
+while IFS= read -r absolute; do
+  relative="${absolute#$ROOT_DIR/}"
+  allowed=false
+  for candidate in "${allowed_legacy_id_files[@]}"; do
+    if [[ "$relative" == "$candidate" ]]; then
+      allowed=true
+      break
+    fi
+  done
+  [[ "$allowed" == true ]] || fail "new LegacyId field introduced outside the Step 21.13 retirement inventory: $relative"
+done < <(grep -RIl --include='*.java' 'LegacyId' "$ROOT_DIR/api/src/main/java" || true)
+
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/core/repository" ]] \
+  || fail "legacy generic Master Data repository package must remain absent"
+
+if grep -q '@Deprecated' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"; then
+  fail "CoreService must not regain deprecated compatibility constructors"
+fi
+
+if grep -q '@Deprecated' "$ROOT_DIR/api/src/main/java/com/comandos/workflow/service/WorkflowService.java"; then
+  fail "WorkflowService must not regain deprecated compatibility constructors"
+fi
+
 # Master-data migration seams must remain present until the legacy persistence cutover is complete.
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataMapper.java" \
   || fail "canonical master-data mapper is required during legacy persistence migration"
