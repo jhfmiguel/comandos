@@ -16,8 +16,6 @@ export {
 
 export { Layout } from "./layout"
 
-export { UserRegistration, UsersList } from "./users"
-
 export { WeaponsRegistration, WeaponsList } from "./weapons"
 
 export { ComandosToaster, notify } from "./common/toast"
