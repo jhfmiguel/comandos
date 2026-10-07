@@ -186,6 +186,20 @@ create index ix_stock_location_org_canonical
 create index ix_stock_location_unit_canonical
     on erp_stock_location (unit_canonical_id);
 
+alter table erp_equipment_set add organization_canonical_id varchar2(128 char);
+alter table erp_equipment_set add unit_canonical_id varchar2(128 char);
+create index ix_equipment_set_org_canonical
+    on erp_equipment_set (organization_canonical_id);
+create index ix_equipment_set_unit_canonical
+    on erp_equipment_set (unit_canonical_id);
+
+alter table erp_equipment_set_operation add organization_canonical_id varchar2(128 char);
+alter table erp_equipment_set_operation add unit_canonical_id varchar2(128 char);
+create index ix_equipment_set_operation_org_canonical
+    on erp_equipment_set_operation (organization_canonical_id);
+create index ix_equipment_set_operation_unit_canonical
+    on erp_equipment_set_operation (unit_canonical_id);
+
 
 -- Canonical master-data shadow references for purchase and receiving cutover.
 alter table erp_purchase add buyer_organization_canonical_id varchar2(128 char);
