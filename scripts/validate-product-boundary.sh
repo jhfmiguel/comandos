@@ -123,6 +123,14 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
   fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
 fi
 
+# Step 21.36: retired generic API endpoints must not return.
+for retired_endpoint in '/api/users' '/api/weapons' '/api/sales'; do
+  if grep -RFn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=target \
+      "$retired_endpoint" "$ROOT_DIR/api/src" "$ROOT_DIR/app/src" >/dev/null 2>&1; then
+    fail "retired generic API endpoint returned: $retired_endpoint"
+  fi
+done
+
 # Step 21.36: retired legacy/backup file names must not return.
 while IFS= read -r legacy_path; do
   relative="${legacy_path#$ROOT_DIR/}"
