@@ -50,22 +50,28 @@
     },
     {
       "id": "identity-compatibility-bridge",
-      "classification": "migration-bridge",
+      "classification": "compatibility-bridge",
       "safeToDelete": false,
-      "reason": "JpaIdentityDirectory implements the canonical Faria Miguel IdentityDirectory but still resolves subjects from legacy COMANDOS Person persistence.",
+      "reason": "Step 21.8 direct legacy Person dependency removed. JpaIdentityDirectory now resolves people through CanonicalMasterDataDirectory, which switches between legacy projection and canonical persistence according to the controlled master-data read cutover.",
       "evidence": [
         "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
       ],
       "deleteOnlyAfter": [
         "identity lookup no longer depends on legacy Person persistence",
         "all callers resolve identity through canonical persistence/provider"
-      ]
+      ],
+      "completed": [
+        "IdentityDirectory canonical contract retained",
+        "direct EntityManager/legacy Person read removed from JpaIdentityDirectory",
+        "identity resolution delegated to CanonicalMasterDataDirectory"
+      ],
+      "nextAction": "Remove the identity bridge only when provider/subject mapping is supplied directly by canonical identity persistence and no COMANDOS-specific compatibility mapping remains."
     },
     {
       "id": "audit-product-persistence",
       "classification": "product-adapter",
       "safeToDelete": false,
-      "reason": "AuditService already implements the canonical AuditSink, but keeps COMANDOS-specific persistence, query filters and reference enrichment used by the product audit UI.",
+      "reason": "Step 21.7 separation completed: generic Faria Miguel AuditRecorder persists through the canonical enterprise JpaAuditSink; COMANDOS AuditService no longer implements AuditSink and remains only for product-specific audit recording/query/filter/reference enrichment.",
       "evidence": [
         "api/src/main/java/com/comandos/audit/service/AuditService.java"
       ],
@@ -73,17 +79,39 @@
         "shared audit persistence/query capability replaces COMANDOS-specific storage",
         "product audit filters and reference enrichment have a central extension point",
         "audit UI consumes the replacement"
-      ]
+      ],
+      "completed": [
+        "removed AuditSink implementation from COMANDOS AuditService",
+        "generic audit persistence remains owned by Faria Miguel enterprise persistence",
+        "COMANDOS-specific query filters and reference enrichers preserved"
+      ],
+      "nextAction": "Retire local erp_audit_* persistence only after the product audit UI and product-specific record() callers have an equivalent central query/enrichment extension point."
     },
     {
       "id": "security-product-overlay",
-      "classification": "product-owned",
+      "classification": "validated-product-overlay",
       "safeToDelete": false,
-      "reason": "Authentication/session and product scope overlays are explicitly owned by COMANDOS; they adapt to canonical CurrentActor contracts and are not generic duplicate Platform Core code.",
+      "reason": "Step 21.9 review confirms shared security contracts are already canonical: AccountPrincipal implements PlatformPrincipal, SpringCurrentActorProvider implements CurrentActorProvider, and AccessPolicy implements ResourceAccessPolicy using ScopeGrant. Local code is retained only for COMANDOS authentication/session and product-specific live scope rules.",
       "evidence": [
         "api/src/main/java/com/comandos/security/service/SpringCurrentActorProvider.java",
         "api/src/main/java/com/comandos/security/service/AccessPolicy.java",
         "api/src/main/java/com/comandos/security/service/AccountService.java"
+      ],
+      "reviewStatus": "completed",
+      "keep": [
+        "AccountService",
+        "SessionAccountFilter",
+        "SpringCurrentActorProvider",
+        "AccessPolicy",
+        "AccountPrincipal"
+      ],
+      "canonicalContracts": [
+        "com.fariamiguel.security.api.PlatformPrincipal",
+        "com.fariamiguel.security.api.CurrentActor",
+        "com.fariamiguel.security.api.CurrentActorProvider",
+        "com.fariamiguel.security.api.ResourceAccessPolicy",
+        "com.fariamiguel.security.api.ScopeGrant",
+        "com.fariamiguel.security.api.AccessDeniedException"
       ]
     },
     {
@@ -147,20 +175,26 @@
     },
     {
       "id": "messaging-local-publishers",
-      "classification": "migration-bridge",
+      "classification": "compatibility-bridge",
       "safeToDelete": false,
-      "reason": "Step 21.6 cutover started: local publishing contracts are compatibility bridges while dispatch is moved behind the canonical Faria Miguel messaging publisher; local contracts are deleted only after all callers migrate.",
+      "reason": "Generic runtime publishing now delegates to the canonical Faria Miguel PlatformEventPublisher supplied by Platform Core auto-configuration. Local event types/publishers remain only as compatibility bridges until all legacy callers are migrated.",
       "evidence": [
         "api/src/main/java/com/comandos/messaging/SpringPlatformEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventPublisher.java",
         "api/src/main/java/com/comandos/messaging/DomainEventEnvelope.java"
       ],
-      "nextAction": "Delegate local publishers to the canonical Faria Miguel publisher, migrate remaining callers, then retire DomainEventEnvelope, DomainEventPublisher and local PlatformEvent contracts.",
+      "nextAction": "Trace and migrate remaining callers, then remove local PlatformEvent, PlatformEventPublisher, SpringPlatformEventPublisher, DomainEventPublisher and DomainEventEnvelope.",
       "foundationTargets": [
         "com.fariamiguel.messaging.api.PlatformEvent",
         "com.fariamiguel.messaging.api.PlatformEventPublisher",
         "com.fariamiguel.messaging.service.SpringPlatformEventPublisher",
         "com.fariamiguel.integration.events.EventFabric"
+      ],
+      "completed": [
+        "canonical PlatformEventPublisher supplied by Faria Miguel auto-configuration",
+        "local SpringPlatformEventPublisher delegates to canonical publisher",
+        "DomainEventPublisher routes through the compatibility publisher",
+        "manual duplicate publisher bean removed from COMANDOS configuration"
       ]
     }
   ]
