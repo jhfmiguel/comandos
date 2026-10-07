@@ -25,6 +25,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
     private final boolean backfillOnStartup;
     private final boolean parityOnStartup;
     private final boolean productReferenceBackfillOnStartup;
+    private final boolean retirementValidationOnStartup;
 
     public MasterDataMigrationRunner(
             MasterDataMigrationService migration,
@@ -39,7 +40,9 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             @Value("${comandos.master-data.parity-on-startup:false}")
             boolean parityOnStartup,
             @Value("${comandos.master-data.product-reference-backfill-on-startup:false}")
-            boolean productReferenceBackfillOnStartup) {
+            boolean productReferenceBackfillOnStartup,
+            @Value("${comandos.master-data.retirement-validation-on-startup:false}")
+            boolean retirementValidationOnStartup) {
         this.migration = migration;
         this.parity = parity;
         this.cutoverStatus = cutoverStatus;
@@ -49,6 +52,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         this.backfillOnStartup = backfillOnStartup;
         this.parityOnStartup = parityOnStartup;
         this.productReferenceBackfillOnStartup = productReferenceBackfillOnStartup;
+        this.retirementValidationOnStartup = retirementValidationOnStartup;
     }
 
     @Override
@@ -60,6 +64,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 && !backfillOnStartup
                 && !parityOnStartup
                 && !productReferenceBackfillOnStartup
+                && !retirementValidationOnStartup
                 && !canonicalReadEnabled) {
             return;
         }
@@ -126,8 +131,11 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + productParityReport.mismatches()
         );
 
-        if (canonicalReadEnabled) {
+        if (retirementValidationOnStartup || canonicalReadEnabled) {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
+            System.out.println(
+                "[master-data-migration] legacy persistence retirement gate=PASS"
+            );
         }
     }
 
