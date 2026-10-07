@@ -359,7 +359,8 @@
       "local core repository package absent",
       "obsolete CoreService compatibility constructor removed",
       "obsolete WorkflowService compatibility constructor removed",
-      "generic master-data reads routed through canonical read services"
+      "generic master-data reads routed through canonical read services",
+      "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory"
     ]
   }
 }
