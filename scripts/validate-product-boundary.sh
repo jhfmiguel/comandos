@@ -271,6 +271,27 @@ if [[ -n "$null_constructor_hits" ]]; then
   fail "product compatibility constructor still injects null into canonical collaborators"
 fi
 
+# Step 21.37: final closure cannot be declared while any required retirement/validation step is still blocked.
+node - "$ROOT_DIR/architecture/step-21-duplicate-retirement.json" <<'NODE'
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const closure = (manifest.groups || []).find(g => g.id === 'final-step-closure');
+if (!closure) throw new Error('Missing Step 21.37 final-step-closure group');
+
+if (closure.stepStatus === 'completed') {
+  const required = closure.prerequisites || [];
+  const byId = new Map((manifest.groups || []).map(g => [g.id, g]));
+  for (const id of required) {
+    const group = byId.get(id);
+    if (!group) throw new Error('Missing Step 21.37 prerequisite group: ' + id);
+    const status = String(group.stepStatus || '');
+    if (/blocked|pending|in-progress|local-.*blocked/i.test(status)) {
+      throw new Error('Step 21.37 cannot close while prerequisite remains unresolved: ' + id + '=' + status);
+    }
+  }
+}
+NODE
+
 # Step 21.15-21.17: every declared compatibility/runtime-support file must have an explicit post-cutover disposition.
 node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" <<'NODE'
 const fs = require('fs');
