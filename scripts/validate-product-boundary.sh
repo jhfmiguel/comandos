@@ -110,6 +110,15 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
+deprecated_hits="$(
+  grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
+)"
+if [[ -n "$deprecated_hits" ]]; then
+  printf '%s\n' "$deprecated_hits"
+  fail "deprecated production compatibility API returned"
+fi
+
 # Step 21.15: required canonical collaborators are never optional after constructor migration.
 for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror; do
   nullable_hits="$(
