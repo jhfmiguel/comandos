@@ -258,10 +258,21 @@ done
 test -f "$ROOT_DIR/app/.npmrc" || fail "frontend must configure the Faria Miguel package registry"
 grep -q '@jhfmiguel:registry=https://npm.pkg.github.com' "$ROOT_DIR/app/.npmrc" || fail "frontend physical package registry must point to GitHub Packages"
 
-grep -q '@faria-miguel/ui/data-table' "$ROOT_DIR/app/src/platform/components/data-table.tsx" || fail "DataTable must delegate to @faria-miguel/ui"
-grep -q '@faria-miguel/ui/pagination' "$ROOT_DIR/app/src/platform/components/pagination.tsx" || fail "Pagination must delegate to @faria-miguel/ui"
-grep -q '@faria-miguel/ui/form-field' "$ROOT_DIR/app/src/platform/components/form-field.tsx" || fail "FormField must delegate to @faria-miguel/ui"
-grep -q '@faria-miguel/ui/confirm-dialog' "$ROOT_DIR/app/src/platform/components/confirm-dialog.tsx" || fail "ConfirmDialog must delegate to @faria-miguel/ui"
+grep -q '@faria-miguel/ui/data-table' "$ROOT_DIR/app/src/platform/ui.ts" || fail "DataTable must be exported directly from @faria-miguel/ui"
+grep -q '@faria-miguel/ui/pagination' "$ROOT_DIR/app/src/platform/ui.ts" || fail "Pagination must be exported directly from @faria-miguel/ui"
+grep -q '@faria-miguel/ui/form-field' "$ROOT_DIR/app/src/platform/ui.ts" || fail "FormField must be exported directly from @faria-miguel/ui"
+grep -q '@faria-miguel/ui/confirm-dialog' "$ROOT_DIR/app/src/platform/ui.ts" || fail "ConfirmDialog must be exported directly from @faria-miguel/ui"
+grep -q '@faria-miguel/platform/data' "$ROOT_DIR/app/src/platform/index.ts" || fail "platform data must be exported directly from @faria-miguel/platform"
+grep -q '@faria-miguel/platform/hooks' "$ROOT_DIR/app/src/platform/index.ts" || fail "platform hooks must be exported directly from @faria-miguel/platform"
+for removed_wrapper in \
+  "$ROOT_DIR/app/src/platform/components/data-table.tsx" \
+  "$ROOT_DIR/app/src/platform/components/pagination.tsx" \
+  "$ROOT_DIR/app/src/platform/components/form-field.tsx" \
+  "$ROOT_DIR/app/src/platform/components/confirm-dialog.tsx" \
+  "$ROOT_DIR/app/src/platform/data.ts" \
+  "$ROOT_DIR/app/src/platform/hooks.ts"; do
+  [[ ! -e "$removed_wrapper" ]] || fail "redundant shared frontend wrapper returned: ${removed_wrapper#$ROOT_DIR/}"
+done
 grep -q '@faria-miguel/ui/float-label-enhancer' "$ROOT_DIR/app/src/components/common/float-label-enhancer.tsx" || fail "FloatLabel enhancer must delegate to @faria-miguel/ui"
 grep -q '@faria-miguel/platform/admin-layout' "$ROOT_DIR/app/src/components/layout/index.tsx" || fail "administrative layout must compose @faria-miguel/platform AdminLayout"
 grep -q '@faria-miguel/platform/theme' "$ROOT_DIR/app/src/components/settings/preferences-provider.tsx" || fail "theme resolution must come from @faria-miguel/platform"
