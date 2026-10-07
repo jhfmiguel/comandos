@@ -227,6 +227,10 @@ grep -q '"security-adapters-reclassified"' "$MANIFEST" \
   || fail "security adapter reclassification is not declared"
 
 # Step 21 closure guards for messaging, audit and identity.
+# Local generic messaging is fully retired; only canonical Faria Miguel messaging is allowed.
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/messaging" ]] \
+  || fail "local generic messaging package must remain removed; use Faria Miguel messaging/event fabric"
+
 if [[ -d "$ROOT_DIR/api/src/main/java/com/comandos" ]]; then
   messaging_refs="$(grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.messaging(\.api)?\.(PlatformEvent|PlatformEventPublisher|SpringPlatformEventPublisher|DomainEventEnvelope|DomainEventPublisher)|\b(DomainEventPublisher|DomainEventEnvelope)\b' "$ROOT_DIR/api/src/main/java/com/comandos"     | grep -v '/com/comandos/messaging/' || true)"
   [[ -z "$messaging_refs" ]] || {
