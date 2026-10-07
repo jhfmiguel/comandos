@@ -4,13 +4,16 @@ import com.comandos.compliance.dto.ComplianceContract.*;
 import com.comandos.compliance.model.CompliancePolicy;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.*;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -29,12 +32,20 @@ import org.springframework.web.server.ResponseStatusException;
 public class ComplianceService {
     private final EntityManager em;
     private final AccessPolicy access;
-    private final ProductCanonicalScopeResolver canonicalScope;
+    private static final TenantId TENANT = TenantId.of("comandos");
 
-    public ComplianceService(EntityManager em, AccessPolicy access, ProductCanonicalScopeResolver canonicalScope) {
+    private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
+
+    public ComplianceService(
+            EntityManager em,
+            AccessPolicy access,
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
     public SummaryView summary(long organizationId, Long unitId) {
@@ -76,14 +87,27 @@ public class ComplianceService {
         int maintenance = days(request.maintenanceWarningDays(), 30, "Maintenance warning days", 0, 3650);
         int regulatory = days(request.regulatoryWarningDays(), 30, "Regulatory warning days", 0, 3650);
         int inspection = days(request.inspectionIntervalDays(), 180, "Inspection interval days", 1, 3650);
-        Organization organization = em.find(Organization.class, organizationId, LockModeType.PESSIMISTIC_WRITE);
-        if (organization == null || !Boolean.TRUE.equals(organization.active)) bad("Active organization is required.");
+        var organizationView = masterData.findOrganization(organizationId, TENANT)
+            .filter(value -> value.status() == LifecycleStatus.ACTIVE)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Active organization is required."
+            ));
+
         OrganizationalUnit unit = null;
         if (unitId != null) {
-            unit = em.find(OrganizationalUnit.class, unitId, LockModeType.PESSIMISTIC_WRITE);
-            if (unit == null || !unit.organization.id.equals(organizationId) || !Boolean.TRUE.equals(unit.active))
+            CompanyId companyId = CompanyId.of("comandos:organization:" + organizationId);
+            boolean activeUnitInOrganization = masterData
+                .listUnits(organizationId, TENANT, companyId)
+                .stream()
+                .anyMatch(value -> CanonicalMasterDataDirectory.legacyUnitId(value.id()) == unitId);
+            if (!activeUnitInOrganization) {
                 bad("Active unit in the selected organization is required.");
+            }
+            unit = em.getReference(OrganizationalUnit.class, unitId);
         }
+
+        Organization organization = em.getReference(Organization.class, organizationId);
         CompliancePolicy value = exactPolicy(organizationId, unitId);
         if (value == null) {
             value = new CompliancePolicy();
