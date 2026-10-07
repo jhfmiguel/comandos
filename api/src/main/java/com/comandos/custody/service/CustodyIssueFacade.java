@@ -1,7 +1,7 @@
 package com.comandos.custody.service;
 
-import com.comandos.core.model.PersonRoleAssignment;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.comandos.core.service.CanonicalPartyRoleDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
@@ -35,16 +35,19 @@ public class CustodyIssueFacade {
     private final EntityManager em;
     private final CustodyService custodyService;
     private final CanonicalMasterDataDirectory masterData;
+    private final CanonicalPartyRoleDirectory partyRoles;
     private final ProductCanonicalScopeResolver canonicalScope;
 
     public CustodyIssueFacade(
             EntityManager em,
             CustodyService custodyService,
             CanonicalMasterDataDirectory masterData,
+            CanonicalPartyRoleDirectory partyRoles,
             ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.custodyService = custodyService;
         this.masterData = masterData;
+        this.partyRoles = partyRoles;
         this.canonicalScope = canonicalScope;
     }
 
@@ -81,10 +84,11 @@ public class CustodyIssueFacade {
         OrganizationSnapshot organization = organization(request.organizationId());
         UnitSnapshot recipientUnit = unit(organization.id(), request.recipientUnitId());
         PersonSnapshot responsible = person(request.responsiblePersonId());
-        PersonRoleAssignment assignment = locked(
-            PersonRoleAssignment.class,
-            request.responsibilityRoleAssignmentId()
-        );
+        CanonicalPartyRoleDirectory.ProductSpecificRole assignment =
+            responsibilityAssignment(
+                responsible.id(),
+                request.responsibilityRoleAssignmentId()
+            );
         validateResponsibility(organization, recipientUnit, responsible, assignment);
 
         IssueRequest delegated = new IssueRequest(
@@ -111,23 +115,24 @@ public class CustodyIssueFacade {
             OrganizationSnapshot organization,
             UnitSnapshot unit,
             PersonSnapshot responsible,
-            PersonRoleAssignment assignment) {
+            CanonicalPartyRoleDirectory.ProductSpecificRole assignment) {
         if (!organization.active() || !unit.active() || !responsible.active())
             bad("Organization, receiving unit and responsible person must be active.");
-        if (assignment.person == null || !Objects.equals(assignment.person.id, responsible.id()))
+        if (assignment.personId() != responsible.id())
             bad("The responsibility assignment must belong to the selected responsible person.");
-        if (assignment.organization == null || !Objects.equals(assignment.organization.id, organization.id()))
+        if (assignment.organizationId() != organization.id())
             bad("The responsibility assignment must belong to the selected organization.");
-        if (assignment.unit == null || !Objects.equals(assignment.unit.id, unit.id()))
+        if (!Objects.equals(assignment.unitId(), unit.id()))
             bad("Institutional custody responsibility requires a role assignment in the receiving unit.");
-        if (assignment.role == null || blank(assignment.role.code)
-                || !INSTITUTIONAL_RESPONSIBILITY_ROLES.contains(assignment.role.code.trim().toUpperCase(Locale.ROOT)))
+        if (blank(assignment.code())
+                || !INSTITUTIONAL_RESPONSIBILITY_ROLES.contains(
+                    assignment.code().trim().toUpperCase(Locale.ROOT)))
             bad("The selected role does not authorize responsibility for institutional custody.");
-        if (!"ACTIVE".equalsIgnoreCase(assignment.status))
+        if (!"ACTIVE".equalsIgnoreCase(assignment.status()))
             bad("The responsibility role assignment must be active.");
         LocalDate today = LocalDate.now();
-        if (assignment.startDate == null || assignment.startDate.isAfter(today)
-                || assignment.endDate != null && assignment.endDate.isBefore(today))
+        if (assignment.validFrom() == null || assignment.validFrom().isAfter(today)
+                || assignment.validUntil() != null && assignment.validUntil().isBefore(today))
             bad("The responsibility role assignment must be currently valid.");
     }
 
@@ -136,7 +141,7 @@ public class CustodyIssueFacade {
             OrganizationSnapshot organization,
             UnitSnapshot unit,
             PersonSnapshot responsible,
-            PersonRoleAssignment assignment) {
+            CanonicalPartyRoleDirectory.ProductSpecificRole assignment) {
         Custody custody = em.find(Custody.class, custodyId, LockModeType.PESSIMISTIC_WRITE);
         if (custody == null) throw new IllegalStateException("Issued custody not found.");
         CustodyResponsibility existing = em.createQuery(
@@ -145,7 +150,7 @@ public class CustodyIssueFacade {
             .getResultStream().findFirst().orElse(null);
         if (existing != null) {
             if (!Objects.equals(existing.responsiblePersonLegacyId, responsible.id())
-                    || !Objects.equals(existing.roleAssignmentLegacyId, assignment.id))
+                    || !Objects.equals(existing.roleAssignmentLegacyId, assignment.assignmentId()))
                 conflict("This custody request is already bound to a different institutional responsibility.");
             return;
         }
@@ -154,10 +159,10 @@ public class CustodyIssueFacade {
         value.responsiblePersonLegacyId = responsible.id();
         value.responsiblePersonCanonicalId =
             canonicalScope == null ? null : canonicalScope.person(responsible.id());
-        value.roleAssignmentLegacyId = assignment.id;
+        value.roleAssignmentLegacyId = assignment.assignmentId();
         value.responsiblePersonName = responsible.name();
-        value.roleCode = assignment.role.code;
-        value.roleName = assignment.role.name;
+        value.roleCode = assignment.code();
+        value.roleName = assignment.name();
         value.organizationName = organization.name();
         value.unitName = unit.name();
         value.recordedAt = LocalDateTime.now();
