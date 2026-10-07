@@ -1,8 +1,9 @@
 package com.comandos.donation.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.core.model.*;
+import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.donation.dto.DonationContract.*;
 import com.comandos.donation.model.*;
@@ -18,19 +19,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Service @Transactional(readOnly=true)
 public class DonationService {
- private static final int PAGE_SIZE=20; private final EntityManager em; private final AccessPolicy access; private final AuditService audit;
+ private static final int PAGE_SIZE=20; private static final TenantId TENANT=TenantId.of("comandos");
+ private final EntityManager em; private final AccessPolicy access; private final AuditService audit;
  private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
+ private final CanonicalMasterDataDirectory masterData;
 
  @org.springframework.beans.factory.annotation.Autowired
- public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){
-  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;
+ public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
+  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;
  }
-
- @Deprecated
- DonationService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null,null);}
 
  public Page<StockOption> stock(long organizationId,Long unitId,String kind,String search,int page){
   access.requireScope("donations","READ",organizationId,unitId);selectedUnit(organizationId,unitId);pagination(page);
@@ -69,7 +72,12 @@ public class DonationService {
  private static List<LineRequest> sorted(List<LineRequest> items){return items.stream().sorted(Comparator.comparing(i->i.assetId()!=null?"A"+String.format("%020d",i.assetId()):"B"+String.format("%020d",i.balanceId()))).toList();}
  private static String fingerprint(FinalizeRequest r){String lines=sorted(r.items()).stream().map(i->i.assetId()+":"+i.balanceId()+":"+i.quantity().stripTrailingZeros().toPlainString()).toList().toString();return hash(r.organizationId()+"|"+r.unitId()+"|"+r.donorId()+"|"+r.doneeId()+"|"+r.term().trim()+"|"+normalizeDirection(r.direction())+"|"+clean(r.documentReference())+"|"+lines);}
  private void scope(StockLocation l,long org,Long unit){access.requireScope("donations","CREATE",org,unit);if(canonicalScope!=null&&canonicalScope.enabled()){var ids=canonicalScope.scope(org,unit);if(!l.matchesCanonicalScope(ids.organizationId(),ids.unitId()))bad("Every item must belong to the selected organization and unit.");return;}if(!l.organizationLegacyId.equals(org)||unit!=null&&(l.unitLegacyId==null||!unit.equals(l.unitLegacyId)))bad("Every item must belong to the selected organization and unit.");}
- private OrganizationalUnit selectedUnit(long org,Long id){if(id==null)return null;var u=em.find(OrganizationalUnit.class,id);if(u==null||!u.organization.id.equals(org))bad("Select a unit in the selected organization.");if(!Boolean.TRUE.equals(u.active))bad("Selected unit must be active.");return u;}
+ private UnitSnapshot selectedUnit(long org,Long id){if(id==null)return null;var u=masterData.findUnit(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select a unit in the selected organization."));if(!u.active()||!CompanyId.of("comandos:organization:"+org).equals(u.companyId()))bad("Select an active unit in the selected organization.");return new UnitSnapshot(id,u.name());}
+ private OrganizationSnapshot organization(Long id){if(id==null||id<=0)bad("A valid organization is required.");var o=masterData.findOrganization(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Organization not found."));return new OrganizationSnapshot(id,o.legalName(),o.status()==LifecycleStatus.ACTIVE);}
+ private PersonSnapshot person(Long id){if(id==null||id<=0)bad("A valid person is required.");var p=masterData.findPerson(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Person not found."));return new PersonSnapshot(id,p.name(),p.status()==LifecycleStatus.ACTIVE);}
+ private record OrganizationSnapshot(Long id,String name,boolean active){}
+ private record UnitSnapshot(Long id,String name){}
+ private record PersonSnapshot(Long id,String name,boolean active){}
  private void lockCatalog(){em.createQuery("select c from ItemCategory c order by c.id",ItemCategory.class).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();}
  private <T>T locked(Class<T> type,Long id){if(id==null||id<=0)bad("A valid record ID is required.");var value=em.find(type,id,LockModeType.PESSIMISTIC_WRITE);if(value==null)bad(type.getSimpleName()+" not found.");return value;}
  private static String normalizeDirection(String v){return v==null||v.isBlank()?"OUTGOING":v.trim().toUpperCase(Locale.ROOT);}
