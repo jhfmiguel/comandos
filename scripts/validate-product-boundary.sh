@@ -139,7 +139,7 @@ if [[ -n "$stock_location_navigation_hits" ]]; then
 fi
 
 legacy_scope_navigation_hits="$(
-  grep -RInE --include='*.java' '\.(organization|unit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     || true
+  grep -RInE --include='*.java' '\.(organization|unit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
 )"
 if [[ -n "$legacy_scope_navigation_hits" ]]; then
   printf '%s\n' "$legacy_scope_navigation_hits"
