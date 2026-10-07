@@ -317,9 +317,13 @@ public class InventoryService {
                         ? "e.organizationCanonicalId"
                         : "e.organizationLegacyId";
                 case "recalls" ->
-                    "e.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.organizationCanonicalId"
+                        : "e.organizationLegacyId";
                 case "recall-items" ->
-                    "e.recall.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.recall.organizationCanonicalId"
+                        : "e.recall.organizationLegacyId";
                 case "equipment-sets" ->
                     canonicalProductReferenceReadEnabled
                         ? "e.organizationCanonicalId"
@@ -582,13 +586,32 @@ public class InventoryService {
             if (id != null && (entity instanceof Recall || entity instanceof RecallItem)
                     && field.name().equals("description") && !data.containsKey("description")) continue;
             Object raw = data.get(field.name());
+            if (entity instanceof Recall recall
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                Long legacyId = raw == null ? null : integer(raw, false);
+                if (legacyId == null && field.required()) {
+                    bad(field.label() + " is required.");
+                }
+                if ("organizationId".equals(field.name())) {
+                    recall.organizationLegacyId = legacyId;
+                } else {
+                    recall.unitLegacyId = legacyId;
+                }
+                continue;
+            }
             if ((entity instanceof CertificationRecord || entity instanceof ExpirationRecord)
                     && Set.of("organizationId", "unitId").contains(field.name())) {
                 Long legacyId = raw == null ? null : integer(raw, false);
                 if (legacyId == null && field.required()) {
                     bad(field.label() + " is required.");
                 }
-                if (entity instanceof CertificationRecord certification) {
+                if (entity instanceof Recall recall) {
+            result.put("organizationCanonicalId", recall.organizationCanonicalId);
+            result.put("unitCanonicalId", recall.unitCanonicalId);
+            result.put("organizationId", recall.organizationLegacyId);
+            result.put("unitId", recall.unitLegacyId);
+        }
+        if (entity instanceof CertificationRecord certification) {
                     if ("organizationId".equals(field.name())) {
                         certification.organizationLegacyId = legacyId;
                     } else {
@@ -1059,7 +1082,8 @@ public class InventoryService {
             if ((entity instanceof StockLocation
                     || entity instanceof EquipmentSet
                     || entity instanceof CertificationRecord
-                    || entity instanceof ExpirationRecord)
+                    || entity instanceof ExpirationRecord
+                    || entity instanceof Recall)
                     && Set.of("organizationId", "unitId").contains(field.name())) {
                 continue;
             }
