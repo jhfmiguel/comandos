@@ -75,7 +75,9 @@
     "messaging-canonical-publisher-delegation",
     "audit-generic-sink-separation",
     "identity-canonical-master-data-resolution",
-    "security-canonical-contract-review"
+    "security-canonical-contract-review",
+    "frontend-unused-package-cleanup",
+    "frontend-boundary-gate-aligned"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -165,9 +167,7 @@
   "frontendFoundation": {
     "packages": [
       "@faria-miguel/ui",
-      "@faria-miguel/platform",
-      "@faria-miguel/enterprise",
-      "@faria-miguel/builder-core"
+      "@faria-miguel/platform"
     ],
     "genericUiOwnership": "faria-miguel",
     "compatibilityAdaptersAllowed": true,
