@@ -303,6 +303,24 @@ if (closure.stepStatus === 'completed') {
 }
 NODE
 
+# Step 21.13-21.17: every post-cutover phase must define objective completion evidence.
+node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" <<'NODE'
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const phases = manifest.postCutoverRemovalPlan?.phases || [];
+const expected = ['21.13','21.14','21.15','21.16','21.17'];
+for (const step of expected) {
+  const phase = phases.find(p => p.step === step);
+  if (!phase) throw new Error('Missing post-cutover phase ' + step);
+  if (!Array.isArray(phase.completionEvidence) || phase.completionEvidence.length < 3) {
+    throw new Error(step + ' must define objective completionEvidence');
+  }
+}
+if (!manifest.postCutoverRemovalPlan?.executionEvidenceRule) {
+  throw new Error('Missing post-cutover executionEvidenceRule');
+}
+NODE
+
 # Step 21.15-21.17: every declared compatibility/runtime-support file must have an explicit post-cutover disposition.
 node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" <<'NODE'
 const fs = require('fs');
