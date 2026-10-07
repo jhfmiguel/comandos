@@ -12,11 +12,11 @@ public class InventoryUnitScopeGuard implements UnitScopeGuard {
     public InventoryUnitScopeGuard(EntityManager em) { this.em = em; }
     @Override
     public void validateOrganizationChange(long unitId, long organizationId) {
-        long count = em.createQuery("select count(l) from StockLocation l where l.unit.id = :unit and l.organization.id <> :organization", Long.class)
+        long count = em.createQuery("select count(l) from StockLocation l where l.unitLegacyId = :unit and l.organizationLegacyId <> :organization", Long.class)
             .setParameter("unit", unitId).setParameter("organization", organizationId).getSingleResult();
         if (count > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "The unit has stock locations in its current organization.");
-        count = em.createQuery("select count(s) from EquipmentSet s where s.unit.id = :unit and s.organization.id <> :organization", Long.class)
+        count = em.createQuery("select count(s) from EquipmentSet s where s.unitLegacyId = :unit and s.organizationLegacyId <> :organization", Long.class)
             .setParameter("unit", unitId).setParameter("organization", organizationId).getSingleResult();
         if (count > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "The unit has equipment sets in its current organization.");
