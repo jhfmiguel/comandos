@@ -130,6 +130,14 @@ if grep -nE 'location\.(organization|unit)\.' "$ROOT_DIR/api/src/main/java/com/c
   fail "ComplianceService must use scalar/canonical StockLocation scope fields; only CompliancePolicy organization/unit remains transitional"
 fi
 
+stock_location_navigation_hits="$(
+  grep -RInE --include='*.java' '\.location\.(organization|unit)(\.|[^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/demo/'     || true
+)"
+if [[ -n "$stock_location_navigation_hits" ]]; then
+  printf '%s\n' "$stock_location_navigation_hits"
+  fail "production code still navigates retired StockLocation organization/unit associations"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
