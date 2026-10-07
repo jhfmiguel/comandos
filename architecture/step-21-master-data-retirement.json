@@ -384,7 +384,8 @@
       "ComplianceService now validates active organization/unit membership through CanonicalMasterDataDirectory and only materializes legacy JPA references required by CompliancePolicy persistence.",
       "AccessPolicy security-scope compatibility is frozen to four enumerated legacy path occurrences.",
       "CoreAccessDemoSeeder compatibility surface is frozen to eight enumerated Master Data references.",
-      "CustodyResponsibility bridge is frozen to two approved legacy identifiers with mandatory canonical person reference and canonical validation directories."
+      "CustodyResponsibility bridge is frozen to two approved legacy identifiers with mandatory canonical person reference and canonical validation directories.",
+      "CompliancePolicy Organization/OrganizationalUnit JPA associations retired pre-cutover; policy scope is scalar and canonical validation remains in ComplianceService."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -392,13 +393,10 @@
       "canonical mappers used by legacy projection, shadow-write, backfill or parity",
       "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
     ],
-    "explicitProductionExceptionsUntilCutover": [
-      "api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java",
-      "api/src/main/java/com/comandos/compliance/service/ComplianceService.java"
-    ],
+    "explicitProductionExceptionsUntilCutover": [],
     "enforcement": [
-      "No product model outside core/model may import Organization, OrganizationalUnit, Person or PersonRoleAssignment; CompliancePolicy is the sole model exception until Step 21.12.",
-      "No production code outside core may import those legacy Master Data entities except ComplianceService until Step 21.12; JpaIdentityDirectory is already canonical and is no longer an exception.",
+      "No product model outside core/model may import Organization, OrganizationalUnit, Person or PersonRoleAssignment; no compliance exception remains.",
+      "No production code outside core may import those legacy Master Data entities; JpaIdentityDirectory and ComplianceService are canonical/scalar consumers and are not exceptions.",
       "All scalarized models remain guarded against JPA association regression.",
       "All 59 *LegacyId fields, 59 physical Oracle bridge columns, and 26 FK-retirement entries are cross-checked by automatic gates.",
       "Product boundary globally rejects production navigation through retired .organization.id/.unit.id associations outside core/compliance/security overlay exceptions.",
@@ -419,12 +417,12 @@
       "caveat": "Step 21.12 remains blocked before COMANDOS startup because canonical Maven artifact resolution fails."
     },
     "complianceException": {
-      "status": "persistence-association-only-until-21.12",
+      "status": "association-retired-pre-cutover",
       "model": "api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java",
       "service": "api/src/main/java/com/comandos/compliance/service/ComplianceService.java",
-      "remaining": "CompliancePolicy still maps Organization/OrganizationalUnit through JPA because its physical persistence has not been cut over.",
-      "completed": "ComplianceService organization/unit validation now uses CanonicalMasterDataDirectory; direct em.find reads of legacy Organization/OrganizationalUnit are forbidden by Product boundary.",
-      "retirementCondition": "Remove the remaining CompliancePolicy legacy JPA association only after Step 21.12 PASS and physical cutover preparation."
+      "completed": "CompliancePolicy no longer maps Organization/OrganizationalUnit JPA associations. organization_id/unit_id remain scalar policy-scope columns; ComplianceService validates scope through CanonicalMasterDataDirectory.",
+      "remaining": "No legacy Master Data entity association remains in compliance.",
+      "retirementCondition": "Any future conversion of scalar policy scope to canonical identifiers is a data-model evolution, not a blocker for retiring legacy Master Data JPA entities."
     },
     "custodyResponsibilityException": {
       "status": "controlled-product-role-bridge-until-cutover",
