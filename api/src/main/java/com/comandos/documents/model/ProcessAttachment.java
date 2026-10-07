@@ -7,8 +7,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "erp_process_attachment", indexes = {
     @Index(name = "idx_process_attachment_target", columnList = "process_type,record_id"),
-    @Index(name = "idx_process_attachment_scope", columnList = "organization_id,unit_id"),
-    @Index(name = "idx_process_attachment_storage", columnList = "storage_id")
+    @Index(name = "idx_process_attachment_scope", columnList = "organization_id,unit_id")
 }, uniqueConstraints = {
     @UniqueConstraint(name = "uk_process_attachment_storage", columnNames = {"storage_id"})
 })
