@@ -57,8 +57,10 @@ class DuplicateRetirementArchitectureTest {
         Set<String> removed = new HashSet<>();
 
         for (JsonNode group : inventory.path("groups")) {
-            if (!"removed".equals(group.path("classification").asText())) continue;
-            for (JsonNode file : group.path("files")) removed.add(file.asText());
+            if ("removed".equals(group.path("classification").asText())) {
+                for (JsonNode file : group.path("files")) removed.add(file.asText());
+            }
+            for (JsonNode file : group.path("removedFiles")) removed.add(file.asText());
         }
 
         assertFalse(removed.isEmpty());

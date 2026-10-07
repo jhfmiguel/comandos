@@ -99,19 +99,21 @@
     },
     {
       "id": "frontend-shared-wrappers",
-      "classification": "compatibility-wrapper",
+      "classification": "partially-removed",
       "safeToDelete": false,
-      "reason": "Several local files are already thin re-exports/adapters over @faria-miguel packages, but deleting them requires call-site migration to direct shared imports.",
+      "reason": "Pure re-export wrappers for shared UI/data/hooks were removed after the COMANDOS platform barrel was redirected to @faria-miguel packages. shared-foundation.ts remains until its call sites are fully traced.",
       "evidence": [
+        "app/src/platform/shared-foundation.ts"
+      ],
+      "nextAction": "Trace shared-foundation.ts call sites; remove it only if no product-specific compatibility surface depends on it.",
+      "removedFiles": [
         "app/src/platform/components/data-table.tsx",
         "app/src/platform/components/form-field.tsx",
         "app/src/platform/components/pagination.tsx",
         "app/src/platform/components/confirm-dialog.tsx",
         "app/src/platform/data.ts",
-        "app/src/platform/hooks.ts",
-        "app/src/platform/shared-foundation.ts"
-      ],
-      "nextAction": "Migrate product call sites to direct @faria-miguel imports, then delete wrappers."
+        "app/src/platform/hooks.ts"
+      ]
     },
     {
       "id": "frontend-product-composition-adapters",
