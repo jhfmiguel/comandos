@@ -717,6 +717,18 @@
         "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
         "scripts/validate-product-boundary.sh"
       ]
+    },
+    {
+      "id": "reconciliation-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "InventoryCountService resolves organization and unit through CanonicalMasterDataDirectory and uses scalar legacy/canonical identifiers on InventoryCount. Reconciliation keeps only product-specific stock snapshot, count, approval and adjustment rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/reconciliation/service/InventoryCountService.java",
+        "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
