@@ -67,7 +67,11 @@
     "frontend-shared-modal",
     "frontend-shared-admin-layout",
     "frontend-shared-theme",
-    "frontend-shared-notifications"
+    "frontend-shared-notifications",
+    "frontend-import-cutover",
+    "frontend-compatibility-review",
+    "frontend-error-boundary",
+    "messaging-publisher-delegation"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
