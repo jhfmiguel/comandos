@@ -308,14 +308,16 @@
       "id": "oracle-legacy-structures",
       "classification": "retirement-plan",
       "safeToDelete": false,
-      "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.16 mapped the Oracle legacy/cutover structures. Master Data physical drops remain forbidden until the Step 21.12 retirement gate passes. Separately, the retired generic User and Weapon CRUDs no longer have schema definitions in compatibility-schema.sql; any pre-existing physical user/weapon tables must be treated as orphan-data candidates and verified before drop rather than deleted blindly.",
+      "stepStatus": "local-inventory-complete-blocked-by-21.12",
+      "reason": "Step 21.16 local Oracle retirement inventory is complete and read-only. The audit now tracks the 59 physical scalar bridge columns by their real database names (for example ORGANIZATION_ID, UNIT_ID, BUYER_ORGANIZATION_ID, RESPONSIBLE_PERSON_ID) instead of assuming a *_LEGACY_ID naming convention. It also inventories canonical columns, indexes, constraints, views, triggers, sequences and the ERP_MASTER_DATA_REFERENCE crosswalk. Physical drops remain forbidden until the Step 21.12 retirement gate passes.",
       "evidence": [
         "api/src/main/resources/db/oracle/compatibility-schema.sql",
         "architecture/step-21-master-data-retirement.json",
-        "scripts/oracle-step-21-retirement-audit.sql"
+        "architecture/master-data-foreign-keys.json",
+        "scripts/oracle-step-21-retirement-audit.sql",
+        "commit 90d3a5fb082337a46ce812064f9e98a53cf9c17c"
       ],
-      "auditStatus": "read-only inventory script prepared; destructive DDL intentionally deferred",
+      "auditStatus": "read-only inventory prepared and synchronized to the 59-field scalar bridge baseline; destructive DDL intentionally deferred",
       "targets": [
         "erp_master_data_reference crosswalk table and indexes",
         "legacy master-data tables after entity retirement",
@@ -329,11 +331,13 @@
       "id": "temporary-master-data-migrations",
       "classification": "retirement-plan",
       "safeToDelete": false,
-      "stepStatus": "mapped-blocked-by-21.12",
-      "reason": "Step 21.17 mapped temporary migration content inside the Oracle compatibility schema. The durable legacy-to-canonical crosswalk is temporary and may be retired only after cutover PASS. Canonical-id columns and their indexes are not temporary by default: once canonical IDs become the primary product references they must be retained, while legacy scalar IDs, legacy foreign keys and rollback-only support structures are the retirement targets.",
+      "stepStatus": "local-mapping-complete-blocked-by-21.12",
+      "reason": "Step 21.17 local mapping is complete. The durable legacy-to-canonical crosswalk is temporary and may be retired only after cutover PASS. Canonical-id columns and their indexes are not temporary by default. Legacy scalar bridges use their existing physical names (such as ORGANIZATION_ID, UNIT_ID, RECIPIENT_ID, BUYER_ID and ROLE_ASSIGNMENT_ID), not a *_LEGACY_ID database naming convention; those physical bridge columns and rollback-only constraints are retirement targets only after Step 21.12 PASS and zero-reference validation.",
       "evidence": [
         "api/src/main/resources/db/oracle/compatibility-schema.sql",
-        "scripts/oracle-step-21-retirement-audit.sql"
+        "scripts/oracle-step-21-retirement-audit.sql",
+        "architecture/step-21-master-data-retirement.json",
+        "commit 18e35d778868df6c43b05b08a1f050325b4fed08"
       ],
       "temporaryObjectsAfterCutoverPass": [
         "ERP_MASTER_DATA_REFERENCE",
@@ -346,7 +350,7 @@
         "indexes supporting *_CANONICAL_ID primary read paths"
       ],
       "retireAfterCutoverPass": [
-        "*_LEGACY_ID scalar reference columns after zero-reference validation",
+        "the 59 inventoried physical scalar bridge columns after zero-reference validation and product cutover",
         "legacy foreign keys and constraints tied only to retired Master Data persistence",
         "rollback-only migration support objects no longer required"
       ]
@@ -767,7 +771,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "completed-current-head-family",
-      "reason": "Step 21.35 Product boundary and Faria Miguel architecture gates pass after fixing the regex matcher conflict that had masked direct legacy reads/null canonical collaborators. The gates now actively reject direct product Master Data reads, nullable canonicalScope/masterDataReferences/masterDataMirror fallbacks, sibling dependencies, recreated shared roots/contracts and LegacyId growth.",
+      "reason": "Step 21.35 Product boundary and Faria Miguel architecture gates pass after fixing the regex matcher conflict that had masked direct legacy reads/null canonical collaborators. The gates now reject direct product Master Data reads, nullable canonicalScope/masterDataReferences/masterDataMirror fallbacks, sibling dependencies, recreated shared roots/contracts, LegacyId growth, JPA regression in 25 scalarized Master Data models, and Oracle bridge-inventory drift away from the current 59-field baseline.",
       "evidence": [
         "GitHub Actions Product boundary run 37569660581: success",
         "GitHub Actions Faria Miguel automatic architecture gates run 37569660593: success"
