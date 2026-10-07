@@ -392,6 +392,11 @@ if grep -q 'ManyToOne' "$ROOT_DIR/api/src/main/java/com/comandos/purchase/model/
   fail "ProcurementProcess must not regain a legacy Organization JPA association"
 fi
 
+# Consumption must not depend on legacy master-data entities directly.
+if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person)|em\.find\((Organization|OrganizationalUnit|Person)\.class|locked\((Organization|Person)\.class' "$ROOT_DIR/api/src/main/java/com/comandos/consumption"; then
+  fail "consumption code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
+fi
+
 # Reconciliation must not depend on legacy master-data entities directly.
 if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person)|em\.find\((Organization|OrganizationalUnit|Person)\.class|locked\((Organization|Person)\.class' "$ROOT_DIR/api/src/main/java/com/comandos/reconciliation"; then
   fail "reconciliation code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
