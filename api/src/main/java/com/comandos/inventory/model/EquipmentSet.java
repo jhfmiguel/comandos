@@ -1,8 +1,6 @@
 package com.comandos.inventory.model;
 
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,18 +8,27 @@ import jakarta.persistence.*;
     @UniqueConstraint(columnNames = {"organization_id", "code"})
 })
 public class EquipmentSet extends CoreEntity {
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
-    @ManyToOne
-    @JoinColumn(name = "unit_id")
-    public OrganizationalUnit unit;
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
+
+    @Column(name = "unit_id")
+    public Long unitLegacyId;
+
+    @Column(name = "organization_canonical_id", length = 128)
+    public String organizationCanonicalId;
+
+    @Column(name = "unit_canonical_id", length = 128)
+    public String unitCanonicalId;
+
     @Column(name = "code", nullable = false, length = 255)
     public String code;
+
     @Column(name = "name", nullable = false, length = 255)
     public String name;
+
     @Column(name = "description", length = 255)
     public String description;
+
     @Column(name = "active", nullable = false)
     public boolean active;
 }
