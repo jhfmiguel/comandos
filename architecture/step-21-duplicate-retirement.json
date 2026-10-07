@@ -307,8 +307,10 @@
       "reason": "Step 21.16 mapped the Oracle legacy/cutover structures. Master Data physical drops remain forbidden until the Step 21.12 retirement gate passes. Separately, the retired generic User and Weapon CRUDs no longer have schema definitions in compatibility-schema.sql; any pre-existing physical user/weapon tables must be treated as orphan-data candidates and verified before drop rather than deleted blindly.",
       "evidence": [
         "api/src/main/resources/db/oracle/compatibility-schema.sql",
-        "architecture/step-21-master-data-retirement.json"
+        "architecture/step-21-master-data-retirement.json",
+        "scripts/oracle-step-21-retirement-audit.sql"
       ],
+      "auditStatus": "read-only inventory script prepared; destructive DDL intentionally deferred",
       "targets": [
         "erp_master_data_reference crosswalk table and indexes",
         "legacy master-data tables after entity retirement",
