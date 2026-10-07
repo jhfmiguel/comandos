@@ -121,11 +121,18 @@
       "id": "workflow-sensitive-operation-overlay",
       "classification": "product-owned",
       "safeToDelete": false,
-      "reason": "Sensitive-operation approval rules remain a COMANDOS vertical specialization while generic workflow contracts are owned by the foundation.",
+      "reason": "Step 21.10 completed: generic workflow transition validation is owned by the canonical Faria Miguel WorkflowEngine. COMANDOS retains only the sensitive-operation approval overlay, its product persistence/history and product-specific authorization/justification rules.",
       "evidence": [
         "api/src/main/java/com/comandos/workflow/api/SensitiveWorkflowGateway.java",
         "api/src/main/java/com/comandos/workflow/service/SensitiveOperationExecutor.java",
         "api/src/main/java/com/comandos/workflow/service/WorkflowApprovalGuard.java"
+      ],
+      "stepStatus": "completed",
+      "completed": [
+        "generic WorkflowEngine/WorkflowDefinition/WorkflowTransition consumed from Faria Miguel",
+        "local generic workflow contracts remain forbidden by product boundary",
+        "WorkflowApprovalGuard aligned with legacy/canonical scope cutover without legacy Organization/Unit JPA associations",
+        "SensitiveWorkflowGateway/SensitiveOperationExecutor/WorkflowApprovalGuard retained as product-specific overlay"
       ]
     },
     {
