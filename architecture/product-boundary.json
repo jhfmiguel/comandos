@@ -82,7 +82,9 @@
     "audit-generic-cleanup-complete",
     "identity-generic-cleanup-complete",
     "frontend-import-migration-complete",
-    "frontend-final-build-validation-deferred-to-21.34"
+    "frontend-final-build-validation-deferred-to-21.34",
+    "workflow-generic-cleanup-complete",
+    "workflow-canonical-scope-cutover-aligned"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
