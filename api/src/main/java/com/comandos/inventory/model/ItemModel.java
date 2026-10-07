@@ -1,11 +1,10 @@
 package com.comandos.inventory.model;
 
-import com.comandos.enterprise.catalog.model.CatalogItemBase;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "erp_item_model", uniqueConstraints = {@UniqueConstraint(columnNames = {"sku"})})
-public class ItemModel extends CatalogItemBase {
+public class ItemModel extends InventoryItemModelBase {
     @ManyToOne
     @JoinColumn(name = "armament_type_id")
     public ArmamentType armamentType;
