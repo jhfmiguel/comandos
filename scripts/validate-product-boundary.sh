@@ -110,6 +110,18 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15: required canonical collaborators are never optional after constructor migration.
+for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror; do
+  nullable_hits="$(
+    grep -RFnE --include='*.java' "$nullable_collaborator[[:space:]]*!=[[:space:]]*null|$nullable_collaborator[[:space:]]*==[[:space:]]*null" \
+      "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
+  )"
+  if [[ -n "$nullable_hits" ]]; then
+    printf '%s\n' "$nullable_hits"
+    fail "required canonical collaborator still has nullable fallback: $nullable_collaborator"
+  fi
+done
+
 # Step 21.15: CanonicalMasterDataDirectory must not keep test-only null constructors.
 CANONICAL_MASTER_DATA_DIRECTORY="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java"
 if grep -q '@Deprecated' "$CANONICAL_MASTER_DATA_DIRECTORY" \
