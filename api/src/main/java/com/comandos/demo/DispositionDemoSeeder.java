@@ -57,10 +57,10 @@ public class DispositionDemoSeeder implements ApplicationRunner {
         if (count(Donation.class) > 0) return;
 
         Donation donation = new Donation();
-        donation.organization = org;
-        donation.unit = unit;
-        donation.donor = donor;
-        donation.donee = donee;
+        donation.organizationLegacyId = org.id;
+        donation.unitLegacyId = unit.id;
+        donation.donorLegacyId = donor.id;
+        donation.doneeLegacyId = donee.id;
         donation.organizationName = org.name;
         donation.unitName = unit.name;
         donation.donorName = donor.fullName;
@@ -99,10 +99,10 @@ public class DispositionDemoSeeder implements ApplicationRunner {
         if (count(InventorySale.class) > 0) return;
 
         InventorySale sale = new InventorySale();
-        sale.organization = org;
-        sale.unit = unit;
+        sale.organizationLegacyId = org.id;
+        sale.unitLegacyId = unit.id;
         sale.unitName = unit.name;
-        sale.buyer = buyer;
+        sale.buyerLegacyId = buyer.id;
         sale.organizationName = org.name;
         sale.buyerName = buyer.fullName;
         sale.paymentMethod = PaymentMethod.BANK_TRANSFER;
@@ -163,8 +163,8 @@ public class DispositionDemoSeeder implements ApplicationRunner {
         if (count(DisposalProcess.class) > 0) return;
 
         DisposalProcess process = new DisposalProcess();
-        process.organization = org;
-        process.unit = unit;
+        process.organizationLegacyId = org.id;
+        process.unitLegacyId = unit.id;
         process.organizationName = org.name;
         process.unitName = unit.name;
         process.processNumber = "PROC-DEMO-DESFAZIMENTO-001";
