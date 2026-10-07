@@ -75,11 +75,11 @@ public class TransferTransitDemoVerifier implements ApplicationRunner {
     }
 
     private void verifyHeader(InventoryTransfer transfer) {
-        require(transfer.organization != null, "transfer without organization: transfer=" + transfer.id);
-        require(transfer.sourceUnit != null, "transfer without source unit: transfer=" + transfer.id);
-        require(transfer.destinationUnit != null, "transfer without destination unit: transfer=" + transfer.id);
+        require(transfer.organizationLegacyId != null, "transfer without organization: transfer=" + transfer.id);
+        require(transfer.sourceUnitLegacyId != null, "transfer without source unit: transfer=" + transfer.id);
+        require(transfer.destinationUnitLegacyId != null, "transfer without destination unit: transfer=" + transfer.id);
         require(transfer.destinationLocation != null, "transfer without destination location: transfer=" + transfer.id);
-        require(!transfer.sourceUnit.id.equals(transfer.destinationUnit.id),
+        require(!transfer.sourceUnitLegacyId.equals(transfer.destinationUnitLegacyId),
             "transfer source and destination units must differ: transfer=" + transfer.id);
         require(notBlank(transfer.sourceUnitName),
             "transfer must preserve historical source unit name: transfer=" + transfer.id);
