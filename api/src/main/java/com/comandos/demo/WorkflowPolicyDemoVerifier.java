@@ -52,7 +52,7 @@ public class WorkflowPolicyDemoVerifier implements ApplicationRunner {
         var workflows = em.createQuery("select w from ApprovalWorkflow w order by w.id", ApprovalWorkflow.class).getResultList();
         for (var workflow : workflows) {
             policy.rule(workflow.operationType);
-            if (workflow.organization == null) fail("workflow without organization: " + workflow.id);
+            if (workflow.organizationLegacyId == null) fail("workflow without organization: " + workflow.id);
             if (blank(workflow.resource)) fail("workflow without permission resource: " + workflow.id);
             if (blank(workflow.justification)) fail("workflow without justification: " + workflow.id);
             if (workflow.requestedAt == null) fail("workflow without request timestamp: " + workflow.id);
