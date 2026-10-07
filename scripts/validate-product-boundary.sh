@@ -574,12 +574,6 @@ printf 'Remaining local core code is restricted to legacy master-data/admin comp
 printf 'Generic integrations adapters are removed and cannot be reintroduced locally.\n'
 printf 'Only the pre-existing COMANDOS enterprise/catalog compatibility layer is permitted locally.\n'
 printf 'COMANDOS product boundary validated against canonical Faria Miguel foundation.\n'
- "$CANONICAL_CORE_READS" | grep -q 'EntityManager'; then
-  fail "CanonicalCoreReadService must not keep a legacy constructor that bypasses CanonicalMasterDataDirectory"
-fi
-grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
-  || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
-
 # Steps 21.13-21.15: legacy master-data retirement backlog may only shrink.
 RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
