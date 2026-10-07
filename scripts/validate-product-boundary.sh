@@ -138,6 +138,14 @@ if [[ -n "$stock_location_navigation_hits" ]]; then
   fail "production code still navigates retired StockLocation organization/unit associations"
 fi
 
+legacy_scope_navigation_hits="$(
+  grep -RInE --include='*.java' '\.(organization|unit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     || true
+)"
+if [[ -n "$legacy_scope_navigation_hits" ]]; then
+  printf '%s\n' "$legacy_scope_navigation_hits"
+  fail "product code still navigates legacy organization/unit entity associations"
+fi
+
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
 deprecated_hits="$(
   grep -RFn --include='*.java' '@Deprecated' "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
