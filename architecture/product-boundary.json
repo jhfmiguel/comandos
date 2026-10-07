@@ -89,7 +89,22 @@
     "canonical-party-roles-read-cutover",
     "canonical-party-documents-read-cutover",
     "canonical-professional-qualifications-read-cutover",
-    "master-data-canonical-domain-finalization"
+    "master-data-canonical-domain-finalization",
+    "catalog-primitives-promoted-to-foundation",
+    "inventory-canonical-contract-boundary",
+    "procurement-canonical-contract-boundary",
+    "generic-sales-persistence-removed",
+    "finance-canonical-only",
+    "contracts-canonical-only",
+    "document-storage-centralized",
+    "notifications-local-package-absent",
+    "platform-metrics-centralized",
+    "platform-manual-wiring-removed",
+    "redundant-spring-security-crypto-removed",
+    "frontend-unused-shared-packages-removed",
+    "postgres-demo-config-removed",
+    "oracle-env-example-aligned",
+    "duplicate-demo-script-removed"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
@@ -121,7 +136,11 @@
     "sensitive-operation-workflow-overlay",
     "local-authentication-session-overlay",
     "security-scope-overlay",
-    "legacy-master-data-admin-compatibility"
+    "legacy-master-data-admin-compatibility",
+    "controlled-asset-alienation",
+    "controlled-material-procurement-overlay",
+    "controlled-inventory-regulatory-overlay",
+    "process-document-policy-overlay"
   ],
   "compatibilityAdaptersOnly": [
     "audit",
@@ -213,5 +232,12 @@
       "product-translations",
       "product-session-routing-overlay"
     ]
+  },
+  "step21": {
+    "manifest": "architecture/step-21-duplicate-retirement.json",
+    "masterDataRetirement": "architecture/step-21-master-data-retirement.json",
+    "automaticArchitectureGates": "passed",
+    "productBoundaryGate": "passed",
+    "runtimeCutoverBlocker": "canonical Faria Miguel Maven/npm artifacts are not published to GitHub Packages"
   }
 }
