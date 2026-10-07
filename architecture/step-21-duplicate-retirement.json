@@ -651,6 +651,27 @@
       ]
     },
     {
+      "id": "legacy-generic-weapon-crud",
+      "classification": "removed",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.32/21.36 retired the obsolete generic Weapon CRUD and /api/weapons endpoint. The old weapon query/registration routes now redirect to the current COMANDOS inventory catalog, where armament models and controlled-asset specializations are maintained. Product-specific inventory/armament entities remain.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/model/Weapon.java",
+        "api/src/main/java/com/comandos/model/repository/WeaponRepository.java",
+        "api/src/main/java/com/comandos/rest/weapons/WeaponController.java",
+        "api/src/main/java/com/comandos/rest/weapons/WeaponFormRequest.java",
+        "app/src/components/weapons",
+        "app/src/api/services/weapon.service.ts",
+        "app/src/api/models/weapons"
+      ],
+      "canonicalRoute": "/erp/inventory?section=catalog&resource=item-models",
+      "legacyRouteCompatibility": [
+        "/queries/weapons redirects to canonical inventory catalog",
+        "/registrations/weapons redirects to canonical inventory catalog"
+      ]
+    },
+    {
       "id": "legacy-generic-user-crud",
       "classification": "removed",
       "safeToDelete": true,
