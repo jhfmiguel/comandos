@@ -129,9 +129,14 @@ jobs:
             exit 0
           fi
           git clone --depth 1 "https://x-access-token:${FARIA_MIGUEL_READ_TOKEN}@github.com/jhfmiguel/faria-miguel.git" ../faria-miguel
-          mkdir -p app/.foundation-packages
-          npm pack ../faria-miguel/frontend/packages/ui --pack-destination app/.foundation-packages
-          npm pack ../faria-miguel/frontend/packages/platform --pack-destination app/.foundation-packages
+          node <<'NODE'
+          const fs = require("fs");
+          const path = "app/package.json";
+          const pkg = JSON.parse(fs.readFileSync(path, "utf8"));
+          pkg.dependencies["@faria-miguel/ui"] = "file:../../faria-miguel/frontend/packages/ui";
+          pkg.dependencies["@faria-miguel/platform"] = "file:../../faria-miguel/frontend/packages/platform";
+          fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");
+          NODE
           echo "available=true" >> "$GITHUB_OUTPUT"
 
       - name: Record unavailable canonical frontend dependency
@@ -342,12 +347,12 @@ jobs:
           fi
 
       - name: Install frontend with Yarn
-        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
 
       - name: Generate frontend CycloneDX SBOM
-        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true'
         run: |
           mkdir -p artifacts
           cd app
