@@ -2,6 +2,7 @@ package com.comandos.architecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fariamiguel.analytics.api.MetricRecorder;
 import com.fariamiguel.audit.api.AuditRecorder;
 import com.fariamiguel.core.api.IdGenerator;
 import com.fariamiguel.documents.api.DocumentStorage;
@@ -43,6 +44,7 @@ class FariaMiguelConsumerContractTest {
         assertShared(CurrentActorProvider.class, "com.fariamiguel.security.api");
         assertShared(IdentityDirectory.class, "com.fariamiguel.identity.api");
         assertShared(PlatformEventPublisher.class, "com.fariamiguel.messaging.api");
+        assertShared(MetricRecorder.class, "com.fariamiguel.analytics.api");
         assertShared(AuditRecorder.class, "com.fariamiguel.audit.api");
         assertShared(DocumentStorage.class, "com.fariamiguel.documents.api");
         assertShared(WorkflowEngine.class, "com.fariamiguel.workflow.api");
