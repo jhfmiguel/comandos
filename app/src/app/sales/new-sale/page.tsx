@@ -1,4 +1,5 @@
-import { Sales } from "components"
+import { redirect } from "next/navigation"
 
-export default Sales
-
+export default function LegacySalesRedirect() {
+    redirect("/erp/sales")
+}
