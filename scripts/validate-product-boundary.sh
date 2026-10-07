@@ -164,8 +164,10 @@ while IFS= read -r import_line; do
     candidate="$next"
   done
 
-  [[ "$resolved" == true ]] \
-    || fail "orphan COMANDOS import points to a missing source file: $imported"
+  if [[ "$resolved" != true ]]; then
+    grep -RFn --include='*.java' "import $imported;" "$ROOT_DIR/api/src" 2>/dev/null || true
+    fail "orphan COMANDOS import points to a missing source file: $imported"
+  fi
 done < <(
   grep -RhoE --include='*.java' '^import[[:space:]]+com\.comandos\.[A-Za-z0-9_.]+;' "$ROOT_DIR/api/src" \
     | sort -u
