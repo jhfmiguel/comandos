@@ -2,6 +2,7 @@ package com.comandos.sales.service;
 
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.model.InventoryCountItem;
@@ -23,16 +24,21 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 
 @Service
 @Transactional(readOnly = true)
 public class InventorySalesService {
     private static final int PAGE_SIZE = 20;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public InventorySalesService(
@@ -40,17 +46,14 @@ public class InventorySalesService {
             AccessPolicy access,
             AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null, null);
+        this.masterData = masterData;
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -94,7 +97,7 @@ public class InventorySalesService {
         access.requireScope("sales", "CREATE", request.organizationId(), request.unitId());
         em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
             .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
-        var organization = locked(Organization.class, request.organizationId());
+        var organization = organization(request.organizationId());
         String fingerprint = fingerprint(request);
         var existing = em.createQuery("select s from InventorySale s where s.requestId = :key", InventorySale.class)
             .setParameter("key", request.requestId()).getResultStream().findFirst();
@@ -103,22 +106,22 @@ public class InventorySalesService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different sale.");
             return view(existing.get());
         }
-        var unit = selectedUnit(organization.id, request.unitId());
-        var buyer = locked(Person.class, request.buyerId());
-        access.requireEntity("core/people", "READ", buyer);
-        if (!organization.active || !buyer.active) bad("Organization and buyer must be active.");
+        var unit = selectedUnit(organization.id(), request.unitId());
+        var buyer = person(request.buyerId());
+        access.requireAny("core/people", "READ");
+        if (!organization.active() || !buyer.active()) bad("Organization and buyer must be active.");
         var sale = new InventorySale();
-        sale.organizationLegacyId = organization.id;
-        sale.unitLegacyId = unit == null ? null : unit.id;
-        sale.buyerLegacyId = buyer.id;
+        sale.organizationLegacyId = organization.id();
+        sale.unitLegacyId = unit == null ? null : unit.id();
+        sale.buyerLegacyId = buyer.id();
         if (canonicalScope != null) {
-            sale.organizationCanonicalId = canonicalScope.organization(organization.id);
-            sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
-            sale.buyerCanonicalId = canonicalScope.person(buyer.id);
+            sale.organizationCanonicalId = canonicalScope.organization(organization.id());
+            sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+            sale.buyerCanonicalId = canonicalScope.person(buyer.id());
         }
-        sale.unitName = unit == null ? null : unit.name;
-        sale.organizationName = organization.name;
-        sale.buyerName = buyer.fullName;
+        sale.unitName = unit == null ? null : unit.name();
+        sale.organizationName = organization.name();
+        sale.buyerName = buyer.name();
         sale.paymentMethod = request.paymentMethod();
         sale.processNumber = request.processNumber().trim();
         sale.legalBasis = request.legalBasis().trim();
@@ -140,7 +143,7 @@ public class InventorySalesService {
             item.quantity = requested.quantity();
             if (requested.assetId() != null) {
                 var asset = locked(AssetItem.class, requested.assetId());
-                validateLocation(asset.location, organization.id, request.unitId());
+                validateLocation(asset.location, organization.id(), request.unitId());
                 if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
                 notExpired(asset.validUntil);
                 if (item.quantity.compareTo(BigDecimal.ONE) != 0) bad("Individual assets require quantity 1.");
@@ -153,7 +156,7 @@ public class InventorySalesService {
                 asset.status = AssetStatus.SOLD.name();
             } else {
                 var balance = locked(StockBalance.class, requested.balanceId());
-                validateLocation(balance.location, organization.id, request.unitId());
+                validateLocation(balance.location, organization.id(), request.unitId());
                 var lot = locked(StockLot.class, balance.lot.id);
                 notExpired(lot.validUntil);
                 if (balance.available.compareTo(item.quantity) < 0 || lot.availableQuantity.compareTo(item.quantity) < 0)
