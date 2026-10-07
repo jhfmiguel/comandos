@@ -371,8 +371,21 @@ public class DonationReceiptService {
             long organizationId,
             Long unitId) {
 
-        if (!Boolean.TRUE.equals(location.active)
-                || !organizationIdEquals(location.organizationLegacyId, organizationId)) {
+        if (!Boolean.TRUE.equals(location.active)) {
+            bad("Donation destination must be an active location in the selected organization.");
+        }
+
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var scope = canonicalScope.scope(organizationId, unitId);
+            if (!location.matchesCanonicalScope(
+                    scope.organizationId(),
+                    scope.unitId())) {
+                bad("Donation destination must belong to the selected canonical organization and unit.");
+            }
+            return;
+        }
+
+        if (!organizationIdEquals(location.organizationLegacyId, organizationId)) {
             bad("Donation destination must be an active location in the selected organization.");
         }
 
