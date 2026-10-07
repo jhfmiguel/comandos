@@ -9,8 +9,8 @@
   "legacyIdRetirement": {
     "step": "21.13",
     "status": "blocked-by-21.12",
-    "baselineCount": 53,
-    "rule": "The corrected baseline is 53 after hidden CertificationRecord and ExpirationRecord Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
+    "baselineCount": 55,
+    "rule": "The corrected baseline is 55 after the Recall Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
     "fields": [
       {
         "entity": "StockLocation",
@@ -275,6 +275,16 @@
       {
         "entity": "ExpirationRecord",
         "path": "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "Recall",
+        "path": "api/src/main/java/com/comandos/inventory/model/Recall.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "Recall",
+        "path": "api/src/main/java/com/comandos/inventory/model/Recall.java",
         "field": "unitLegacyId"
       }
     ]
