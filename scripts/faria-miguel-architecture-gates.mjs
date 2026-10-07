@@ -10,6 +10,7 @@ const violations = [];
 const legacyIdInventory = retirement.legacyIdRetirement;
 const expectedLegacyIds = new Set((legacyIdInventory.fields ?? []).map(({path: filePath, field}) => `${filePath}#${field}`));
 const detectedLegacyIds = new Set();
+const scalarizedMasterDataModels = new Set((legacyIdInventory.fields ?? []).map(({path: filePath}) => filePath));
 
 function walk(dir, visit) {
   if (!fs.existsSync(dir)) return;
@@ -61,6 +62,13 @@ walk(root, file => {
     if (relative.startsWith('api/src/main/java/') && relative.includes('/model/')) {
       const legacyField = /\b(?:public|protected|private)[ \t]+(?:(?:static|final|transient|volatile)[ \t]+)*(?:[\w.$<>?,\[\]]+)[ \t]+([A-Za-z_][A-Za-z0-9_]*LegacyId)[ \t]*(?:=[^;\n]*)?;/g;
       for (const match of src.matchAll(legacyField)) detectedLegacyIds.add(relative + '#' + match[1]);
+    }
+    if (scalarizedMasterDataModels.has(relative)) {
+      const legacyMasterDataAssociationImport = /^\s*import\s+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person|PersonRoleAssignment)\s*;/m;
+      const legacyMasterDataAssociationField = /@(ManyToOne|OneToOne)[\s\S]{0,240}?\b(Organization|OrganizationalUnit|Person|PersonRoleAssignment)\s+[A-Za-z_][A-Za-z0-9_]*\s*;/m;
+      if (legacyMasterDataAssociationImport.test(src) || legacyMasterDataAssociationField.test(src)) {
+        violations.push(relative + ' reintroduces a legacy Master Data JPA association after scalarization');
+      }
     }
     const pkg=src.match(/^\s*package\s+([\w.]+)\s*;/m)?.[1];
     if (pkg) {
@@ -180,3 +188,4 @@ console.log('Faria Miguel automatic gates passed.');
 console.log('Foundation SHA: ' + lock.foundationSha);
 console.log('Maven version: ' + lock.mavenVersion + ' | Frontend version: ' + lock.frontendVersion);
 console.log('Step 21 *LegacyId inventory: ' + detectedLegacyIds.size + '/' + baselineCount + ' (current/baseline).');
+console.log('Step 21 scalarized Master Data models guarded: ' + scalarizedMasterDataModels.size + '.');
