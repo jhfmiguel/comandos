@@ -345,8 +345,8 @@
       "id": "inventory-generic-cutover",
       "classification": "product-specialization-over-canonical-core",
       "safeToDelete": false,
-      "stepStatus": "in-progress-dual-write",
-      "reason": "Step 21.19 consumes canonical InventoryLedger/StockLocationRepository and now dual-writes stock locations plus lot/asset opening movements to Faria Miguel. Local StockBalance/StockMovement remain as controlled-inventory compatibility persistence until runtime cutover proves safe retirement.",
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Step 21.19 generic cleanup completed: inventory no longer imports or directly loads legacy Organization, OrganizationalUnit or Person entities; stock locations and opening movements dual-write to canonical Faria Miguel inventory contracts; controlled-asset rules remain product-owned. Local StockBalance/StockMovement persistence remains only as a cutover compatibility layer until Step 21.12 permits retirement.",
       "canonicalContracts": [
         "com.fariamiguel.enterprise.inventory.InventoryLedger",
         "com.fariamiguel.enterprise.inventory.StockLocationRepository",
@@ -378,7 +378,15 @@
         "Recall Organization/Unit JPA associations removed",
         "Recall scope covered by canonical synchronization/backfill/parity",
         "InventoryRules no longer reads legacy Organization/Unit entities directly",
-        "InventoryService labels resolved through CanonicalMasterDataDirectory"
+        "InventoryService labels resolved through CanonicalMasterDataDirectory",
+        "56 inventory model/service files scanned for legacy Master Data direct dependencies",
+        "no direct Organization/OrganizationalUnit/Person imports or EntityManager reads remain in inventory"
+      ],
+      "remainingCompatibility": [
+        "local StockBalance persistence",
+        "local StockMovement persistence",
+        "scalar *LegacyId cutover fields guarded by Step 21.13",
+        "Oracle compatibility columns guarded by Step 21.16"
       ]
     },
     {
