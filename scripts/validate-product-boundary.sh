@@ -318,6 +318,26 @@ if grep -q 'implements[[:space:]]\+AuditSink' "$ROOT_DIR/api/src/main/java/com/c
   fail "COMANDOS AuditService must not implement the generic Faria Miguel AuditSink"
 fi
 
+# Step 21.18: generic catalog primitives are foundation-owned.
+for retired_catalog_primitive in \
+  "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/CatalogIdentity.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingMode.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingPolicy.java" \
+  "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/UnitOfMeasureCode.java"; do
+  [[ ! -e "$retired_catalog_primitive" ]] \
+    || fail "generic catalog primitive returned to COMANDOS: ${retired_catalog_primitive#$ROOT_DIR/}"
+done
+
+grep -q 'com.fariamiguel.enterprise.catalog.CatalogIdentity' \
+  "$ROOT_DIR/api/src/test/java/com/comandos/enterprise/catalog/EnterpriseCatalogTests.java" \
+  || fail "catalog identity tests must consume the canonical Faria Miguel primitive"
+grep -q 'com.fariamiguel.enterprise.catalog.CatalogTrackingPolicy' \
+  "$ROOT_DIR/api/src/test/java/com/comandos/enterprise/catalog/EnterpriseCatalogTests.java" \
+  || fail "catalog tracking tests must consume the canonical Faria Miguel primitive"
+grep -q 'com.fariamiguel.enterprise.catalog.UnitOfMeasureCode' \
+  "$ROOT_DIR/api/src/test/java/com/comandos/enterprise/catalog/EnterpriseCatalogTests.java" \
+  || fail "unit-of-measure tests must consume the canonical Faria Miguel primitive"
+
 # COMANDOS already had a catalog compatibility layer before extraction. Until its callers
 # are fully moved, no other Enterprise subdomain is allowed to exist locally.
 enterprise_root="$ROOT_DIR/api/src/main/java/com/comandos/enterprise"
