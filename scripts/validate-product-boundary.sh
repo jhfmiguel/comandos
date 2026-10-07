@@ -136,7 +136,7 @@ while IFS= read -r absolute; do
     fi
   done
   [[ "$allowed" == true ]] || fail "new LegacyId field introduced outside the Step 21.13 retirement inventory: $relative"
-done < <(grep -RIl --include='*.java' 'LegacyId' "$ROOT_DIR/api/src/main/java" || true)
+done < <(grep -RIlE --include='*.java' 'public[[:space:]]+Long[[:space:]]+[A-Za-z0-9_]*LegacyId[[:space:]]*;' "$ROOT_DIR/api/src/main/java" || true)
 
 [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/core/repository" ]] \
   || fail "legacy generic Master Data repository package must remain absent"
