@@ -1,19 +1,24 @@
 package com.comandos.messaging;
 
-import org.springframework.context.ApplicationEventPublisher;
+import com.comandos.messaging.api.PlatformEvent;
+import com.comandos.messaging.api.PlatformEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DomainEventPublisher {
-    private final ApplicationEventPublisher publisher;
+    private final PlatformEventPublisher publisher;
 
-    public DomainEventPublisher(ApplicationEventPublisher publisher) {
+    public DomainEventPublisher(PlatformEventPublisher publisher) {
         this.publisher = publisher;
     }
 
     public <T> DomainEventEnvelope<T> publish(String eventType, T payload) {
-        DomainEventEnvelope<T> event = DomainEventEnvelope.of(eventType, payload);
-        publisher.publishEvent(event);
-        return event;
+        PlatformEvent<T> event = publisher.publish(eventType, payload);
+        return new DomainEventEnvelope<>(
+            event.eventId(),
+            event.eventType(),
+            event.occurredAt(),
+            event.payload()
+        );
     }
 }
