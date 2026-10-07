@@ -358,6 +358,15 @@ grep -q '"core-adapters-reclassified"' "$MANIFEST" \
 grep -q '"legacy-master-data-admin-compatibility"' "$MANIFEST" \
   || fail "remaining local core compatibility ownership is not declared"
 
+# Step 21.20: purchase/procurement must not depend on legacy master-data entities directly.
+if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|Person|OrganizationalUnit)' "$ROOT_DIR/api/src/main/java/com/comandos/purchase"; then
+  fail "purchase/procurement code must consume canonical Master Data instead of legacy Organization/Person/Unit entities"
+fi
+if grep -q 'ManyToOne' "$ROOT_DIR/api/src/main/java/com/comandos/purchase/model/ProcurementProcess.java" \
+   && grep -q 'Organization' "$ROOT_DIR/api/src/main/java/com/comandos/purchase/model/ProcurementProcess.java"; then
+  fail "ProcurementProcess must not regain a legacy Organization JPA association"
+fi
+
 # Steps 21.21-21.23: generic sales/finance/contracts are foundation-owned.
 for removed_sales_file in \
   "$ROOT_DIR/api/src/main/java/com/comandos/model/Sale.java" \
