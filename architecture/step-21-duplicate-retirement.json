@@ -605,7 +605,13 @@
       "classification": "boundary-validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-blocked-by-master-data-retirement",
-      "reason": "Step 21.32 continues to converge: inventory, procurement, donation and custody overlays no longer read generic Organization/OrganizationalUnit/Person entities directly. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific role assignment bridges.",
+      "reason": "Step 21.32 continues to converge: product overlays no longer read generic Organization/OrganizationalUnit/Person entities directly, and the empty generic enterprise, personnel and procurement package markers were removed. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific role assignment bridges.",
+      "completedCleanup": [
+        "removed empty com.comandos.enterprise package marker",
+        "removed empty com.comandos.personnel package marker",
+        "removed empty com.comandos.procurement package marker",
+        "added regression gate preventing those generic roots from returning"
+      ],
       "allowedProductOverlays": [
         "armament/ammunition",
         "custody",
