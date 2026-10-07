@@ -9,8 +9,8 @@
   "legacyIdRetirement": {
     "step": "21.13",
     "status": "blocked-by-21.12",
-    "baselineCount": 55,
-    "rule": "The corrected baseline is 55 after the Recall Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
+    "baselineCount": 57,
+    "rule": "The corrected baseline is 57 after CustodyResponsibility Person/role-assignment JPA associations were converted into scalar legacy references. The count may only decrease from this corrected baseline.",
     "fields": [
       {
         "entity": "StockLocation",
@@ -286,6 +286,16 @@
         "entity": "Recall",
         "path": "api/src/main/java/com/comandos/inventory/model/Recall.java",
         "field": "unitLegacyId"
+      },
+      {
+        "entity": "CustodyResponsibility",
+        "path": "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
+        "field": "responsiblePersonLegacyId"
+      },
+      {
+        "entity": "CustodyResponsibility",
+        "path": "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
+        "field": "roleAssignmentLegacyId"
       }
     ]
   },
