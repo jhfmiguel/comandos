@@ -16,6 +16,7 @@ import com.comandos.inventory.model.Recall;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
+import com.comandos.maintenance.model.MaintenancePlan;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.purchase.model.PurchasePlanning;
@@ -133,6 +134,10 @@ public class ProductMasterDataReferenceParityService {
             ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
             ref("sourceUnitLegacyId", "sourceUnitCanonicalId", MasterDataReferenceService.UNIT),
             ref("destinationUnitLegacyId", "destinationUnitCanonicalId", MasterDataReferenceService.UNIT)
+        )),
+        new Spec(MaintenancePlan.class, List.of(
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
         )),
         new Spec(WorkOrder.class, List.of(
             ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
