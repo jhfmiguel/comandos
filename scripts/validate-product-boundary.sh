@@ -110,6 +110,15 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15: CanonicalMasterDataDirectory must not keep test-only null constructors.
+CANONICAL_MASTER_DATA_DIRECTORY="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java"
+if grep -q '@Deprecated' "$CANONICAL_MASTER_DATA_DIRECTORY" \
+   || grep -q 'this\.canonicalPeople = null' "$CANONICAL_MASTER_DATA_DIRECTORY" \
+   || grep -q 'this\.canonicalOrganizations = null' "$CANONICAL_MASTER_DATA_DIRECTORY" \
+   || grep -q 'this\.canonicalUnits = null' "$CANONICAL_MASTER_DATA_DIRECTORY"; then
+  fail "CanonicalMasterDataDirectory must not keep deprecated null-repository constructors"
+fi
+
 # Step 21.15: CoreService master-data mirror is a required collaborator.
 CORE_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CoreService.java"
 if grep -q 'masterDataMirror[[:space:]]*!=[[:space:]]*null' "$CORE_SERVICE"; then
