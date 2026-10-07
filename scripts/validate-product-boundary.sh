@@ -453,6 +453,26 @@ for retired_generic_root in enterprise personnel procurement; do
     || fail "empty generic COMANDOS root returned: $retired_generic_root"
 done
 
+# Step 21.32/21.36: the obsolete generic user/person CRUD must not return.
+retired_user_paths=(
+  "api/src/main/java/com/comandos/rest/users"
+  "api/src/main/java/com/comandos/model/User.java"
+  "api/src/main/java/com/comandos/model/repository/UserRepository.java"
+  "app/src/components/users"
+  "app/src/api/services/user.service.ts"
+  "app/src/api/models/users"
+)
+for retired_user_path in "${retired_user_paths[@]}"; do
+  [[ ! -e "$ROOT_DIR/$retired_user_path" ]] \
+    || fail "legacy generic user CRUD returned: $retired_user_path"
+done
+for legacy_user_page in \
+  "$ROOT_DIR/app/src/app/queries/users/page.tsx" \
+  "$ROOT_DIR/app/src/app/registrations/users/page.tsx"; do
+  grep -q 'redirect("/erp/core?section=people&resource=people")' "$legacy_user_page" \
+    || fail "legacy user route must redirect to canonical people workspace: $legacy_user_page"
+done
+
 # Step 21.32/21.36: the obsolete generic sales stack must not return.
 retired_sales_paths=(
   "api/src/main/java/com/comandos/rest/sales"
