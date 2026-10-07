@@ -169,6 +169,18 @@ if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
   fail "product code still navigates retired Master Data objects"
 fi
 
+# Step 21.36: custody responsibility bridge is frozen until cutover.
+CUSTODY_RESPONSIBILITY="$ROOT_DIR/api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java"
+CUSTODY_ISSUE_FACADE="$ROOT_DIR/api/src/main/java/com/comandos/custody/service/CustodyIssueFacade.java"
+custody_legacy_id_count="$(
+  grep -cE 'public Long (responsiblePersonLegacyId|roleAssignmentLegacyId);' "$CUSTODY_RESPONSIBILITY" 2>/dev/null || true
+)"
+[[ "$custody_legacy_id_count" == "2" ]]   || fail "CustodyResponsibility compatibility bridge changed; expected exactly two approved legacy identifiers"
+grep -q 'public String responsiblePersonCanonicalId;' "$CUSTODY_RESPONSIBILITY"   || fail "CustodyResponsibility must retain the canonical responsible person identifier during cutover"
+grep -q 'CanonicalPartyRoleDirectory partyRoles' "$CUSTODY_ISSUE_FACADE"   || fail "CustodyIssueFacade must validate responsibility through CanonicalPartyRoleDirectory"
+grep -q 'CanonicalMasterDataDirectory masterData' "$CUSTODY_ISSUE_FACADE"   || fail "CustodyIssueFacade must validate responsibility through CanonicalMasterDataDirectory"
+grep -q 'canonicalScope.person(responsible.id())' "$CUSTODY_ISSUE_FACADE"   || fail "CustodyIssueFacade must persist the canonical responsible person reference"
+
 # Step 21.36: CoreAccessDemoSeeder may keep only the enumerated security demo compatibility references until cutover.
 CORE_ACCESS_DEMO="$ROOT_DIR/api/src/main/java/com/comandos/demo/CoreAccessDemoSeeder.java"
 core_access_demo_hits="$(
