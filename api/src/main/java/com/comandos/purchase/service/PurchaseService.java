@@ -37,7 +37,7 @@ public class PurchaseService {
   OrganizationSnapshot buyerOrganization=org(r.buyerOrganizationId());OrganizationSnapshot supplierOrganization=r.supplierOrganizationId()==null?null:org(r.supplierOrganizationId());PersonSnapshot originPerson=person(r.originPersonId());
   Purchase p=new Purchase();
   p.buyerOrganizationLegacyId=buyerOrganization.legacyId();p.supplierOrganizationLegacyId=supplierOrganization==null?null:supplierOrganization.legacyId();p.originPersonLegacyId=originPerson.legacyId();
-  if(canonicalScope!=null){p.buyerOrganizationCanonicalId=canonicalScope.organization(buyerOrganization.legacyId());p.supplierOrganizationCanonicalId=supplierOrganization==null?null:canonicalScope.organization(supplierOrganization.legacyId());p.originPersonCanonicalId=canonicalScope.person(originPerson.legacyId());}
+  p.buyerOrganizationCanonicalId=canonicalScope.organization(buyerOrganization.legacyId());p.supplierOrganizationCanonicalId=supplierOrganization==null?null:canonicalScope.organization(supplierOrganization.legacyId());p.originPersonCanonicalId=canonicalScope.person(originPerson.legacyId());
   p.acquisitionType=r.acquisitionType()==null?AcquisitionType.ONEROUS:r.acquisitionType();p.originDescription=trim(r.originDescription());
   p.purchaseNumber=r.purchaseNumber().trim();p.purchaseDate=r.purchaseDate()==null?LocalDate.now():r.purchaseDate();
   p.discount=money(r.discount());p.freight=money(r.freight());p.taxes=money(r.taxes());p.otherCosts=money(r.otherCosts());
@@ -68,7 +68,7 @@ public class PurchaseService {
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.supplierChoiceReason()))throw new IllegalArgumentException("Supplier choice reason is required for direct contracting.");
   if(r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING&&blank(r.priceJustification()))throw new IllegalArgumentException("Price justification is required for direct contracting.");
   if(r.procurementMethod()==ProcurementMethod.NOT_REQUIRED){p.procurementProcess=null;p.status=PurchaseStatus.AUTHORIZED;return view(purchases.save(p));}
-  ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organizationLegacyId=buyerOrganization.legacyId();x.organizationCanonicalId=canonicalScope==null?null:canonicalScope.organization(buyerOrganization.legacyId());x.processNumber=r.processNumber().trim();
+  ProcurementProcess x=p.procurementProcess==null?new ProcurementProcess():p.procurementProcess;x.organizationLegacyId=buyerOrganization.legacyId();x.organizationCanonicalId=canonicalScope.organization(buyerOrganization.legacyId());x.processNumber=r.processNumber().trim();
   x.objectDescription=r.objectDescription();x.justification=r.justification();x.procurementMethod=r.procurementMethod();x.biddingModality=r.procurementMethod()==ProcurementMethod.BIDDING?r.biddingModality():null;
   x.directContractingType=r.procurementMethod()==ProcurementMethod.DIRECT_CONTRACTING?r.directContractingType():null;x.estimatedValue=r.estimatedValue()==null?p.total:r.estimatedValue();
   x.legalBasis=r.legalBasis();x.supplierChoiceReason=r.supplierChoiceReason();x.priceJustification=r.priceJustification();p.procurementProcess=procurements.save(x);p.status=PurchaseStatus.PROCUREMENT_IN_PROGRESS;
@@ -128,7 +128,7 @@ public class PurchaseService {
  }
 
  @Transactional(readOnly=true) public PurchaseView get(Long id){return view(find(id));}
- @Transactional(readOnly=true) public List<PurchaseView> list(Long organizationId){var rows=canonicalScope!=null&&canonicalScope.enabled()?purchases.findByBuyerOrganizationCanonicalIdOrderByCreatedAtDesc(canonicalScope.organization(organizationId)):purchases.findByBuyerOrganizationLegacyIdOrderByCreatedAtDesc(organizationId);return rows.stream().map(this::view).toList();}
+ @Transactional(readOnly=true) public List<PurchaseView> list(Long organizationId){var rows=canonicalScope.enabled()?purchases.findByBuyerOrganizationCanonicalIdOrderByCreatedAtDesc(canonicalScope.organization(organizationId)):purchases.findByBuyerOrganizationLegacyIdOrderByCreatedAtDesc(organizationId);return rows.stream().map(this::view).toList();}
  @Transactional public PurchaseView cancel(Long id){Purchase p=find(id);if(p.items.stream().anyMatch(i->nz(i.receivedQuantity).signum()>0))throw new IllegalStateException("Acquisition with received items cannot be cancelled.");p.status=PurchaseStatus.CANCELLED;return view(purchases.save(p));}
  private PurchaseView view(Purchase p){
   ProcurementView pv=null;if(p.procurementProcess!=null){var x=p.procurementProcess;pv=new ProcurementView(x.id,x.processNumber,x.procurementMethod,x.biddingModality,x.directContractingType,x.status,x.estimatedValue,x.legalBasis);}
