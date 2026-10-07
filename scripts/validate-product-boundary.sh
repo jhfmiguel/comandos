@@ -335,44 +335,20 @@ test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement m
 legacy_id_count="$(grep -RhoE --include='*.java' 'public[[:space:]]+Long[[:space:]]+[A-Za-z0-9_]*LegacyId[[:space:]]*;' "$ROOT_DIR/api/src/main/java" | wc -l | tr -d ' ')"
 [[ "$legacy_id_count" -le 59 ]] || fail "LegacyId field count grew above the corrected Step 21.13 baseline of 59"
 
-allowed_legacy_id_files=(
-  "api/src/main/java/com/comandos/inventory/model/StockLocation.java"
-  "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java"
-  "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java"
-  "api/src/main/java/com/comandos/inventory/model/Recall.java"
-  "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java"
-  "api/src/main/java/com/comandos/inventory/model/CertificationRecord.java"
-  "api/src/main/java/com/comandos/inventory/model/EquipmentSet.java"
-  "api/src/main/java/com/comandos/purchase/model/Purchase.java"
-  "api/src/main/java/com/comandos/purchase/model/ProcurementProcess.java"
-  "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java"
-  "api/src/main/java/com/comandos/custody/model/Custody.java"
-  "api/src/main/java/com/comandos/donation/model/Donation.java"
-  "api/src/main/java/com/comandos/sales/model/InventorySale.java"
-  "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java"
-  "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java"
-  "api/src/main/java/com/comandos/maintenance/model/MaintenancePlan.java"
-  "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java"
-  "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java"
-  "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java"
-  "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java"
-  "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java"
-  "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java"
-  "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java"
-  "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java"
-  "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java"
-)
+allowed_legacy_id_files="$(
+  node -e '
+    const fs = require("fs");
+    const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const paths = [...new Set(manifest.legacyIdRetirement.fields.map(entry => entry.path))].sort();
+    process.stdout.write(paths.join("\n"));
+  ' "$RETIREMENT_MANIFEST"
+)"
 
 while IFS= read -r absolute; do
   relative="${absolute#$ROOT_DIR/}"
-  allowed=false
-  for candidate in "${allowed_legacy_id_files[@]}"; do
-    if [[ "$relative" == "$candidate" ]]; then
-      allowed=true
-      break
-    fi
-  done
-  [[ "$allowed" == true ]] || fail "new LegacyId field introduced outside the Step 21.13 retirement inventory: $relative"
+  if ! grep -Fxq "$relative" <<<"$allowed_legacy_id_files"; then
+    fail "new LegacyId field introduced outside the Step 21.13 retirement inventory: $relative"
+  fi
 done < <(grep -RIlE --include='*.java' 'public[[:space:]]+Long[[:space:]]+[A-Za-z0-9_]*LegacyId[[:space:]]*;' "$ROOT_DIR/api/src/main/java" || true)
 
 [[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/core/repository" ]] \
