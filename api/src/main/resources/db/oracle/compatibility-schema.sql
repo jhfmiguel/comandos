@@ -214,6 +214,13 @@ create index ix_expiration_record_org_canonical
 create index ix_expiration_record_unit_canonical
     on erp_expiration_record (unit_canonical_id);
 
+alter table erp_recall add organization_canonical_id varchar2(128 char);
+alter table erp_recall add unit_canonical_id varchar2(128 char);
+create index ix_recall_org_canonical
+    on erp_recall (organization_canonical_id);
+create index ix_recall_unit_canonical
+    on erp_recall (unit_canonical_id);
+
 
 -- Canonical master-data shadow references for purchase and receiving cutover.
 alter table erp_purchase add buyer_organization_canonical_id varchar2(128 char);
