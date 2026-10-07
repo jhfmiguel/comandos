@@ -234,11 +234,16 @@ if [[ -d "$ROOT_DIR/api/src/main/java/com/comandos" ]]; then
     fail "legacy COMANDOS messaging contracts still have callers outside the compatibility package"
   }
 
-  identity_refs="$(grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.identity\.service\.JpaIdentityDirectory|EntityManager.*Person|find\(Person\.class' "$ROOT_DIR/api/src/main/java/com/comandos"     | grep -v '/com/comandos/identity/service/JpaIdentityDirectory.java' || true)"
+  identity_refs="$(grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.identity\.service\.JpaIdentityDirectory' "$ROOT_DIR/api/src/main/java/com/comandos"     | grep -v '/com/comandos/identity/service/JpaIdentityDirectory.java' || true)"
   [[ -z "$identity_refs" ]] || {
     echo "$identity_refs" >&2
-    fail "identity callers still depend on the legacy COMANDOS identity implementation or Person persistence"
+    fail "identity callers must depend on the canonical IdentityDirectory contract, not JpaIdentityDirectory"
   }
+
+  identity_bridge="$ROOT_DIR/api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
+  if grep -qE 'com\.comandos\.core\.model\.Person|EntityManager|find\(Person\.class' "$identity_bridge"; then
+    fail "JpaIdentityDirectory must not read legacy Person persistence directly"
+  fi
 fi
 
 if grep -q 'implements[[:space:]]\+AuditSink' "$ROOT_DIR/api/src/main/java/com/comandos/audit/service/AuditService.java"; then
