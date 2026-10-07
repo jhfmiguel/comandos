@@ -375,8 +375,8 @@
       "id": "procurement-generic-cutover",
       "classification": "product-specialization-over-canonical-core",
       "safeToDelete": false,
-      "stepStatus": "in-progress-canonical-master-data",
-      "reason": "Step 21.20 consumes canonical procurement contracts and now removes the ProcurementProcess -> Organization JPA association. PurchaseService reads organizations/people through CanonicalMasterDataDirectory; ProcurementProcess uses legacy/canonical scalar IDs and participates in backfill/parity.",
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Step 21.20 generic cleanup completed: procurement contracts/services are foundation-owned; COMANDOS purchase services no longer read legacy Person/Organization entities directly, ProcurementProcess no longer has an Organization JPA association, and canonical reference synchronization/backfill/parity covers procurement. Remaining scalar legacy ids are controlled cutover bridges owned by Steps 21.12-21.17.",
       "canonicalContracts": [
         "com.fariamiguel.enterprise.procurement.ProcurementService",
         "com.fariamiguel.enterprise.procurement.PurchaseOrderRepository",
@@ -398,6 +398,12 @@
         "PurchaseService direct Person/Organization reads removed",
         "ProcurementProcess Organization JPA association removed",
         "ProcurementProcess added to canonical reference synchronization/backfill/parity"
+      ],
+      "remainingCutoverBridges": [
+        "Purchase buyer/supplier/origin scalar legacy ids",
+        "ProcurementProcess organizationLegacyId",
+        "EquipmentReceiving receivingOrganizationLegacyId",
+        "PurchasePlanning organizationLegacyId"
       ]
     },
     {
