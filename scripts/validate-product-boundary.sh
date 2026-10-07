@@ -175,7 +175,7 @@ if [[ -n "$stock_location_navigation_hits" ]]; then
 fi
 
 legacy_scope_navigation_hits="$(
-  grep -RInE --include='*.java' '\.(organization|unit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
+  grep -RInE --include='*.java' '\.(organization|unit)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
 )"
 if [[ -n "$legacy_scope_navigation_hits" ]]; then
   printf '%s\n' "$legacy_scope_navigation_hits"
@@ -191,7 +191,7 @@ if [[ -n "$unit_scope_guard_hits" ]]; then
 fi
 
 legacy_party_navigation_hits="$(
-  grep -RInE --include='*.java' '\.(buyerOrganization|supplierOrganization|originPerson|receivingOrganization|recipient|recipientUnit|authorizer|donor|donee|buyer|sourceUnit|destinationUnit|responsible|responsiblePerson|roleAssignment)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
+  grep -RInE --include='*.java' '\.(buyerOrganization|supplierOrganization|originPerson|receivingOrganization|recipient|recipientUnit|authorizer|donor|donee|buyer|sourceUnit|destinationUnit|responsible|responsiblePerson|roleAssignment)\.id([^A-Za-z0-9_]|$)'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     || true
 )"
 if [[ -n "$legacy_party_navigation_hits" ]]; then
   printf '%s\n' "$legacy_party_navigation_hits"
@@ -199,7 +199,7 @@ if [[ -n "$legacy_party_navigation_hits" ]]; then
 fi
 
 legacy_master_data_object_navigation_hits="$(
-  grep -RInE --include='*.java' '\.(organization|unit|buyerOrganization|supplierOrganization|originPerson|receivingOrganization|recipient|recipientUnit|authorizer|donor|donee|buyer|sourceUnit|destinationUnit|responsible|responsiblePerson|roleAssignment)\.'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/compliance/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     | grep -v 'com\.fariamiguel\.enterprise\.organization\.Organization'     | grep -v 'com\.fariamiguel\.tenancy\.api\.OrganizationalUnit'     || true
+  grep -RInE --include='*.java' '\.(organization|unit|buyerOrganization|supplierOrganization|originPerson|receivingOrganization|recipient|recipientUnit|authorizer|donor|donee|buyer|sourceUnit|destinationUnit|responsible|responsiblePerson|roleAssignment)\.'     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null     | grep -v '/core/'     | grep -v '/demo/'     | grep -v '/security/service/AccessPolicy.java'     | grep -v 'com\.fariamiguel\.enterprise\.organization\.Organization'     | grep -v 'com\.fariamiguel\.tenancy\.api\.OrganizationalUnit'     || true
 )"
 if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
   printf '%s\n' "$legacy_master_data_object_navigation_hits"
