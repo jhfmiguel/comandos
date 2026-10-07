@@ -50,7 +50,7 @@ public class ExceptionalOccurrenceDemoVerifier implements ApplicationRunner {
     }
 
     private void verify(ExceptionOccurrence occurrence) {
-        require(occurrence.organization != null, "Occurrence must preserve organization provenance.");
+        require(occurrence.organizationLegacyId != null, "Occurrence must preserve organization provenance.");
         require(occurrence.type != null && !occurrence.type.isBlank(), "Occurrence type is required.");
         require(Set.of("OPEN", "UNDER_INVESTIGATION", "RESOLVED").contains(occurrence.status), "Occurrence workflow status is invalid.");
         require((occurrence.asset == null) != (occurrence.lot == null), "Occurrence must reference exactly one asset or lot.");
