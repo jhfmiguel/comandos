@@ -226,6 +226,26 @@
       ],
       "state": "retired",
       "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; operation snapshots now carry scalar legacy/canonical scope ids."
+    },
+    {
+      "entity": "CertificationRecord",
+      "path": "api/src/main/java/com/comandos/inventory/model/CertificationRecord.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
+    },
+    {
+      "entity": "ExpirationRecord",
+      "path": "api/src/main/java/com/comandos/inventory/model/ExpirationRecord.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
