@@ -283,7 +283,7 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "in-progress-blocked-by-21.12",
-      "reason": "Step 21.15 cleanup progressed: no generic core repository package exists, obsolete compatibility constructors were removed, and the remaining controller/service/mapper list is explicitly inventoried. Final deletion depends on Step 21.12.",
+      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation and custody no longer perform direct generic Master Data reads; remaining compatibility services/mappers are isolated behind the explicit retirement inventory and Step 21.12 runtime gate.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java"
@@ -600,7 +600,7 @@
       "classification": "boundary-validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-blocked-by-master-data-retirement",
-      "reason": "Step 21.32 validates that generic finance/contracts/notifications/messaging/analytics and obsolete sales infrastructure are absent, while inventory/procurement/sales/documents are explicitly product overlays. Final purity cannot be declared until legacy Master Data compatibility code from Steps 21.12-21.17 is retired.",
+      "reason": "Step 21.32 continues to converge: inventory, procurement, donation and custody overlays no longer read generic Organization/OrganizationalUnit/Person entities directly. Remaining generic Master Data compatibility is isolated to the controlled retirement inventory and product-specific role assignment bridges.",
       "allowedProductOverlays": [
         "armament/ammunition",
         "custody",
