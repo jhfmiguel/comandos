@@ -102,7 +102,12 @@ grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR
 # Step 21.15: canonical Core reads must not keep a legacy fallback constructor.
 CANONICAL_CORE_READS="$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalCoreReadService.java"
 if grep -q '@Deprecated' "$CANONICAL_CORE_READS" \
-   || grep -q 'CanonicalCoreReadService([[:space:]]*
+   || grep -q 'this\.masterData = null' "$CANONICAL_CORE_READS"; then
+  fail "CanonicalCoreReadService must not keep a legacy constructor that bypasses CanonicalMasterDataDirectory"
+fi
+grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
+  || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
+
 # Steps 21.13-21.15: legacy master-data retirement backlog may only shrink.
 RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
