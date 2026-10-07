@@ -528,6 +528,7 @@
         "action": "Remove migration/write compatibility code and shadow-write/backfill/parity plumbing.",
         "targets": [
           "MasterDataMigrationService",
+          "CoreCatalog",
           "MasterDataParityService",
           "MasterDataReferenceService",
           "ProductMasterDataReferenceBackfillService",
@@ -589,6 +590,7 @@
     "compatibilityDisposition": {
       "removeAfter21_12": [
         "CoreController compatibility endpoints/paths no longer needed after canonical writes",
+        "CoreCatalog",
         "CoreService legacy write/projection compatibility no longer needed after canonical writes",
         "PersonRegistrationService legacy write orchestration",
         "CanonicalMasterDataMapper",
