@@ -4,6 +4,8 @@ import com.comandos.core.model.CoreEntity;
 import com.comandos.inventory.model.StockLocation;
 import com.comandos.inventory.model.EquipmentSet;
 import com.comandos.inventory.model.EquipmentSetOperation;
+import com.comandos.inventory.model.CertificationRecord;
+import com.comandos.inventory.model.ExpirationRecord;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.transfer.model.InventoryTransfer;
@@ -86,6 +88,32 @@ public class ProductMasterDataReferenceSynchronizer {
                 MasterDataReferenceService.UNIT,
                 operation.unitLegacyId,
                 "equipment set operation unit"
+            );
+            return true;
+        }
+        if (entity instanceof CertificationRecord certification) {
+            certification.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                certification.organizationLegacyId,
+                "certification organization"
+            );
+            certification.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                certification.unitLegacyId,
+                "certification unit"
+            );
+            return true;
+        }
+        if (entity instanceof ExpirationRecord expiration) {
+            expiration.organizationCanonicalId = require(
+                MasterDataReferenceService.ORGANIZATION,
+                expiration.organizationLegacyId,
+                "expiration organization"
+            );
+            expiration.unitCanonicalId = optional(
+                MasterDataReferenceService.UNIT,
+                expiration.unitLegacyId,
+                "expiration unit"
             );
             return true;
         }
