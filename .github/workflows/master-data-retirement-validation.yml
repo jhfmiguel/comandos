@@ -8,7 +8,13 @@ on:
       - ".github/workflows/master-data-retirement-validation.yml"
       - "api/src/main/java/com/comandos/core/service/**"
       - "api/src/main/resources/application.properties"
+      - "api/pom.xml"
       - "architecture/step-21-duplicate-retirement.json"
+      - "architecture/step-21-master-data-retirement.json"
+      - "architecture/master-data-foreign-keys.json"
+      - "scripts/check-faria-miguel-artifacts.sh"
+      - "scripts/oracle-step-21-retirement-audit.sql"
+      - "scripts/validate-product-boundary.sh"
 
 permissions:
   contents: read
@@ -54,6 +60,7 @@ jobs:
           FARIA_MIGUEL_READ_TOKEN: ${{ secrets.FARIA_MIGUEL_READ_TOKEN }}
         run: |
           set -euo pipefail
+          exec > >(tee /tmp/faria-miguel-artifact-resolution.log) 2>&1
 
           if bash scripts/check-faria-miguel-artifacts.sh api/pom.xml; then
             echo "Canonical Faria Miguel Maven artifacts are available from GitHub Packages."
@@ -141,7 +148,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: master-data-retirement-validation
-          path: /tmp/comandos-master-data-retirement.log
+          path: |
+            /tmp/faria-miguel-artifact-resolution.log
+            /tmp/comandos-master-data-retirement.log
           if-no-files-found: warn
           retention-days: 30
 
