@@ -192,6 +192,21 @@ public class CustodyIssueFacade {
             value.recordedAt.toString());
     }
 
+    private CanonicalPartyRoleDirectory.ProductSpecificRole responsibilityAssignment(
+            long personId,
+            Long assignmentId) {
+        if (assignmentId == null || assignmentId <= 0) {
+            bad("A valid responsibility assignment is required.");
+        }
+        return partyRoles.productSpecificRoles(personId).stream()
+            .filter(role -> role.assignmentId() == assignmentId)
+            .findFirst()
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Responsibility role assignment not found."
+            ));
+    }
+
     private OrganizationSnapshot organization(Long id) {
         if (id == null || id <= 0) bad("A valid organization is required.");
         var value = masterData.findOrganization(id, TENANT)
