@@ -705,6 +705,18 @@
         "api/src/main/java/com/comandos/maintenance/service/MaintenanceService.java",
         "api/src/main/java/com/comandos/maintenance/service/MaintenanceUnitScopeGuard.java"
       ]
+    },
+    {
+      "id": "reservation-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "ReservationService resolves organization and unit through CanonicalMasterDataDirectory and uses scalar legacy/canonical identifiers on InventoryReservation. Reservation retains only product-specific stock blocking/release and expiration rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/reservation/service/ReservationService.java",
+        "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
