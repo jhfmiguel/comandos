@@ -31,7 +31,7 @@
       "id": "master-data-persistence-bridges",
       "classification": "migration-bridge",
       "safeToDelete": false,
-      "reason": "Step 21.12 is prepared but cannot safely delete migration bridges until a production-equivalent retirement validation passes. The code now exposes an explicit retirement-validation-on-startup gate that calls MasterDataCutoverStatusService.requireReadyToRetireLegacyPersistence().",
+      "reason": "Step 21.12 is prepared but cannot safely delete migration bridges until a production-equivalent retirement validation passes. The immediate blocker is GitHub Actions execution on the private jhfmiguel/faria-miguel repository: publish, foundation and COMANDOS-consumer jobs are created but finish before any runner step starts (steps/logs unavailable), so canonical Maven/NPM publication and runtime cutover proof never execute. The code exposes an explicit retirement-validation-on-startup gate that calls MasterDataCutoverStatusService.requireReadyToRetireLegacyPersistence().",
       "evidence": [
         "architecture/master-data-foreign-keys.json",
         "api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java",
@@ -52,6 +52,17 @@
         "property": "comandos.master-data.retirement-validation-on-startup",
         "environment": "COMANDOS_MASTER_DATA_RETIREMENT_VALIDATION_ON_STARTUP",
         "requiredResult": "legacy persistence retirement gate=PASS"
+      },
+      "executionBlocker": {
+        "repository": "jhfmiguel/faria-miguel",
+        "visibility": "private",
+        "symptom": "GitHub Actions jobs fail before the first workflow step starts",
+        "observedRuns": [
+          "37576939731 Publish shared artifacts",
+          "37576943820 Verify COMANDOS consumer",
+          "37576948015 Shared architecture foundation"
+        ],
+        "diagnosis": "runner/account/repository Actions execution layer must be restored before artifact publication and production-equivalent cutover validation can run"
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
