@@ -3,8 +3,6 @@ package com.comandos.audit.service;
 import com.comandos.audit.api.AuditReferenceEnricher;
 import com.comandos.audit.model.AuditRecord;
 import com.comandos.audit.model.AuditReference;
-import com.fariamiguel.audit.api.AuditEvent;
-import com.fariamiguel.audit.api.AuditSink;
 import com.fariamiguel.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
@@ -20,7 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional(readOnly = true)
-public class AuditService implements AuditSink {
+public class AuditService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final CurrentActorProvider actors;
@@ -51,18 +49,6 @@ public class AuditService implements AuditSink {
         return current.authenticated()
             ? new Actor(numericActorId(current.id()), current.displayName(), "ACCOUNT")
             : new Actor(null, null, "UNAUTHENTICATED");
-    }
-
-    @Override
-    @Transactional
-    public void append(AuditEvent event) {
-        long recordId = numericId(event.resourceId());
-        Map<String, String> snapshot = new LinkedHashMap<>(event.metadata());
-        snapshot.putIfAbsent("sharedAuditId", event.id().toString());
-        snapshot.putIfAbsent("correlationId", event.correlationId() == null ? "" : event.correlationId());
-        snapshot.putIfAbsent("sharedActor", event.actorId() == null ? "" : event.actorId());
-        snapshot.putIfAbsent("sharedOccurredAt", event.occurredAt().toString());
-        record(event.resourceType(), recordId, event.action(), null, snapshot);
     }
 
     private static Long numericActorId(String value) {
