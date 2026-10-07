@@ -2,9 +2,8 @@ package com.comandos.disposal.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.disposal.dto.DisposalContract.*;
 import com.comandos.disposal.model.*;
@@ -16,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
 import java.util.*;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,22 +27,25 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class DisposalService {
     private static final int PAGE_SIZE = 20;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public DisposalService(EntityManager em, AccessPolicy access, AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null, null);
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -84,9 +89,9 @@ public class DisposalService {
         access.requireScope("disposals", "CREATE", request.organizationId(), request.unitId());
         access.requireScope("disposals", "APPROVE", request.organizationId(), request.unitId());
         lockCatalog();
-        Organization organization = locked(Organization.class, request.organizationId());
-        if (!organization.active) bad("Organization must be active.");
-        OrganizationalUnit unit = selectedUnit(organization.id, request.unitId());
+        OrganizationSnapshot organization = organization(request.organizationId());
+        if (!organization.active()) bad("Organization must be active.");
+        UnitSnapshot unit = selectedUnit(organization.id(), request.unitId());
         String fingerprint = fingerprint(request);
         var existing = em.createQuery("select p from DisposalProcess p where p.requestId=:requestId", DisposalProcess.class)
             .setParameter("requestId", request.requestId()).getResultStream().findFirst();
@@ -96,17 +101,17 @@ public class DisposalService {
             return view(existing.get());
         }
         boolean duplicate = !em.createQuery("select p.id from DisposalProcess p where p.organizationLegacyId=:organization and p.processNumber=:number", Long.class)
-            .setParameter("organization", organization.id).setParameter("number", request.processNumber().trim()).setMaxResults(1).getResultList().isEmpty();
+            .setParameter("organization", organization.id()).setParameter("number", request.processNumber().trim()).setMaxResults(1).getResultList().isEmpty();
         if (duplicate) conflict("A disposal process with this number already exists in the organization.");
 
         DisposalProcess process = new DisposalProcess();
-        process.organizationLegacyId = organization.id; process.unitLegacyId = unit == null ? null : unit.id;
+        process.organizationLegacyId = organization.id(); process.unitLegacyId = unit == null ? null : unit.id();
         if (canonicalScope != null) {
-            process.organizationCanonicalId = canonicalScope.organization(organization.id);
-            process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            process.organizationCanonicalId = canonicalScope.organization(organization.id());
+            process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
         }
-        process.organizationName = organization.name;
-        process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
+        process.organizationName = organization.name();
+        process.unitName = unit == null ? null : unit.name(); process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
         process.requestId = request.requestId(); process.requestFingerprint = fingerprint;
@@ -215,12 +220,37 @@ public class DisposalService {
         if (activeCounts > 0) conflict("Finish or cancel the active inventory count before disposing stock at this location.");
     }
 
-    private OrganizationalUnit selectedUnit(long organizationId, Long unitId) {
-        if (unitId == null) return null; OrganizationalUnit unit = em.find(OrganizationalUnit.class, unitId);
-        if (unit == null || !unit.organization.id.equals(organizationId)) bad("Select a unit in the selected organization.");
-        if (!Boolean.TRUE.equals(unit.active)) bad("Selected unit must be active.");
-        return unit;
+    private UnitSnapshot selectedUnit(long organizationId, Long unitId) {
+        if (unitId == null) return null;
+        var unit = masterData.findUnit(unitId, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Select a unit in the selected organization."
+            ));
+        if (!unit.active()
+                || !CompanyId.of("comandos:organization:" + organizationId)
+                    .equals(unit.companyId())) {
+            bad("Select an active unit in the selected organization.");
+        }
+        return new UnitSnapshot(unitId, unit.name());
     }
+
+    private OrganizationSnapshot organization(Long id) {
+        if (id == null || id <= 0) bad("A valid organization is required.");
+        var value = masterData.findOrganization(id, TENANT)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Organization not found."
+            ));
+        return new OrganizationSnapshot(
+            id,
+            value.legalName(),
+            value.status() == LifecycleStatus.ACTIVE
+        );
+    }
+
+    private record OrganizationSnapshot(Long id, String name, boolean active) {}
+    private record UnitSnapshot(Long id, String name) {}
 
     private void validate(FinalizeRequest request) {
         if (request == null || request.organizationId() == null || blank(request.processNumber()) || blank(request.reason()))
