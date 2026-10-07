@@ -399,5 +399,27 @@
       "CoreAccessDemoSeeder compatibility paths required by the cutover",
       "CustodyResponsibility / PersonRoleAssignment compatibility required by the cutover"
     ]
+  },
+  "cutoverRuntimeSupport": {
+    "step": "21.12-21.17",
+    "status": "required-until-cutover-validation",
+    "rule": "These files support canonical reads, cutover status, migration execution/guarding, canonical scope resolution, or parity validation. They are not evidence of duplicate domain ownership and must not be deleted merely because legacy JPA associations are retired.",
+    "files": [
+      "api/src/main/java/com/comandos/core/service/CanonicalCoreReadService.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalContactDirectory.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalPartyRoleDirectory.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalPartyDocumentDirectory.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalPartySnapshotDirectory.java",
+      "api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataCutoverStatusService.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataMigrationConfigurationGuard.java",
+      "api/src/main/java/com/comandos/core/service/MasterDataMigrationRunner.java",
+      "api/src/main/java/com/comandos/core/service/ProductCanonicalScopeResolver.java"
+    ],
+    "afterCutover": [
+      "Canonical read/directory services and ProductCanonicalScopeResolver are retained if still used by product canonical access paths.",
+      "Migration runner/configuration guard/cutover status helpers are reviewed for retirement only after Step 21.12 PASS and rollback window closure."
+    ]
   }
 }
