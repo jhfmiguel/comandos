@@ -89,6 +89,16 @@ done
 grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.(core\.api\.(IdGenerator|PlatformClock|PlatformPage)|audit\.api\.AuditRecorder|documents\.api\.(DocumentStorage|DocumentReference)|notifications\.api\.(NotificationSender|NotificationMessage));' "$ROOT_DIR/api/src" \
   && fail "source still imports a removed COMANDOS-owned generic contract" || true
 
+# Canonical Master Data read cutovers completed by Step 21.11.
+grep -q 'ContactRepository canonicalContacts' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalContactDirectory.java" \
+  || fail "contacts must read from canonical ContactRepository after cutover"
+grep -q 'PartyRoleRepository canonicalRoles' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalPartyRoleDirectory.java" \
+  || fail "generic party roles must read from canonical PartyRoleRepository after cutover"
+grep -q 'PartyDocumentRepository canonicalDocuments' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalPartyDocumentDirectory.java" \
+  || fail "party documents must read from canonical PartyDocumentRepository after cutover"
+grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java" \
+  || fail "professional qualifications must read from canonical repository after cutover"
+
 # Master-data migration seams must remain present until the legacy persistence cutover is complete.
 test -f "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalMasterDataMapper.java" \
   || fail "canonical master-data mapper is required during legacy persistence migration"
