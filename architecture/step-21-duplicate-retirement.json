@@ -56,13 +56,13 @@
       "executionBlocker": {
         "repository": "jhfmiguel/faria-miguel",
         "visibility": "private",
-        "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback now exists but FARIA_MIGUEL_REPOSITORY_TOKEN is not configured in the COMANDOS repository",
+        "symptom": "COMANDOS retirement validation cannot resolve the canonical 0.1.0-SNAPSHOT Maven foundation from GitHub Packages; a source-install fallback now exists but FARIA_MIGUEL_READ_TOKEN is not configured in the COMANDOS repository",
         "observedRuns": [
           "37615171522 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
           "37576939731 Publish shared artifacts: upstream publication unresolved"
         ],
-        "diagnosis": "either publish the canonical Faria Miguel Maven artifacts successfully or configure FARIA_MIGUEL_REPOSITORY_TOKEN with read access to jhfmiguel/faria-miguel so the workflow can install the canonical foundation from source",
-        "sourceFallbackCommit": "86276aebaa9ecf1782eeaddc634237f0c77b5c40"
+        "diagnosis": "either publish the canonical Faria Miguel Maven artifacts successfully or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so the workflow can install the canonical foundation from source",
+        "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e"
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
@@ -737,7 +737,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "blocked-by-foundation-resolution",
-      "reason": "Step 21.33 remains blocked: product-boundary/architecture checks pass, but final Maven test/verify still cannot execute until the canonical foundation resolves. The retirement workflow now supports either GitHub Packages or source installation; the source fallback is currently blocked only because FARIA_MIGUEL_REPOSITORY_TOKEN is not configured."
+      "reason": "Step 21.33 remains blocked: product-boundary/architecture checks pass, but final Maven test/verify still cannot execute until the canonical foundation resolves. The retirement workflow now supports either GitHub Packages or source installation; the source fallback is currently blocked only because FARIA_MIGUEL_READ_TOKEN is not configured."
     },
     {
       "id": "final-frontend-tests",
