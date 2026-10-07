@@ -7,7 +7,7 @@ import { Eye } from "lucide-react"
 import { Layout } from "components/layout"
 import { Message } from "components/common/message"
 import { useSession } from "components/auth/session-provider"
-import { Pagination } from "platform/components/pagination"
+import { Pagination } from "@faria-miguel/ui/pagination"
 import {
     auditService,
     type AuditDetail,
