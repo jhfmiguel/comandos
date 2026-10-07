@@ -1,0 +1,122 @@
+name: Master Data retirement validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validate-retirement:
+    name: Validate Step 21.12 on Oracle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_PASSWORD: oracle
+          APP_USER: comandos
+          APP_USER_PASSWORD: comandos
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Require canonical Faria Miguel Maven artifacts
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          bash scripts/check-faria-miguel-artifacts.sh api/pom.xml
+
+      - name: Start COMANDOS with full master-data cutover validation
+        working-directory: api
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORACLE_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
+          ORACLE_USERNAME: comandos
+          ORACLE_PASSWORD: comandos
+          JPA_DDL_AUTO: create
+          FLYWAY_ENABLED: "false"
+          SPRING_SQL_INIT_MODE: never
+
+          COMANDOS_MASTER_DATA_SHADOW_WRITE: "true"
+          COMANDOS_MASTER_DATA_READINESS_ON_STARTUP: "true"
+          COMANDOS_MASTER_DATA_BACKFILL_ON_STARTUP: "true"
+          COMANDOS_MASTER_DATA_PARITY_ON_STARTUP: "true"
+          COMANDOS_MASTER_DATA_CANONICAL_READ: "true"
+
+          COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_SHADOW: "true"
+          COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_BACKFILL_ON_STARTUP: "true"
+          COMANDOS_MASTER_DATA_PRODUCT_REFERENCE_PRIMARY_READ: "true"
+          COMANDOS_MASTER_DATA_LEGACY_PRODUCT_ASSOCIATIONS_RETIRED: "true"
+
+          COMANDOS_MASTER_DATA_RETIREMENT_VALIDATION_ON_STARTUP: "true"
+        run: |
+          set -euo pipefail
+          chmod +x mvnw
+          nohup ./mvnw -U spring-boot:run \
+            -Dspring-boot.run.profiles=demo,oracle \
+            -Dspring-boot.run.arguments=--server.port=8180 \
+            > /tmp/comandos-master-data-retirement.log 2>&1 &
+          echo $! > /tmp/comandos-master-data-retirement.pid
+
+      - name: Require retirement gate PASS
+        run: |
+          set -euo pipefail
+
+          for i in {1..180}; do
+            if grep -q "legacy persistence retirement gate=PASS" /tmp/comandos-master-data-retirement.log 2>/dev/null; then
+              echo "Step 21.12 retirement gate passed."
+              cat /tmp/comandos-master-data-retirement.log
+              exit 0
+            fi
+
+            if ! kill -0 "$(cat /tmp/comandos-master-data-retirement.pid)" 2>/dev/null; then
+              echo "COMANDOS exited before the Step 21.12 retirement gate passed."
+              cat /tmp/comandos-master-data-retirement.log
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          echo "Timed out waiting for the Step 21.12 retirement gate."
+          cat /tmp/comandos-master-data-retirement.log
+          exit 1
+
+      - name: Upload retirement validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-data-retirement-validation
+          path: /tmp/comandos-master-data-retirement.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Stop COMANDOS
+        if: always()
+        run: |
+          if [[ -f /tmp/comandos-master-data-retirement.pid ]]; then
+            kill "$(cat /tmp/comandos-master-data-retirement.pid)" 2>/dev/null || true
+          fi
