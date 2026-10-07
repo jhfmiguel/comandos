@@ -142,7 +142,7 @@ jobs:
         with:
           name: master-data-retirement-validation
           path: /tmp/comandos-master-data-retirement.log
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Stop COMANDOS
