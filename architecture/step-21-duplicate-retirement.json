@@ -387,6 +387,55 @@
         "api/src/main/java/com/comandos/purchase/package-info.java",
         "api/src/test/java/com/comandos/architecture/FariaMiguelConsumerContractTest.java"
       ]
+    },
+    {
+      "id": "sales-generic-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "Step 21.21 removed the obsolete generic Sale/SaleItem persistence and keeps only controlled-asset alienation specialization. Generic sales orders/services/repositories are owned by Faria Miguel.",
+      "removedFiles": [
+        "api/src/main/java/com/comandos/model/Sale.java",
+        "api/src/main/java/com/comandos/model/SaleItem.java",
+        "api/src/main/java/com/comandos/model/repository/SaleRepository.java",
+        "api/src/main/java/com/comandos/model/repository/SaleItemRepository.java"
+      ],
+      "canonicalContracts": [
+        "com.fariamiguel.enterprise.sales.SalesService",
+        "com.fariamiguel.enterprise.sales.SalesOrderRepository",
+        "com.fariamiguel.enterprise.sales.SalesOrder"
+      ],
+      "productSpecializations": [
+        "controlled-asset alienation",
+        "legal/process evidence",
+        "title transfer",
+        "withdrawal",
+        "public-security authorization"
+      ]
+    },
+    {
+      "id": "finance-generic-cutover",
+      "classification": "canonical-only",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.22 completed: COMANDOS has no local finance domain/package. Accounts, ledger and finance services are owned exclusively by Faria Miguel Enterprise Core.",
+      "canonicalContracts": [
+        "com.fariamiguel.enterprise.finance.FinanceService",
+        "com.fariamiguel.enterprise.finance.FinancialLedger",
+        "com.fariamiguel.enterprise.finance.FinancialEntry"
+      ]
+    },
+    {
+      "id": "contracts-generic-cutover",
+      "classification": "canonical-only",
+      "safeToDelete": true,
+      "stepStatus": "completed",
+      "reason": "Step 21.23 completed: COMANDOS has no local contracts domain/package. Generic contracts are owned exclusively by Faria Miguel Enterprise Core.",
+      "canonicalContracts": [
+        "com.fariamiguel.enterprise.contracts.ContractService",
+        "com.fariamiguel.enterprise.contracts.ContractRepository",
+        "com.fariamiguel.enterprise.contracts.Contract"
+      ]
     }
   ]
 }
