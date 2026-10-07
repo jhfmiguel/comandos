@@ -307,7 +307,9 @@
         "path": "api/src/main/java/com/comandos/maintenance/model/MaintenancePlan.java",
         "field": "unitLegacyId"
       }
-    ]
+    ],
+    "currentCount": 59,
+    "enforcement": "Automatic architecture gates require currentCount to match the manifest inventory and detected Java *LegacyId field declarations exactly; baselineCount is the maximum and may not increase."
   },
   "legacyMasterDataEntities": {
     "step": "21.14",
@@ -361,13 +363,37 @@
       "obsolete WorkflowService compatibility constructor removed",
       "generic master-data reads routed through canonical read services",
       "CanonicalCoreReadService legacy fallback constructor removed; canonical reads now require CanonicalMasterDataDirectory",
-    "CanonicalCoreReadService read-time masterData == null / CanonicalMasterDataMapper fallbacks removed; the mapper remains only in migration shadow-write/backfill/parity paths until Step 21.12"
+      "CanonicalCoreReadService read-time masterData == null / CanonicalMasterDataMapper fallbacks removed; the mapper remains only in migration shadow-write/backfill/parity paths until Step 21.12"
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
       "PersonRegistrationService legacy write orchestration",
       "canonical mappers used by legacy projection, shadow-write, backfill or parity",
       "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
+    ]
+  },
+  "demoAssociationSweep": {
+    "step": "21.36",
+    "status": "complete-current-head",
+    "scope": [
+      "DonationLifecycleDemoVerifier",
+      "PurchaseFlowDemoVerifier",
+      "ReceivingIntegrationDemoVerifier",
+      "SaleAlienationLifecycleDemoVerifier",
+      "TransferTransitDemoVerifier",
+      "WorkflowPolicyDemoVerifier",
+      "StockOracleRegressionDemoVerifier",
+      "IncorporationIntegrityDemoVerifier",
+      "DemoCoverageVerifier",
+      "DemoCoverageSeeder",
+      "InspectionChecklistDemoSeeder",
+      "AmmunitionBoxDemoVerifier"
+    ],
+    "result": "No removable legacy Master Data JPA association remains in this sweep. References through StockLocation, StockMovement, StockLot, StockBalance, InventoryTransferItem and AmmunitionBox are product inventory associations still present in the current operational model, not retired generic Master Data navigation.",
+    "preservedUntilCutover": [
+      "CompliancePolicy organization/unit compatibility",
+      "CoreAccessDemoSeeder compatibility paths required by the cutover",
+      "CustodyResponsibility / PersonRoleAssignment compatibility required by the cutover"
     ]
   }
 }
