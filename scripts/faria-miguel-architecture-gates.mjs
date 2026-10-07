@@ -19,6 +19,11 @@ const oracleBridgePairs = new Set(
   [...oracleRetirementAudit.matchAll(/select '([^']+)'[,\s]*'([^']+)' from dual/g)]
     .map(match => match[1] + '#' + match[2])
 );
+const requiredCutoverFiles = new Set([
+  ...(retirement.legacyMasterDataEntities?.files ?? []),
+  ...(retirement.legacyMasterDataCode?.compatibilityFiles ?? []),
+  ...(retirement.cutoverRuntimeSupport?.files ?? [])
+]);
 
 function walk(dir, visit) {
   if (!fs.existsSync(dir)) return;
@@ -202,6 +207,11 @@ for (const reference of foreignKeyInventory.references ?? []) {
     violations.push('Step 21 Master Data FK retirement regressed: ' + reference.entity + ' state=' + reference.state);
   }
 }
+for (const requiredFile of requiredCutoverFiles) {
+  if (!fs.existsSync(path.join(root, requiredFile))) {
+    violations.push('required Step 21 cutover/compatibility file is missing before retirement gate PASS: ' + requiredFile);
+  }
+}
 
 if (violations.length) {
   console.error('Faria Miguel automatic gate violations:');
@@ -216,3 +226,4 @@ console.log('Step 21 scalarized Master Data models guarded: ' + scalarizedMaster
 console.log('Step 21 Oracle legacy bridge columns guarded: ' + oracleBridgePairs.size + '.');
 console.log('Step 21 FK retirement manifest covers scalarized models: ' + scalarizedMasterDataModels.size + '.');
 console.log('Step 21 FK retirement entries locked retired: ' + (foreignKeyInventory.references ?? []).length + '.');
+console.log('Step 21 required cutover/compatibility files guarded: ' + requiredCutoverFiles.size + '.');
