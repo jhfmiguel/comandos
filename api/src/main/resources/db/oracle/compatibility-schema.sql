@@ -201,6 +201,10 @@ create index ix_purchase_supplier_org_canonical
 create index ix_purchase_origin_person_canonical
     on erp_purchase (origin_person_canonical_id);
 
+alter table erp_procurement_process add organization_canonical_id varchar2(128 char);
+create index ix_procurement_process_org_canonical
+    on erp_procurement_process (organization_canonical_id);
+
 alter table erp_equipment_receiving add receiving_organization_canonical_id varchar2(128 char);
 alter table erp_equipment_receiving add receiving_organization_name varchar2(255 char);
 
