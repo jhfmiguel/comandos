@@ -99,6 +99,17 @@ grep -q 'PartyDocumentRepository canonicalDocuments' "$ROOT_DIR/api/src/main/jav
 grep -q 'ProfessionalQualificationRepository canonicalQualifications' "$ROOT_DIR/api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java" \
   || fail "professional qualifications must read from canonical repository after cutover"
 
+# Step 21.12: retirement validation workflow must cover all cutover control artifacts and preserve diagnostics.
+RETIREMENT_WORKFLOW="$ROOT_DIR/.github/workflows/master-data-retirement-validation.yml"
+test -f "$RETIREMENT_WORKFLOW" || fail "missing Step 21.12 retirement validation workflow"
+
+for required_path in   'architecture/step-21-duplicate-retirement.json'   'architecture/step-21-master-data-retirement.json'   'architecture/master-data-foreign-keys.json'   'scripts/check-faria-miguel-artifacts.sh'   'scripts/oracle-step-21-retirement-audit.sql'   'scripts/validate-product-boundary.sh'   'api/pom.xml'; do
+  grep -q "$required_path" "$RETIREMENT_WORKFLOW"     || fail "Step 21.12 workflow must trigger on cutover control artifact: $required_path"
+done
+
+grep -q '/tmp/faria-miguel-artifact-resolution.log' "$RETIREMENT_WORKFLOW"   || fail "Step 21.12 workflow must preserve canonical artifact resolution diagnostics"
+grep -q '/tmp/comandos-master-data-retirement.log' "$RETIREMENT_WORKFLOW"   || fail "Step 21.12 workflow must preserve COMANDOS retirement runtime diagnostics"
+
 # Step 21.14: legacy generic Master Data entity inventory is frozen until Step 21.12 PASS.
 node - "$ROOT_DIR/architecture/step-21-master-data-retirement.json" "$ROOT_DIR" <<'NODE'
 const fs = require('fs');
