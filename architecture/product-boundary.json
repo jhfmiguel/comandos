@@ -104,7 +104,10 @@
     "frontend-unused-shared-packages-removed",
     "postgres-demo-config-removed",
     "oracle-env-example-aligned",
-    "duplicate-demo-script-removed"
+    "duplicate-demo-script-removed",
+    "procurement-master-data-direct-read-removed",
+    "procurement-process-organization-association-retired",
+    "procurement-reference-parity-covered"
   ],
   "allowedIntegrationChannels": [
     "versioned-maven-artifacts",
