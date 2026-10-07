@@ -169,6 +169,20 @@ if [[ -n "$legacy_master_data_object_navigation_hits" ]]; then
   fail "product code still navigates retired Master Data objects"
 fi
 
+# Step 21.15: AccessPolicy may keep only the enumerated security-overlay Master Data paths until cutover.
+ACCESS_POLICY="$ROOT_DIR/api/src/main/java/com/comandos/security/service/AccessPolicy.java"
+access_policy_legacy_paths="$(
+  grep -nE 'organization\.id|unit\.id|personRole\.organization\.id|personRole\.unit\.id' "$ACCESS_POLICY" 2>/dev/null || true
+)"
+access_policy_expected_count="$(
+  printf '%s\n' "$access_policy_legacy_paths" | sed '/^$/d' | wc -l | tr -d ' '
+)"
+[[ "$access_policy_expected_count" == "4" ]]   || fail "AccessPolicy security compatibility exception changed; expected exactly 4 legacy scope path occurrences"
+grep -q 'u\.organization\.id, unit\.id' "$ACCESS_POLICY"   || fail "AccessPolicy grant query security compatibility path changed unexpectedly"
+grep -q 'case "core/units" -> new Scope("organization.id", "id");' "$ACCESS_POLICY"   || fail "AccessPolicy core/units security compatibility scope changed unexpectedly"
+grep -q 'case "core/person-roles" -> new Scope("organization.id", "unit.id");' "$ACCESS_POLICY"   || fail "AccessPolicy core/person-roles security compatibility scope changed unexpectedly"
+grep -q 'case "core/role-data" -> new Scope("personRole.organization.id", "personRole.unit.id");' "$ACCESS_POLICY"   || fail "AccessPolicy core/role-data security compatibility scope changed unexpectedly"
+
 # Step 21.15: product constructors must not inject null into canonical cutover collaborators.
 null_constructor_hits="$(
   node - "$ROOT_DIR/api/src/main/java/com/comandos" <<'NODE'
