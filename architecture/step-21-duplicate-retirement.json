@@ -339,6 +339,54 @@
         "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogCategoryBase.java",
         "api/src/main/java/com/comandos/enterprise/catalog/model/CatalogItemBase.java"
       ]
+    },
+    {
+      "id": "inventory-generic-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "in-progress",
+      "reason": "Step 21.19 now explicitly treats InventoryLedger, StockLocationRepository and PhysicalInventoryService as Faria Miguel-owned canonical capabilities. COMANDOS inventory remains only for controlled assets, armament/ammunition, regulatory traceability, custody-sensitive state and security-equipment specializations.",
+      "canonicalContracts": [
+        "com.fariamiguel.enterprise.inventory.InventoryLedger",
+        "com.fariamiguel.enterprise.inventory.StockLocationRepository",
+        "com.fariamiguel.enterprise.inventory.PhysicalInventoryService",
+        "com.fariamiguel.enterprise.inventory.StockMovement"
+      ],
+      "productSpecializations": [
+        "firearms and ammunition",
+        "controlled assets",
+        "ballistic/tactical equipment",
+        "serial/lot regulatory traceability",
+        "custody-sensitive inventory state",
+        "certifications and recalls"
+      ],
+      "evidence": [
+        "api/src/main/java/com/comandos/inventory/package-info.java",
+        "api/src/test/java/com/comandos/architecture/FariaMiguelConsumerContractTest.java"
+      ]
+    },
+    {
+      "id": "procurement-generic-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "in-progress",
+      "reason": "Step 21.20 now explicitly treats ProcurementService and PurchaseOrderRepository as Faria Miguel-owned canonical capabilities. COMANDOS purchase code remains for public-security acquisition workflow, controlled-material receiving/inspection, incorporation, serial capture and regulatory/legal metadata.",
+      "canonicalContracts": [
+        "com.fariamiguel.enterprise.procurement.ProcurementService",
+        "com.fariamiguel.enterprise.procurement.PurchaseOrderRepository",
+        "com.fariamiguel.enterprise.procurement.PurchaseOrder"
+      ],
+      "productSpecializations": [
+        "public-security acquisition rules",
+        "controlled-material receiving and inspection",
+        "incorporation into controlled inventory",
+        "serial capture",
+        "regulatory/legal procurement metadata"
+      ],
+      "evidence": [
+        "api/src/main/java/com/comandos/purchase/package-info.java",
+        "api/src/test/java/com/comandos/architecture/FariaMiguelConsumerContractTest.java"
+      ]
     }
   ]
 }
