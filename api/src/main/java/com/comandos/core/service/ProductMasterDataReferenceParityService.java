@@ -13,6 +13,7 @@ import com.comandos.maintenance.model.WorkOrder;
 import com.comandos.purchase.model.EquipmentReceiving;
 import com.comandos.purchase.model.Purchase;
 import com.comandos.purchase.model.PurchasePlanning;
+import com.comandos.purchase.model.ProcurementProcess;
 import com.comandos.reconciliation.model.InventoryCount;
 import com.comandos.reservation.model.InventoryReservation;
 import com.comandos.sales.model.InventorySale;
@@ -77,6 +78,9 @@ public class ProductMasterDataReferenceParityService {
         )),
         new Spec(EquipmentReceiving.class, List.of(
             ref("receivingOrganizationLegacyId", "receivingOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+        )),
+        new Spec(ProcurementProcess.class, List.of(
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
         )),
         new Spec(Custody.class, List.of(
             ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
