@@ -161,9 +161,12 @@ public class EquipmentSetOperationService {
         var set = em.find(EquipmentSet.class, id, LockModeType.PESSIMISTIC_WRITE);
         if (set == null) bad("Equipment set not found.");
         if (!set.active) conflict("Equipment set is inactive.");
-        if (!set.organization.id.equals(organizationId)) bad("Equipment set does not belong to the selected organization.");
-        Long setUnit = set.unit == null ? null : set.unit.id;
-        if (unitId != null && !Objects.equals(setUnit, unitId)) bad("Equipment set does not belong to the selected unit.");
+        if (!Objects.equals(set.organizationLegacyId, organizationId)) {
+            bad("Equipment set does not belong to the selected organization.");
+        }
+        if (unitId != null && !Objects.equals(set.unitLegacyId, unitId)) {
+            bad("Equipment set does not belong to the selected unit.");
+        }
         return set;
     }
 
@@ -198,8 +201,10 @@ public class EquipmentSetOperationService {
         var actor = audit.actor();
         var operation = new EquipmentSetOperation();
         operation.equipmentSet = set;
-        operation.organization = set.organization;
-        operation.unit = set.unit;
+        operation.organizationLegacyId = set.organizationLegacyId;
+        operation.unitLegacyId = set.unitLegacyId;
+        operation.organizationCanonicalId = set.organizationCanonicalId;
+        operation.unitCanonicalId = set.unitCanonicalId;
         operation.setCode = set.code;
         operation.setName = set.name;
         operation.operationType = operationType;
