@@ -367,7 +367,9 @@
       "Product boundary regex matcher conflict removed; direct legacy Master Data and nullable canonical collaborator scans now execute as intended",
       "WorkflowService no longer directly loads Organization/OrganizationalUnit; validation goes through CanonicalMasterDataDirectory",
       "scalarized purchase, receiving, transfer, donation, reservation, lifecycle, consumption, disposal, maintenance, custody, reconciliation and inventory services no longer treat canonicalScope/masterDataReferences as nullable",
-      "ComplianceService/CompliancePolicy organization-unit association remains an explicit Step 21.12 cutover exception"
+      "ComplianceService/CompliancePolicy organization-unit association remains an explicit Step 21.12 cutover exception",
+      "JpaIdentityDirectory exception removed: it consumes canonical com.fariamiguel.enterprise.people.Person through CanonicalMasterDataDirectory and no longer needs any legacy Master Data import allowance",
+      "ComplianceService stock reads no longer navigate removed StockLocation.organization/unit associations; stock scope uses scalar/canonical location identifiers while CompliancePolicy remains the explicit cutover association exception"
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -377,8 +379,7 @@
     ],
     "explicitProductionExceptionsUntilCutover": [
       "api/src/main/java/com/comandos/compliance/model/CompliancePolicy.java",
-      "api/src/main/java/com/comandos/compliance/service/ComplianceService.java",
-      "api/src/main/java/com/comandos/identity/service/JpaIdentityDirectory.java"
+      "api/src/main/java/com/comandos/compliance/service/ComplianceService.java"
     ],
     "enforcement": [
       "No product model outside core/model may import Organization, OrganizationalUnit, Person or PersonRoleAssignment; CompliancePolicy is the sole model exception until Step 21.12.",
