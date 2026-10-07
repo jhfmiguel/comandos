@@ -73,10 +73,8 @@ public class ExceptionalOccurrenceService {
         ExceptionOccurrence occurrence = new ExceptionOccurrence();
         occurrence.organizationLegacyId = organization.id();
         occurrence.unitLegacyId = unit == null ? null : unit.id();
-        if (canonicalScope != null) {
-            occurrence.organizationCanonicalId = canonicalScope.organization(organization.id());
-            occurrence.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
-        }
+        occurrence.organizationCanonicalId = canonicalScope.organization(organization.id());
+        occurrence.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
         occurrence.type = type;
         occurrence.description = request.description().trim();
         occurrence.investigation = clean(request.investigation());
@@ -184,7 +182,7 @@ public class ExceptionalOccurrenceService {
         if (page < 0) bad("Invalid page.");
         access.requireScope("inventory/assets", "READ", organizationId, unitId);
         unit(organizationId, unitId);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String where = " where "
             + (canonical ? "x.organizationCanonicalId" : "x.organizationLegacyId")
@@ -285,7 +283,7 @@ public class ExceptionalOccurrenceService {
 
     private void scope(StockLocation location, long organizationId, Long unitId) {
         if (location == null || !Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Item is outside selected scope.");
