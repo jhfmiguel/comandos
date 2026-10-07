@@ -54,8 +54,8 @@ public class InventoryOperationsDemoSeeder implements ApplicationRunner {
         if (count(InventoryReservation.class) > 0) return;
 
         InventoryReservation reservation = new InventoryReservation();
-        reservation.organization = org;
-        reservation.unit = unit;
+        reservation.organizationLegacyId = org.id;
+        reservation.unitLegacyId = unit.id;
         reservation.status = first(ReservationStatusType.class);
         reservation.organizationName = org.name;
         reservation.unitName = unit.name;
@@ -88,9 +88,9 @@ public class InventoryOperationsDemoSeeder implements ApplicationRunner {
         if (count(InventoryTransfer.class) > 0) return;
 
         InventoryTransfer transfer = new InventoryTransfer();
-        transfer.organization = org;
-        transfer.sourceUnit = source;
-        transfer.destinationUnit = destination;
+        transfer.organizationLegacyId = org.id;
+        transfer.sourceUnitLegacyId = source.id;
+        transfer.destinationUnitLegacyId = destination.id;
         transfer.destinationLocation = destinationLocation;
         transfer.organizationName = org.name;
         transfer.sourceUnitName = source.name;
@@ -135,8 +135,8 @@ public class InventoryOperationsDemoSeeder implements ApplicationRunner {
         if (count(InventoryCount.class) > 0) return;
 
         InventoryCount inventory = new InventoryCount();
-        inventory.organization = org;
-        inventory.unit = unit;
+        inventory.organizationLegacyId = org.id;
+        inventory.unitLegacyId = unit.id;
         inventory.location = location;
         inventory.status = first(InventoryCountStatusType.class);
         inventory.organizationName = org.name;
