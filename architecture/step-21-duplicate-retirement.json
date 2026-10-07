@@ -681,6 +681,18 @@
         "api/src/main/java/com/comandos/donation/service/DonationReceiptService.java",
         "scripts/validate-product-boundary.sh"
       ]
+    },
+    {
+      "id": "disposal-master-data-cutover",
+      "classification": "product-specialization-over-canonical-core",
+      "safeToDelete": false,
+      "stepStatus": "completed-generic-cleanup",
+      "reason": "DisposalService now resolves organization and unit through CanonicalMasterDataDirectory and uses scalar legacy/canonical identifiers on DisposalProcess. Disposal retains only product-specific irreversible disposal, destruction, stock-control and approval rules.",
+      "evidence": [
+        "api/src/main/java/com/comandos/disposal/service/DisposalService.java",
+        "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
+        "scripts/validate-product-boundary.sh"
+      ]
     }
   ]
 }
