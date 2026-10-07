@@ -3,7 +3,7 @@ package com.comandos.security.controller;
 import com.comandos.core.model.*;
 import com.comandos.inventory.model.*;
 import com.comandos.sales.model.InventorySale;
-import com.comandos.model.PaymentMethod;
+import com.comandos.sales.model.PaymentMethod;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
