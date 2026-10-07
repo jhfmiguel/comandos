@@ -31,7 +31,7 @@
       "id": "master-data-persistence-bridges",
       "classification": "migration-bridge",
       "safeToDelete": false,
-      "reason": "All direct product-domain master-data JPA associations are retired, but legacy scalar ids, crosswalk and synchronization services still support controlled database cutover and parity verification.",
+      "reason": "Step 21.12 is prepared but cannot safely delete migration bridges until a production-equivalent retirement validation passes. The code now exposes an explicit retirement-validation-on-startup gate that calls MasterDataCutoverStatusService.requireReadyToRetireLegacyPersistence().",
       "evidence": [
         "architecture/master-data-foreign-keys.json",
         "api/src/main/java/com/comandos/core/service/MasterDataReferenceService.java",
@@ -46,7 +46,14 @@
         "zero-mismatch parity",
         "legacy foreign keys and scalar ids no longer required for rollback",
         "database cleanup migration prepared and verified"
-      ]
+      ],
+      "stepStatus": "blocked-pending-runtime-cutover",
+      "operationalGate": {
+        "property": "comandos.master-data.retirement-validation-on-startup",
+        "environment": "COMANDOS_MASTER_DATA_RETIREMENT_VALIDATION_ON_STARTUP",
+        "requiredResult": "legacy persistence retirement gate=PASS"
+      },
+      "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
     {
       "id": "identity-compatibility-bridge",
