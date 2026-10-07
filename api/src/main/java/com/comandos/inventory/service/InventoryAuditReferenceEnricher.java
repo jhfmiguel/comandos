@@ -22,7 +22,7 @@ public class InventoryAuditReferenceEnricher implements AuditReferenceEnricher {
         var location = em.find(StockLocation.class, targetId);
         if (location == null) return;
 
-        addReference.accept("organization", location.organization.id);
-        if (location.unit != null) addReference.accept("unit", location.unit.id);
+        addReference.accept("organization", location.organizationLegacyId);
+        if (location.unitLegacyId != null) addReference.accept("unit", location.unitLegacyId);
     }
 }
