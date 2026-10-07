@@ -557,7 +557,21 @@
       {
         "step": "21.16",
         "action": "Drop retired Oracle bridge columns, foreign keys and obsolete compatibility tables only after code no longer references them.",
-        "gate": "Oracle migration verification + application startup + Master Data smoke/parity checks."
+        "gate": "Oracle migration verification + application startup + Master Data smoke/parity checks.",
+        "inventory": {
+          "source": "scripts/oracle-step-21-retirement-audit.sql",
+          "expectedPhysicalBridgeColumns": 59,
+          "additionalObjectsToReview": [
+            "indexes tied to legacy/canonical cutover columns",
+            "constraints and foreign keys tied to legacy/canonical cutover columns",
+            "views containing legacy/canonical/crosswalk markers",
+            "triggers on legacy/cutover tables",
+            "legacy/master-data sequences",
+            "ERP_MASTER_DATA_REFERENCE crosswalk table",
+            "known retired generic CRUD tables USER/WEAPON if still present"
+          ],
+          "rule": "The audit is read-only. Destructive DDL is generated only after Step 21.12 PASS and after Java 21.13-21.15 references are removed."
+        }
       },
       {
         "step": "21.17",
@@ -605,6 +619,12 @@
         "MasterDataMigrationConfigurationGuard",
         "MasterDataCutoverStatusService"
       ]
+    },
+    "physicalRetirementSourceOfTruth": {
+      "javaLegacyIdInventory": "legacyIdRetirement.fields",
+      "foreignKeyRetirementInventory": "architecture/master-data-foreign-keys.json",
+      "oraclePhysicalInventory": "scripts/oracle-step-21-retirement-audit.sql",
+      "invariant": "Java legacy-id inventory and Oracle expected bridge-column inventory must remain aligned at 59 before cutover and may only decrease together after Step 21.12 PASS, except product-specific fields explicitly retained."
     }
   }
 }
