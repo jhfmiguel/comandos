@@ -502,6 +502,8 @@ for retired_frontend_package in '@faria-miguel/enterprise' '@faria-miguel/builde
   fi
 done
 
+node "$ROOT_DIR/scripts/audit-frontend-dependencies.mjs"
+
 if grep -qE '^DB_URL=jdbc:postgresql|^DB_USERNAME=postgres|^DB_PASSWORD=postgres' "$ROOT_DIR/.env.example"; then
   fail ".env.example must remain aligned with Oracle; obsolete PostgreSQL defaults are forbidden"
 fi
