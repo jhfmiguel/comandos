@@ -53,7 +53,7 @@ public class CustodyService {
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from AssetItem a where "
             + (canonical ? "a.location.organizationCanonicalId" : "a.location.organizationLegacyId")
@@ -81,7 +81,7 @@ public class CustodyService {
     public Page<EquipmentSetOption> equipmentSets(long organizationId, Long unitId, String search, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from EquipmentSet s where "
             + (canonical ? "s.organizationCanonicalId" : "s.organizationLegacyId")
@@ -146,13 +146,11 @@ public class CustodyService {
         custody.recipientLegacyId = recipient == null ? null : recipient.id();
         custody.recipientUnitLegacyId = recipientUnit == null ? null : recipientUnit.id();
         custody.authorizerLegacyId = authorizer.id();
-        if (canonicalScope != null) {
-            custody.organizationCanonicalId = canonicalScope.organization(organization.id());
-            custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
-            custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id());
-            custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id());
-            custody.authorizerCanonicalId = canonicalScope.person(authorizer.id());
-        }
+        custody.organizationCanonicalId = canonicalScope.organization(organization.id());
+        custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
+        custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id());
+        custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id());
+        custody.authorizerCanonicalId = canonicalScope.person(authorizer.id());
         custody.organizationName = organization.name();
         custody.unitName = unit == null ? null : unit.name();
         custody.recipientName = recipient == null ? recipientUnit.name() : recipient.name();
@@ -282,7 +280,7 @@ public class CustodyService {
     public Page<CustodyView> list(long organizationId, Long unitId, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from Custody c where "
             + (canonical ? "c.organizationCanonicalId" : "c.organizationLegacyId")
@@ -348,7 +346,7 @@ public class CustodyService {
 
     private void validateAsset(AssetItem asset, long organizationId, Long unitId, boolean equipmentSetIssue) {
         access.requireScope("custodies", "CREATE", organizationId, unitId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!asset.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every asset must belong to the selected organization and unit.");
@@ -371,7 +369,7 @@ public class CustodyService {
             set.unitLegacyId
         );
 
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!Objects.equals(set.organizationCanonicalId, ids.organizationId())
                     || !Objects.equals(set.unitCanonicalId, ids.unitId())) {
@@ -387,7 +385,7 @@ public class CustodyService {
 
     private void validateBalance(StockBalance balance, BigDecimal quantity, long organizationId, Long unitId) {
         access.requireScope("custodies", "CREATE", organizationId, unitId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             var ids = canonicalScope.scope(organizationId, unitId);
             if (!balance.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
                 bad("Every stock balance must belong to the selected organization and unit.");
