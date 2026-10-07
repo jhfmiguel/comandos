@@ -133,8 +133,11 @@ if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVI
 fi
 
 # Step 21.32/21.36: sales must not depend on the retired generic model package.
-if grep -RFn --include='*.java' 'com.comandos.model.PaymentMethod' \
-    "$ROOT_DIR/api/src" >/dev/null 2>&1; then
+retired_payment_method_hits="$(
+  grep -RFn --include='*.java' 'com.comandos.model.PaymentMethod' "$ROOT_DIR/api/src" 2>/dev/null || true
+)"
+if [[ -n "$retired_payment_method_hits" ]]; then
+  printf '%s\n' "$retired_payment_method_hits"
   fail "sales still depends on retired com.comandos.model.PaymentMethod"
 fi
 
