@@ -2,19 +2,26 @@ package com.comandos.core.service;
 
 import com.comandos.core.model.PersonRoleAssignment;
 import com.comandos.core.model.RoleData;
+import com.fariamiguel.enterprise.common.BusinessId;
+import com.fariamiguel.enterprise.party.PartyKind;
+import com.fariamiguel.enterprise.party.PartyRef;
 import com.fariamiguel.enterprise.party.PartyRoleAssignment;
+import com.fariamiguel.enterprise.party.PartyRoleRepository;
 import com.fariamiguel.enterprise.party.PartyRoleType;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Canonical read directory for reusable party roles while COMANDOS still owns
- * the legacy role-assignment tables.
+ * Canonical directory for reusable party roles.
+ *
+ * <p>Generic roles read directly from Faria Miguel after canonical cutover.
+ * Product-specific role extensions remain COMANDOS-owned.</p>
  */
 @Service
 @Transactional(readOnly = true)
@@ -34,13 +41,25 @@ public class CanonicalPartyRoleDirectory {
     ) {}
 
     private final EntityManager entityManager;
+    private final PartyRoleRepository canonicalRoles;
+    private final boolean canonicalReadEnabled;
 
-    public CanonicalPartyRoleDirectory(EntityManager entityManager) {
+    public CanonicalPartyRoleDirectory(
+            EntityManager entityManager,
+            PartyRoleRepository canonicalRoles,
+            @Value("${comandos.master-data.canonical-read.enabled:false}")
+            boolean canonicalReadEnabled) {
         this.entityManager = entityManager;
+        this.canonicalRoles = canonicalRoles;
+        this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
     public List<PartyRoleAssignment> roles(long personId, TenantId tenantId) {
         if (personId <= 0) return List.of();
+
+        if (canonicalReadEnabled) {
+            return canonicalRoles.findByParty(tenantId, personRef(personId));
+        }
 
         return assignments(personId).stream()
             .map(source -> CanonicalPartyRoleMapper.assignment(
@@ -58,6 +77,12 @@ public class CanonicalPartyRoleDirectory {
             PartyRoleType role) {
 
         if (role == null) return roles(personId, tenantId);
+
+        if (canonicalReadEnabled) {
+            return canonicalRoles.findByRole(tenantId, role).stream()
+                .filter(assignment -> assignment.party().equals(personRef(personId)))
+                .toList();
+        }
 
         return roles(personId, tenantId).stream()
             .filter(assignment -> assignment.role() == role)
@@ -86,9 +111,11 @@ public class CanonicalPartyRoleDirectory {
 
     public boolean hasRole(long personId, TenantId tenantId, PartyRoleType role) {
         if (role == null) return false;
+
         return roles(personId, tenantId, role).stream()
             .anyMatch(assignment ->
-                assignment.status() == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE
+                assignment.status()
+                    == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE
             );
     }
 
@@ -122,5 +149,12 @@ public class CanonicalPartyRoleDirectory {
             });
 
         return Map.copyOf(result);
+    }
+
+    private static PartyRef personRef(long personId) {
+        return new PartyRef(
+            BusinessId.of("comandos:person:" + personId),
+            PartyKind.PERSON
+        );
     }
 }
