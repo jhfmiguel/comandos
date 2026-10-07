@@ -473,6 +473,26 @@ for legacy_user_page in \
     || fail "legacy user route must redirect to canonical people workspace: $legacy_user_page"
 done
 
+# Step 21.32/21.36: the obsolete generic weapon CRUD must not return.
+retired_weapon_paths=(
+  "api/src/main/java/com/comandos/rest/weapons"
+  "api/src/main/java/com/comandos/model/Weapon.java"
+  "api/src/main/java/com/comandos/model/repository/WeaponRepository.java"
+  "app/src/components/weapons"
+  "app/src/api/services/weapon.service.ts"
+  "app/src/api/models/weapons"
+)
+for retired_weapon_path in "${retired_weapon_paths[@]}"; do
+  [[ ! -e "$ROOT_DIR/$retired_weapon_path" ]] \
+    || fail "legacy generic weapon CRUD returned: $retired_weapon_path"
+done
+for legacy_weapon_page in \
+  "$ROOT_DIR/app/src/app/queries/weapons/page.tsx" \
+  "$ROOT_DIR/app/src/app/registrations/weapons/page.tsx"; do
+  grep -q 'redirect("/erp/inventory?section=catalog&resource=item-models")' "$legacy_weapon_page" \
+    || fail "legacy weapon route must redirect to canonical inventory catalog: $legacy_weapon_page"
+done
+
 # Step 21.32/21.36: the obsolete generic sales stack must not return.
 retired_sales_paths=(
   "api/src/main/java/com/comandos/rest/sales"
