@@ -45,11 +45,6 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         this.canonicalScope = canonicalScope;
     }
 
-    @Deprecated
-    WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
-            CurrentActorProvider actors, WorkflowPolicy policy) {
-        this(em, access, audit, actors, policy, null, null);
-    }
 
     @Transactional
     public WorkflowView request(WorkflowRequest r) {
