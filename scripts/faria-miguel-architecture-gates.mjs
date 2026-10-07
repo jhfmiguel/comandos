@@ -3,9 +3,13 @@ import path from 'node:path';
 
 const root = process.cwd();
 const lock = JSON.parse(fs.readFileSync(path.join(root, 'architecture', 'faria-miguel-gates.lock.json'), 'utf8'));
+const retirement = JSON.parse(fs.readFileSync(path.join(root, 'architecture', 'step-21-master-data-retirement.json'), 'utf8'));
 
 const IGNORED = new Set(['.git','.next','.turbo','coverage','dist','build','target','node_modules','migration-staging']);
 const violations = [];
+const legacyIdInventory = retirement.legacyIdRetirement;
+const expectedLegacyIds = new Set((legacyIdInventory.fields ?? []).map(({path: filePath, field}) => `${filePath}#${field}`));
+const detectedLegacyIds = new Set();
 
 function walk(dir, visit) {
   if (!fs.existsSync(dir)) return;
@@ -54,6 +58,10 @@ walk(root, file => {
 
   if (file.endsWith('.java')) {
     const src=fs.readFileSync(file,'utf8');
+    if (relative.startsWith('api/src/main/java/') && relative.includes('/model/')) {
+      const legacyField = /\b(?:public|protected|private)[ \t]+(?:(?:static|final|transient|volatile)[ \t]+)*(?:[\w.$<>?,\[\]]+)[ \t]+([A-Za-z_][A-Za-z0-9_]*LegacyId)[ \t]*(?:=[^;\n]*)?;/g;
+      for (const match of src.matchAll(legacyField)) detectedLegacyIds.add(relative + '#' + match[1]);
+    }
     const pkg=src.match(/^\s*package\s+([\w.]+)\s*;/m)?.[1];
     if (pkg) {
       for (const reserved of reservedJava) {
@@ -136,6 +144,33 @@ walk(root, file => {
   }
 });
 
+const baselineCount = Number(legacyIdInventory.baselineCount);
+const currentCount = Number(legacyIdInventory.currentCount);
+if (!Number.isInteger(baselineCount) || baselineCount < 0) {
+  violations.push('Step 21 LegacyId baselineCount must be a non-negative integer');
+}
+if (!Number.isInteger(currentCount) || currentCount < 0) {
+  violations.push('Step 21 LegacyId currentCount must be a non-negative integer');
+}
+if (currentCount > baselineCount) {
+  violations.push('Step 21 LegacyId currentCount=' + currentCount + ' exceeds baselineCount=' + baselineCount);
+}
+if (expectedLegacyIds.size !== currentCount) {
+  violations.push('Step 21 LegacyId manifest inventory has ' + expectedLegacyIds.size + ' entries but currentCount=' + currentCount);
+}
+for (const key of detectedLegacyIds) {
+  if (!expectedLegacyIds.has(key)) violations.push('untracked *LegacyId field introduced: ' + key);
+}
+for (const key of expectedLegacyIds) {
+  if (!detectedLegacyIds.has(key)) violations.push('Step 21 LegacyId manifest is stale or field moved/removed without inventory update: ' + key);
+}
+if (detectedLegacyIds.size > baselineCount) {
+  violations.push('detected *LegacyId field count=' + detectedLegacyIds.size + ' exceeds immutable Step 21 baseline=' + baselineCount);
+}
+if (detectedLegacyIds.size !== currentCount) {
+  violations.push('detected *LegacyId field count=' + detectedLegacyIds.size + ' differs from locked currentCount=' + currentCount);
+}
+
 if (violations.length) {
   console.error('Faria Miguel automatic gate violations:');
   for (const v of [...new Set(violations)]) console.error(' - ' + v);
@@ -144,3 +179,4 @@ if (violations.length) {
 console.log('Faria Miguel automatic gates passed.');
 console.log('Foundation SHA: ' + lock.foundationSha);
 console.log('Maven version: ' + lock.mavenVersion + ' | Frontend version: ' + lock.frontendVersion);
+console.log('Step 21 *LegacyId inventory: ' + detectedLegacyIds.size + '/' + baselineCount + ' (current/baseline).');
