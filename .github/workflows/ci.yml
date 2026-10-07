@@ -39,8 +39,23 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Prepare Faria Miguel backend fallback from source
+        id: foundation_source
+        if: steps.foundation.outputs.available != 'true'
+        env:
+          FARIA_MIGUEL_READ_TOKEN: ${{ secrets.FARIA_MIGUEL_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${FARIA_MIGUEL_READ_TOKEN:-}" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${FARIA_MIGUEL_READ_TOKEN}@github.com/jhfmiguel/faria-miguel.git" ../faria-miguel
+          mvn -B -ntp -f ../faria-miguel/pom.xml -DskipTests install
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
       - name: Verify COMANDOS API against canonical Faria Miguel artifacts
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' || steps.foundation_source.outputs.available == 'true'
         working-directory: api
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -52,7 +67,7 @@ jobs:
           ./mvnw -U verify 2>&1 | tee ../artifacts/backend-maven.log
 
       - name: Record unavailable canonical backend dependency
-        if: steps.foundation.outputs.available != 'true'
+        if: steps.foundation.outputs.available != 'true' && steps.foundation_source.outputs.available != 'true'
         run: |
           echo "::warning::Faria Miguel 0.1.0-SNAPSHOT is not fully available to this repository through GitHub Packages. Backend compilation was not executed remotely."
           {
@@ -102,8 +117,25 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Record unavailable canonical frontend dependency
+      - name: Prepare Faria Miguel frontend fallback from source
+        id: frontend_source
         if: steps.frontend_foundation.outputs.available != 'true'
+        env:
+          FARIA_MIGUEL_READ_TOKEN: ${{ secrets.FARIA_MIGUEL_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${FARIA_MIGUEL_READ_TOKEN:-}" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${FARIA_MIGUEL_READ_TOKEN}@github.com/jhfmiguel/faria-miguel.git" ../faria-miguel
+          mkdir -p app/.foundation-packages
+          npm pack ../faria-miguel/frontend/packages/ui --pack-destination app/.foundation-packages
+          npm pack ../faria-miguel/frontend/packages/platform --pack-destination app/.foundation-packages
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Record unavailable canonical frontend dependency
+        if: steps.frontend_foundation.outputs.available != 'true' && steps.frontend_source.outputs.available != 'true'
         run: |
           echo "::warning::Canonical Faria Miguel frontend packages are unavailable from GitHub Packages. Frontend install/lint/build are deferred."
           {
@@ -113,23 +145,23 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
       - name: License policy
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         run: yarn licenses:audit
       - name: Platform boundary audit
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         run: yarn platform:audit
       - name: Lint
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         run: yarn lint
       - name: Build
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         env:
           NODE_ENV: production
@@ -310,12 +342,12 @@ jobs:
           fi
 
       - name: Install frontend with Yarn
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
 
       - name: Generate frontend CycloneDX SBOM
-        if: steps.frontend_foundation.outputs.available == 'true'
+        if: steps.frontend_foundation.outputs.available == 'true' || steps.frontend_source.outputs.available == 'true'
         run: |
           mkdir -p artifacts
           cd app
