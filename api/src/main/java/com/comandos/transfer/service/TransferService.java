@@ -121,14 +121,14 @@ public class TransferService {
         access.requireScope("transfers", "CREATE", request.organizationId(), request.destinationUnitId());
         lockCatalog();
 
-        Organization organization = locked(Organization.class, request.organizationId());
-        if (!organization.active) bad("Organization must be active.");
-        OrganizationalUnit sourceUnit = selectedUnit(organization.id, request.sourceUnitId());
-        OrganizationalUnit destinationUnit = selectedUnit(organization.id, request.destinationUnitId());
-        if (sourceUnit.id.equals(destinationUnit.id)) bad("Source and destination units must be different.");
+        OrganizationSnapshot organization = organization(request.organizationId());
+        if (!organization.active()) bad("Organization must be active.");
+        UnitSnapshot sourceUnit = selectedUnit(organization.id(), request.sourceUnitId());
+        UnitSnapshot destinationUnit = selectedUnit(organization.id(), request.destinationUnitId());
+        if (sourceUnit.id().equals(destinationUnit.id())) bad("Source and destination units must be different.");
         StockLocation destinationLocation = locked(StockLocation.class, request.destinationLocationId());
         if (!Boolean.TRUE.equals(destinationLocation.active)) bad("Destination location must be active.");
-        var destinationScope = canonicalScope.scope(organization.id, destinationUnit.id);
+        var destinationScope = canonicalScope.scope(organization.id(), destinationUnit.id());
         if (!destinationLocation.matchesCanonicalScope(
                 destinationScope.organizationId(),
                 destinationScope.unitId())) {
@@ -147,18 +147,18 @@ public class TransferService {
         }
 
         InventoryTransfer transfer = new InventoryTransfer();
-        transfer.organizationLegacyId = organization.id;
-        transfer.sourceUnitLegacyId = sourceUnit.id;
-        transfer.destinationUnitLegacyId = destinationUnit.id;
+        transfer.organizationLegacyId = organization.id();
+        transfer.sourceUnitLegacyId = sourceUnit.id();
+        transfer.destinationUnitLegacyId = destinationUnit.id();
         if (canonicalScope != null) {
-            transfer.organizationCanonicalId = canonicalScope.organization(organization.id);
-            transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id);
-            transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id);
+            transfer.organizationCanonicalId = canonicalScope.organization(organization.id());
+            transfer.sourceUnitCanonicalId = canonicalScope.unit(sourceUnit.id());
+            transfer.destinationUnitCanonicalId = canonicalScope.unit(destinationUnit.id());
         }
         transfer.destinationLocation = destinationLocation;
-        transfer.organizationName = organization.name;
-        transfer.sourceUnitName = sourceUnit.name;
-        transfer.destinationUnitName = destinationUnit.name;
+        transfer.organizationName = organization.name();
+        transfer.sourceUnitName = sourceUnit.name();
+        transfer.destinationUnitName = destinationUnit.name();
         transfer.destinationLocationName = destinationLocation.name;
         transfer.purpose = request.purpose().trim();
         transfer.transferType = request.transferType() == null || request.transferType().isBlank()
