@@ -7,6 +7,8 @@ import com.comandos.custody.model.Custody;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.donation.model.Donation;
 import com.comandos.inventory.model.StockLocation;
+import com.comandos.inventory.model.EquipmentSet;
+import com.comandos.inventory.model.EquipmentSetOperation;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
@@ -68,6 +70,14 @@ public class ProductMasterDataReferenceParityService {
 
     private static final List<Spec> SPECS = List.of(
         new Spec(StockLocation.class, List.of(
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+        )),
+        new Spec(EquipmentSet.class, List.of(
+            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
+            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+        )),
+        new Spec(EquipmentSetOperation.class, List.of(
             ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
             ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
         )),
