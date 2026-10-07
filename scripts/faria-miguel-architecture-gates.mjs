@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const lock = JSON.parse(fs.readFileSync(path.join(root, 'architecture', 'faria-miguel-gates.lock.json'), 'utf8'));
 const retirement = JSON.parse(fs.readFileSync(path.join(root, 'architecture', 'step-21-master-data-retirement.json'), 'utf8'));
+const foreignKeyInventory = JSON.parse(fs.readFileSync(path.join(root, 'architecture', 'master-data-foreign-keys.json'), 'utf8'));
 
 const IGNORED = new Set(['.git','.next','.turbo','coverage','dist','build','target','node_modules','migration-staging']);
 const violations = [];
@@ -11,6 +12,7 @@ const legacyIdInventory = retirement.legacyIdRetirement;
 const expectedLegacyIds = new Set((legacyIdInventory.fields ?? []).map(({path: filePath, field}) => `${filePath}#${field}`));
 const detectedLegacyIds = new Set();
 const scalarizedMasterDataModels = new Set((legacyIdInventory.fields ?? []).map(({path: filePath}) => filePath));
+const foreignKeyReferencesByPath = new Map((foreignKeyInventory.references ?? []).map(reference => [reference.path, reference]));
 const oracleRetirementAuditPath = path.join(root, 'scripts', 'oracle-step-21-retirement-audit.sql');
 const oracleRetirementAudit = fs.readFileSync(oracleRetirementAuditPath, 'utf8');
 const oracleBridgePairs = new Set(
@@ -187,6 +189,14 @@ if (detectedLegacyIds.size !== currentCount) {
 if (oracleBridgePairs.size !== currentCount) {
   violations.push('Oracle Step 21 retirement audit tracks ' + oracleBridgePairs.size + ' unique legacy bridge columns, expected currentCount=' + currentCount);
 }
+for (const modelPath of scalarizedMasterDataModels) {
+  const reference = foreignKeyReferencesByPath.get(modelPath);
+  if (!reference) {
+    violations.push('scalarized Master Data model missing from master-data-foreign-keys.json: ' + modelPath);
+  } else if (reference.state !== 'retired') {
+    violations.push('scalarized Master Data model must remain retired from legacy JPA association: ' + modelPath + ' state=' + reference.state);
+  }
+}
 
 if (violations.length) {
   console.error('Faria Miguel automatic gate violations:');
@@ -199,3 +209,4 @@ console.log('Maven version: ' + lock.mavenVersion + ' | Frontend version: ' + lo
 console.log('Step 21 *LegacyId inventory: ' + detectedLegacyIds.size + '/' + baselineCount + ' (current/baseline).');
 console.log('Step 21 scalarized Master Data models guarded: ' + scalarizedMasterDataModels.size + '.');
 console.log('Step 21 Oracle legacy bridge columns guarded: ' + oracleBridgePairs.size + '.');
+console.log('Step 21 FK retirement manifest covers scalarized models: ' + scalarizedMasterDataModels.size + '.');
