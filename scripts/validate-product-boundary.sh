@@ -110,6 +110,13 @@ fi
 grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
   || fail "CanonicalCoreReadService must depend on CanonicalMasterDataDirectory"
 
+# Step 21.15: required workflow cutover collaborators must not be nullable fallbacks.
+WORKFLOW_SERVICE="$ROOT_DIR/api/src/main/java/com/comandos/workflow/service/WorkflowService.java"
+if grep -q 'masterDataReferences[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVICE" \
+   || grep -q 'canonicalScope[[:space:]]*!=[[:space:]]*null' "$WORKFLOW_SERVICE"; then
+  fail "WorkflowService must not keep nullable cutover collaborator fallbacks"
+fi
+
 # Steps 21.13-21.15: legacy master-data retirement backlog may only shrink.
 RETIREMENT_MANIFEST="$ROOT_DIR/architecture/step-21-master-data-retirement.json"
 test -f "$RETIREMENT_MANIFEST" || fail "missing Step 21 master-data retirement manifest"
