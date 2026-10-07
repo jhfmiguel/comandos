@@ -112,7 +112,7 @@ grep -q 'CanonicalMasterDataDirectory masterData' "$CANONICAL_CORE_READS" \
 
 # Step 21.15/21.32: product services must not directly read legacy Master Data entities.
 legacy_master_data_read_hits="$(
-  grep -RFnE --include='*.java' \
+  grep -RnE --include='*.java' \
     'find\((Person|Organization|OrganizationalUnit)\.class|locked\((Person|Organization|OrganizationalUnit)\.class|from[[:space:]]+(Person|Organization|OrganizationalUnit)[[:space:]]' \
     "$ROOT_DIR/api/src/main/java/com/comandos" 2>/dev/null \
     | grep -v '/core/service/' \
@@ -138,7 +138,7 @@ fi
 # Step 21.15: required canonical collaborators are never optional after constructor migration.
 for nullable_collaborator in canonicalScope masterDataReferences masterDataMirror; do
   nullable_hits="$(
-    grep -RFnE --include='*.java' "$nullable_collaborator[[:space:]]*!=[[:space:]]*null|$nullable_collaborator[[:space:]]*==[[:space:]]*null" \
+    grep -RnE --include='*.java' "$nullable_collaborator[[:space:]]*!=[[:space:]]*null|$nullable_collaborator[[:space:]]*==[[:space:]]*null" \
       "$ROOT_DIR/api/src/main/java" 2>/dev/null || true
   )"
   if [[ -n "$nullable_hits" ]]; then
