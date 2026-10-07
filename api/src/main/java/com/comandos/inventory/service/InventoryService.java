@@ -670,24 +670,6 @@ public class InventoryService {
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
             // share this check under the catalog lock, before stock or audit writes.
-            if (entity instanceof CertificationRecord certification) {
-            result.put("organizationCanonicalId", certification.organizationCanonicalId);
-            result.put("unitCanonicalId", certification.unitCanonicalId);
-            result.put("organizationId", certification.organizationLegacyId);
-            result.put("unitId", certification.unitLegacyId);
-        }
-        if (entity instanceof ExpirationRecord expiration) {
-            result.put("organizationCanonicalId", expiration.organizationCanonicalId);
-            result.put("unitCanonicalId", expiration.unitCanonicalId);
-            result.put("organizationId", expiration.organizationLegacyId);
-            result.put("unitId", expiration.unitLegacyId);
-        }
-        if (entity instanceof EquipmentSet equipmentSet) {
-            result.put("organizationCanonicalId", equipmentSet.organizationCanonicalId);
-            result.put("unitCanonicalId", equipmentSet.unitCanonicalId);
-            result.put("organizationId", equipmentSet.organizationLegacyId);
-            result.put("unitId", equipmentSet.unitLegacyId);
-        }
         if (entity instanceof AssetItem asset) {
                 var errors = AssetIdentity.conflicts(em.createQuery("select a from AssetItem a", AssetItem.class)
                     .getResultList(), asset.assetCode, asset.serialNumber, asset.internalCode);
@@ -1044,6 +1026,24 @@ public class InventoryService {
                 ? null : em.find(OrganizationalUnit.class, location.unitLegacyId);
             if (organization != null) labels.put("organizationId", label(organization));
             if (unit != null) labels.put("unitId", label(unit));
+        }
+        if (entity instanceof CertificationRecord certification) {
+            result.put("organizationCanonicalId", certification.organizationCanonicalId);
+            result.put("unitCanonicalId", certification.unitCanonicalId);
+            result.put("organizationId", certification.organizationLegacyId);
+            result.put("unitId", certification.unitLegacyId);
+        }
+        if (entity instanceof ExpirationRecord expiration) {
+            result.put("organizationCanonicalId", expiration.organizationCanonicalId);
+            result.put("unitCanonicalId", expiration.unitCanonicalId);
+            result.put("organizationId", expiration.organizationLegacyId);
+            result.put("unitId", expiration.unitLegacyId);
+        }
+        if (entity instanceof EquipmentSet equipmentSet) {
+            result.put("organizationCanonicalId", equipmentSet.organizationCanonicalId);
+            result.put("unitCanonicalId", equipmentSet.unitCanonicalId);
+            result.put("organizationId", equipmentSet.organizationLegacyId);
+            result.put("unitId", equipmentSet.unitLegacyId);
         }
         if (entity instanceof AssetItem asset) {
             result.put("organizationId", asset.location.organizationLegacyId);
