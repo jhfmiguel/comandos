@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -74,9 +75,9 @@ public class MaintenanceLifecycleDemoVerifier implements ApplicationRunner {
     }
 
     private void verifyOrderIdentity(WorkOrder workOrder) {
-        require(workOrder.organization != null && workOrder.asset != null && workOrder.asset.location != null,
+        require(workOrder.organizationLegacyId != null && workOrder.asset != null && workOrder.asset.location != null,
             "Maintenance order must retain organization, asset and location provenance.");
-        require(workOrder.asset.location.organization.id.equals(workOrder.organization.id),
+        require(Objects.equals(workOrder.asset.location.organizationLegacyId, workOrder.organizationLegacyId),
             "Maintenance asset and order organization must match.");
         require(TYPES.contains(workOrder.maintenanceType),
             "Maintenance type must be PREVENTIVE or CORRECTIVE.");
@@ -87,9 +88,9 @@ public class MaintenanceLifecycleDemoVerifier implements ApplicationRunner {
             "Maintenance opening must retain idempotency metadata.");
         if (workOrder.plan != null) {
             require(Boolean.TRUE.equals(workOrder.plan.active), "Referenced maintenance plan must be active in demo data.");
-            require(workOrder.plan.organization.id.equals(workOrder.organization.id),
+            require(Objects.equals(workOrder.plan.organizationLegacyId, workOrder.organizationLegacyId),
                 "Maintenance plan and order organization must match.");
-            require(workOrder.plan.unit == null || workOrder.unit != null && workOrder.plan.unit.id.equals(workOrder.unit.id),
+            require(workOrder.plan.unitLegacyId == null || Objects.equals(workOrder.plan.unitLegacyId, workOrder.unitLegacyId),
                 "Maintenance plan and order unit scope must match.");
             require(workOrder.plan.periodicityDays != null && workOrder.plan.periodicityDays > 0,
                 "Maintenance plan periodicity must be positive.");
@@ -191,7 +192,7 @@ public class MaintenanceLifecycleDemoVerifier implements ApplicationRunner {
             "select p from MaintenancePlan p", MaintenancePlan.class
         ).getResultList();
         for (MaintenancePlan plan : plans) {
-            require(plan.organization != null && notBlank(plan.name) && notBlank(plan.type),
+            require(plan.organizationLegacyId != null && notBlank(plan.name) && notBlank(plan.type),
                 "Maintenance plan requires organization, name and type.");
             require(plan.periodicityDays != null && plan.periodicityDays > 0,
                 "Maintenance plan periodicity must be positive.");
