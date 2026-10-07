@@ -40,7 +40,7 @@ jobs:
           fi
 
       - name: Verify COMANDOS API against canonical Faria Miguel artifacts
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: api
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -91,19 +91,45 @@ jobs:
           node-version: "24"
           cache: yarn
           cache-dependency-path: app/yarn.lock
+      - name: Check canonical Faria Miguel frontend packages
+        id: frontend_foundation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if bash scripts/check-faria-miguel-frontend-packages.sh; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record unavailable canonical frontend dependency
+        if: steps.frontend_foundation.outputs.available != 'true'
+        run: |
+          echo "::warning::Canonical Faria Miguel frontend packages are unavailable from GitHub Packages. Frontend install/lint/build are deferred."
+          {
+            echo "### Frontend verification deferred"
+            echo
+            echo "The canonical @jhfmiguel/faria-miguel-platform and/or @jhfmiguel/faria-miguel-ui packages are not published."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Install
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
       - name: License policy
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn licenses:audit
       - name: Platform boundary audit
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn platform:audit
       - name: Lint
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn lint
       - name: Build
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         env:
           NODE_ENV: production
@@ -153,25 +179,36 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check canonical Faria Miguel frontend packages
+        id: frontend_foundation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if bash scripts/check-faria-miguel-frontend-packages.sh; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Record deferred browser regression
-        if: steps.foundation.outputs.available != 'true'
+        if: steps.foundation.outputs.available != 'true' || steps.frontend_foundation.outputs.available != 'true'
         run: |
           echo "::warning::Armament browser regression was deferred because the canonical Faria Miguel backend artifacts are not available to this repository."
           echo "### Armament browser regression deferred" >> "$GITHUB_STEP_SUMMARY"
           echo "Canonical Faria Miguel Maven artifacts are required before the Oracle-backed API can start." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install frontend
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
 
       - name: Install Chromium
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn playwright install --with-deps chromium
 
       - name: Start demo API on Oracle
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: api
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -187,7 +224,7 @@ jobs:
           nohup ./mvnw -U spring-boot:run -Dspring-boot.run.profiles=demo,oracle -Dspring-boot.run.arguments=--server.port=8180 > /tmp/comandos-api.log 2>&1 &
 
       - name: Wait for API and Oracle business regression verification
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         run: |
           for i in {1..120}; do
             if curl -fsS http://localhost:8180/actuator/health; then
@@ -200,21 +237,21 @@ jobs:
           exit 1
 
       - name: Build frontend
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8180
         run: yarn build
 
       - name: Start frontend
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8180
         run: nohup yarn start > /tmp/comandos-app.log 2>&1 &
 
       - name: Wait for frontend
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         run: |
           for i in {1..60}; do
             curl -fsS http://localhost:3000 && exit 0
@@ -224,7 +261,7 @@ jobs:
           exit 1
 
       - name: Browser smoke validation
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         env:
           COMANDOS_API_URL: http://localhost:8180
@@ -261,11 +298,24 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check canonical Faria Miguel frontend packages
+        id: frontend_foundation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if bash scripts/check-faria-miguel-frontend-packages.sh; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install frontend with Yarn
+        if: steps.frontend_foundation.outputs.available == 'true'
         working-directory: app
         run: yarn install --frozen-lockfile
 
       - name: Generate frontend CycloneDX SBOM
+        if: steps.frontend_foundation.outputs.available == 'true'
         run: |
           mkdir -p artifacts
           cd app
@@ -283,14 +333,18 @@ jobs:
           cp target/bom.json ../artifacts/backend-bom.json
 
       - name: Audit frontend and backend SBOM licenses
-        if: steps.foundation.outputs.available == 'true'
+        if: steps.foundation.outputs.available == 'true' && steps.frontend_foundation.outputs.available == 'true'
         run: node scripts/check-sbom-licenses.mjs artifacts/frontend-bom.json artifacts/backend-bom.json
 
       - name: Audit frontend SBOM licenses
-        if: steps.foundation.outputs.available != 'true'
+        if: steps.foundation.outputs.available != 'true' && steps.frontend_foundation.outputs.available == 'true'
         run: |
           echo "::warning::Backend SBOM was deferred because canonical Faria Miguel artifacts are unavailable."
           node scripts/check-sbom-licenses.mjs artifacts/frontend-bom.json
+
+      - name: Record unavailable canonical frontend dependency for SBOM
+        if: steps.frontend_foundation.outputs.available != 'true'
+        run: echo "::warning::Frontend SBOM deferred because canonical Faria Miguel frontend packages are unavailable."
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
