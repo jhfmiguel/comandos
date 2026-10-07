@@ -3,6 +3,7 @@ package com.comandos.reconciliation.service;
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.dto.InventoryCountContract.*;
@@ -14,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.*;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +25,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service @Transactional(readOnly=true)
 public class InventoryCountService {
-    private final EntityManager em; private final AccessPolicy access; private final AuditService audit; private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
+    private static final TenantId TENANT = TenantId.of("comandos");
+    private final EntityManager em; private final AccessPolicy access; private final AuditService audit; private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
     @org.springframework.beans.factory.annotation.Autowired
-    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope){this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;}
-    @Deprecated
-    InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit){this(em,access,audit,null,null);}
+    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;}
 
     @Transactional public CountView open(OpenRequest r){
         if(r==null||r.organizationId()==null||r.locationId()==null||blank(r.purpose()))bad("Organization, location and purpose are required.");
@@ -33,13 +36,13 @@ public class InventoryCountService {
         var existing=em.createQuery("select c from InventoryCount c where c.requestId=:id",InventoryCount.class).setParameter("id",r.requestId()).getResultStream().findFirst();
         String fp=hash(r.organizationId()+"|"+r.unitId()+"|"+r.locationId()+"|"+r.purpose().trim());
         if(existing.isPresent()){access.requireEntity("inventory-counts","READ",existing.get());if(!existing.get().requestFingerprint.equals(fp))conflict("Request ID already used.");return view(existing.get());}
-        var organization=locked(Organization.class,r.organizationId());if(!organization.active)bad("Organization must be active.");
-        var unit=unit(organization.id,r.unitId());var location=locked(StockLocation.class,r.locationId());
-        if(!location.organizationLegacyId.equals(organization.id)||unit!=null&&(location.unitLegacyId==null||!location.unitLegacyId.equals(unit.id)))bad("Location does not belong to the selected scope.");
+        var organization=organization(r.organizationId());if(!organization.active())bad("Organization must be active.");
+        var unit=unit(organization.id(),r.unitId());var location=locked(StockLocation.class,r.locationId());
+        if(!Objects.equals(location.organizationLegacyId,organization.id())||unit!=null&&!Objects.equals(location.unitLegacyId,unit.id()))bad("Location does not belong to the selected scope.");
         access.requireScope("inventory-counts","CREATE",location.organizationLegacyId,location.unitLegacyId);
         long active=em.createQuery("select count(c) from InventoryCount c where c.location.id=:l and c.status.code in ('OPEN','COUNTED')",Long.class).setParameter("l",location.id).getSingleResult();
         if(active>0)conflict("This location already has an unfinished inventory count.");
-        var c=new InventoryCount();c.organizationLegacyId=organization.id;c.unitLegacyId=unit==null?null:unit.id;if(canonicalScope!=null){c.organizationCanonicalId=canonicalScope.organization(organization.id);c.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id);}c.location=location;c.status=status("OPEN");c.organizationName=organization.name;c.unitName=unit==null?null:unit.name;c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(c);else masterDataReferences.synchronize(c);}em.persist(c);
+        var c=new InventoryCount();c.organizationLegacyId=organization.id();c.unitLegacyId=unit==null?null:unit.id();if(canonicalScope!=null){c.organizationCanonicalId=canonicalScope.organization(organization.id());c.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id());}c.location=location;c.status=status("OPEN");c.organizationName=organization.name();c.unitName=unit==null?null:unit.name();c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;if(masterDataReferences!=null){if(canonicalScope!=null&&canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(c);else masterDataReferences.synchronize(c);}em.persist(c);
         var assets=em.createQuery("select a from AssetItem a where a.location.id=:l and a.status in ('AVAILABLE','BLOCKED') order by a.id",AssetItem.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         for(var a:assets){var i=base(c,a.model,a.assetCode);i.asset=a;i.systemQuantity=BigDecimal.ONE;em.persist(i);}
         var balances=em.createQuery("select b from StockBalance b where b.location.id=:l and (b.available+b.reserved+b.blocked)>0 order by b.id",StockBalance.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
@@ -76,7 +79,10 @@ public class InventoryCountService {
     private List<InventoryCountItem> items(long id){return em.createQuery("select i from InventoryCountItem i where i.inventoryCount.id=:id order by i.id",InventoryCountItem.class).setParameter("id",id).getResultList();}
     private InventoryCountStatusType status(String code){var value=em.createQuery("select s from InventoryCountStatusType s where s.code=:c",InventoryCountStatusType.class).setParameter("c",code).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultStream().findFirst().orElseThrow(()->new ResponseStatusException(HttpStatus.CONFLICT,"Required inventory count status is not configured."));if(!value.active)conflict("Required inventory count status "+code+" is inactive.");return value;}
     private InventoryCountResultType result(String code){var value=em.createQuery("select s from InventoryCountResultType s where s.code=:c",InventoryCountResultType.class).setParameter("c",code).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultStream().findFirst().orElseThrow(()->new ResponseStatusException(HttpStatus.CONFLICT,"Required inventory result is not configured."));if(!value.active)conflict("Required inventory result "+code+" is inactive.");return value;}
-    private OrganizationalUnit unit(long org,Long id){if(id==null)return null;var u=em.find(OrganizationalUnit.class,id);if(u==null||!u.organization.id.equals(org))bad("Select a unit in the organization.");return u;}
+    private UnitSnapshot unit(long organizationId,Long unitId){if(unitId==null)return null;var u=masterData.findUnit(unitId,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select a unit in the organization."));if(!u.active()||!CompanyId.of("comandos:organization:"+organizationId).equals(u.companyId()))bad("Select an active unit in the organization.");return new UnitSnapshot(unitId,u.name());}
+    private OrganizationSnapshot organization(Long id){if(id==null||id<=0)bad("A valid organization is required.");var o=masterData.findOrganization(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Organization not found."));return new OrganizationSnapshot(id,o.legalName(),o.status()==LifecycleStatus.ACTIVE);}
+    private record OrganizationSnapshot(Long id,String name,boolean active){}
+    private record UnitSnapshot(Long id,String name){}
     private<T>T locked(Class<T>type,Long id){var value=id==null?null:em.find(type,id,LockModeType.PESSIMISTIC_WRITE);if(value==null)bad(type.getSimpleName()+" not found.");return value;}
     private static void quantity(BigDecimal q){if(q==null||q.signum()<0||q.stripTrailingZeros().scale()>4)bad("Counted quantity must be non-negative with at most four decimals.");}
     private static String trim(String v,int max){v=v.trim();if(v.length()>max)bad("Text is too long.");return v;}private static boolean blank(String v){return v==null||v.isBlank();}
