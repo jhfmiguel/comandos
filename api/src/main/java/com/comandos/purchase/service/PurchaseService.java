@@ -26,10 +26,7 @@ public class PurchaseService {
   this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;
  }
 
- @Deprecated
- PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em){
-  this(p,pr,em,null,null);
- }
+
  @Transactional public PurchaseView create(CreatePurchaseRequest r){
   if(r==null||r.buyerOrganizationId()==null)throw new IllegalArgumentException("Buyer organization is required.");
   if(r.originPersonId()==null)throw new IllegalArgumentException("Acquisition origin person is required.");
