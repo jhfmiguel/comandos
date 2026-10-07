@@ -256,6 +256,16 @@
       ],
       "state": "retired",
       "note": "Legacy Organization/OrganizationalUnit JPA associations were removed; scalar legacy ids remain while canonical scope ids are primary."
+    },
+    {
+      "entity": "CustodyResponsibility",
+      "path": "api/src/main/java/com/comandos/custody/model/CustodyResponsibility.java",
+      "fields": [
+        "responsiblePersonLegacyId",
+        "roleAssignmentLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy Person and PersonRoleAssignment JPA associations were removed. The person has a canonical shadow id; the role-assignment id remains a product-specific scalar reference."
     }
   ],
   "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
