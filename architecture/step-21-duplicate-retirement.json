@@ -761,8 +761,8 @@
       "id": "final-legacy-scan",
       "classification": "validation",
       "safeToDelete": false,
-      "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. After retiring the old generic sales, user, weapon, model and REST compatibility stacks, repository path-name scanning still finds no files named legacy; compatibility remains only in db/oracle/compatibility-schema.sql, bridge remains only in StockLocationMasterDataBridgeTest, and backfill remains only in ProductMasterDataReferenceBackfillService. Regression gates prevent *LegacyId growth; final source-level retirement still depends on Step 21.12."
+      "stepStatus": "advanced-known-bridges-only",
+      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository filename scanning now enforces that old/backup/deprecated/legacy/copy artifacts cannot return. The only allowed migration-named files are db/oracle/compatibility-schema.sql, StockLocationMasterDataBridgeTest and ProductMasterDataReferenceBackfillService. Regression gates prevent both filename residue and *LegacyId growth; final source-level retirement still depends on Step 21.12."
     },
     {
       "id": "final-legacy-scan-evidence",
@@ -775,7 +775,7 @@
         "api/src/main/java/com/comandos/core/service/ProductMasterDataReferenceBackfillService.java",
         "scripts/validate-product-boundary.sh"
       ],
-      "note": "No repository path currently contains legacy in its filename; source-level *LegacyId usage is controlled by the 59-field retirement baseline."
+      "note": "No repository path contains old/backup/deprecated/legacy/copy residue. The three explicitly allowed compatibility/bridge/backfill filenames are cutover-owned and are guarded by Product boundary until Step 21.12 completes."
     },
     {
       "id": "final-step-closure",
