@@ -38,18 +38,18 @@ public class CustodyResponsibilityDemoVerifier implements ApplicationRunner {
         List<Custody> custodies = em.createQuery("select c from Custody c", Custody.class).getResultList();
         for (Custody custody : custodies) {
             verifyMatrix(custody);
-            if (custody.recipientUnit != null) verifyInstitutionalResponsibility(custody);
+            if (custody.recipientUnitLegacyId != null) verifyInstitutionalResponsibility(custody);
         }
     }
 
     private void verifyMatrix(Custody custody) {
         String scope = custody.custodyScope == null ? "INDIVIDUAL" : custody.custodyScope;
         String duration = custody.durationType == null ? (custody.dueAt == null ? "PERMANENT" : "TEMPORARY") : custody.durationType;
-        if (custody.recipientUnit == null) {
-            require(custody.recipient != null, "person custody without recipient");
+        if (custody.recipientUnitLegacyId == null) {
+            require(custody.recipientLegacyId != null, "person custody without recipient");
             require("INDIVIDUAL".equals(scope), "person custody must be INDIVIDUAL");
         } else {
-            require(custody.recipient == null, "institutional custody cannot also have person recipient");
+            require(custody.recipientLegacyId == null, "institutional custody cannot also have person recipient");
             require(Set.of("COLLECTIVE", "TEAM", "OPERATION").contains(scope), "invalid institutional custody scope");
         }
         require(Set.of("TEMPORARY", "PERMANENT").contains(duration), "invalid custody duration");
@@ -67,12 +67,13 @@ public class CustodyResponsibilityDemoVerifier implements ApplicationRunner {
             .setParameter("custody", custody.id)
             .getResultStream().findFirst().orElse(null);
         require(responsibility != null, "institutional custody without responsibility: custody=" + custody.id);
-        require(responsibility.responsiblePerson != null && responsibility.roleAssignment != null,
-            "institutional responsibility without person/assignment");
-        PersonRoleAssignment assignment = responsibility.roleAssignment;
-        require(Objects.equals(assignment.person.id, responsibility.responsiblePerson.id), "responsibility assignment person mismatch");
-        require(Objects.equals(assignment.organization.id, custody.organization.id), "responsibility organization mismatch");
-        require(assignment.unit != null && Objects.equals(assignment.unit.id, custody.recipientUnit.id), "responsibility unit mismatch");
+        require(responsibility.responsiblePersonLegacyId != null && responsibility.roleAssignmentLegacyId != null,
+            "institutional responsibility without person/assignment ids");
+        PersonRoleAssignment assignment = em.find(PersonRoleAssignment.class, responsibility.roleAssignmentLegacyId);
+        require(assignment != null, "institutional responsibility role assignment not found");
+        require(Objects.equals(assignment.person.id, responsibility.responsiblePersonLegacyId), "responsibility assignment person mismatch");
+        require(Objects.equals(assignment.organization.id, custody.organizationLegacyId), "responsibility organization mismatch");
+        require(assignment.unit != null && Objects.equals(assignment.unit.id, custody.recipientUnitLegacyId), "responsibility unit mismatch");
         require(assignment.role != null && AUTHORIZED.contains(assignment.role.code.toUpperCase()), "responsibility role not authorized");
         require("ACTIVE".equalsIgnoreCase(assignment.status), "responsibility assignment not active");
         require(assignment.startDate != null && !assignment.startDate.isAfter(LocalDate.now()), "responsibility assignment not started");
