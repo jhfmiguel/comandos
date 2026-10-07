@@ -627,11 +627,15 @@
       "classification": "script-cleanup",
       "safeToDelete": true,
       "stepStatus": "completed-current-known-duplicates",
-      "reason": "Step 21.30 consolidated duplicate demo startup automation into scripts/run-oracle-demo.ps1 and removed api/scripts/start-with-demo-data.ps1. Docker/bootstrap/verification scripts remain because they still implement distinct supported workflows.",
+      "reason": "Step 21.30 consolidated duplicate demo startup automation into scripts/run-oracle-demo.ps1, removed api/scripts/start-with-demo-data.ps1, and removed the accidentally duplicated second half of scripts/validate-product-boundary.sh. The product-boundary gate now keeps a single canonical copy of every Step 21 regression rule; Docker/bootstrap/verification scripts remain because they implement distinct supported workflows.",
       "removed": [
         "api/scripts/start-with-demo-data.ps1"
       ],
-      "canonicalScript": "scripts/run-oracle-demo.ps1"
+      "canonicalScript": "scripts/run-oracle-demo.ps1",
+      "evidence": [
+        "scripts/validate-product-boundary.sh",
+        "commit 24fb09547b7e006d5cb0e8bdfae02cb3da510f07"
+      ]
     },
     {
       "id": "architectural-manifests",
