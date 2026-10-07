@@ -119,12 +119,15 @@ legacy_master_data_read_hits="$(
     | grep -v '/core/model/' \
     | grep -v '/demo/' \
     | grep -v '/compliance/service/ComplianceService.java' \
-    | grep -v '/identity/service/JpaIdentityDirectory.java' \
     || true
 )"
 if [[ -n "$legacy_master_data_read_hits" ]]; then
   printf '%s\n' "$legacy_master_data_read_hits"
   fail "product code still reads legacy Master Data entities directly"
+fi
+
+if grep -nE 'location\.(organization|unit)\.' "$ROOT_DIR/api/src/main/java/com/comandos/compliance/service/ComplianceService.java"; then
+  fail "ComplianceService must use scalar/canonical StockLocation scope fields; only CompliancePolicy organization/unit remains transitional"
 fi
 
 # Step 21.15/21.36: production Java must not reintroduce deprecated compatibility APIs.
