@@ -5,6 +5,7 @@ import com.comandos.consumption.dto.ConsumableUsageContract.*;
 import com.comandos.consumption.model.*;
 import com.comandos.core.model.*;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.security.service.AccessPolicy;
@@ -14,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
 import java.util.*;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.CompanyId;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,22 +27,25 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class ConsumableUsageService {
     private static final int PAGE_SIZE = 20;
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope) {
-        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
-    }
-
-    @Deprecated
-    ConsumableUsageService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this(em, access, audit, null, null);
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
@@ -72,8 +79,8 @@ public class ConsumableUsageService {
     public UsageView finalizeUsage(FinalizeRequest request) {
         validate(request);
         access.requireScope("ammunition-consumptions", "CREATE", request.organizationId(), request.unitId());
-        var organization = locked(Organization.class, request.organizationId());
-        var unit = selectedUnit(organization.id, request.unitId());
+        var organization = organization(request.organizationId());
+        var unit = selectedUnit(organization.id(), request.unitId());
         String fingerprint = fingerprint(request);
         var existing = em.createQuery("select u from ConsumableUsage u where u.requestId=:id", ConsumableUsage.class)
             .setParameter("id", request.requestId()).getResultStream().findFirst();
@@ -81,19 +88,20 @@ public class ConsumableUsageService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("Request ID already used for another consumable usage.");
             return view(existing.get());
         }
-        var responsible = locked(Person.class, request.responsibleId());
-        var authorizer = locked(Person.class, request.authorizerId());
-        if (!organization.active || !responsible.active || !authorizer.active) bad("Organization, responsible person and authorizer must be active.");
+        var responsible = person(request.responsibleId());
+        var authorizer = person(request.authorizerId());
+        access.requireAny("core/people", "READ");
+        if (!organization.active() || !responsible.active() || !authorizer.active()) bad("Organization, responsible person and authorizer must be active.");
         var now = LocalDateTime.now();
         var usage = new ConsumableUsage();
-        usage.organizationLegacyId=organization.id; usage.unitLegacyId=unit==null?null:unit.id;
-        usage.responsibleLegacyId=responsible.id; usage.authorizerLegacyId=authorizer.id;
-        if(canonicalScope!=null){usage.organizationCanonicalId=canonicalScope.organization(organization.id);
-        usage.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id);
-        usage.responsibleCanonicalId=canonicalScope.person(responsible.id);
-        usage.authorizerCanonicalId=canonicalScope.person(authorizer.id);}
-        usage.organizationName=organization.name; usage.unitName=unit==null?null:unit.name;
-        usage.responsibleName=responsible.fullName; usage.authorizerName=authorizer.fullName;
+        usage.organizationLegacyId=organization.id(); usage.unitLegacyId=unit==null?null:unit.id();
+        usage.responsibleLegacyId=responsible.id(); usage.authorizerLegacyId=authorizer.id();
+        if(canonicalScope!=null){usage.organizationCanonicalId=canonicalScope.organization(organization.id());
+        usage.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id());
+        usage.responsibleCanonicalId=canonicalScope.person(responsible.id());
+        usage.authorizerCanonicalId=canonicalScope.person(authorizer.id());}
+        usage.organizationName=organization.name(); usage.unitName=unit==null?null:unit.name();
+        usage.responsibleName=responsible.name(); usage.authorizerName=authorizer.name();
         usage.purpose=request.purpose().trim(); usage.activityType=normalized(request.activityType(), "OPERATION");
         usage.operationTraining=blankToNull(request.operationTraining()); usage.deliveredAt=now; usage.closedAt=now;
         var actor=audit.actor(); usage.finalizedById=actor.id(); usage.finalizedByLogin=actor.login();
@@ -102,7 +110,7 @@ public class ConsumableUsageService {
         List<Map<String,Object>> changes = new ArrayList<>();
         for (var line : request.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).toList()) {
             var balance=locked(StockBalance.class,line.balanceId()); var lot=locked(StockLot.class,balance.lot.id);
-            validateStock(balance,lot,organization.id,request.unitId(),line.deliveredQuantity());
+            validateStock(balance,lot,organization.id(),request.unitId(),line.deliveredQuantity());
             BigDecimal delivered=line.deliveredQuantity(), used=line.usedQuantity(), returned=line.returnedQuantity();
             BigDecimal beforeBalance=balance.available, beforeLot=lot.availableQuantity;
             balance.available=beforeBalance.subtract(delivered); lot.availableQuantity=beforeLot.subtract(delivered);
@@ -156,7 +164,25 @@ public class ConsumableUsageService {
     private StockOption stockView(StockBalance b){return new StockOption(b.id,b.lot.id,b.lot.model.category.family,b.lot.model.sku,b.lot.model.name,b.lot.lotNumber,b.location.name,b.lot.model.unitOfMeasure,b.available,b.lot.validUntil==null?null:b.lot.validUntil.toString());}
     private void validateStock(StockBalance b,StockLot lot,long org,Long unit,BigDecimal delivered){if(canonicalScope!=null&&canonicalScope.enabled()){var ids=canonicalScope.scope(org,unit);if(!b.location.matchesCanonicalScope(ids.organizationId(),ids.unitId()))bad("Every consumable lot must belong to the selected organization and unit.");}else if(!b.location.organizationLegacyId.equals(org)||unit!=null&&(b.location.unitLegacyId==null||!unit.equals(b.location.unitLegacyId)))bad("Every consumable lot must belong to the selected organization and unit.");var c=lot.model.category;if(!Boolean.TRUE.equals(c.lotControlled)||Boolean.TRUE.equals(c.serialized)||!Boolean.TRUE.equals(c.consumable))bad("Only lot-controlled, non-serialized consumable items use this lifecycle.");if(lot.validUntil!=null&&lot.validUntil.isBefore(LocalDate.now()))bad("Expired consumable stock cannot be delivered.");if(b.available.compareTo(delivered)<0||lot.availableQuantity.compareTo(delivered)<0)conflict("Insufficient available consumable stock for delivery.");}
     private void validate(FinalizeRequest r){if(r==null||r.organizationId()==null||r.responsibleId()==null||r.authorizerId()==null||r.purpose()==null||r.purpose().isBlank())bad("Organization, responsible person, authorizer and purpose are required.");uuid(r.requestId());if(r.items()==null||r.items().isEmpty()||r.items().size()>100)bad("Select 1 to 100 consumable lots.");Set<Long> ids=new HashSet<>();for(var l:r.items()){if(l==null||l.balanceId()==null||l.deliveredQuantity()==null||l.usedQuantity()==null||l.returnedQuantity()==null||l.deliveredQuantity().signum()<=0||l.usedQuantity().signum()<0||l.returnedQuantity().signum()<0||l.usedQuantity().add(l.returnedQuantity()).compareTo(l.deliveredQuantity())!=0||l.result()==null||l.result().isBlank())bad("Each line must satisfy delivered = used + returned and include a result.");if(!ids.add(l.balanceId()))bad("Each stock balance can appear only once.");}}
-    private OrganizationalUnit selectedUnit(long org,Long id){if(id==null)return null;var u=em.find(OrganizationalUnit.class,id);if(u==null||!u.organization.id.equals(org))bad("Select a unit in the selected organization.");return u;}
+    private UnitSnapshot selectedUnit(long organizationId,Long unitId){
+        if(unitId==null)return null;
+        var u=masterData.findUnit(unitId,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select a unit in the selected organization."));
+        if(!u.active()||!CompanyId.of("comandos:organization:"+organizationId).equals(u.companyId()))bad("Select an active unit in the selected organization.");
+        return new UnitSnapshot(unitId,u.name());
+    }
+    private OrganizationSnapshot organization(Long id){
+        if(id==null||id<=0)bad("A valid organization is required.");
+        var o=masterData.findOrganization(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Organization not found."));
+        return new OrganizationSnapshot(id,o.legalName(),o.status()==LifecycleStatus.ACTIVE);
+    }
+    private PersonSnapshot person(Long id){
+        if(id==null||id<=0)bad("A valid person is required.");
+        var p=masterData.findPerson(id,TENANT).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Person not found."));
+        return new PersonSnapshot(id,p.name(),p.status()==LifecycleStatus.ACTIVE);
+    }
+    private record OrganizationSnapshot(Long id,String name,boolean active){}
+    private record UnitSnapshot(Long id,String name){}
+    private record PersonSnapshot(Long id,String name,boolean active){}
     private <T>T locked(Class<T> type,Long id){if(id==null||id<=0)bad("A valid record ID is required.");var v=em.find(type,id,LockModeType.PESSIMISTIC_WRITE);if(v==null)bad(type.getSimpleName()+" not found.");return v;}
     private static String fingerprint(FinalizeRequest r){String lines=r.items().stream().sorted(Comparator.comparing(LineRequest::balanceId)).map(i->i.balanceId()+":"+i.deliveredQuantity()+":"+i.usedQuantity()+":"+i.returnedQuantity()+":"+i.result().trim()).toList().toString();return hash(r.organizationId()+"|"+r.unitId()+"|"+r.responsibleId()+"|"+r.authorizerId()+"|"+r.purpose().trim()+"|"+lines);}
     private static String hash(String v){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(v.getBytes(StandardCharsets.UTF_8)));}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);}}
