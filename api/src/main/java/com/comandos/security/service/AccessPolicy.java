@@ -122,10 +122,14 @@ public class AccessPolicy implements ResourceAccessPolicy {
             case "inventory/locations" -> new Scope("organizationLegacyId", "unitLegacyId");
             case "inventory/assets", "inventory/balances", "inventory/movements" -> new Scope("location.organizationLegacyId", "location.unitLegacyId");
             case "inventory/regulatory-controls" -> new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
-            case "inventory/expirations", "inventory/certifications", "inventory/recalls" -> new Scope("organization.id", "unit.id");
-            case "inventory/recall-items" -> new Scope("recall.organization.id", "recall.unit.id");
-            case "inventory/equipment-sets" -> new Scope("organization.id", "unit.id");
-            case "inventory/equipment-set-components" -> new Scope("equipmentSet.organization.id", "equipmentSet.unit.id");
+            case "inventory/expirations", "inventory/certifications", "inventory/recalls" ->
+                new Scope("organizationLegacyId", "unitLegacyId");
+            case "inventory/recall-items" ->
+                new Scope("recall.organizationLegacyId", "recall.unitLegacyId");
+            case "inventory/equipment-sets" ->
+                new Scope("organizationLegacyId", "unitLegacyId");
+            case "inventory/equipment-set-components" ->
+                new Scope("equipmentSet.organizationLegacyId", "equipmentSet.unitLegacyId");
             case "inventory/lots" -> new Scope("openingLocation.organizationLegacyId", "openingLocation.unitLegacyId");
             case "inventory/item-values" -> new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
             case "sales" -> new Scope("organizationLegacyId", "unitLegacyId");
