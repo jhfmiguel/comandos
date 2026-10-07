@@ -1,7 +1,10 @@
 package com.comandos.enterprise.catalog;
 
+import com.fariamiguel.enterprise.catalog.CatalogIdentity;
+import com.fariamiguel.enterprise.catalog.CatalogTrackingMode;
+import com.fariamiguel.enterprise.catalog.CatalogTrackingPolicy;
+import com.fariamiguel.enterprise.catalog.UnitOfMeasureCode;
 import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.Test;
 
 class EnterpriseCatalogTests {
