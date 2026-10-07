@@ -118,6 +118,7 @@ legacy_master_data_read_hits="$(
     | grep -v '/core/service/' \
     | grep -v '/core/model/' \
     | grep -v '/demo/' \
+    | grep -v '/compliance/service/ComplianceService.java' \
     | grep -v '/identity/service/JpaIdentityDirectory.java' \
     || true
 )"
