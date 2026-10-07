@@ -12,6 +12,13 @@ import com.comandos.sales.model.SaleReturnReasonType;
 import com.comandos.custody.model.CustodyReturnConditionType;
 import com.comandos.security.service.AccessPolicy;
 import com.comandos.audit.service.AuditService;
+import com.fariamiguel.enterprise.common.BusinessId;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.enterprise.inventory.InventoryLedger;
+import com.fariamiguel.enterprise.inventory.StockLocationRepository;
+import com.fariamiguel.enterprise.inventory.StockLocationType;
+import com.fariamiguel.enterprise.inventory.StockMovementType;
+import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.http.HttpStatus;
@@ -32,7 +39,11 @@ public class InventoryService {
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final MasterDataReferenceService canonicalReferences;
+    private static final TenantId TENANT = TenantId.of("comandos");
+
     private final boolean canonicalProductReferenceReadEnabled;
+    private final InventoryLedger canonicalInventoryLedger;
+    private final StockLocationRepository canonicalStockLocations;
 
     @org.springframework.beans.factory.annotation.Autowired
     public InventoryService(
@@ -44,7 +55,9 @@ public class InventoryService {
             MasterDataReferenceService canonicalReferences,
             @org.springframework.beans.factory.annotation.Value(
                 "${comandos.master-data.product-reference-primary-read.enabled:false}"
-            ) boolean canonicalProductReferenceReadEnabled) {
+            ) boolean canonicalProductReferenceReadEnabled,
+            InventoryLedger canonicalInventoryLedger,
+            StockLocationRepository canonicalStockLocations) {
         this.em = em;
         this.rules = rules;
         this.access = access;
@@ -52,6 +65,8 @@ public class InventoryService {
         this.masterDataReferences = masterDataReferences;
         this.canonicalReferences = canonicalReferences;
         this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
+        this.canonicalInventoryLedger = canonicalInventoryLedger;
+        this.canonicalStockLocations = canonicalStockLocations;
     }
 
     InventoryService(
@@ -60,7 +75,17 @@ public class InventoryService {
             AccessPolicy access,
             AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences) {
-        this(em, rules, access, audit, masterDataReferences, null, false);
+        this(
+            em,
+            rules,
+            access,
+            audit,
+            masterDataReferences,
+            null,
+            false,
+            null,
+            null
+        );
     }
 
 
@@ -608,7 +633,12 @@ public class InventoryService {
             if (entity instanceof StockLot lot) lot.openingPackaging = packaging;
             if (entity instanceof StockLot lot) lot.availableQuantity = lot.initialQuantity;
             em.persist(entity);
+            if (entity instanceof StockLocation location) {
+                mirrorCanonicalLocation(location);
+            }
             createOpening(entity);
+        } else if (entity instanceof StockLocation location) {
+            mirrorCanonicalLocation(location);
         }
         em.flush();
         var result = view(spec, entity);
@@ -650,17 +680,135 @@ public class InventoryService {
         StockMovement movement = new StockMovement();
         movement.nature = StockMovementNature.OPENING.name();
         movement.movedAt = LocalDateTime.now();
+
         if (entity instanceof StockLot lot) {
             StockBalance balance = new StockBalance();
-            balance.lot = lot; balance.location = lot.openingLocation;
+            balance.lot = lot;
+            balance.location = lot.openingLocation;
             balance.available = lot.initialQuantity;
             em.persist(balance);
-            movement.lot = lot; movement.location = lot.openingLocation;
+
+            movement.lot = lot;
+            movement.location = lot.openingLocation;
             movement.quantity = lot.initialQuantity;
+
+            appendCanonicalOpening(
+                "lot:" + lot.id,
+                lot.model.id,
+                lot.openingLocation,
+                lot.initialQuantity,
+                lot.lotNumber,
+                null,
+                lot.validUntil
+            );
         } else if (entity instanceof AssetItem asset) {
-            movement.asset = asset; movement.location = asset.location; movement.quantity = BigDecimal.ONE;
-        } else return;
-        movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
+            movement.asset = asset;
+            movement.location = asset.location;
+            movement.quantity = BigDecimal.ONE;
+
+            appendCanonicalOpening(
+                "asset:" + asset.id,
+                asset.model.id,
+                asset.location,
+                BigDecimal.ONE,
+                null,
+                asset.serialNumber,
+                asset.validUntil
+            );
+        } else {
+            return;
+        }
+
+        movement.operatorLogin = audit.actor().login();
+        movement.operatorId = audit.actor().id();
+        em.persist(movement);
+    }
+
+    private void appendCanonicalOpening(
+            String movementSuffix,
+            Long itemModelId,
+            StockLocation location,
+            BigDecimal quantity,
+            String lotNumber,
+            String serialNumber,
+            LocalDate expiresAt) {
+
+        if (canonicalInventoryLedger == null || canonicalStockLocations == null) {
+            return;
+        }
+
+        mirrorCanonicalLocation(location);
+
+        canonicalInventoryLedger.append(
+            new com.fariamiguel.enterprise.inventory.StockMovement(
+                BusinessId.of("comandos:stock-opening:" + movementSuffix),
+                TENANT,
+                canonicalItemId(itemModelId),
+                canonicalLocationId(location.id),
+                StockMovementType.RECEIPT,
+                quantity,
+                "COMANDOS_OPENING",
+                movementSuffix,
+                java.time.Instant.now(),
+                String.valueOf(audit.actor().id()),
+                lotNumber,
+                serialNumber,
+                expiresAt,
+                null
+            )
+        );
+    }
+
+    private void mirrorCanonicalLocation(StockLocation location) {
+        if (canonicalStockLocations == null || location == null || location.id == null) {
+            return;
+        }
+
+        canonicalStockLocations.save(
+            new com.fariamiguel.enterprise.inventory.StockLocation(
+                canonicalLocationId(location.id),
+                TENANT,
+                null,
+                location.code == null || location.code.isBlank()
+                    ? "LOC-" + location.id
+                    : location.code.trim(),
+                location.name,
+                canonicalLocationType(location),
+                Boolean.FALSE.equals(location.active)
+                    ? LifecycleStatus.INACTIVE
+                    : LifecycleStatus.ACTIVE,
+                Map.of(
+                    "comandosLegacyId", String.valueOf(location.id),
+                    "controlled", String.valueOf(Boolean.TRUE.equals(location.controlled))
+                )
+            )
+        );
+    }
+
+    private static BusinessId canonicalLocationId(Long locationId) {
+        return BusinessId.of("comandos:stock-location:" + locationId);
+    }
+
+    private static BusinessId canonicalItemId(Long itemModelId) {
+        return BusinessId.of("comandos:item-model:" + itemModelId);
+    }
+
+    private static StockLocationType canonicalLocationType(StockLocation location) {
+        String raw = location.warehouseType == null || location.warehouseType.isBlank()
+            ? location.type
+            : location.warehouseType;
+
+        if (raw != null) {
+            try {
+                return StockLocationType.valueOf(
+                    raw.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_')
+                );
+            } catch (IllegalArgumentException ignored) {
+                // COMANDOS may carry product-specific location labels.
+            }
+        }
+
+        return StockLocationType.WAREHOUSE;
     }
 
     private record LegacyParameterField(String legacyField, String parameterType) {}
