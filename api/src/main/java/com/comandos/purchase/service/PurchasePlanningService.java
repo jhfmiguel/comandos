@@ -1,33 +1,35 @@
 package com.comandos.purchase.service;
 
-import com.comandos.core.model.Organization;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.purchase.dto.PurchasePlanningContract.CreateRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.StatusRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.View;
 import com.comandos.purchase.model.PurchasePlanning;
 import com.comandos.purchase.model.PurchasePlanningStatus;
 import com.comandos.purchase.repository.PurchasePlanningRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
 public class PurchasePlanningService {
+    private static final TenantId TENANT = TenantId.of("comandos");
     private final PurchasePlanningRepository repository;
-    private final EntityManager em;
     private final ProductCanonicalScopeResolver canonicalScope;
+    private final CanonicalMasterDataDirectory masterData;
 
     public PurchasePlanningService(
             PurchasePlanningRepository repository,
-            EntityManager em,
-            ProductCanonicalScopeResolver canonicalScope) {
+            ProductCanonicalScopeResolver canonicalScope,
+            CanonicalMasterDataDirectory masterData) {
         this.repository = repository;
-        this.em = em;
         this.canonicalScope = canonicalScope;
+        this.masterData = masterData;
     }
 
     @Transactional
@@ -39,17 +41,18 @@ public class PurchasePlanningService {
             throw new IllegalArgumentException("Object description and need justification are required.");
         }
 
-        Organization organization = em.find(Organization.class, request.organizationId());
-        if (organization == null) {
-            throw new EntityNotFoundException("Organization not found: " + request.organizationId());
-        }
-        if (!Boolean.TRUE.equals(organization.active)) {
+        long organizationId = request.organizationId();
+        var organization = masterData.findOrganization(organizationId, TENANT)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Organization not found: " + organizationId
+            ));
+        if (organization.status() != LifecycleStatus.ACTIVE) {
             throw new IllegalArgumentException("Organization must be active.");
         }
 
         PurchasePlanning planning = new PurchasePlanning();
-        planning.organizationLegacyId = organization.id;
-        planning.organizationCanonicalId = canonicalScope.organization(organization.id);
+        planning.organizationLegacyId = organizationId;
+        planning.organizationCanonicalId = canonicalScope.organization(organizationId);
         planning.processNumber = clean(request.processNumber());
         planning.requestingUnit = clean(request.requestingUnit());
         planning.objectDescription = required(request.objectDescription(), 2000, "Object description");
