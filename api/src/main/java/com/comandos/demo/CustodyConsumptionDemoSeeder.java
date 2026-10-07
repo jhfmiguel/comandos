@@ -54,10 +54,10 @@ public class CustodyConsumptionDemoSeeder implements ApplicationRunner {
         if (count(Custody.class) > 0) return;
 
         Custody custody = new Custody();
-        custody.organization = org;
-        custody.unit = unit;
-        custody.recipient = recipient;
-        custody.authorizer = authorizer;
+        custody.organizationLegacyId = org.id;
+        custody.unitLegacyId = unit.id;
+        custody.recipientLegacyId = recipient.id;
+        custody.authorizerLegacyId = authorizer.id;
         custody.organizationName = org.name;
         custody.unitName = unit.name;
         custody.recipientName = recipient.fullName;
@@ -119,10 +119,10 @@ public class CustodyConsumptionDemoSeeder implements ApplicationRunner {
         if (count(AmmunitionConsumption.class) > 0) return;
 
         AmmunitionConsumption consumption = new AmmunitionConsumption();
-        consumption.organization = org;
-        consumption.unit = unit;
-        consumption.responsible = responsible;
-        consumption.authorizer = authorizer;
+        consumption.organizationLegacyId = org.id;
+        consumption.unitLegacyId = unit.id;
+        consumption.responsibleLegacyId = responsible.id;
+        consumption.authorizerLegacyId = authorizer.id;
         consumption.organizationName = org.name;
         consumption.unitName = unit.name;
         consumption.responsibleName = responsible.fullName;
