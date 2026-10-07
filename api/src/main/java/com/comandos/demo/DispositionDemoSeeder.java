@@ -4,7 +4,7 @@ import com.comandos.core.model.*;
 import com.comandos.disposal.model.*;
 import com.comandos.donation.model.*;
 import com.comandos.inventory.model.*;
-import com.comandos.model.PaymentMethod;
+import com.comandos.sales.model.PaymentMethod;
 import com.comandos.sales.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
