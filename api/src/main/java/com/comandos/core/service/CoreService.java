@@ -41,22 +41,6 @@ public class CoreService {
         this.masterDataMirror = masterDataMirror;
     }
 
-    /**
-     * Transitional constructor kept for focused unit tests while the canonical
-     * persistence mirror becomes mandatory in the Spring runtime.
-     */
-    @Deprecated
-    CoreService(
-            EntityManager em,
-            List<UnitScopeGuard> unitScopeGuards,
-            AccessPolicy access,
-            AuditService audit) {
-        this.em = em;
-        this.access = access;
-        this.audit = audit;
-        this.unitScopeGuards = unitScopeGuards;
-        this.masterDataMirror = null;
-    }
 
     public CorePageResult list(
             String resource,
