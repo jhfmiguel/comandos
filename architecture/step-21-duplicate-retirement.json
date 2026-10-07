@@ -545,12 +545,9 @@
       "classification": "dependency-cleanup",
       "safeToDelete": true,
       "stepStatus": "advanced-external-resolution-blocked",
-      "reason": "Step 21.27 removed the redundant direct spring-security-crypto dependency and the unused Spring Modulith BOM/core/test stack after source-use checks found no Modulith APIs or annotations in COMANDOS. Product boundary validation passed after the cleanup. Remaining Faria Miguel artifacts are intentional canonical dependencies, but full Maven resolution/verify is still blocked because the private foundation artifacts are not published to GitHub Packages.",
+      "reason": "Step 21.27 removed the redundant direct spring-security-crypto dependency. A broader Spring Modulith removal was evaluated and reverted after package-info.java source inspection proved active use of @ApplicationModule and @NamedInterface across COMANDOS domains; Modulith therefore remains an intentional dependency. Remaining Faria Miguel artifacts are canonical dependencies, but full Maven resolution/verify is still blocked because the private foundation artifacts are not published to GitHub Packages.",
       "removed": [
-        "org.springframework.security:spring-security-crypto",
-        "org.springframework.modulith:spring-modulith-bom",
-        "org.springframework.modulith:spring-modulith-starter-core",
-        "org.springframework.modulith:spring-modulith-starter-test"
+        "org.springframework.security:spring-security-crypto"
       ],
       "blocker": "canonical Faria Miguel Maven artifacts unavailable in GitHub Packages"
     },
