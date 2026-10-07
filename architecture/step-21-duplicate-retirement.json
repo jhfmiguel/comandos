@@ -60,13 +60,20 @@
         "observedRuns": [
           "37615171522 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
           "37576939731 Publish shared artifacts: upstream publication unresolved",
-          "37630830186 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure"
+          "37630830186 Master Data retirement validation: Resolve canonical Faria Miguel Maven artifacts = failure",
+          "37576939731 Publish shared artifacts: Maven job 112647838113 and NPM job 112647838386 both failed before runner steps (steps=[])"
         ],
         "diagnosis": "the workflow YAML/POM structure is not the immediate failure point. Resolve the private-repository Actions execution layer or configure FARIA_MIGUEL_READ_TOKEN with read access to jhfmiguel/faria-miguel so COMANDOS can install the canonical foundation from source. Exact GitHub administrative/billing cause is not asserted because the available API does not expose it.",
         "sourceFallbackCommit": "e9e618a73d4700c77d4cdc890a81ac07c32c3c3e",
         "latestObservedComandosRun": "37636516313",
         "latestObservedComandosJob": "112844057045",
-        "latestObservedResult": "Oracle, checkout and Java setup succeeded; canonical Faria Miguel Maven artifact resolution failed before COMANDOS startup, so the Step 21.12 retirement gate did not execute."
+        "latestObservedResult": "Oracle, checkout and Java setup succeeded; canonical Faria Miguel Maven artifact resolution failed before COMANDOS startup, so the Step 21.12 retirement gate did not execute.",
+        "latestObservedUpstream": {
+          "run": "37576939731",
+          "mavenJob": "112647838113",
+          "npmJob": "112647838386",
+          "result": "Both publication jobs failed before any runner step executed (steps=[])."
+        }
       },
       "nextAction": "Run controlled Oracle validation with readiness, backfill/parity, product-reference backfill/parity, shadow-write, primary canonical reads and legacy-product-associations-retired enabled. Only after PASS may Step 21.12 bridge files be deleted."
     },
