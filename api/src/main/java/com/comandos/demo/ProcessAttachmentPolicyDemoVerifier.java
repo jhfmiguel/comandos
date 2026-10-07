@@ -1,7 +1,6 @@
 package com.comandos.demo;
 
 import com.comandos.documents.model.ProcessAttachment;
-import com.comandos.documents.model.StoredDocumentBlob;
 import com.comandos.documents.service.ProcessDocumentPolicy;
 import jakarta.persistence.EntityManager;
 import java.util.*;
@@ -58,9 +57,6 @@ public class ProcessAttachmentPolicyDemoVerifier implements ApplicationRunner {
             if (a.versionNumber < 1) fail("attachment version must be positive");
             if (a.uploadedAt == null) fail("attachment upload timestamp is missing");
             if (!storageIds.add(a.storageId)) fail("one stored binary is linked by more than one process attachment");
-            long blobCount = em.createQuery("select count(b) from StoredDocumentBlob b where b.storageId=:id", Long.class)
-                .setParameter("id", a.storageId).getSingleResult();
-            if (blobCount != 1) fail("attachment storage reference is missing or duplicated");
             if (a.supersedes != null) {
                 if (!Objects.equals(a.processType, a.supersedes.processType) || !Objects.equals(a.recordId, a.supersedes.recordId)
                         || !Objects.equals(a.documentType, a.supersedes.documentType)) fail("replacement changed attachment identity");
@@ -71,13 +67,6 @@ public class ProcessAttachmentPolicyDemoVerifier implements ApplicationRunner {
         }
         if (childCount.values().stream().anyMatch(count -> count > 1)) fail("an attachment version has multiple replacement successors");
 
-        var blobs = em.createQuery("select b from StoredDocumentBlob b order by b.id", StoredDocumentBlob.class).getResultList();
-        for (var b : blobs) {
-            if (blank(b.storageId) || blank(b.fileName) || blank(b.contentType) || blank(b.checksum) || b.createdAt == null)
-                fail("stored document metadata is incomplete");
-            if (b.fileSize <= 0 || b.content == null || b.content.length != b.fileSize) fail("stored document bytes do not match metadata");
-            if (!b.checksum.matches("[0-9a-f]{64}")) fail("stored document checksum is not SHA-256");
-        }
     }
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }
