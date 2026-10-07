@@ -742,7 +742,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. Repository path-name scanning found no files named legacy; compatibility remains only in db/oracle/compatibility-schema.sql, bridge remains only in StockLocationMasterDataBridgeTest, and backfill remains only in ProductMasterDataReferenceBackfillService. Regression gates prevent *LegacyId growth; final source-level retirement still depends on Step 21.12."
+      "reason": "Step 21.36 tracks a reconciled 59-field *LegacyId baseline. After retiring the old generic sales, user, weapon, model and REST compatibility stacks, repository path-name scanning still finds no files named legacy; compatibility remains only in db/oracle/compatibility-schema.sql, bridge remains only in StockLocationMasterDataBridgeTest, and backfill remains only in ProductMasterDataReferenceBackfillService. Regression gates prevent *LegacyId growth; final source-level retirement still depends on Step 21.12."
     },
     {
       "id": "final-legacy-scan-evidence",
