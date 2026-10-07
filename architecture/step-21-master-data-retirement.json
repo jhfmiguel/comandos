@@ -9,8 +9,8 @@
   "legacyIdRetirement": {
     "step": "21.13",
     "status": "blocked-by-21.12",
-    "baselineCount": 45,
-    "rule": "The corrected baseline is 45 after ProcurementProcess's previously hidden Organization JPA association was converted into an explicit scalar legacy bridge. The count may only decrease from this corrected baseline; no new legacy dependency may be introduced.",
+    "baselineCount": 49,
+    "rule": "The corrected baseline is 49 after hidden EquipmentSet and EquipmentSetOperation Organization/Unit JPA associations were converted into explicit scalar legacy bridges. The count may only decrease from this corrected baseline.",
     "fields": [
       {
         "entity": "StockLocation",
@@ -235,6 +235,26 @@
       {
         "entity": "ExceptionOccurrence",
         "path": "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "EquipmentSet",
+        "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSet.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "EquipmentSet",
+        "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSet.java",
+        "field": "unitLegacyId"
+      },
+      {
+        "entity": "EquipmentSetOperation",
+        "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java",
+        "field": "organizationLegacyId"
+      },
+      {
+        "entity": "EquipmentSetOperation",
+        "path": "api/src/main/java/com/comandos/inventory/model/EquipmentSetOperation.java",
         "field": "unitLegacyId"
       }
     ]
