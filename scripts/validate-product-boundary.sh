@@ -363,6 +363,11 @@ grep -q '"core-adapters-reclassified"' "$MANIFEST" \
 grep -q '"legacy-master-data-admin-compatibility"' "$MANIFEST" \
   || fail "remaining local core compatibility ownership is not declared"
 
+# Step 21.19: inventory must not depend on legacy master-data entities directly.
+if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|OrganizationalUnit|Person)|em\.find\((Organization|OrganizationalUnit|Person)\.class' "$ROOT_DIR/api/src/main/java/com/comandos/inventory"; then
+  fail "inventory code must consume canonical Master Data instead of legacy Organization/Unit/Person entities"
+fi
+
 # Step 21.20: purchase/procurement must not depend on legacy master-data entities directly.
 if grep -RInE --include='*.java' 'import[[:space:]]+com\.comandos\.core\.model\.(Organization|Person|OrganizationalUnit)' "$ROOT_DIR/api/src/main/java/com/comandos/purchase"; then
   fail "purchase/procurement code must consume canonical Master Data instead of legacy Organization/Person/Unit entities"
