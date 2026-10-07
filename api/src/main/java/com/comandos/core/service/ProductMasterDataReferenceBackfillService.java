@@ -7,6 +7,8 @@ import com.comandos.custody.model.Custody;
 import com.comandos.disposal.model.DisposalProcess;
 import com.comandos.donation.model.Donation;
 import com.comandos.inventory.model.StockLocation;
+import com.comandos.inventory.model.EquipmentSet;
+import com.comandos.inventory.model.EquipmentSetOperation;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.maintenance.model.WorkOrder;
@@ -56,6 +58,14 @@ public class ProductMasterDataReferenceBackfillService {
 
     private static final List<Spec> SPECS = List.of(
         new Spec(StockLocation.class,
+            "e.organizationCanonicalId is null or "
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
+        new Spec(EquipmentSet.class,
+            "e.organizationCanonicalId is null or "
+                + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
+                + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
+        new Spec(EquipmentSetOperation.class,
             "e.organizationCanonicalId is null or "
                 + "(e.unitLegacyId is not null and e.unitCanonicalId is null) or "
                 + "(e.unitLegacyId is null and e.unitCanonicalId is not null)"),
