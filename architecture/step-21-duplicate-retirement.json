@@ -566,11 +566,24 @@
       "id": "frontend-dependency-cleanup",
       "classification": "dependency-cleanup",
       "safeToDelete": true,
-      "stepStatus": "in-progress-external-resolution-blocked",
-      "reason": "Step 21.28 previously removed unused @faria-miguel/enterprise and @faria-miguel/builder-core dependencies. No further package is removed without source-use proof; final install/build dependency validation remains in Step 21.34 because canonical frontend packages are not currently published.",
+      "stepStatus": "advanced-local-cleanup-complete-final-build-blocked",
+      "reason": "Step 21.28 now has a source-based dependency audit enforced by Product boundary. The audit proved seven runtime packages unused; they were removed from package.json and their direct Yarn lock entries were removed after confirming no surviving lock consumer. Product boundary and Faria Miguel architecture gates passed. Final install/lint/build dependency validation remains in Step 21.34 because canonical frontend packages are not currently published.",
       "removed": [
         "@faria-miguel/enterprise",
-        "@faria-miguel/builder-core"
+        "@faria-miguel/builder-core",
+        "@base-ui/react",
+        "class-variance-authority",
+        "clsx",
+        "react-number-format",
+        "swr",
+        "tailwind-merge",
+        "tw-animate-css"
+      ],
+      "evidence": [
+        "scripts/audit-frontend-dependencies.mjs",
+        "Product boundary run 37578168630: success",
+        "app/package.json",
+        "app/yarn.lock"
       ],
       "blocker": "@faria-miguel/platform and @faria-miguel/ui physical packages unavailable"
     },
