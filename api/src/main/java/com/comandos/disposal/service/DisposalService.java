@@ -55,7 +55,7 @@ public class DisposalService {
         if (!assets && !"LOT".equals(kind)) bad("Stock kind must be ASSET or LOT.");
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
             + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
@@ -106,10 +106,8 @@ public class DisposalService {
 
         DisposalProcess process = new DisposalProcess();
         process.organizationLegacyId = organization.id(); process.unitLegacyId = unit == null ? null : unit.id();
-        if (canonicalScope != null) {
-            process.organizationCanonicalId = canonicalScope.organization(organization.id());
-            process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
-        }
+        process.organizationCanonicalId = canonicalScope.organization(organization.id());
+        process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id());
         process.organizationName = organization.name();
         process.unitName = unit == null ? null : unit.name(); process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
@@ -132,7 +130,7 @@ public class DisposalService {
 
     public Page<DisposalView> list(long organizationId, Long unitId, int page) {
         access.requireScope("disposals", "READ", organizationId, unitId); selectedUnit(organizationId, unitId); pagination(page);
-        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        boolean canonical = canonicalScope.enabled();
         var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
         String from = " from DisposalProcess p where "
             + (canonical ? "p.organizationCanonicalId" : "p.organizationLegacyId")
@@ -201,7 +199,7 @@ public class DisposalService {
         if (!Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
         access.requireScope("disposals", "CREATE", process.organizationLegacyId, process.unitLegacyId);
         access.requireScope("disposals", "APPROVE", process.organizationLegacyId, process.unitLegacyId);
-        if (canonicalScope != null && canonicalScope.enabled()) {
+        if (canonicalScope.enabled()) {
             if (!location.matchesCanonicalScope(
                     process.organizationCanonicalId,
                     process.unitCanonicalId)) {
