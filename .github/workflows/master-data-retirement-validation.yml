@@ -51,7 +51,7 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FARIA_MIGUEL_REPOSITORY_TOKEN: ${{ secrets.FARIA_MIGUEL_REPOSITORY_TOKEN }}
+          FARIA_MIGUEL_READ_TOKEN: ${{ secrets.FARIA_MIGUEL_READ_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -60,8 +60,8 @@ jobs:
             exit 0
           fi
 
-          if [[ -z "${FARIA_MIGUEL_REPOSITORY_TOKEN:-}" ]]; then
-            echo "::error::Canonical Faria Miguel Maven artifacts are not published and FARIA_MIGUEL_REPOSITORY_TOKEN is not configured."
+          if [[ -z "${FARIA_MIGUEL_READ_TOKEN:-}" ]]; then
+            echo "::error::Canonical Faria Miguel Maven artifacts are not published and FARIA_MIGUEL_READ_TOKEN is not configured."
             echo "::error::Configure a read token for jhfmiguel/faria-miguel so this workflow can install the canonical foundation from source."
             exit 1
           fi
@@ -69,7 +69,7 @@ jobs:
           echo "Canonical packages are unavailable; installing the Faria Miguel foundation from source."
           rm -rf /tmp/faria-miguel
           git clone --depth 1 \
-            "https://x-access-token:${FARIA_MIGUEL_REPOSITORY_TOKEN}@github.com/jhfmiguel/faria-miguel.git" \
+            "https://x-access-token:${FARIA_MIGUEL_READ_TOKEN}@github.com/jhfmiguel/faria-miguel.git" \
             /tmp/faria-miguel
 
           mvn -B -ntp -DskipTests \
