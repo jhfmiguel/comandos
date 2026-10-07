@@ -283,7 +283,7 @@
       "classification": "retirement-in-progress",
       "safeToDelete": false,
       "stepStatus": "in-progress-blocked-by-21.12",
-      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation and custody no longer perform direct generic Master Data reads; remaining compatibility services/mappers are isolated behind the explicit retirement inventory and Step 21.12 runtime gate.",
+      "reason": "Step 21.15 cleanup progressed further: inventory, procurement, donation, custody, maintenance, reservation, reconciliation, consumption and lifecycle no longer perform direct generic Master Data reads; CanonicalCoreReadService no longer has a legacy fallback constructor and now requires CanonicalMasterDataDirectory. Remaining compatibility services/mappers are isolated behind the explicit retirement inventory and Step 21.12 runtime gate.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "api/src/main/java/com/comandos/core/service/CoreService.java"
