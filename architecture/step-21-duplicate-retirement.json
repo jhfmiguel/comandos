@@ -262,7 +262,7 @@
       "classification": "blocked-retirement-backlog",
       "safeToDelete": false,
       "stepStatus": "blocked-by-21.12",
-      "reason": "Step 21.13 corrected the known baseline to 45 *LegacyId fields after ProcurementProcess's hidden Organization JPA association was converted into an explicit scalar bridge. The gate prevents any increase from this corrected baseline; physical deletion remains blocked until Step 21.12 passes.",
+      "reason": "Step 21.13 corrected the controlled baseline to 49 *LegacyId fields after hidden ProcurementProcess, EquipmentSet and EquipmentSetOperation JPA associations were surfaced and converted to scalar bridges. The count may only decrease; physical deletion remains blocked by Step 21.12.",
       "evidence": [
         "architecture/step-21-master-data-retirement.json",
         "scripts/validate-product-boundary.sh"
@@ -368,7 +368,10 @@
       "completed": [
         "canonical StockLocation mirrored on product location create/update",
         "lot/asset opening movements dual-written to canonical InventoryLedger",
-        "obsolete InventoryService compatibility constructor removed"
+        "obsolete InventoryService compatibility constructor removed",
+        "EquipmentSet Organization/Unit JPA associations removed",
+        "EquipmentSetOperation Organization/Unit JPA associations removed",
+        "equipment set scopes covered by canonical backfill/parity"
       ]
     },
     {
@@ -626,7 +629,7 @@
       "classification": "validation",
       "safeToDelete": false,
       "stepStatus": "in-progress-known-bridges-only",
-      "reason": "Step 21.36 has a controlled corrected baseline of 45 *LegacyId fields after surfacing the previously hidden ProcurementProcess organization dependency, plus the explicit Master Data migration/shadow/backfill/crosswalk services. Regression gates prevent further growth."
+      "reason": "Step 21.36 currently tracks a corrected 49-field *LegacyId baseline after surfacing and converting hidden JPA master-data associations. Regression gates prevent growth; final deletion still depends on Step 21.12."
     },
     {
       "id": "final-step-closure",
