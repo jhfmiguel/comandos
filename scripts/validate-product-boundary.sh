@@ -319,6 +319,9 @@ if grep -q 'implements[[:space:]]\+AuditSink' "$ROOT_DIR/api/src/main/java/com/c
 fi
 
 # Step 21.18: generic catalog primitives are foundation-owned.
+[[ ! -d "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog" ]] \
+  || fail "com.comandos.enterprise.catalog must remain absent after Step 21.18"
+
 for retired_catalog_primitive in \
   "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/CatalogIdentity.java" \
   "$ROOT_DIR/api/src/main/java/com/comandos/enterprise/catalog/CatalogTrackingMode.java" \
