@@ -13,7 +13,7 @@ public class SalesUnitScopeGuard implements UnitScopeGuard {
 
     @Override
     public void validateOrganizationChange(long unitId, long organizationId) {
-        long count = em.createQuery("select count(s) from InventorySale s where s.unit.id = :unit and s.organization.id <> :organization", Long.class)
+        long count = em.createQuery("select count(s) from InventorySale s where s.unitLegacyId = :unit and s.organizationLegacyId <> :organization", Long.class)
             .setParameter("unit", unitId).setParameter("organization", organizationId).getSingleResult();
         if (count > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "The unit has sales in its current organization.");
