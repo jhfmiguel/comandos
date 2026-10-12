@@ -80,6 +80,19 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(code.contains("requireReadyToRetireLegacyPersistence()"));
     }
 
+    @Test
+    void cutoverEvidenceSnapshotIsReadOnlyAndPreservesParityDetails() throws IOException {
+        String code = source("core/service/MasterDataCutoverStatusService.java");
+        assertTrue(code.contains("public record CutoverEvidence("));
+        assertTrue(code.contains("public CutoverEvidence evidence()"));
+        assertTrue(code.contains("public CutoverEvidence evidence(CutoverStatus current)"));
+        assertTrue(code.contains("java.util.Collections.unmodifiableMap(gates)"));
+        assertTrue(code.contains("java.util.List.copyOf(legacyParity.mismatches())"));
+        assertTrue(code.contains("java.util.Map.copyOf(productReadiness.incompleteByEntity())"));
+        assertFalse(code.contains("migration.backfill("));
+        assertFalse(code.contains("productReferenceBackfill.backfill("));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
