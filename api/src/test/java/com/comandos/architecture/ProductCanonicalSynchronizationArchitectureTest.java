@@ -44,9 +44,9 @@ class ProductCanonicalSynchronizationArchitectureTest {
     void masterDataBatchBackfillNeverDependsOnRuntimeShadowWriteFlag() throws IOException {
         String migration = source("core/service/MasterDataMigrationService.java");
         assertFalse(migration.contains("mirror.mirror("));
-        assertTrue(migration.contains("mirror.mirrorForBackfill("));
+        assertTrue(migration.contains("mirror.synchronizeHistoricalBackfill("));
         String mirror = source("core/service/CanonicalMasterDataWriteService.java");
-        assertTrue(mirror.contains("public boolean mirrorForBackfill(CoreEntity entity)"));
+        assertTrue(mirror.contains("public boolean synchronizeHistoricalBackfill(CoreEntity entity)"));
     }
 
     @Test
