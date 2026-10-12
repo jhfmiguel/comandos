@@ -54,6 +54,21 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         assertTrue(synchronizer.contains("synchronizeForBackfill("));
     }
 
+    @Test
+    void coreRuntimeDependsOnCanonicalWritePortInsteadOfLegacyMigrationMirror() throws IOException {
+        String core = read("core/service/CoreService.java");
+        String port = read("core/service/CanonicalMasterDataWritePort.java");
+        String adapter = read("core/service/CanonicalMasterDataMirrorService.java");
+
+        assertFalse(core.contains("CanonicalMasterDataMirrorService"));
+        assertFalse(core.contains("masterDataMirror"));
+        assertTrue(core.contains("CanonicalMasterDataWritePort canonicalMasterData"));
+        assertTrue(core.contains("canonicalMasterData.synchronize(entity)"));
+        assertTrue(core.contains("canonicalMasterData.delete(entity)"));
+        assertTrue(port.contains("boolean synchronize(CoreEntity entity)"));
+        assertTrue(adapter.contains("implements CanonicalMasterDataWritePort"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
