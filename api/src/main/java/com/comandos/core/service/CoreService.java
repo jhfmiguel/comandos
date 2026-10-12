@@ -25,6 +25,9 @@ public class CoreService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final CanonicalMasterDataWritePort canonicalMasterData;
+    @org.springframework.beans.factory.annotation.Value("${comandos.master-data.canonical-read.enabled:false}")
+    private boolean canonicalReadEnabled;
+
     private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder(12);
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -366,7 +369,13 @@ public class CoreService {
         validate(entity);
         if (id == null) em.persist(entity);
         em.flush();
-        canonicalMasterData.synchronize(entity);
+        boolean canonicalStored = canonicalMasterData.synchronize(entity);
+        if (canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalStored) {
+            throw new IllegalStateException(
+                "Canonical master-data persistence is required for "
+                    + entity.getClass().getSimpleName() + " id=" + entity.id
+            );
+        }
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
@@ -734,8 +743,27 @@ public class CoreService {
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
-        canonicalMasterData.delete(entity);
+        boolean canonicalDeleted = canonicalMasterData.delete(entity);
+        if (canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalDeleted) {
+            throw new IllegalStateException(
+                "Canonical master-data deletion is required for "
+                    + entity.getClass().getSimpleName() + " id=" + entity.id
+            );
+        }
         audit.record("core/" + resource, id, "DELETE", before, null);
+    }
+
+    private static boolean isCanonicalMasterData(CoreEntity entity) {
+        return entity instanceof Person
+            || entity instanceof Organization
+            || entity instanceof OrganizationalUnit
+            || entity instanceof PersonAddress
+            || entity instanceof PersonPhone
+            || entity instanceof PersonEmail
+            || entity instanceof PersonRoleAssignment
+            || entity instanceof RoleData
+            || entity instanceof PersonCredential
+            || entity instanceof PersonQualification;
     }
 
     private void validate(CoreEntity entity) {
