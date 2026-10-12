@@ -31,9 +31,11 @@ class ProductCanonicalSynchronizationArchitectureTest {
     }
 
     @Test
-    void productSynchronizationPreservesShadowWriteControl() throws IOException {
+    void historicalBackfillSynchronizerHasNoRuntimeShadowWriteMode() throws IOException {
         String code = source("core/service/ProductMasterDataReferenceSynchronizer.java");
-        assertTrue(code.contains("if (!enabled) return false;"));
+        assertFalse(code.contains("product-reference-shadow.enabled"));
+        assertFalse(code.contains("synchronizeOnWrite("));
+        assertFalse(code.contains("public boolean synchronize(CoreEntity entity)"));
         assertTrue(code.contains("public boolean synchronizeForBackfill(CoreEntity entity)"));
     }
 
