@@ -76,6 +76,39 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void rejectsProductParityWithInsufficientReferenceCoverage() {
+        var migration = mock(MasterDataMigrationService.class);
+        var parity = mock(MasterDataParityService.class);
+        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
+        var scope = mock(ProductCanonicalScopeResolver.class);
+        var backfill = mock(ProductMasterDataReferenceBackfillService.class);
+        var productParity = mock(ProductMasterDataReferenceParityService.class);
+        when(migration.readiness()).thenReturn(
+            new MasterDataMigrationService.ReadinessReport(true, List.of())
+        );
+        when(parity.verify()).thenReturn(
+            new MasterDataParityService.ParityReport(true, 1, List.of())
+        );
+        when(mirror.enabled()).thenReturn(true);
+        when(synchronizer.enabled()).thenReturn(true);
+        when(scope.enabled()).thenReturn(true);
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(
+                true, 5, 0, Map.of()
+            )
+        );
+        when(productParity.verify()).thenReturn(
+            new ProductMasterDataReferenceParityService.ParityReport(true, 0, List.of())
+        );
+        var gate = new MasterDataCutoverStatusService(
+            migration, parity, mirror, synchronizer, scope, backfill, productParity, true, true
+        );
+        assertFalse(gate.status().productReferenceParityPassed());
+        assertTrue(gate.retirementBlockers().contains("PRODUCT_REFERENCE_PARITY_FAILED"));
+    }
+
+    @Test
     void rejectsUnavailableCutoverEvidence() {
         var gate = createGate(true, true, true, true, true, true, true, true, true);
         org.junit.jupiter.api.Assertions.assertEquals(
