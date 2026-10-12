@@ -24,7 +24,7 @@ class MasterDataCutoverStatusServiceTests {
             boolean canonicalRead) {
         var migration = mock(MasterDataMigrationService.class);
         var parityService = mock(MasterDataParityService.class);
-        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var mirror = mock(CanonicalMasterDataWriteService.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParityService = mock(ProductMasterDataReferenceParityService.class);
@@ -77,7 +77,7 @@ class MasterDataCutoverStatusServiceTests {
     void rejectsProductParityWithInsufficientReferenceCoverage() {
         var migration = mock(MasterDataMigrationService.class);
         var parity = mock(MasterDataParityService.class);
-        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var mirror = mock(CanonicalMasterDataWriteService.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParity = mock(ProductMasterDataReferenceParityService.class);
@@ -117,7 +117,7 @@ class MasterDataCutoverStatusServiceTests {
     void rejectsInconsistentReportsEvenWhenTheirSummaryFlagsClaimSuccess() {
         var migration = mock(MasterDataMigrationService.class);
         var parity = mock(MasterDataParityService.class);
-        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var mirror = mock(CanonicalMasterDataWriteService.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParity = mock(ProductMasterDataReferenceParityService.class);
@@ -153,7 +153,7 @@ class MasterDataCutoverStatusServiceTests {
     void blocksRetirementWhenReadinessSummaryHidesBlockingIssues() {
         var migration = mock(MasterDataMigrationService.class);
         var parityService = mock(MasterDataParityService.class);
-        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var mirror = mock(CanonicalMasterDataWriteService.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var referenceParity = mock(ProductMasterDataReferenceParityService.class);
