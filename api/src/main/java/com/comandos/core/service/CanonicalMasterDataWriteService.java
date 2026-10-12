@@ -79,12 +79,24 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
     @Override
     @Transactional
     public boolean synchronize(CoreEntity entity) {
-        if (!enabled) return false;
+        if (!enabled || entity == null) return false;
+        requirePersistedIdentity(entity);
         return mirrorNow(entity);
+    }
+
+    private static void requirePersistedIdentity(CoreEntity entity) {
+        if (entity.id == null || entity.id <= 0) {
+            throw new IllegalStateException(
+                "Canonical master-data write requires a persisted business identifier: "
+                    + entity.getClass().getSimpleName()
+            );
+        }
     }
 
     @Transactional
     public boolean synchronizeHistoricalBackfill(CoreEntity entity) {
+        if (entity == null) return false;
+        requirePersistedIdentity(entity);
         return mirrorNow(entity);
     }
 
