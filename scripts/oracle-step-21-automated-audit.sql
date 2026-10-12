@@ -31,6 +31,7 @@ declare
     total_erp number := 0;
     total_fm number := 0;
     populated number := 0;
+    count_errors number := 0;
 begin
     for t in (select table_name from dba_tables
               where owner='COMANDOS'
@@ -43,12 +44,14 @@ begin
             if n > 0 then populated := populated + 1; end if;
             dbms_output.put_line(rpad(t.table_name,58) || to_char(n));
         exception when others then
+            count_errors := count_errors + 1;
             dbms_output.put_line('COUNT_ERROR '|| t.table_name || ': ' || sqlerrm);
         end;
     end loop;
     dbms_output.put_line('ERP_TOTAL_ROWS='||total_erp);
     dbms_output.put_line('FM_TOTAL_ROWS='||total_fm);
     dbms_output.put_line('POPULATED_TABLES='||populated);
+    dbms_output.put_line('COUNT_ERRORS='||count_errors);
 end;
 /
 
