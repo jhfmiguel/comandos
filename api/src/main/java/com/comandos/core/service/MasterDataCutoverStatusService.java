@@ -87,9 +87,11 @@ public class MasterDataCutoverStatusService {
         boolean productReferenceShadowEnabled = productReferences.enabled();
         boolean productReferencePrimaryReadEnabled = productCanonicalScope.enabled();
         boolean productReferencesReady = productReferenceReport.ready()
+            && productReferenceReport.checked() >= 0
             && productReferenceReport.incomplete() == 0
             && productReferenceReport.incompleteByEntity() != null
-            && productReferenceReport.incompleteByEntity().values().stream().allMatch(count -> count != null && count == 0);
+            && productReferenceReport.incompleteByEntity().values().stream()
+                .allMatch(count -> count != null && count == 0);
         // An empty product domain is legitimate; when it is not empty every
         // persisted product row must contribute its expected reference checks.
         boolean productReferenceParityPassed = productReferenceParityReport.consistent()
