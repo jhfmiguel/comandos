@@ -39,6 +39,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductMasterDataReferenceSynchronizer {
 
+    private static final String ORGANIZATION = "ORGANIZATION";
+    private static final String PERSON = "PERSON";
+    private static final String UNIT = "UNIT";
+
     private final ProductCanonicalScopeResolver canonicalScope;
     private final boolean enabled;
 
@@ -79,12 +83,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof EquipmentSet equipmentSet) {
             equipmentSet.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 equipmentSet.organizationLegacyId,
                 "equipment set organization"
             );
             equipmentSet.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 equipmentSet.unitLegacyId,
                 "equipment set unit"
             );
@@ -92,12 +96,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof EquipmentSetOperation operation) {
             operation.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 operation.organizationLegacyId,
                 "equipment set operation organization"
             );
             operation.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 operation.unitLegacyId,
                 "equipment set operation unit"
             );
@@ -105,12 +109,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof CertificationRecord certification) {
             certification.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 certification.organizationLegacyId,
                 "certification organization"
             );
             certification.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 certification.unitLegacyId,
                 "certification unit"
             );
@@ -118,12 +122,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof ExpirationRecord expiration) {
             expiration.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 expiration.organizationLegacyId,
                 "expiration organization"
             );
             expiration.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 expiration.unitLegacyId,
                 "expiration unit"
             );
@@ -131,12 +135,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof Recall recall) {
             recall.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 recall.organizationLegacyId,
                 "recall organization"
             );
             recall.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 recall.unitLegacyId,
                 "recall unit"
             );
@@ -152,7 +156,7 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof ProcurementProcess procurement) {
             procurement.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 procurement.organizationLegacyId,
                 "procurement process organization"
             );
@@ -168,7 +172,7 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof CustodyResponsibility responsibility) {
             responsibility.responsiblePersonCanonicalId = require(
-                MasterDataReferenceService.PERSON,
+                PERSON,
                 responsibility.responsiblePersonLegacyId,
                 "custody responsibility person"
             );
@@ -184,12 +188,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof MaintenancePlan maintenancePlan) {
             maintenancePlan.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 maintenancePlan.organizationLegacyId,
                 "maintenance plan organization"
             );
             maintenancePlan.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 maintenancePlan.unitLegacyId,
                 "maintenance plan unit"
             );
@@ -197,12 +201,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof WorkOrder workOrder) {
             workOrder.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 workOrder.organizationLegacyId,
                 "work order organization"
             );
             workOrder.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 workOrder.unitLegacyId,
                 "work order unit"
             );
@@ -210,12 +214,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof ApprovalWorkflow workflow) {
             workflow.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 workflow.organizationLegacyId,
                 "approval workflow organization"
             );
             workflow.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 workflow.unitLegacyId,
                 "approval workflow unit"
             );
@@ -223,12 +227,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof DisposalProcess disposal) {
             disposal.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 disposal.organizationLegacyId,
                 "disposal organization"
             );
             disposal.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 disposal.unitLegacyId,
                 "disposal unit"
             );
@@ -236,12 +240,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof InventoryReservation reservation) {
             reservation.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 reservation.organizationLegacyId,
                 "inventory reservation organization"
             );
             reservation.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 reservation.unitLegacyId,
                 "inventory reservation unit"
             );
@@ -249,12 +253,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof InventoryCount count) {
             count.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 count.organizationLegacyId,
                 "inventory count organization"
             );
             count.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 count.unitLegacyId,
                 "inventory count unit"
             );
@@ -262,22 +266,22 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof AmmunitionConsumption consumption) {
             consumption.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 consumption.organizationLegacyId,
                 "ammunition consumption organization"
             );
             consumption.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 consumption.unitLegacyId,
                 "ammunition consumption unit"
             );
             consumption.responsibleCanonicalId = require(
-                MasterDataReferenceService.PERSON,
+                PERSON,
                 consumption.responsibleLegacyId,
                 "ammunition consumption responsible"
             );
             consumption.authorizerCanonicalId = require(
-                MasterDataReferenceService.PERSON,
+                PERSON,
                 consumption.authorizerLegacyId,
                 "ammunition consumption authorizer"
             );
@@ -285,22 +289,22 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof ConsumableUsage usage) {
             usage.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 usage.organizationLegacyId,
                 "consumable usage organization"
             );
             usage.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 usage.unitLegacyId,
                 "consumable usage unit"
             );
             usage.responsibleCanonicalId = require(
-                MasterDataReferenceService.PERSON,
+                PERSON,
                 usage.responsibleLegacyId,
                 "consumable usage responsible"
             );
             usage.authorizerCanonicalId = require(
-                MasterDataReferenceService.PERSON,
+                PERSON,
                 usage.authorizerLegacyId,
                 "consumable usage authorizer"
             );
@@ -308,7 +312,7 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof PurchasePlanning planning) {
             planning.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 planning.organizationLegacyId,
                 "purchase planning organization"
             );
@@ -316,12 +320,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof PeriodicInspection inspection) {
             inspection.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 inspection.organizationLegacyId,
                 "periodic inspection organization"
             );
             inspection.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 inspection.unitLegacyId,
                 "periodic inspection unit"
             );
@@ -329,12 +333,12 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         if (entity instanceof ExceptionOccurrence occurrence) {
             occurrence.organizationCanonicalId = require(
-                MasterDataReferenceService.ORGANIZATION,
+                ORGANIZATION,
                 occurrence.organizationLegacyId,
                 "exception occurrence organization"
             );
             occurrence.unitCanonicalId = optional(
-                MasterDataReferenceService.UNIT,
+                UNIT,
                 occurrence.unitLegacyId,
                 "exception occurrence unit"
             );
@@ -345,17 +349,17 @@ public class ProductMasterDataReferenceSynchronizer {
 
     private void synchronizePurchase(Purchase purchase) {
         purchase.buyerOrganizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             purchase.buyerOrganizationLegacyId,
             "buyer organization"
         );
         purchase.supplierOrganizationCanonicalId = optional(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             purchase.supplierOrganizationLegacyId,
             "supplier organization"
         );
         purchase.originPersonCanonicalId = require(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             purchase.originPersonLegacyId,
             "origin person"
         );
@@ -374,12 +378,12 @@ public class ProductMasterDataReferenceSynchronizer {
             );
         }
         String organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             organization.id,
             label + " organization"
         );
         String unitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             unit == null ? null : unit.id,
             label + " unit"
         );
@@ -388,27 +392,27 @@ public class ProductMasterDataReferenceSynchronizer {
 
     private void synchronizeCustody(Custody custody) {
         custody.organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             custody.organizationLegacyId,
             "custody organization"
         );
         custody.authorizerCanonicalId = require(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             custody.authorizerLegacyId,
             "custody authorizer"
         );
         custody.unitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             custody.unitLegacyId,
             "custody unit"
         );
         custody.recipientCanonicalId = optional(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             custody.recipientLegacyId,
             "custody recipient"
         );
         custody.recipientUnitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             custody.recipientUnitLegacyId,
             "custody recipient unit"
         );
@@ -417,22 +421,22 @@ public class ProductMasterDataReferenceSynchronizer {
     private void synchronizeDonation(Donation donation) {
 
         donation.organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             donation.organizationLegacyId,
             "donation organization"
         );
         donation.unitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             donation.unitLegacyId,
             "donation unit"
         );
         donation.donorCanonicalId = require(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             donation.donorLegacyId,
             "donation donor"
         );
         donation.doneeCanonicalId = require(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             donation.doneeLegacyId,
             "donation donee"
         );
@@ -441,17 +445,17 @@ public class ProductMasterDataReferenceSynchronizer {
     private void synchronizeSale(InventorySale sale) {
 
         sale.organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             sale.organizationLegacyId,
             "sale organization"
         );
         sale.unitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             sale.unitLegacyId,
             "sale unit"
         );
         sale.buyerCanonicalId = require(
-            MasterDataReferenceService.PERSON,
+            PERSON,
             sale.buyerLegacyId,
             "sale buyer"
         );
@@ -463,9 +467,9 @@ public class ProductMasterDataReferenceSynchronizer {
         }
         try {
             return switch (resourceType) {
-                case MasterDataReferenceService.ORGANIZATION -> canonicalScope.organization(legacyId);
-                case MasterDataReferenceService.PERSON -> canonicalScope.person(legacyId);
-                case MasterDataReferenceService.UNIT -> canonicalScope.unit(legacyId);
+                case ORGANIZATION -> canonicalScope.organization(legacyId);
+                case PERSON -> canonicalScope.person(legacyId);
+                case UNIT -> canonicalScope.unit(legacyId);
                 default -> throw new IllegalArgumentException(
                     "Unsupported product master-data reference type: " + resourceType
                 );
@@ -485,17 +489,17 @@ public class ProductMasterDataReferenceSynchronizer {
 
     private void synchronizeTransfer(InventoryTransfer transfer) {
         transfer.organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             transfer.organizationLegacyId,
             "transfer organization"
         );
         transfer.sourceUnitCanonicalId = require(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             transfer.sourceUnitLegacyId,
             "transfer source unit"
         );
         transfer.destinationUnitCanonicalId = require(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             transfer.destinationUnitLegacyId,
             "transfer destination unit"
         );
@@ -503,7 +507,7 @@ public class ProductMasterDataReferenceSynchronizer {
 
     private void synchronizeReceiving(EquipmentReceiving receiving) {
         receiving.receivingOrganizationCanonicalId = optional(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             receiving.receivingOrganizationLegacyId,
             "receiving organization"
         );
@@ -511,12 +515,12 @@ public class ProductMasterDataReferenceSynchronizer {
 
     private void synchronizeLocation(StockLocation location) {
         location.organizationCanonicalId = require(
-            MasterDataReferenceService.ORGANIZATION,
+            ORGANIZATION,
             location.organizationLegacyId,
             "stock location organization"
         );
         location.unitCanonicalId = optional(
-            MasterDataReferenceService.UNIT,
+            UNIT,
             location.unitLegacyId,
             "stock location unit"
         );
