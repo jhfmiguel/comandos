@@ -57,11 +57,11 @@ public class MasterDataMigrationService {
     }
 
     private final EntityManager entityManager;
-    private final CanonicalMasterDataMirrorService mirror;
+    private final CanonicalMasterDataWriteService mirror;
 
     public MasterDataMigrationService(
             EntityManager entityManager,
-            CanonicalMasterDataMirrorService mirror) {
+            CanonicalMasterDataWriteService mirror) {
         this.entityManager = entityManager;
         this.mirror = mirror;
     }
