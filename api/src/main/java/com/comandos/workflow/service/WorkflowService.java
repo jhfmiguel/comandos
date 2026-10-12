@@ -2,7 +2,6 @@ package com.comandos.workflow.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.security.service.AccessPolicy;
 import com.fariamiguel.security.api.CurrentActor;
@@ -31,14 +30,12 @@ public class WorkflowService implements SensitiveWorkflowGateway {
     private final AuditService audit;
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
             CurrentActorProvider actors, WorkflowPolicy policy,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
@@ -46,7 +43,6 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         this.audit = audit;
         this.actors = actors;
         this.policy = policy;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
     }
@@ -84,11 +80,6 @@ public class WorkflowService implements SensitiveWorkflowGateway {
         CurrentActor actor = requiredActor();
         w.requestedById = actorId(actor);
         w.requestedByLogin = actor.displayName();
-        if (canonicalScope.enabled()) {
-            masterDataReferences.synchronizeForBackfill(w);
-        } else {
-            masterDataReferences.synchronize(w);
-        }
         em.persist(w);
         em.flush();
 
