@@ -99,7 +99,7 @@ public class PurchaseDemoSeeder implements ApplicationRunner {
         if (existing != null) return existing;
 
         ProcurementProcess value = new ProcurementProcess();
-        value.organization = organization;
+        value.organizationLegacyId = organization.id;
         value.processNumber = "PROC-DEMO-2026-0001";
         value.objectDescription = "Aquisição de 10.000 cartuchos CBC 9 mm Luger FMJ - cenário de demonstração.";
         value.justification = "Reposição fictícia de estoque para treinamento do fluxo de contratação.";
