@@ -120,6 +120,17 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(parity.contains("Product canonical reference differs from the canonical directory."));
     }
 
+    @Test
+    void masterDataParityChecksCanonicalEntitiesWithoutTemporaryCrosswalk() throws IOException {
+        String parity = source("core/service/MasterDataParityService.java");
+        assertFalse(parity.contains("MasterDataReferenceService"));
+        assertFalse(parity.contains("verifyCrosswalk("));
+        assertFalse(parity.contains("resolveCanonicalId("));
+        assertTrue(parity.contains("verifyPeople(mismatches)"));
+        assertTrue(parity.contains("verifyOrganizations(mismatches)"));
+        assertTrue(parity.contains("verifyQualifications(mismatches)"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
