@@ -395,12 +395,13 @@
       "An architecture gate scans all production Java consumers and rejects new dependencies on migration bridge types outside migration infrastructure; direct inventory product-write synchronizer consumer was removed in an earlier commit.",
       "ProductMasterDataReferenceSynchronizer removed completely; historic product backfill now resolves canonical IDs internally through ProductMasterDataReferenceBackfillService with no runtime synchronize or shadow-write API. MasterDataCutoverStatusService reads its independent shadow-write gate directly from configuration.",
       "ProductMasterDataReferenceBackfillService now owns all historical product-reference mapping; deleted ProductMasterDataReferenceSynchronizer.java and its obsolete runtime/shadow methods. Architecture assertions and unit tests were migrated to the remaining explicit backfill service.",
-      "MasterDataMigrationConfigurationGuard.java removed; transitional canonical read versus legacy write invariant is enforced by CanonicalMasterDataDirectory initialization instead."
+      "MasterDataMigrationConfigurationGuard.java removed; transitional canonical read versus legacy write invariant is enforced by CanonicalMasterDataDirectory initialization instead.",
+      "Deleted temporary CanonicalMasterDataMirrorService and migrated runtime CoreService write-port adapter, migration backfill and cutover-status consumers to CanonicalMasterDataWriteService. Historical backfill uses synchronizeHistoricalBackfill, and adapter regression tests were moved to the canonical writer type."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
       "PersonRegistrationService legacy write orchestration",
-      "canonical mappers used by legacy projection, shadow-write, backfill or parity",
+      "canonical mappers used by legacy projection, canonical synchronized writes, backfill or parity",
       "Master Data migration/parity/reference services required by Step 21.12 runtime retirement proof"
     ],
     "explicitProductionExceptionsUntilCutover": [],
