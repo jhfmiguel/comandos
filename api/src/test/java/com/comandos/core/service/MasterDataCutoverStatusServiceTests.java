@@ -179,7 +179,7 @@ class MasterDataCutoverStatusServiceTests {
             new ProductMasterDataReferenceParityService.ParityReport(true, 12, List.of())
         );
         var gate = new MasterDataCutoverStatusService(
-            migration, parityService, mirror, productShadow, scope, backfill,
+            migration, parityService, mirror, true, scope, backfill,
             referenceParity, true, true
         );
         assertFalse(gate.status().readinessPassed());
