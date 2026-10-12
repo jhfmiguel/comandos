@@ -67,6 +67,12 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         assertTrue(core.contains("canonicalMasterData.delete(entity)"));
         assertTrue(port.contains("boolean synchronize(CoreEntity entity)"));
         assertTrue(adapter.contains("implements CanonicalMasterDataWritePort"));
+        assertTrue(adapter.contains("enterprise.savePerson(canonical)"));
+        assertTrue(adapter.contains("enterprise.saveOrganization(canonical)"));
+        assertTrue(adapter.contains("enterprise.saveDocument(canonical)"));
+        assertTrue(adapter.contains("enterprise.saveQualification(canonical)"));
+        assertTrue(adapter.contains("enterprise.deleteDocument(TENANT"));
+        assertTrue(adapter.contains("enterprise.deleteQualification(TENANT"));
     }
 
     @Test

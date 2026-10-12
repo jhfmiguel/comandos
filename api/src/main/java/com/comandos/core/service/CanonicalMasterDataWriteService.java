@@ -215,26 +215,20 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
         }
 
         if (entity instanceof PersonAddress address) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-address:" + address.id)
-            );
+            if (enterprise != null) enterprise.deleteContact(TENANT, BusinessId.of("comandos:person-address:" + address.id));
+            else contacts.deletePartyContact(TENANT, BusinessId.of("comandos:person-address:" + address.id));
             return true;
         }
 
         if (entity instanceof PersonPhone phone) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-phone:" + phone.id)
-            );
+            if (enterprise != null) enterprise.deleteContact(TENANT, BusinessId.of("comandos:person-phone:" + phone.id));
+            else contacts.deletePartyContact(TENANT, BusinessId.of("comandos:person-phone:" + phone.id));
             return true;
         }
 
         if (entity instanceof PersonEmail email) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-email:" + email.id)
-            );
+            if (enterprise != null) enterprise.deleteContact(TENANT, BusinessId.of("comandos:person-email:" + email.id));
+            else contacts.deletePartyContact(TENANT, BusinessId.of("comandos:person-email:" + email.id));
             return true;
         }
 
@@ -242,12 +236,8 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
             if (CanonicalPartyRoleMapper.roleType(assignment.role).isEmpty()) {
                 return false;
             }
-            roles.delete(
-                TENANT,
-                BusinessId.of(
-                    "comandos:person-role-assignment:" + assignment.id
-                )
-            );
+            if (enterprise != null) enterprise.deleteRole(TENANT, BusinessId.of("comandos:person-role-assignment:" + assignment.id));
+            else roles.delete(TENANT, BusinessId.of("comandos:person-role-assignment:" + assignment.id));
             return true;
         }
 
@@ -260,22 +250,14 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
         }
 
         if (entity instanceof PersonCredential credential) {
-            documents.delete(
-                TENANT,
-                BusinessId.of(
-                    "comandos:person-credential:" + credential.id
-                )
-            );
+            if (enterprise != null) enterprise.deleteDocument(TENANT, BusinessId.of("comandos:person-credential:" + credential.id));
+            else documents.delete(TENANT, BusinessId.of("comandos:person-credential:" + credential.id));
             return true;
         }
 
         if (entity instanceof PersonQualification qualification) {
-            qualifications.delete(
-                TENANT,
-                BusinessId.of(
-                    "comandos:person-qualification:" + qualification.id
-                )
-            );
+            if (enterprise != null) enterprise.deleteQualification(TENANT, BusinessId.of("comandos:person-qualification:" + qualification.id));
+            else qualifications.delete(TENANT, BusinessId.of("comandos:person-qualification:" + qualification.id));
             return true;
         }
 
