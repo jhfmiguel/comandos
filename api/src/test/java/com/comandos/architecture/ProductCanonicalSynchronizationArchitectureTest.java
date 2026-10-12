@@ -12,7 +12,7 @@ class ProductCanonicalSynchronizationArchitectureTest {
 
     @Test
     void productSynchronizerDoesNotDependOnLegacyReferenceRegistry() throws IOException {
-        String code = source("core/service/ProductMasterDataReferenceSynchronizer.java");
+        String code = source("core/service/ProductMasterDataReferenceBackfillService.java");
         assertFalse(code.contains("private final MasterDataReferenceService references;"));
         assertFalse(code.contains("references.resolveCanonicalId("));
         assertFalse(code.contains("MasterDataReferenceService"));
@@ -32,11 +32,12 @@ class ProductCanonicalSynchronizationArchitectureTest {
 
     @Test
     void historicalBackfillSynchronizerHasNoRuntimeShadowWriteMode() throws IOException {
-        String code = source("core/service/ProductMasterDataReferenceSynchronizer.java");
+        String code = source("core/service/ProductMasterDataReferenceBackfillService.java");
         assertFalse(code.contains("product-reference-shadow.enabled"));
         assertFalse(code.contains("synchronizeOnWrite("));
         assertFalse(code.contains("public boolean synchronize(CoreEntity entity)"));
         assertTrue(code.contains("public boolean synchronizeForBackfill(CoreEntity entity)"));
+        assertFalse(Files.exists(Path.of("src/main/java/com/comandos/core/service/ProductMasterDataReferenceSynchronizer.java")));
     }
 
     @Test
@@ -51,7 +52,7 @@ class ProductCanonicalSynchronizationArchitectureTest {
     @Test
     void inventoryWritesDirectlyToCanonicalIdsAndBackfillIsIsolated() throws IOException {
         String inventory = source("inventory/service/InventoryService.java");
-        String synchronizer = source("core/service/ProductMasterDataReferenceSynchronizer.java");
+        String synchronizer = source("core/service/ProductMasterDataReferenceBackfillService.java");
         assertFalse(inventory.contains("masterDataReferences.synchronizeOnWrite("));
         assertFalse(inventory.contains("ProductMasterDataReferenceSynchronizer"));
         assertTrue(inventory.contains("synchronizeCanonicalProductWrite(entity)"));
@@ -66,7 +67,7 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(code.contains("!readiness.ready()"));
         assertTrue(code.contains("readiness.incomplete() != 0"));
         assertTrue(code.contains("!readiness.incompleteByEntity().isEmpty()"));
-        assertTrue(code.contains("synchronizer.synchronizeForBackfill(entity)"));
+        assertTrue(code.contains("if (synchronizeForBackfill(entity))"));
     }
 
     @Test
