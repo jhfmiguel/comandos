@@ -97,6 +97,7 @@ public class MasterDataCutoverStatusService {
         // An empty product domain is legitimate; when it is not empty every
         // persisted product row must contribute its expected reference checks.
         boolean productReferenceParityPassed = productReferenceParityReport.consistent()
+            && productReferenceParityReport.checkedReferences() >= 0
             && productReferenceParityReport.mismatches() != null
             && productReferenceParityReport.mismatches().isEmpty()
             && (productReferenceReport.checked() == 0
