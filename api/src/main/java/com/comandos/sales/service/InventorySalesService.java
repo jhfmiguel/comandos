@@ -1,7 +1,6 @@
 package com.comandos.sales.service;
 
 import com.comandos.core.model.*;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
@@ -36,7 +35,6 @@ public class InventorySalesService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
@@ -45,13 +43,11 @@ public class InventorySalesService {
             EntityManager em,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
-            ProductCanonicalScopeResolver canonicalScope,
+                ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
     }
