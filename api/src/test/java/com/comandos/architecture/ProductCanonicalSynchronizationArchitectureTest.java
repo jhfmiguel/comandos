@@ -131,6 +131,20 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(parity.contains("verifyQualifications(mismatches)"));
     }
 
+    @Test
+    void temporaryCrosswalkRegistryIsNoLongerPartOfRuntimeArchitecture() throws IOException {
+        Path service = Path.of("src/main/java/com/comandos/core/service/MasterDataReferenceService.java");
+        Path entity = Path.of("src/main/java/com/comandos/core/model/MasterDataReference.java");
+        assertFalse(Files.exists(service));
+        assertFalse(Files.exists(entity));
+        assertFalse(source("core/service/CanonicalMasterDataMirrorService.java")
+            .contains("MasterDataReferenceService"));
+        assertFalse(source("core/service/MasterDataParityService.java")
+            .contains("MasterDataReferenceService"));
+        assertFalse(source("core/service/ProductMasterDataReferenceParityService.java")
+            .contains("MasterDataReferenceService"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
