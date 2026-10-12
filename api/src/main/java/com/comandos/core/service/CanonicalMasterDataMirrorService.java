@@ -80,11 +80,6 @@ public class CanonicalMasterDataMirrorService implements CanonicalMasterDataWrit
     @Override
     @Transactional
     public boolean synchronize(CoreEntity entity) {
-        return mirror(entity);
-    }
-
-    @Transactional
-    public boolean mirror(CoreEntity entity) {
         if (!enabled) return false;
         return mirrorNow(entity);
     }
