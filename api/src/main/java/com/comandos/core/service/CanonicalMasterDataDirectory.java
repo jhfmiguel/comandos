@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,19 @@ public class CanonicalMasterDataDirectory {
     private final OrganizationalUnitRepository canonicalUnits;
     private final ContactRepository canonicalContacts;
     private final boolean canonicalReadEnabled;
+
+    @Value("${comandos.master-data.shadow-write.enabled:false}")
+    private boolean legacyWriteSynchronizationEnabled;
+
+    @PostConstruct
+    void validateCanonicalReadConfiguration() {
+        if (canonicalReadEnabled && !legacyWriteSynchronizationEnabled) {
+            throw new IllegalStateException(
+                "Canonical master-data reads require legacy writes to be synchronized "
+                    + "until the canonical write cutover is completed."
+            );
+        }
+    }
 
     @Autowired
     public CanonicalMasterDataDirectory(
