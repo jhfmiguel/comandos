@@ -61,6 +61,25 @@ public class ProductCanonicalScopeResolver {
             ));
     }
 
+    /**
+     * Retirement parity must never be satisfied by a synthesized legacy
+     * projection when canonical reads have not yet been enabled.
+     */
+    public boolean persistedCanonicalExists(String resourceType, Long legacyId) {
+        if (legacyId == null || legacyId <= 0) return false;
+        return switch (resourceType) {
+            case "ORGANIZATION" ->
+                directory.containsPersistedCanonicalOrganization(legacyId, TENANT);
+            case "PERSON" ->
+                directory.containsPersistedCanonicalPerson(legacyId, TENANT);
+            case "UNIT" ->
+                directory.containsPersistedCanonicalUnit(legacyId, TENANT);
+            default -> throw new IllegalArgumentException(
+                "Unsupported canonical resource type: " + resourceType
+            );
+        };
+    }
+
     public Scope scope(Long organizationLegacyId, Long unitLegacyId) {
         return new Scope(
             organization(organizationLegacyId),
