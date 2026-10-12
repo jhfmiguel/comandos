@@ -146,7 +146,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         WorkflowSpy(List<String> calls) {
-            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()), null, null, null);
+            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()), null, null);
             this.calls = calls;
         }
 
