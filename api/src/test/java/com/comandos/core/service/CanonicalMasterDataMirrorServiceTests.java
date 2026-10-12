@@ -132,6 +132,46 @@ class CanonicalMasterDataMirrorServiceTests {
         );
     }
 
+    @Test
+    void canonicalDeletionNoLongerRequiresLegacyCrosswalkForOrganizationAndUnit() {
+        var mirror = service(true);
+        var organization = new Organization();
+        organization.id = 120L;
+        var unit = new OrganizationalUnit();
+        unit.id = 121L;
+
+        assertTrue(mirror.delete(organization));
+        assertTrue(mirror.delete(unit));
+
+        var tenant = com.fariamiguel.tenancy.api.TenantId.of("comandos");
+        verify(organizations).delete(
+            tenant, com.fariamiguel.enterprise.common.BusinessId.of("comandos:organization:120")
+        );
+        verify(units).delete(
+            tenant, com.fariamiguel.tenancy.api.OrganizationalUnitId.of("comandos:unit:121")
+        );
+    }
+
+    @Test
+    void canonicalDeletionNoLongerRequiresLegacyCrosswalkForContactsAndQualifications() {
+        var mirror = service(true);
+        var address = new com.comandos.core.model.PersonAddress();
+        address.id = 210L;
+        var qualification = new PersonQualification();
+        qualification.id = 211L;
+
+        assertTrue(mirror.delete(address));
+        assertTrue(mirror.delete(qualification));
+
+        var tenant = com.fariamiguel.tenancy.api.TenantId.of("comandos");
+        verify(contacts).deletePartyContact(
+            tenant, com.fariamiguel.enterprise.common.BusinessId.of("comandos:person-address:210")
+        );
+        verify(qualifications).delete(
+            tenant, com.fariamiguel.enterprise.common.BusinessId.of("comandos:person-qualification:211")
+        );
+    }
+
     private CanonicalMasterDataMirrorService service(boolean enabled) {
         when(people.save(any())).thenAnswer(returnsFirstArg());
         when(organizations.save(any())).thenAnswer(returnsFirstArg());
