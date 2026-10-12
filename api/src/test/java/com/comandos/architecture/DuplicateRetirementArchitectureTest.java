@@ -48,7 +48,7 @@ class DuplicateRetirementArchitectureTest {
             retired++;
         }
 
-        assertEquals(18, retired);
+        assertEquals(26, retired);
     }
 
     @Test
