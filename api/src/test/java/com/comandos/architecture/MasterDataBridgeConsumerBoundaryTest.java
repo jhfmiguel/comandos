@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class MasterDataBridgeConsumerBoundaryTest {
 
     private static final Set<String> TRANSITIONAL = Set.of(
-        "CanonicalMasterDataMirrorService.java",
+        "CanonicalMasterDataWriteService.java",
         "MasterDataMigrationConfigurationGuard.java",
         "MasterDataMigrationRunner.java",
         "MasterDataMigrationService.java",
@@ -25,7 +25,7 @@ class MasterDataBridgeConsumerBoundaryTest {
     );
 
     private static final List<String> BRIDGES = List.of(
-        "CanonicalMasterDataMirrorService",
+        "CanonicalMasterDataWriteService",
         "MasterDataMigrationService",
         "MasterDataParityService",
         "MasterDataCutoverStatusService",
