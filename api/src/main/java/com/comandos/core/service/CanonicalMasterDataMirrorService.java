@@ -91,14 +91,14 @@ public class CanonicalMasterDataMirrorService {
     private boolean mirrorNow(CoreEntity entity) {
         if (entity == null) return false;
         if (entity instanceof Person person) {
-            var canonical = people.save(
+            people.save(
                 CanonicalMasterDataMapper.person(person, TENANT)
             );
             return true;
         }
 
         if (entity instanceof Organization organization) {
-            var canonical = organizations.save(
+            organizations.save(
                 CanonicalMasterDataMapper.organization(
                     organization,
                     TENANT,
@@ -109,7 +109,7 @@ public class CanonicalMasterDataMirrorService {
         }
 
         if (entity instanceof OrganizationalUnit unit) {
-            var canonical = units.save(
+            units.save(
                 CanonicalMasterDataMapper.unit(
                     unit,
                     TENANT,
@@ -120,21 +120,21 @@ public class CanonicalMasterDataMirrorService {
         }
 
         if (entity instanceof PersonAddress address) {
-            var canonical = contacts.save(
+            contacts.save(
                 CanonicalContactMapper.address(address, TENANT)
             );
             return true;
         }
 
         if (entity instanceof PersonPhone phone) {
-            var canonical = contacts.save(
+            contacts.save(
                 CanonicalContactMapper.phone(phone, TENANT)
             );
             return true;
         }
 
         if (entity instanceof PersonEmail email) {
-            var canonical = contacts.save(
+            contacts.save(
                 CanonicalContactMapper.email(email, TENANT)
             );
             return true;
@@ -150,14 +150,14 @@ public class CanonicalMasterDataMirrorService {
         }
 
         if (entity instanceof PersonCredential credential) {
-            var canonical = documents.save(
+            documents.save(
                 CanonicalPartyDocumentMapper.credential(credential, TENANT)
             );
             return true;
         }
 
         if (entity instanceof PersonQualification qualification) {
-            var canonical = qualifications.save(
+            qualifications.save(
                 CanonicalProfessionalQualificationMapper.qualification(
                     qualification,
                     TENANT
@@ -279,7 +279,7 @@ public class CanonicalMasterDataMirrorService {
                     details
                 )
                 .map(role -> {
-                    var canonical = roles.save(role);
+                    roles.save(role);
                     return true;
                 })
                 .orElse(false);
