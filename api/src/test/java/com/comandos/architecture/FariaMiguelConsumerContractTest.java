@@ -77,4 +77,19 @@ class FariaMiguelConsumerContractTest {
         assertThat(type.getPackageName()).isEqualTo(expectedPackage);
         assertThat(type.getName()).startsWith("com.fariamiguel.");
     }
+    @org.junit.jupiter.api.Test
+    void canonicalMasterDataDirectoryConsumesSharedEnterpriseContracts() throws java.io.IOException {
+        String directory = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java"));
+        String contacts = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "src/main/java/com/comandos/core/service/CanonicalContactDirectory.java"));
+        org.junit.jupiter.api.Assertions.assertTrue(directory.contains("enterprise.findPerson("));
+        org.junit.jupiter.api.Assertions.assertTrue(directory.contains("enterprise.findOrganization("));
+        org.junit.jupiter.api.Assertions.assertTrue(directory.contains("enterprise.searchPeople("));
+        org.junit.jupiter.api.Assertions.assertTrue(directory.contains("enterprise.listOrganizations("));
+        org.junit.jupiter.api.Assertions.assertTrue(directory.contains("enterprise.addresses("));
+        org.junit.jupiter.api.Assertions.assertTrue(contacts.contains("enterprise.phones("));
+        org.junit.jupiter.api.Assertions.assertTrue(contacts.contains("enterprise.emails("));
+    }
+
 }

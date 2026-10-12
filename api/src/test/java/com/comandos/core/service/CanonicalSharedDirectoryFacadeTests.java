@@ -59,6 +59,22 @@ class CanonicalSharedDirectoryFacadeTests {
         verifyNoInteractions(manager, people, organizations);
     }
 
+    @Test void canonicalSearchAndOrganizationListsUseFariaMiguel() {
+        var facade = mock(PartyMasterDataFacade.class);
+        var people = mock(PersonRepository.class);
+        var organizations = mock(OrganizationRepository.class);
+        var directory = new CanonicalMasterDataDirectory(
+            mock(EntityManager.class), mock(CanonicalContactDirectory.class),
+            people, organizations, mock(OrganizationalUnitRepository.class),
+            mock(ContactRepository.class), true);
+        directory.setEnterprise(facade);
+        assertEquals(List.of(), directory.searchPeople(TENANT, "Ada", 25));
+        assertEquals(List.of(), directory.listOrganizations(TENANT));
+        verify(facade).searchPeople(TENANT, "ada", 25);
+        verify(facade).listOrganizations(TENANT);
+        verifyNoInteractions(people, organizations);
+    }
+
     @Test void neverQueriesLegacyForInvalidIdentifiers() {
         var manager = mock(EntityManager.class);
         var directory = new CanonicalContactDirectory(manager, mock(ContactRepository.class), true);

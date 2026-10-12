@@ -209,8 +209,9 @@ public class CanonicalMasterDataDirectory {
         String normalized = normalizeQuery(query);
 
         if (canonicalReadEnabled) {
-            return canonicalPeople
-                .search(tenantId, normalized == null ? "" : normalized, safeLimit)
+            return (enterprise == null
+                ? canonicalPeople.search(tenantId, normalized == null ? "" : normalized, safeLimit)
+                : enterprise.searchPeople(tenantId, normalized == null ? "" : normalized, safeLimit))
                 .stream()
                 .map(person -> enrichCanonicalPerson(person, tenantId))
                 .toList();
@@ -238,7 +239,8 @@ public class CanonicalMasterDataDirectory {
             TenantId tenantId) {
 
         if (canonicalReadEnabled) {
-            return canonicalOrganizations.list(tenantId).stream()
+            return (enterprise == null ? canonicalOrganizations.list(tenantId)
+                : enterprise.listOrganizations(tenantId)).stream()
                 .filter(org -> org.status() == com.fariamiguel.enterprise.common.LifecycleStatus.ACTIVE)
                 .toList();
         }
@@ -287,15 +289,18 @@ public class CanonicalMasterDataDirectory {
 
         PartyRef party = new PartyRef(person.id(), PartyKind.PERSON);
 
-        var addresses = canonicalContacts.addresses(tenantId, party).stream()
+        var addresses = (enterprise == null ? canonicalContacts.addresses(tenantId, party)
+            : enterprise.addresses(tenantId, party)).stream()
             .map(contact -> contact.address())
             .toList();
 
-        var emails = canonicalContacts.emails(tenantId, party).stream()
+        var emails = (enterprise == null ? canonicalContacts.emails(tenantId, party)
+            : enterprise.emails(tenantId, party)).stream()
             .map(contact -> contact.email())
             .collect(java.util.stream.Collectors.toUnmodifiableSet());
 
-        var phones = canonicalContacts.phones(tenantId, party).stream()
+        var phones = (enterprise == null ? canonicalContacts.phones(tenantId, party)
+            : enterprise.phones(tenantId, party)).stream()
             .map(contact -> contact.number())
             .collect(java.util.stream.Collectors.toUnmodifiableSet());
 
