@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
  * read cutover and delete semantics remain separate explicit migration steps.</p>
  */
 @Service
-public class CanonicalMasterDataMirrorService {
+public class CanonicalMasterDataMirrorService implements CanonicalMasterDataWritePort {
 
     private static final TenantId TENANT = TenantId.of("comandos");
 
@@ -75,6 +75,12 @@ public class CanonicalMasterDataMirrorService {
 
     public boolean enabled() {
         return enabled;
+    }
+
+    @Override
+    @Transactional
+    public boolean synchronize(CoreEntity entity) {
+        return mirror(entity);
     }
 
     @Transactional
@@ -170,6 +176,7 @@ public class CanonicalMasterDataMirrorService {
     }
 
 
+    @Override
     @Transactional
     public boolean delete(CoreEntity entity) {
         if (!enabled || entity == null) return false;
