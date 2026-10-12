@@ -11,19 +11,20 @@ import org.springframework.stereotype.Component;
 public class MasterDataMigrationConfigurationGuard {
 
     private final boolean canonicalReadEnabled;
-    private final CanonicalMasterDataMirrorService mirror;
+    private final boolean shadowWriteEnabled;
 
     public MasterDataMigrationConfigurationGuard(
-            CanonicalMasterDataMirrorService mirror,
+            @Value("${comandos.master-data.shadow-write.enabled:false}")
+            boolean shadowWriteEnabled,
             @Value("${comandos.master-data.canonical-read.enabled:false}")
             boolean canonicalReadEnabled) {
-        this.mirror = mirror;
+        this.shadowWriteEnabled = shadowWriteEnabled;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
     @PostConstruct
     void validate() {
-        if (canonicalReadEnabled && !mirror.enabled()) {
+        if (canonicalReadEnabled && !shadowWriteEnabled) {
             throw new IllegalStateException(
                 "Canonical master-data reads require shadow-write to be enabled "
                     + "so legacy writes cannot drift from fm_* persistence."
