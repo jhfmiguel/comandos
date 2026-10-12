@@ -59,6 +59,14 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
         this.enterprise = enterprise;
     }
 
+    /**
+     * A canonical-only operation must have the full shared master-data facade.
+     * Repository fallback is retained solely for backwards-compatible wiring.
+     */
+    public boolean usingSharedFacade() {
+        return enterprise != null;
+    }
+
     public CanonicalMasterDataWriteService(
             EntityManager entityManager,
             PersonRepository people,

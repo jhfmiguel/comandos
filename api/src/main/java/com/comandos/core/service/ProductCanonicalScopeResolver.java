@@ -31,8 +31,8 @@ public class ProductCanonicalScopeResolver {
     }
 
     public String organization(Long legacyId) {
-        if (legacyId == null) {
-            throw new IllegalArgumentException("Organization id is required.");
+        if (legacyId == null || legacyId <= 0) {
+            throw new IllegalArgumentException("Positive organization id is required.");
         }
         return directory.findOrganization(legacyId, TENANT)
             .map(organization -> organization.id().value())
@@ -42,8 +42,8 @@ public class ProductCanonicalScopeResolver {
     }
 
     public String person(Long legacyId) {
-        if (legacyId == null) {
-            throw new IllegalArgumentException("Person id is required.");
+        if (legacyId == null || legacyId <= 0) {
+            throw new IllegalArgumentException("Positive person id is required.");
         }
         return directory.findPerson(legacyId, TENANT)
             .map(person -> person.id().value())
@@ -54,6 +54,7 @@ public class ProductCanonicalScopeResolver {
 
     public String unit(Long legacyId) {
         if (legacyId == null) return null;
+        if (legacyId <= 0) throw new IllegalArgumentException("Positive unit id is required.");
         return directory.findUnit(legacyId, TENANT)
             .map(unit -> unit.id().value())
             .orElseThrow(() -> new IllegalStateException(
