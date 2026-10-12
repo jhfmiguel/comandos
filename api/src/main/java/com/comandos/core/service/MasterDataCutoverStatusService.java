@@ -191,7 +191,7 @@ public class MasterDataCutoverStatusService {
         int productParityMismatches,
         java.util.List<MasterDataMigrationService.ReadinessIssue> readinessIssues,
         java.util.List<MasterDataParityService.ParityMismatch> canonicalMismatches,
-        java.util.List<ProductMasterDataReferenceParityService.ParityMismatch> productMismatches
+        java.util.List<ProductMasterDataReferenceParityService.Mismatch> productMismatches
     ) {}
 
     public CutoverEvidence evidence() {
@@ -222,7 +222,7 @@ public class MasterDataCutoverStatusService {
             ? java.util.List.<MasterDataParityService.ParityMismatch>of()
             : java.util.List.copyOf(legacyParity.mismatches());
         var productMismatches = productParity == null || productParity.mismatches() == null
-            ? java.util.List.<ProductMasterDataReferenceParityService.ParityMismatch>of()
+            ? java.util.List.<ProductMasterDataReferenceParityService.Mismatch>of()
             : java.util.List.copyOf(productParity.mismatches());
         var incomplete = productReadiness == null || productReadiness.incompleteByEntity() == null
             ? java.util.Map.<String, Long>of()
@@ -238,7 +238,7 @@ public class MasterDataCutoverStatusService {
             productReadiness == null ? 0L : productReadiness.checked(),
             productReadiness == null ? 0L : productReadiness.incomplete(),
             incomplete,
-            productParity == null ? 0L : productParity.checked(),
+            productParity == null ? 0L : productParity.checkedReferences(),
             productMismatches.size(),
             issues,
             mismatches,
