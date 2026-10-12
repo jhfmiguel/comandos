@@ -46,7 +46,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(location));
+        assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
         assertEquals("unit-canonical-20", location.unitCanonicalId);
     }
@@ -66,7 +66,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(location));
+        assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
         assertNull(location.unitCanonicalId);
     }
@@ -87,7 +87,7 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         IllegalStateException error = assertThrows(
             IllegalStateException.class,
-            () -> synchronizer.synchronize(location)
+            () -> synchronizer.synchronizeForBackfill(location)
         );
 
         assertTrue(error.getMessage().contains("legacy id 10"));
@@ -99,7 +99,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertFalse(synchronizer.synchronize(new StockMovement()));
+        assertFalse(synchronizer.synchronizeForBackfill(new StockMovement()));
         verifyNoInteractions(canonicalScope);
     }
 
@@ -125,7 +125,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(purchase));
+        assertTrue(synchronizer.synchronizeForBackfill(purchase));
         assertEquals("buyer-org", purchase.buyerOrganizationCanonicalId);
         assertEquals("supplier-org", purchase.supplierOrganizationCanonicalId);
         assertEquals("origin-person", purchase.originPersonCanonicalId);
@@ -142,7 +142,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(receiving));
+        assertTrue(synchronizer.synchronizeForBackfill(receiving));
         assertEquals("receiving-org", receiving.receivingOrganizationCanonicalId);
     }
 
@@ -165,7 +165,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(purchase));
+        assertTrue(synchronizer.synchronizeForBackfill(purchase));
         assertNull(purchase.supplierOrganizationCanonicalId);
     }
 
@@ -191,7 +191,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(transfer));
+        assertTrue(synchronizer.synchronizeForBackfill(transfer));
         assertEquals("transfer-org", transfer.organizationCanonicalId);
         assertEquals("source-unit", transfer.sourceUnitCanonicalId);
         assertEquals("destination-unit", transfer.destinationUnitCanonicalId);
@@ -222,7 +222,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(custody));
+        assertTrue(synchronizer.synchronizeForBackfill(custody));
         assertEquals("custody-org", custody.organizationCanonicalId);
         assertEquals("custody-unit", custody.unitCanonicalId);
         assertEquals("recipient-person", custody.recipientCanonicalId);
@@ -252,7 +252,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(donation));
+        assertTrue(synchronizer.synchronizeForBackfill(donation));
         assertEquals("donation-org", donation.organizationCanonicalId);
         assertEquals("donation-unit", donation.unitCanonicalId);
         assertEquals("donor-person", donation.donorCanonicalId);
@@ -278,7 +278,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(sale));
+        assertTrue(synchronizer.synchronizeForBackfill(sale));
         assertEquals("sale-org", sale.organizationCanonicalId);
         assertEquals("sale-unit", sale.unitCanonicalId);
         assertEquals("buyer-person", sale.buyerCanonicalId);
@@ -299,35 +299,35 @@ class ProductMasterDataReferenceSynchronizerTest {
         WorkOrder workOrder = new WorkOrder();
         workOrder.organizationLegacyId = organization.id;
         workOrder.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(workOrder));
+        assertTrue(synchronizer.synchronizeForBackfill(workOrder));
         assertEquals("ops-org", workOrder.organizationCanonicalId);
         assertEquals("ops-unit", workOrder.unitCanonicalId);
 
         ApprovalWorkflow workflow = new ApprovalWorkflow();
         workflow.organizationLegacyId = organization.id;
         workflow.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(workflow));
+        assertTrue(synchronizer.synchronizeForBackfill(workflow));
         assertEquals("ops-org", workflow.organizationCanonicalId);
         assertEquals("ops-unit", workflow.unitCanonicalId);
 
         DisposalProcess disposal = new DisposalProcess();
         disposal.organizationLegacyId = organization.id;
         disposal.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(disposal));
+        assertTrue(synchronizer.synchronizeForBackfill(disposal));
         assertEquals("ops-org", disposal.organizationCanonicalId);
         assertEquals("ops-unit", disposal.unitCanonicalId);
 
         InventoryReservation reservation = new InventoryReservation();
         reservation.organizationLegacyId = organization.id;
         reservation.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(reservation));
+        assertTrue(synchronizer.synchronizeForBackfill(reservation));
         assertEquals("ops-org", reservation.organizationCanonicalId);
         assertEquals("ops-unit", reservation.unitCanonicalId);
 
         InventoryCount count = new InventoryCount();
         count.organizationLegacyId = organization.id;
         count.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(count));
+        assertTrue(synchronizer.synchronizeForBackfill(count));
         assertEquals("ops-org", count.organizationCanonicalId);
         assertEquals("ops-unit", count.unitCanonicalId);
     }
@@ -353,7 +353,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ammunition.unitLegacyId = unit.id;
         ammunition.responsibleLegacyId = responsible.id;
         ammunition.authorizerLegacyId = authorizer.id;
-        assertTrue(synchronizer.synchronize(ammunition));
+        assertTrue(synchronizer.synchronizeForBackfill(ammunition));
         assertEquals("remaining-org", ammunition.organizationCanonicalId);
         assertEquals("remaining-unit", ammunition.unitCanonicalId);
         assertEquals("responsible-person", ammunition.responsibleCanonicalId);
@@ -364,62 +364,44 @@ class ProductMasterDataReferenceSynchronizerTest {
         usage.unitLegacyId = unit.id;
         usage.responsibleLegacyId = responsible.id;
         usage.authorizerLegacyId = authorizer.id;
-        assertTrue(synchronizer.synchronize(usage));
+        assertTrue(synchronizer.synchronizeForBackfill(usage));
         assertEquals("remaining-org", usage.organizationCanonicalId);
         assertEquals("remaining-unit", usage.unitCanonicalId);
 
         PurchasePlanning planning = new PurchasePlanning();
         planning.organizationLegacyId = organization.id;
-        assertTrue(synchronizer.synchronize(planning));
+        assertTrue(synchronizer.synchronizeForBackfill(planning));
         assertEquals("remaining-org", planning.organizationCanonicalId);
 
         PeriodicInspection inspection = new PeriodicInspection();
         inspection.organizationLegacyId = organization.id;
         inspection.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(inspection));
+        assertTrue(synchronizer.synchronizeForBackfill(inspection));
         assertEquals("remaining-org", inspection.organizationCanonicalId);
         assertEquals("remaining-unit", inspection.unitCanonicalId);
 
         ExceptionOccurrence occurrence = new ExceptionOccurrence();
         occurrence.organizationLegacyId = organization.id;
         occurrence.unitLegacyId = unit.id;
-        assertTrue(synchronizer.synchronize(occurrence));
+        assertTrue(synchronizer.synchronizeForBackfill(occurrence));
         assertEquals("remaining-org", occurrence.organizationCanonicalId);
         assertEquals("remaining-unit", occurrence.unitCanonicalId);
     }
 
     @Test
-    void backfillBypassesRuntimeShadowFlag() {
+    void historicalBackfillIsIndependentOfTheLegacyRuntimeShadowFlag() {
         ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         when(canonicalScope.organization(100L)).thenReturn("backfill-org");
-
-        Organization organization = new Organization();
-        organization.id = 100L;
-
         PurchasePlanning planning = new PurchasePlanning();
-        planning.organizationLegacyId = organization.id;
-
+        planning.organizationLegacyId = 100L;
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
 
-        assertFalse(synchronizer.synchronize(planning));
-        assertNull(planning.organizationCanonicalId);
-
+        assertFalse(synchronizer.enabled());
         assertTrue(synchronizer.synchronizeForBackfill(planning));
         assertEquals("backfill-org", planning.organizationCanonicalId);
     }
 
-    @Test
-    void runtimeFlagCanDisableSynchronization() {
-        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
-        ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
-
-        StockLocation location = new StockLocation();
-
-        assertFalse(synchronizer.synchronize(location));
-        verifyNoInteractions(canonicalScope);
-    }
     @Test
     void clearsReceivingOrganizationWhenLegacyReferenceIsAbsent() {
         ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
@@ -429,7 +411,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertTrue(synchronizer.synchronize(receiving));
+        assertTrue(synchronizer.synchronizeForBackfill(receiving));
         assertNull(receiving.receivingOrganizationCanonicalId);
         verifyNoInteractions(canonicalScope);
     }
@@ -443,37 +425,19 @@ class ProductMasterDataReferenceSynchronizerTest {
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
-        assertThrows(IllegalStateException.class, () -> synchronizer.synchronize(location));
+        assertThrows(IllegalStateException.class, () -> synchronizer.synchronizeForBackfill(location));
         assertEquals("previous-organization", location.organizationCanonicalId);
         verifyNoInteractions(canonicalScope);
     }
 
     @Test
-    void disabledSynchronizationDoesNotOverwriteExistingCanonicalIds() {
-        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
-        StockLocation location = new StockLocation();
-        location.organizationLegacyId = 10L;
-        location.organizationCanonicalId = "existing-organization";
-
-        ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
-
-        assertFalse(synchronizer.synchronize(location));
-        assertEquals("existing-organization", location.organizationCanonicalId);
-        verifyNoInteractions(canonicalScope);
-    }
-
-    @Test
-    void historicalBackfillBypassesDisabledRuntimeShadowFlag() {
+    void backfillDoesNotDependOnLegacyShadowWriteEnabled() {
         var resolver = mock(ProductCanonicalScopeResolver.class);
         when(resolver.organization(10L)).thenReturn("canonical-org-10");
         var location = new StockLocation();
         location.organizationLegacyId = 10L;
         var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, false);
-
-        assertFalse(synchronizer.synchronize(location));
         assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("canonical-org-10", location.organizationCanonicalId);
     }
-
 }
