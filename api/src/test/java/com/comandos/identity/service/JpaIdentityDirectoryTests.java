@@ -3,60 +3,53 @@ package com.comandos.identity.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.comandos.core.model.Person;
-import jakarta.persistence.EntityManager;
-import java.time.LocalDate;
+import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.enterprise.people.Person;
+import com.fariamiguel.enterprise.common.LifecycleStatus;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class JpaIdentityDirectoryTests {
-
     @Test
-    void returnsEmptyWhenPersonDoesNotExist() {
-        var em = mock(EntityManager.class);
-        when(em.find(Person.class, 99L)).thenReturn(null);
-
-        var directory = new JpaIdentityDirectory(em);
-
-        assertFalse(directory.find("COMANDOS", "99").isPresent());
+    void returnsEmptyWhenCanonicalPersonDoesNotExist() {
+        var canonical = mock(CanonicalMasterDataDirectory.class);
+        when(canonical.findPerson(eq(99L), any())).thenReturn(Optional.empty());
+        assertFalse(new JpaIdentityDirectory(canonical).find("COMANDOS", "99").isPresent());
     }
 
     @Test
-    void keepsLegacyLookupWhileExposingCanonicalIdentityDirectory() {
-        var person = new Person();
-        person.id = 7L;
-        person.personType = "INDIVIDUAL";
-        person.fullName = "Example Person";
-        person.taxId = "123";
-        person.birthDate = LocalDate.of(1990, 1, 2);
-        person.phone = "62999999999";
-        person.email = "person@example.com";
-        person.active = true;
+    void mapsCanonicalPersonIntoIdentityContract() {
+        var canonical = mock(CanonicalMasterDataDirectory.class);
+        var person = mock(Person.class);
+        when(person.name()).thenReturn("Example Person");
+        when(person.taxId()).thenReturn("123");
+        when(person.emails()).thenReturn(List.of("person@example.com"));
+        when(person.phones()).thenReturn(List.of("62999999999"));
+        when(person.attributes()).thenReturn(Map.of("personType", "INDIVIDUAL"));
+        when(person.status()).thenReturn(LifecycleStatus.ACTIVE);
+        when(canonical.findPerson(eq(7L), any())).thenReturn(Optional.of(person));
 
-        var em = mock(EntityManager.class);
-        when(em.find(Person.class, 7L)).thenReturn(person);
-
-        var directory = new JpaIdentityDirectory(em);
-        var canonical = directory.find("comandos", "7").orElseThrow();
-
-        assertEquals("COMANDOS", canonical.provider());
-        assertEquals("7", canonical.subject());
-        assertEquals("Example Person", canonical.displayName());
-        assertEquals("person@example.com", canonical.email());
-        assertEquals("INDIVIDUAL", canonical.attributes().get("personType"));
-        assertEquals("123", canonical.attributes().get("taxId"));
-        assertEquals("1990-01-02", canonical.attributes().get("birthDate"));
-        assertEquals("62999999999", canonical.attributes().get("phone"));
-        assertEquals("true", canonical.attributes().get("active"));
+        var subject = new JpaIdentityDirectory(canonical).find("comandos", "7").orElseThrow();
+        assertEquals("COMANDOS", subject.provider());
+        assertEquals("7", subject.subject());
+        assertEquals("Example Person", subject.displayName());
+        assertEquals("person@example.com", subject.email());
+        assertEquals("INDIVIDUAL", subject.attributes().get("personType"));
+        assertEquals("123", subject.attributes().get("taxId"));
+        assertEquals("62999999999", subject.attributes().get("phone"));
+        assertEquals("true", subject.attributes().get("active"));
     }
 
     @Test
-    void ignoresUnknownProvidersAndMalformedSubjects() {
-        var em = mock(EntityManager.class);
-        var directory = new JpaIdentityDirectory(em);
-
+    void rejectsUnknownProviderAndMalformedSubjects() {
+        var directory = new JpaIdentityDirectory(mock(CanonicalMasterDataDirectory.class));
         assertTrue(directory.find("SSP", "7").isEmpty());
         assertTrue(directory.find("COMANDOS", "not-a-number").isEmpty());
         assertTrue(directory.find("COMANDOS", "0").isEmpty());
