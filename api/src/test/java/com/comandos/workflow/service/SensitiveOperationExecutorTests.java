@@ -123,7 +123,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         GuardSpy(List<String> calls) {
-            super(null, new WorkflowPolicy(new DefaultWorkflowEngine()));
+            super(null, new WorkflowPolicy(new DefaultWorkflowEngine()), null);
             this.calls = calls;
         }
 
@@ -146,7 +146,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         WorkflowSpy(List<String> calls) {
-            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()));
+            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()), null, null, null);
             this.calls = calls;
         }
 
