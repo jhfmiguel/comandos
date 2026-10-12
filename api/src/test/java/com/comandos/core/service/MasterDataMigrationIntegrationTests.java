@@ -84,6 +84,17 @@ class MasterDataMigrationIntegrationTests {
             )
         )).hasSize(1);
 
+        var repeatedBackfill = migration.backfill();
+        assertThat(repeatedBackfill.people()).isEqualTo(1);
+        assertThat(repeatedBackfill.qualifications()).isEqualTo(1);
+        assertThat(qualifications.findByPerson(
+            TENANT,
+            new com.fariamiguel.enterprise.party.PartyRef(
+                BusinessId.of("comandos:person:" + person.id),
+                com.fariamiguel.enterprise.party.PartyKind.PERSON
+            )
+        )).hasSize(1);
+
         var parityReport = parity.verify();
         assertThat(parityReport.consistent()).isTrue();
         assertThat(parityReport.mismatches()).isEmpty();
