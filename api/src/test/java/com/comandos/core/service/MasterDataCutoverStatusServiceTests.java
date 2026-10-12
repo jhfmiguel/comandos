@@ -7,68 +7,67 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class MasterDataCutoverStatusServiceTests {
 
-    @Test
-    void refusesLegacyRetirementUntilAllCutoverConditionsPass() {
+    private static MasterDataCutoverStatusService createGate(
+            boolean readiness,
+            boolean parity,
+            boolean masterShadow,
+            boolean productShadow,
+            boolean productPrimary,
+            boolean productReady,
+            boolean productParity,
+            boolean associationsRetired,
+            boolean canonicalRead) {
         var migration = mock(MasterDataMigrationService.class);
-        var parity = mock(MasterDataParityService.class);
+        var parityService = mock(MasterDataParityService.class);
         var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
+        var scope = mock(ProductCanonicalScopeResolver.class);
+        var backfill = mock(ProductMasterDataReferenceBackfillService.class);
+        var productParityService = mock(ProductMasterDataReferenceParityService.class);
 
         when(migration.readiness()).thenReturn(
-            new MasterDataMigrationService.ReadinessReport(true, List.of())
+            new MasterDataMigrationService.ReadinessReport(readiness, List.of())
         );
-        when(parity.verify()).thenReturn(
-            new MasterDataParityService.ParityReport(true, 12, List.of())
+        when(parityService.verify()).thenReturn(
+            new MasterDataParityService.ParityReport(parity, 12, List.of())
         );
-        when(mirror.enabled()).thenReturn(false);
-
-        var service = new MasterDataCutoverStatusService(
-            migration,
-            parity,
-            mirror,
-            true
+        when(mirror.enabled()).thenReturn(masterShadow);
+        when(synchronizer.enabled()).thenReturn(productShadow);
+        when(scope.enabled()).thenReturn(productPrimary);
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(
+                productReady, 12, productReady ? 0 : 1, productReady ? Map.of() : Map.of("StockLocation", 1L))
         );
-
-        var status = service.status();
-
-        assertTrue(status.readinessPassed());
-        assertTrue(status.parityPassed());
-        assertFalse(status.shadowWriteEnabled());
-        assertTrue(status.canonicalReadEnabled());
-        assertFalse(status.readyToRetireLegacyPersistence());
-
-        assertThrows(
-            IllegalStateException.class,
-            service::requireReadyToRetireLegacyPersistence
+        when(productParityService.verify()).thenReturn(
+            new ProductMasterDataReferenceParityService.ParityReport(productParity, 12, List.of())
+        );
+        return new MasterDataCutoverStatusService(
+            migration, parityService, mirror, synchronizer, scope, backfill,
+            productParityService, associationsRetired, canonicalRead
         );
     }
 
     @Test
-    void marksPersistenceBridgeReadyOnlyWithParityReadinessAndBothModesEnabled() {
-        var migration = mock(MasterDataMigrationService.class);
-        var parity = mock(MasterDataParityService.class);
-        var mirror = mock(CanonicalMasterDataMirrorService.class);
+    void passesWhenAllNineConditionsAreTrue() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        assertTrue(gate.requireReadyToRetireLegacyPersistence().readyToRetireLegacyPersistence());
+    }
 
-        when(migration.readiness()).thenReturn(
-            new MasterDataMigrationService.ReadinessReport(true, List.of())
-        );
-        when(parity.verify()).thenReturn(
-            new MasterDataParityService.ParityReport(true, 25, List.of())
-        );
-        when(mirror.enabled()).thenReturn(true);
-
-        var service = new MasterDataCutoverStatusService(
-            migration,
-            parity,
-            mirror,
-            true
-        );
-
-        var status = service.requireReadyToRetireLegacyPersistence();
-
-        assertTrue(status.readyToRetireLegacyPersistence());
+    @Test
+    void blocksRetirementWhenAnyRequiredConditionIsFalse() {
+        for (int failing = 0; failing < 9; failing++) {
+            boolean[] values = {true, true, true, true, true, true, true, true, true};
+            values[failing] = false;
+            var gate = createGate(values[0], values[1], values[2], values[3], values[4],
+                values[5], values[6], values[7], values[8]);
+            assertFalse(gate.status().readyToRetireLegacyPersistence(),
+                "Condition " + failing + " must block retirement");
+            assertThrows(IllegalStateException.class, gate::requireReadyToRetireLegacyPersistence);
+        }
     }
 }
