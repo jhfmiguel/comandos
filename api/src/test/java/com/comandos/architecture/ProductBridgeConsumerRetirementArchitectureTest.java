@@ -46,8 +46,9 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         String inventory = read("inventory/service/InventoryService.java");
         String synchronizer = read("core/service/ProductMasterDataReferenceSynchronizer.java");
 
-        assertTrue(inventory.contains("masterDataReferences.synchronize("));
-        assertTrue(inventory.contains("masterDataReferences.synchronizeForBackfill("));
+        assertTrue(inventory.contains("masterDataReferences.synchronizeOnWrite("));
+        assertFalse(inventory.contains("masterDataReferences.synchronizeForBackfill("));
+        assertFalse(inventory.contains("masterDataReferences.synchronize("));
         assertTrue(synchronizer.contains("ProductCanonicalScopeResolver"));
     }
 
