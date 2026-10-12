@@ -26,6 +26,17 @@ class MasterDataMigrationRunnerTests {
     }
 
     @Test
+    void retirementCannotApproveTheSameStartupThatMutatesLegacyOrCanonicalData() {
+        assertThrows(IllegalStateException.class,
+            () -> runner(false, true, false, false, true)
+                .run(new DefaultApplicationArguments()));
+        assertThrows(IllegalStateException.class,
+            () -> runner(false, false, false, true, true)
+                .run(new DefaultApplicationArguments()));
+        verifyNoInteractions(migration, parity, cutover, backfill, productParity);
+    }
+
+    @Test
     void canonicalRuntimeDoesNotTriggerMigrationWhenAllOperationalFlagsAreDisabled() {
         when(cutover.canonicalReadEnabled()).thenReturn(true);
         runner(false, false, false, false, false).run(new DefaultApplicationArguments());
