@@ -37,7 +37,6 @@ class CanonicalMasterDataMirrorRoleDataTests {
         @SuppressWarnings("unchecked")
         TypedQuery<RoleData> query = mock(TypedQuery.class);
         PartyRoleRepository roles = mock(PartyRoleRepository.class);
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
 
         PersonRoleAssignment assignment = new PersonRoleAssignment();
         assignment.id = 41L;
@@ -77,7 +76,6 @@ class CanonicalMasterDataMirrorRoleDataTests {
             roles,
             mock(PartyDocumentRepository.class),
             mock(ProfessionalQualificationRepository.class),
-            references,
             true
         );
 
@@ -91,6 +89,5 @@ class CanonicalMasterDataMirrorRoleDataTests {
         verify(roles).save(saved.capture());
         assertTrue(saved.getValue().attributes().containsKey("detail.region"));
         assertFalse(saved.getValue().attributes().containsKey("detail.obsolete"));
-        verify(references).upsert(eq(MasterDataReferenceService.PARTY_ROLE), eq(41L), anyString(), anyString());
     }
 }
