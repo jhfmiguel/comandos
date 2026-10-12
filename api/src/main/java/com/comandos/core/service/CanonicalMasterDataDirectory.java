@@ -60,6 +60,28 @@ public class CanonicalMasterDataDirectory {
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
+    /**
+     * Cutover verification bypasses the legacy projection fallback. A canonical
+     * identifier is valid only if its persistent canonical record exists.
+     */
+    public boolean containsPersistedCanonicalPerson(long legacyId, TenantId tenantId) {
+        return legacyId > 0 && canonicalPeople.find(
+            tenantId, BusinessId.of("comandos:person:" + legacyId)
+        ).isPresent();
+    }
+
+    public boolean containsPersistedCanonicalOrganization(long legacyId, TenantId tenantId) {
+        return legacyId > 0 && canonicalOrganizations.find(
+            tenantId, BusinessId.of("comandos:organization:" + legacyId)
+        ).isPresent();
+    }
+
+    public boolean containsPersistedCanonicalUnit(long legacyId, TenantId tenantId) {
+        return legacyId > 0 && canonicalUnits.find(
+            tenantId, OrganizationalUnitId.of("comandos:unit:" + legacyId)
+        ).isPresent();
+    }
+
     public boolean canonicalReadEnabled() {
         return canonicalReadEnabled;
     }
