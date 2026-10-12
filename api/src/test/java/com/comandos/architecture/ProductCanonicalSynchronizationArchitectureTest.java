@@ -124,6 +124,19 @@ class ProductCanonicalSynchronizationArchitectureTest {
     }
 
     @Test
+    void productParityCannotPassOnLegacyOnlyCanonicalProjections() throws IOException {
+        String directory = source("core/service/CanonicalMasterDataDirectory.java");
+        String resolver = source("core/service/ProductCanonicalScopeResolver.java");
+        String parity = source("core/service/ProductMasterDataReferenceParityService.java");
+        assertTrue(directory.contains("containsPersistedCanonicalPerson("));
+        assertTrue(directory.contains("containsPersistedCanonicalOrganization("));
+        assertTrue(directory.contains("containsPersistedCanonicalUnit("));
+        assertTrue(resolver.contains("persistedCanonicalExists("));
+        assertTrue(parity.contains("canonicalScope.persistedCanonicalExists("));
+        assertTrue(parity.contains("persisted canonical record is missing"));
+    }
+
+    @Test
     void masterDataParityChecksCanonicalEntitiesWithoutTemporaryCrosswalk() throws IOException {
         String parity = source("core/service/MasterDataParityService.java");
         assertFalse(parity.contains("MasterDataReferenceService"));
