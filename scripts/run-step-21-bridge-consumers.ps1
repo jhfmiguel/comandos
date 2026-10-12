@@ -62,6 +62,24 @@ try {
         $hitCount = @($_.Group | Where-Object { $_.Classificacao -ne "SEM_REFERENCIAS" }).Count
         Write-Host ("{0}: {1} referencias" -f $_.Name, $hitCount)
     }
+    $production = @($rows | Where-Object { $_.Classificacao -eq "JAVA" -and $_.Arquivo -match 'src/main/' })
+    $priority = @("MasterDataMigrationService","MasterDataParityService","MasterDataReferenceService","ProductMasterDataReferenceSynchronizer","ProductMasterDataReferenceParityService")
+    $priorityRows = @($production | Where-Object { $priority -contains $_.Termo })
+    $ranked = @($priorityRows | Group-Object Arquivo | Sort-Object Count -Descending)
+    $shortlist = Join-Path $reportDir "bridge-production-shortlist-$stamp.txt"
+    $shortLines = New-Object System.Collections.Generic.List[string]
+    $shortLines.Add("ETAPA 21.12 - CONSUMIDORES DE PRODUCAO")
+    $shortLines.Add("Contagens indicam ocorrencias textuais, nao quantidade de dependencias independentes.")
+    foreach ($item in $ranked) {
+        $shortLines.Add(("{0,4}  {1}" -f $item.Count, $item.Name))
+        $sample = @($item.Group | Select-Object -First 3)
+        foreach ($entry in $sample) { $shortLines.Add(("       {0}:{1} [{2}] {3}" -f $entry.Arquivo, $entry.Linha, $entry.Termo, $entry.Texto)) }
+    }
+    $shortLines | Set-Content -Path $shortlist -Encoding UTF8
+    Write-Host ""
+    Write-Host "=== TOP 15 ARQUIVOS JAVA DE PRODUCAO - BRIDGES ===" -ForegroundColor Cyan
+    $ranked | Select-Object -First 15 | ForEach-Object { Write-Host ("{0,4}  {1}" -f $_.Count, $_.Name) }
+    Write-Host "Shortlist: $shortlist"
     Write-Host "Mapa gerado. Nenhum arquivo de codigo foi modificado." -ForegroundColor Green
 } finally {
     Pop-Location
