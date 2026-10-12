@@ -163,6 +163,28 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void assessmentExplainsFailedCutoverWithConsistentEvidence() {
+        var gate = createGate(true, true, true, true, false, false, true, false, true);
+        var snapshot = gate.assessment();
+        assertFalse(snapshot.ready());
+        assertTrue(snapshot.blockers().contains("PRODUCT_CANONICAL_READ_DISABLED"));
+        assertTrue(snapshot.blockers().contains("PRODUCT_REFERENCE_BACKFILL_INCOMPLETE"));
+        assertTrue(snapshot.blockers().contains("LEGACY_PRODUCT_ASSOCIATIONS_ACTIVE"));
+        org.junit.jupiter.api.Assertions.assertEquals(12, snapshot.productReferencesChecked());
+        org.junit.jupiter.api.Assertions.assertEquals(1, snapshot.productReferencesIncomplete());
+        org.junit.jupiter.api.Assertions.assertEquals(0, snapshot.masterDataParityMismatches());
+    }
+
+    @Test
+    void assessmentPassesWithNoBlockersAndZeroMismatches() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        var snapshot = gate.assessment();
+        assertTrue(snapshot.ready());
+        assertTrue(snapshot.blockers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(0, snapshot.productReferenceParityMismatches());
+    }
+
+    @Test
     void passesWhenAllNineConditionsAreTrue() {
         var gate = createGate(true, true, true, true, true, true, true, true, true);
         assertTrue(gate.requireReadyToRetireLegacyPersistence().readyToRetireLegacyPersistence());
