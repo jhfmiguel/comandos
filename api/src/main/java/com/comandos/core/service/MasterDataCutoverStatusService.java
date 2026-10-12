@@ -1,5 +1,7 @@
 package com.comandos.core.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,13 +117,39 @@ public class MasterDataCutoverStatusService {
         );
     }
 
+    /**
+     * Returns actionable reasons for blocking bridge retirement without
+     * requiring callers to interpret a compound Boolean gate.
+     */
+    public List<String> retirementBlockers() {
+        return retirementBlockers(status());
+    }
+
+    public List<String> retirementBlockers(CutoverStatus current) {
+        if (current == null) {
+            return List.of("CUTOVER_STATUS_UNAVAILABLE");
+        }
+        List<String> blockers = new ArrayList<>();
+        if (!current.readinessPassed()) blockers.add("LEGACY_READINESS_FAILED");
+        if (!current.parityPassed()) blockers.add("MASTER_DATA_PARITY_FAILED");
+        if (!current.shadowWriteEnabled()) blockers.add("MASTER_DATA_SHADOW_WRITE_DISABLED");
+        if (!current.productReferenceShadowEnabled()) blockers.add("PRODUCT_REFERENCE_SHADOW_DISABLED");
+        if (!current.productReferencePrimaryReadEnabled()) blockers.add("PRODUCT_CANONICAL_READ_DISABLED");
+        if (!current.productReferencesReady()) blockers.add("PRODUCT_REFERENCE_BACKFILL_INCOMPLETE");
+        if (!current.productReferenceParityPassed()) blockers.add("PRODUCT_REFERENCE_PARITY_FAILED");
+        if (!current.legacyProductAssociationsRetired()) blockers.add("LEGACY_PRODUCT_ASSOCIATIONS_ACTIVE");
+        if (!current.canonicalReadEnabled()) blockers.add("MASTER_DATA_CANONICAL_READ_DISABLED");
+        return List.copyOf(blockers);
+    }
+
     public CutoverStatus requireReadyToRetireLegacyPersistence() {
         CutoverStatus status = status();
 
         if (!status.readyToRetireLegacyPersistence()) {
             throw new IllegalStateException(
                 "Legacy master-data persistence cannot be retired yet: "
-                    + "readinessPassed=" + status.readinessPassed()
+                    + "blockers=" + retirementBlockers(status)
+                    + ", readinessPassed=" + status.readinessPassed()
                     + ", parityPassed=" + status.parityPassed()
                     + ", shadowWriteEnabled=" + status.shadowWriteEnabled()
                     + ", productReferenceShadowEnabled=" + status.productReferenceShadowEnabled()
