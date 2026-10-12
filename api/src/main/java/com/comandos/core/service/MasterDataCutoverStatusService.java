@@ -37,7 +37,7 @@ public class MasterDataCutoverStatusService {
     private final MasterDataMigrationService migration;
     private final MasterDataParityService parity;
     private final CanonicalMasterDataMirrorService mirror;
-    private final ProductMasterDataReferenceSynchronizer productReferences;
+    private final boolean productReferenceShadowWriteEnabled;
     private final ProductCanonicalScopeResolver productCanonicalScope;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
     private final ProductMasterDataReferenceParityService productReferenceParity;
@@ -48,7 +48,8 @@ public class MasterDataCutoverStatusService {
             MasterDataMigrationService migration,
             MasterDataParityService parity,
             CanonicalMasterDataMirrorService mirror,
-            ProductMasterDataReferenceSynchronizer productReferences,
+            @Value("${comandos.master-data.product-reference-shadow.enabled:false}")
+            boolean productReferenceShadowWriteEnabled,
             ProductCanonicalScopeResolver productCanonicalScope,
             ProductMasterDataReferenceBackfillService productReferenceBackfill,
             ProductMasterDataReferenceParityService productReferenceParity,
@@ -59,7 +60,7 @@ public class MasterDataCutoverStatusService {
         this.migration = migration;
         this.parity = parity;
         this.mirror = mirror;
-        this.productReferences = productReferences;
+        this.productReferenceShadowWriteEnabled = productReferenceShadowWriteEnabled;
         this.productCanonicalScope = productCanonicalScope;
         this.productReferenceBackfill = productReferenceBackfill;
         this.productReferenceParity = productReferenceParity;
@@ -86,7 +87,7 @@ public class MasterDataCutoverStatusService {
             && parityReport.mismatches() != null
             && parityReport.mismatches().isEmpty();
         boolean shadowWriteEnabled = mirror.enabled();
-        boolean productReferenceShadowEnabled = productReferences.enabled();
+        boolean productReferenceShadowEnabled = productReferenceShadowWriteEnabled;
         boolean productReferencePrimaryReadEnabled = productCanonicalScope.enabled();
         boolean productReferencesReady = productReferenceReport.ready()
             && productReferenceReport.checked() >= 0
