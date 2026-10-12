@@ -400,7 +400,8 @@
       "Step 21.12 canonical write hardening: CanonicalMasterDataWriteService refuses writes without stable persisted legacy identifiers; CoreService requires successful canonical save/delete for supported Master Data entities when canonical-read flag is enabled, and failures abort the same transaction.",
       "Canonical read mode writes updates and deletes to canonical repositories before legacy JPA flush/removal; the single transaction fails closed on canonical error. New records still require legacy-generated numeric identifiers for HTTP and relationship compatibility, so canonical-only create is not yet complete.",
       "COMANDOS production canonical reads for party snapshots, roles, documents and qualifications now use Faria Miguel PartyMasterDataFacade. CanonicalMasterDataWriteService delegates generic person/organization/contact/role/document/qualification writes and child deletions to that facade when Spring wiring provides it; product-specific organizational unit persistence remains in scope. No historical data migration performed.",
-      "Additional canonical contact and person/organization directory lookup routing through PartyMasterDataFacade, including tenant-scoped address/phone/email lookups and regression tests. Core legacy persistence retained until code-level consumer refactoring is completed."
+      "Additional canonical contact and person/organization directory lookup routing through PartyMasterDataFacade, including tenant-scoped address/phone/email lookups and regression tests. Core legacy persistence retained until code-level consumer refactoring is completed.",
+      "InventoryService now uses Faria Miguel EnterpriseOperationsFacade to save canonical stock locations when injected, preserving the existing repository fallback for compatibility tests and transitional deployment."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",

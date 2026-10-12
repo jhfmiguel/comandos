@@ -47,6 +47,14 @@ public class InventoryService {
     private boolean canonicalProductReferenceShadowEnabled;
     private final InventoryLedger canonicalInventoryLedger;
     private final StockLocationRepository canonicalStockLocations;
+    private com.fariamiguel.enterprise.operations.EnterpriseOperationsFacade enterpriseOperations;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setEnterpriseOperations(
+            com.fariamiguel.enterprise.operations.EnterpriseOperationsFacade enterpriseOperations) {
+        this.enterpriseOperations = enterpriseOperations;
+    }
+
 
     @org.springframework.beans.factory.annotation.Autowired
     public InventoryService(
@@ -837,8 +845,7 @@ public class InventoryService {
             return;
         }
 
-        canonicalStockLocations.save(
-            new com.fariamiguel.enterprise.inventory.StockLocation(
+        var canonicalLocation = new com.fariamiguel.enterprise.inventory.StockLocation(
                 canonicalLocationId(location.id),
                 TENANT,
                 null,
@@ -854,8 +861,9 @@ public class InventoryService {
                     "comandosLegacyId", String.valueOf(location.id),
                     "controlled", String.valueOf(Boolean.TRUE.equals(location.controlled))
                 )
-            )
-        );
+            );
+        if (enterpriseOperations == null) canonicalStockLocations.save(canonicalLocation);
+        else enterpriseOperations.saveLocation(canonicalLocation);
     }
 
     private static BusinessId canonicalLocationId(Long locationId) {

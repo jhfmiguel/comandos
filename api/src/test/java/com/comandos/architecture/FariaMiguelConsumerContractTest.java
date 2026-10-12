@@ -92,4 +92,12 @@ class FariaMiguelConsumerContractTest {
         org.junit.jupiter.api.Assertions.assertTrue(contacts.contains("enterprise.emails("));
     }
 
+    @org.junit.jupiter.api.Test
+    void inventoryWritesStockLocationThroughEnterpriseFacade() throws java.io.IOException {
+        String source = java.nio.file.Files.readString(java.nio.file.Path.of(
+                "src/main/java/com/comandos/inventory/service/InventoryService.java"));
+        org.junit.jupiter.api.Assertions.assertTrue(source.contains("enterpriseOperations.saveLocation(canonicalLocation)"));
+        org.junit.jupiter.api.Assertions.assertTrue(source.contains("setEnterpriseOperations("));
+    }
+
 }
