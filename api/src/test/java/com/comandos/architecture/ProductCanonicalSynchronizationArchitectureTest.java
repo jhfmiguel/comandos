@@ -33,6 +33,24 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(code.contains("public boolean synchronizeForBackfill(CoreEntity entity)"));
     }
 
+    @Test
+    void masterDataBatchBackfillNeverDependsOnRuntimeShadowWriteFlag() throws IOException {
+        String migration = source("core/service/MasterDataMigrationService.java");
+        assertFalse(migration.contains("mirror.mirror("));
+        assertTrue(migration.contains("mirror.mirrorForBackfill("));
+        String mirror = source("core/service/CanonicalMasterDataMirrorService.java");
+        assertTrue(mirror.contains("public boolean mirrorForBackfill(CoreEntity entity)"));
+    }
+
+    @Test
+    void inventoryWriteAndBackfillHaveDistinctEntryPoints() throws IOException {
+        String inventory = source("inventory/service/InventoryService.java");
+        String synchronizer = source("core/service/ProductMasterDataReferenceSynchronizer.java");
+        assertTrue(inventory.contains("masterDataReferences.synchronizeOnWrite("));
+        assertFalse(inventory.contains("masterDataReferences.synchronizeForBackfill("));
+        assertTrue(synchronizer.contains("public boolean synchronizeOnWrite(CoreEntity entity, boolean canonicalPrimaryReadEnabled)"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
