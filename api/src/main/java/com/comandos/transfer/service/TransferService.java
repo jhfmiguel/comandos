@@ -67,7 +67,7 @@ public class TransferService {
             EntityManager em,
             AccessPolicy access,
             AuditService audit,
-                ProductCanonicalScopeResolver canonicalScope,
+            ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
