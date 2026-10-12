@@ -10,6 +10,8 @@ import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class CanonicalPartyDocumentDirectory {
     private final EntityManager entityManager;
     private final PartyDocumentRepository canonicalDocuments;
     private final boolean canonicalReadEnabled;
+    private final PartyMasterDataFacade enterprise;
 
     public CanonicalPartyDocumentDirectory(
             EntityManager entityManager,
@@ -30,13 +33,29 @@ public class CanonicalPartyDocumentDirectory {
         this.entityManager = entityManager;
         this.canonicalDocuments = canonicalDocuments;
         this.canonicalReadEnabled = canonicalReadEnabled;
+        this.enterprise = null;
+    }
+
+    @Autowired
+    public CanonicalPartyDocumentDirectory(
+            EntityManager entityManager,
+            PartyDocumentRepository canonicalDocuments,
+            PartyMasterDataFacade enterprise,
+            @Value("${comandos.master-data.canonical-read.enabled:false}")
+            boolean canonicalReadEnabled) {
+        this.entityManager = entityManager;
+        this.canonicalDocuments = canonicalDocuments;
+        this.enterprise = enterprise;
+        this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
     public List<PartyDocument> credentials(long personId, TenantId tenantId) {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalDocuments.findByParty(tenantId, personRef(personId));
+            return enterprise == null
+                ? canonicalDocuments.findByParty(tenantId, personRef(personId))
+                : enterprise.documents(tenantId, personRef(personId));
         }
 
         return entityManager.createQuery(

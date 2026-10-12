@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class CanonicalPartyRoleDirectory {
     private final EntityManager entityManager;
     private final PartyRoleRepository canonicalRoles;
     private final boolean canonicalReadEnabled;
+    private final PartyMasterDataFacade enterprise;
 
     public CanonicalPartyRoleDirectory(
             EntityManager entityManager,
@@ -52,13 +55,29 @@ public class CanonicalPartyRoleDirectory {
         this.entityManager = entityManager;
         this.canonicalRoles = canonicalRoles;
         this.canonicalReadEnabled = canonicalReadEnabled;
+        this.enterprise = null;
+    }
+
+    @Autowired
+    public CanonicalPartyRoleDirectory(
+            EntityManager entityManager,
+            PartyRoleRepository canonicalRoles,
+            PartyMasterDataFacade enterprise,
+            @Value("${comandos.master-data.canonical-read.enabled:false}")
+            boolean canonicalReadEnabled) {
+        this.entityManager = entityManager;
+        this.canonicalRoles = canonicalRoles;
+        this.enterprise = enterprise;
+        this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
     public List<PartyRoleAssignment> roles(long personId, TenantId tenantId) {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalRoles.findByParty(tenantId, personRef(personId));
+            return enterprise == null
+                ? canonicalRoles.findByParty(tenantId, personRef(personId))
+                : enterprise.roles(tenantId, personRef(personId));
         }
 
         return assignments(personId).stream()
@@ -79,7 +98,7 @@ public class CanonicalPartyRoleDirectory {
         if (role == null) return roles(personId, tenantId);
 
         if (canonicalReadEnabled) {
-            return canonicalRoles.findByRole(tenantId, role).stream()
+            return (enterprise == null ? canonicalRoles.findByRole(tenantId, role) : enterprise.rolesByType(tenantId, role)).stream()
                 .filter(assignment -> assignment.party().equals(personRef(personId)))
                 .toList();
         }

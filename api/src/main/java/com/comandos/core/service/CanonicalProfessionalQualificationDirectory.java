@@ -10,6 +10,8 @@ import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class CanonicalProfessionalQualificationDirectory {
     private final EntityManager entityManager;
     private final ProfessionalQualificationRepository canonicalQualifications;
     private final boolean canonicalReadEnabled;
+    private final PartyMasterDataFacade enterprise;
 
     public CanonicalProfessionalQualificationDirectory(
             EntityManager entityManager,
@@ -29,6 +32,20 @@ public class CanonicalProfessionalQualificationDirectory {
             boolean canonicalReadEnabled) {
         this.entityManager = entityManager;
         this.canonicalQualifications = canonicalQualifications;
+        this.canonicalReadEnabled = canonicalReadEnabled;
+        this.enterprise = null;
+    }
+
+    @Autowired
+    public CanonicalProfessionalQualificationDirectory(
+            EntityManager entityManager,
+            ProfessionalQualificationRepository canonicalQualifications,
+            PartyMasterDataFacade enterprise,
+            @Value("${comandos.master-data.canonical-read.enabled:false}")
+            boolean canonicalReadEnabled) {
+        this.entityManager = entityManager;
+        this.canonicalQualifications = canonicalQualifications;
+        this.enterprise = enterprise;
         this.canonicalReadEnabled = canonicalReadEnabled;
     }
 
@@ -39,10 +56,9 @@ public class CanonicalProfessionalQualificationDirectory {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalQualifications.findByPerson(
-                tenantId,
-                personRef(personId)
-            );
+            return enterprise == null
+                ? canonicalQualifications.findByPerson(tenantId, personRef(personId))
+                : enterprise.qualifications(tenantId, personRef(personId));
         }
 
         return entityManager.createQuery(
