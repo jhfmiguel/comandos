@@ -391,7 +391,9 @@
       "Retirement startup validation cannot share an execution with mutating backfill; Oracle CI uses separate backfill and retirement phases.",
       "InventoryService no longer injects ProductMasterDataReferenceSynchronizer: StockLocation, EquipmentSet, CertificationRecord, ExpirationRecord and Recall writes populate canonical references directly via ProductCanonicalScopeResolver; the synchronizer is retained only for historical product-reference backfill.",
       "Product reference retirement parity now checks the actual persisted canonical Person/Organization/Unit repositories even when legacy directory fallback is enabled; synthesized legacy canonical projections are not admissible parity evidence.",
-      "ProductMasterDataReferenceSynchronizer.synchronizeOnWrite removed: runtime inventory canonical identifiers are resolved directly and the migration synchronizer only serves historical reconciliation/backfill."
+      "ProductMasterDataReferenceSynchronizer.synchronizeOnWrite removed: runtime inventory canonical identifiers are resolved directly and the migration synchronizer only serves historical reconciliation/backfill.",
+      "CoreService generic CRUD no longer injects the temporary CanonicalMasterDataMirrorService directly: its write/delete consumer now uses CanonicalMasterDataWritePort, while migration-only startup components retain their temporary adapter.",
+      "An architecture gate scans all production Java consumers and rejects new dependencies on migration bridge types outside migration infrastructure; direct inventory product-write synchronizer consumer was removed in an earlier commit."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
