@@ -123,6 +123,46 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void blocksRetirementWhenReadinessSummaryHidesBlockingIssues() {
+        var migration = mock(MasterDataMigrationService.class);
+        var parityService = mock(MasterDataParityService.class);
+        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
+        var scope = mock(ProductCanonicalScopeResolver.class);
+        var backfill = mock(ProductMasterDataReferenceBackfillService.class);
+        var referenceParity = mock(ProductMasterDataReferenceParityService.class);
+        when(migration.readiness()).thenReturn(
+            new MasterDataMigrationService.ReadinessReport(true, List.of(
+                new MasterDataMigrationService.ReadinessIssue(
+                    "DUPLICATE_PERSON_TAX_ID", "BLOCKER", 2,
+                    "Conflicting canonical tax identifiers"
+                )
+            ))
+        );
+        when(parityService.verify()).thenReturn(
+            new MasterDataParityService.ParityReport(true, 12, List.of())
+        );
+        when(mirror.enabled()).thenReturn(true);
+        when(synchronizer.enabled()).thenReturn(true);
+        when(scope.enabled()).thenReturn(true);
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(
+                true, 12, 0, Map.of()
+            )
+        );
+        when(referenceParity.verify()).thenReturn(
+            new ProductMasterDataReferenceParityService.ParityReport(true, 12, List.of())
+        );
+        var gate = new MasterDataCutoverStatusService(
+            migration, parityService, mirror, synchronizer, scope, backfill,
+            referenceParity, true, true
+        );
+        assertFalse(gate.status().readinessPassed());
+        assertFalse(gate.status().readyToRetireLegacyPersistence());
+        assertTrue(gate.retirementBlockers().contains("LEGACY_READINESS_FAILED"));
+    }
+
+    @Test
     void passesWhenAllNineConditionsAreTrue() {
         var gate = createGate(true, true, true, true, true, true, true, true, true);
         assertTrue(gate.requireReadyToRetireLegacyPersistence().readyToRetireLegacyPersistence());
