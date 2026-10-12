@@ -77,7 +77,10 @@ public class MasterDataCutoverStatusService {
 
         var productReferenceReport = productReferenceBackfill.readiness();
         var productReferenceParityReport = productReferenceParity.verify();
-        boolean readinessPassed = readinessReport.ready();
+        boolean readinessPassed = readinessReport.ready()
+            && readinessReport.issues() != null
+            && readinessReport.issues().stream().noneMatch(issue ->
+                issue == null || "BLOCKER".equalsIgnoreCase(issue.severity()));
         boolean parityPassed = parityReport.consistent() && parityReport.mismatches() != null
             && parityReport.mismatches().isEmpty();
         boolean shadowWriteEnabled = mirror.enabled();
