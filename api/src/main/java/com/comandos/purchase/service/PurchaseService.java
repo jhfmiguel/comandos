@@ -1,6 +1,5 @@
 package com.comandos.purchase.service;
 import com.comandos.inventory.model.ItemModel;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.purchase.dto.PurchaseContract.*;
@@ -21,11 +20,11 @@ import com.fariamiguel.tenancy.api.TenantId;
 public class PurchaseService {
  private final PurchaseRepository purchases; private final ProcurementProcessRepository procurements; private final EntityManager em;
  private static final TenantId TENANT = TenantId.of("comandos");
- private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
+ private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
 
  @org.springframework.beans.factory.annotation.Autowired
- public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
-  this.purchases=p;this.procurements=pr;this.em=em;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;
+ public PurchaseService(PurchaseRepository p,ProcurementProcessRepository pr,EntityManager em,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
+  this.purchases=p;this.procurements=pr;this.em=em;this.canonicalScope=canonicalScope;this.masterData=masterData;
  }
 
 
