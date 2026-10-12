@@ -76,12 +76,18 @@ public class MasterDataCutoverStatusService {
         var productReferenceReport = productReferenceBackfill.readiness();
         var productReferenceParityReport = productReferenceParity.verify();
         boolean readinessPassed = readinessReport.ready();
-        boolean parityPassed = parityReport.consistent();
+        boolean parityPassed = parityReport.consistent() && parityReport.mismatches() != null
+            && parityReport.mismatches().isEmpty();
         boolean shadowWriteEnabled = mirror.enabled();
         boolean productReferenceShadowEnabled = productReferences.enabled();
         boolean productReferencePrimaryReadEnabled = productCanonicalScope.enabled();
-        boolean productReferencesReady = productReferenceReport.ready();
-        boolean productReferenceParityPassed = productReferenceParityReport.consistent();
+        boolean productReferencesReady = productReferenceReport.ready()
+            && productReferenceReport.incomplete() == 0
+            && productReferenceReport.incompleteByEntity() != null
+            && productReferenceReport.incompleteByEntity().values().stream().allMatch(count -> count != null && count == 0);
+        boolean productReferenceParityPassed = productReferenceParityReport.consistent()
+            && productReferenceParityReport.mismatches() != null
+            && productReferenceParityReport.mismatches().isEmpty();
 
         return new CutoverStatus(
             readinessPassed,
