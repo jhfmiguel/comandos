@@ -186,6 +186,7 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
     @Transactional
     public boolean delete(CoreEntity entity) {
         if (!enabled || entity == null) return false;
+        requirePersistedIdentity(entity);
 
         if (entity instanceof Person person) {
             people.delete(
