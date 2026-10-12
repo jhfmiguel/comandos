@@ -58,9 +58,9 @@ class ProductBridgeConsumerRetirementArchitectureTest {
     void coreRuntimeDependsOnCanonicalWritePortInsteadOfLegacyMigrationMirror() throws IOException {
         String core = read("core/service/CoreService.java");
         String port = read("core/service/CanonicalMasterDataWritePort.java");
-        String adapter = read("core/service/CanonicalMasterDataMirrorService.java");
+        String adapter = read("core/service/CanonicalMasterDataWriteService.java");
 
-        assertFalse(core.contains("CanonicalMasterDataMirrorService"));
+        assertFalse(core.contains("CanonicalMasterDataWriteService"));
         assertFalse(core.contains("masterDataMirror"));
         assertTrue(core.contains("CanonicalMasterDataWritePort canonicalMasterData"));
         assertTrue(core.contains("canonicalMasterData.synchronize(entity)"));
