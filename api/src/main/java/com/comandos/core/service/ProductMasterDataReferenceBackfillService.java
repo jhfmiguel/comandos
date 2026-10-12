@@ -52,7 +52,7 @@ public class ProductMasterDataReferenceBackfillService {
 
     public record BackfillReport(
         long scanned,
-        long synchronized,
+        long synchronizedCount,
         Map<String, Long> synchronizedByEntity
     ) {}
 
