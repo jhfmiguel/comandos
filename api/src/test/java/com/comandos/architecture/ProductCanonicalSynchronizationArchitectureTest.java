@@ -15,6 +15,10 @@ class ProductCanonicalSynchronizationArchitectureTest {
         String code = source("core/service/ProductMasterDataReferenceSynchronizer.java");
         assertFalse(code.contains("private final MasterDataReferenceService references;"));
         assertFalse(code.contains("references.resolveCanonicalId("));
+        assertFalse(code.contains("MasterDataReferenceService"));
+        assertTrue(code.contains("private static final String ORGANIZATION"));
+        assertTrue(code.contains("private static final String PERSON"));
+        assertTrue(code.contains("private static final String UNIT"));
         assertTrue(code.contains("private final ProductCanonicalScopeResolver canonicalScope;"));
     }
 
