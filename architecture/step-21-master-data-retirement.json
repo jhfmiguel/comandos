@@ -394,7 +394,8 @@
       "CoreService generic CRUD no longer injects the temporary CanonicalMasterDataMirrorService directly: its write/delete consumer now uses CanonicalMasterDataWritePort, while migration-only startup components retain their temporary adapter.",
       "An architecture gate scans all production Java consumers and rejects new dependencies on migration bridge types outside migration infrastructure; direct inventory product-write synchronizer consumer was removed in an earlier commit.",
       "ProductMasterDataReferenceSynchronizer removed completely; historic product backfill now resolves canonical IDs internally through ProductMasterDataReferenceBackfillService with no runtime synchronize or shadow-write API. MasterDataCutoverStatusService reads its independent shadow-write gate directly from configuration.",
-      "ProductMasterDataReferenceBackfillService now owns all historical product-reference mapping; deleted ProductMasterDataReferenceSynchronizer.java and its obsolete runtime/shadow methods. Architecture assertions and unit tests were migrated to the remaining explicit backfill service."
+      "ProductMasterDataReferenceBackfillService now owns all historical product-reference mapping; deleted ProductMasterDataReferenceSynchronizer.java and its obsolete runtime/shadow methods. Architecture assertions and unit tests were migrated to the remaining explicit backfill service.",
+      "MasterDataMigrationConfigurationGuard.java removed; transitional canonical read versus legacy write invariant is enforced by CanonicalMasterDataDirectory initialization instead."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -483,7 +484,6 @@
       "api/src/main/java/com/comandos/core/service/CanonicalPartySnapshotDirectory.java",
       "api/src/main/java/com/comandos/core/service/CanonicalProfessionalQualificationDirectory.java",
       "api/src/main/java/com/comandos/core/service/MasterDataCutoverStatusService.java",
-      "api/src/main/java/com/comandos/core/service/MasterDataMigrationConfigurationGuard.java",
       "api/src/main/java/com/comandos/core/service/MasterDataMigrationRunner.java",
       "api/src/main/java/com/comandos/core/service/ProductCanonicalScopeResolver.java"
     ],
@@ -608,15 +608,13 @@
         "action": "Remove temporary cutover runtime helpers that exist only for migration/retirement validation.",
         "candidates": [
           "MasterDataMigrationRunner",
-          "MasterDataMigrationConfigurationGuard",
           "MasterDataCutoverStatusService"
         ],
         "retainRule": "Retain any helper still required for normal canonical runtime behavior or rollback policy.",
         "gate": "Final backend/frontend validation and Step 21.35/21.36 gates.",
         "order": [
           "MasterDataMigrationRunner",
-          "MasterDataCutoverStatusService",
-          "MasterDataMigrationConfigurationGuard"
+          "MasterDataCutoverStatusService"
         ],
         "dependencyRationale": {
           "MasterDataMigrationRunner": "Operational startup runner used only for readiness/backfill/parity/retirement validation.",
