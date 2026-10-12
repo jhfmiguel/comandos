@@ -97,6 +97,15 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertFalse(code.contains("productReferenceBackfill.backfill("));
     }
 
+    @Test
+    void canonicalReadDoesNotForceFullLegacyRetirementAtStartup() throws IOException {
+        String runner = source("core/service/MasterDataMigrationRunner.java");
+        assertTrue(runner.contains("if (retirementValidationOnStartup)"));
+        assertFalse(runner.contains("retirementValidationOnStartup || canonicalReadEnabled"));
+        assertTrue(runner.contains("cutoverStatus.requireReadyToRetireLegacyPersistence()"));
+        assertTrue(runner.contains("cutoverStatus.canonicalReadEnabled()"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
