@@ -57,8 +57,14 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        // Canonical reads must not activate any legacy migration service.
-        // All migration and retirement operations require explicit opt-in flags.
+        // Startup operations are permitted only by their explicit opt-in flags.
+        // Canonical runtime reads never cause migration or retirement validation.
+        if (retirementValidationOnStartup
+                && (backfillOnStartup || productReferenceBackfillOnStartup)) {
+            throw new IllegalStateException(
+                "Retirement validation cannot run with mutating backfill startup flags."
+            );
+        }
         if (!readinessOnStartup
                 && !backfillOnStartup
                 && !parityOnStartup
