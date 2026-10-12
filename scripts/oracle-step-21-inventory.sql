@@ -3,10 +3,10 @@ set linesize 220
 set trimspool on
 set feedback on
 set verify off
-set serveroutput on size unlimited
 whenever sqlerror exit sql.sqlcode
 
 alter session set container = FREEPDB1;
+set serveroutput on size unlimited
 
 prompt === ETAPA 21 - INVENTARIO ORACLE (SOMENTE LEITURA) ===
 select sys_context('USERENV','CON_NAME') as pdb, sys_context('USERENV','SESSION_USER') as session_user from dual;
