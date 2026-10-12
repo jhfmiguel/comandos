@@ -28,6 +28,17 @@ class MasterDataCrosswalkRetirementArchitectureTest {
     }
 
     @Test
+    void transitionalConfigurationGuardRemainsRetired() throws Exception {
+        assertFalse(Files.exists(Path.of(
+            "src/main/java/com/comandos/core/service/MasterDataMigrationConfigurationGuard.java"
+        )));
+        String directory = Files.readString(Path.of(
+            "src/main/java/com/comandos/core/service/CanonicalMasterDataDirectory.java"
+        ));
+        assertTrue(directory.contains("void validateCanonicalReadConfiguration()"));
+    }
+
+    @Test
     void productionJavaMustNotReferenceRetiredCrosswalkTypes() throws Exception {
         var offenders = new ArrayList<String>();
         Path root = Path.of("src/main/java");
