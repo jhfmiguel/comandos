@@ -1,0 +1,47 @@
+package com.comandos.architecture;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+class ProductBridgeConsumerRetirementArchitectureTest {
+
+    private static final List<String> DIRECT_CANONICAL_CONSUMERS = List.of(
+        "purchase/service/PurchaseService.java",
+        "purchase/service/EquipmentReceivingService.java",
+        "transfer/service/TransferService.java",
+        "sales/service/InventorySalesService.java"
+    );
+
+    @Test
+    void canonicalProductConsumersHaveNoUnusedSynchronizationBridgeDependency() throws IOException {
+        for (String relativePath : DIRECT_CANONICAL_CONSUMERS) {
+            String source = read(relativePath);
+            assertFalse(source.contains("ProductMasterDataReferenceSynchronizer"),
+                relativePath + " must not inject the temporary product synchronizer");
+            assertFalse(source.contains("masterDataReferences"),
+                relativePath + " must not retain an unused bridge field");
+            assertTrue(source.contains("ProductCanonicalScopeResolver"),
+                relativePath + " must continue using canonical scope resolution");
+        }
+    }
+
+    @Test
+    void sharedSynchronizationRemainsAvailableToActiveMigrationConsumers() throws IOException {
+        String inventory = read("inventory/service/InventoryService.java");
+        String synchronizer = read("core/service/ProductMasterDataReferenceSynchronizer.java");
+
+        assertTrue(inventory.contains("masterDataReferences.synchronize("));
+        assertTrue(inventory.contains("masterDataReferences.synchronizeForBackfill("));
+        assertTrue(synchronizer.contains("ProductCanonicalScopeResolver"));
+    }
+
+    private static String read(String relativePath) throws IOException {
+        return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
+    }
+}
