@@ -78,7 +78,8 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         assertTrue(core.contains("canonicalRequired && id != null"));
         assertTrue(core.contains("requireCanonicalWrite(entity)"));
         assertTrue(core.contains("canonicalRequired && !canonicalStored"));
-        assertTrue(core.contains("canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalDeleted"));
+        assertTrue(core.contains("canonicalRequired && !canonicalDeleted"));
+        assertTrue(core.indexOf("canonicalMasterData.delete(entity)") < core.indexOf("else em.remove(entity)"));
         assertTrue(writer.contains("requirePersistedIdentity(entity)"));
         assertTrue(directory.contains("validateCanonicalReadConfiguration()"));
     }
