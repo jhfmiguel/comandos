@@ -394,7 +394,8 @@
       "ProductMasterDataReferenceSynchronizer.synchronizeOnWrite removed: runtime inventory canonical identifiers are resolved directly and the migration synchronizer only serves historical reconciliation/backfill.",
       "CoreService generic CRUD no longer injects the temporary CanonicalMasterDataMirrorService directly: its write/delete consumer now uses CanonicalMasterDataWritePort, while migration-only startup components retain their temporary adapter.",
       "An architecture gate scans all production Java consumers and rejects new dependencies on migration bridge types outside migration infrastructure; direct inventory product-write synchronizer consumer was removed in an earlier commit.",
-      "ProductMasterDataReferenceSynchronizer removed completely; historic product backfill now resolves canonical IDs internally through ProductMasterDataReferenceBackfillService with no runtime synchronize or shadow-write API. MasterDataCutoverStatusService reads its independent shadow-write gate directly from configuration."
+      "ProductMasterDataReferenceSynchronizer removed completely; historic product backfill now resolves canonical IDs internally through ProductMasterDataReferenceBackfillService with no runtime synchronize or shadow-write API. MasterDataCutoverStatusService reads its independent shadow-write gate directly from configuration.",
+      "ProductMasterDataReferenceBackfillService now owns all historical product-reference mapping; deleted ProductMasterDataReferenceSynchronizer.java and its obsolete runtime/shadow methods. Architecture assertions and unit tests were migrated to the remaining explicit backfill service."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
@@ -531,8 +532,7 @@
           "PersonContactType",
           "OrganizationNature",
           "OrganizationalUnitType",
-          "EconomicActivity",
-          "MasterDataReference"
+          "EconomicActivity"
         ],
         "gate": "No production import, JPQL path or demo dependency may reference a removed entity.",
         "completionEvidence": [
@@ -549,10 +549,8 @@
           "MasterDataMigrationService",
           "CoreCatalog",
           "MasterDataParityService",
-          "MasterDataReferenceService",
           "ProductMasterDataReferenceBackfillService",
           "ProductMasterDataReferenceParityService",
-          "ProductMasterDataReferenceSynchronizer",
           "CanonicalMasterDataMirrorService",
           "legacy projection/write compatibility retained in CoreController/CoreService/PersonRegistrationService where no longer needed",
           "CanonicalMasterDataMapper",
@@ -656,10 +654,8 @@
         "CanonicalMasterDataMirrorService",
         "MasterDataMigrationService",
         "MasterDataParityService",
-        "MasterDataReferenceService",
         "ProductMasterDataReferenceBackfillService",
-        "ProductMasterDataReferenceParityService",
-        "ProductMasterDataReferenceSynchronizer"
+        "ProductMasterDataReferenceParityService"
       ],
       "retainAfterCutoverIfStillUsed": [
         "CanonicalCoreReadService",
