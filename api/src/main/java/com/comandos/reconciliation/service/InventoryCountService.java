@@ -2,7 +2,7 @@ package com.comandos.reconciliation.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
@@ -26,9 +26,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Service @Transactional(readOnly=true)
 public class InventoryCountService {
     private static final TenantId TENANT = TenantId.of("comandos");
-    private final EntityManager em; private final AccessPolicy access; private final AuditService audit; private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
+    private final EntityManager em; private final AccessPolicy access; private final AuditService audit;  private final ProductCanonicalScopeResolver canonicalScope; private final CanonicalMasterDataDirectory masterData;
     @org.springframework.beans.factory.annotation.Autowired
-    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;}
+    public InventoryCountService(EntityManager em,AccessPolicy access,AuditService audit,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){this.em=em;this.access=access;this.audit=audit;this.canonicalScope=canonicalScope;this.masterData=masterData;}
 
     @Transactional public CountView open(OpenRequest r){
         if(r==null||r.organizationId()==null||r.locationId()==null||blank(r.purpose()))bad("Organization, location and purpose are required.");
@@ -42,7 +42,7 @@ public class InventoryCountService {
         access.requireScope("inventory-counts","CREATE",location.organizationLegacyId,location.unitLegacyId);
         long active=em.createQuery("select count(c) from InventoryCount c where c.location.id=:l and c.status.code in ('OPEN','COUNTED')",Long.class).setParameter("l",location.id).getSingleResult();
         if(active>0)conflict("This location already has an unfinished inventory count.");
-        var c=new InventoryCount();c.organizationLegacyId=organization.id();c.unitLegacyId=unit==null?null:unit.id();c.organizationCanonicalId=canonicalScope.organization(organization.id());c.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id());c.location=location;c.status=status("OPEN");c.organizationName=organization.name();c.unitName=unit==null?null:unit.name();c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;if(canonicalScope.enabled())masterDataReferences.synchronizeForBackfill(c);else masterDataReferences.synchronize(c);em.persist(c);
+        var c=new InventoryCount();c.organizationLegacyId=organization.id();c.unitLegacyId=unit==null?null:unit.id();c.organizationCanonicalId=canonicalScope.organization(organization.id());c.unitCanonicalId=canonicalScope.unit(unit==null?null:unit.id());c.location=location;c.status=status("OPEN");c.organizationName=organization.name();c.unitName=unit==null?null:unit.name();c.locationName=location.name;c.purpose=trim(r.purpose(),255);c.openedAt=LocalDateTime.now();var actor=audit.actor();c.openedById=actor.id();c.openedByLogin=actor.login();c.requestId=r.requestId();c.requestFingerprint=fp;em.persist(c);
         var assets=em.createQuery("select a from AssetItem a where a.location.id=:l and a.status in ('AVAILABLE','BLOCKED') order by a.id",AssetItem.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         for(var a:assets){var i=base(c,a.model,a.assetCode);i.asset=a;i.systemQuantity=BigDecimal.ONE;em.persist(i);}
         var balances=em.createQuery("select b from StockBalance b where b.location.id=:l and (b.available+b.reserved+b.blocked)>0 order by b.id",StockBalance.class).setParameter("l",location.id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
