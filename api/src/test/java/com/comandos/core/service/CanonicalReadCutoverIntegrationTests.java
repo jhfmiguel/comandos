@@ -92,4 +92,38 @@ class CanonicalReadCutoverIntegrationTests {
             entityManager.find(Person.class, legacy.id).fullName
         ).isEqualTo("Nome Legado");
     }
+    @Test
+    void canonicalReadFailsClosedWhenLegacyPersonHasNoCanonicalRecord() {
+        var legacy = new Person();
+        legacy.personType = "PF";
+        legacy.fullName = "Nao Migrado";
+        legacy.taxId = "10020030040";
+        legacy.active = true;
+        entityManager.persist(legacy);
+        entityManager.flush();
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> reads.get("people", legacy.id)
+        );
+    }
+
+    @Test
+    void canonicalDirectoryReadsOnlyCanonicalPersistenceWhenEnabled() {
+        var legacy = new Person();
+        legacy.personType = "PF";
+        legacy.fullName = "Leitura Exclusiva Legada";
+        legacy.taxId = "20030040050";
+        legacy.active = true;
+        entityManager.persist(legacy);
+        entityManager.flush();
+
+        var canonicalId = BusinessId.of("comandos:person:" + legacy.id);
+        assertThat(people.find(TENANT, canonicalId)).isEmpty();
+        org.junit.jupiter.api.Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> reads.get("people", legacy.id)
+        );
+    }
+
 }
