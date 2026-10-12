@@ -58,11 +58,6 @@ public class ProductMasterDataReferenceSynchronizer {
         return enabled;
     }
 
-    public boolean synchronize(CoreEntity entity) {
-        if (!enabled) return false;
-        return synchronizeNow(entity);
-    }
-
     public boolean synchronizeForBackfill(CoreEntity entity) {
         return synchronizeNow(entity);
     }
