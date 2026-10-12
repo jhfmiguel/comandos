@@ -388,7 +388,8 @@
       "CompliancePolicy Organization/OrganizationalUnit JPA associations retired pre-cutover; policy scope is scalar and canonical validation remains in ComplianceService.",
       "Legacy master-data crosswalk service and JPA registry entity retired from Java runtime; canonical master-data and product parity now use canonical repositories/directory instead of ERP_MASTER_DATA_REFERENCE.",
       "CanonicalMasterDataMirrorService no longer performs registry upserts/deactivation; canonical delete handlers for all master-data entity types remain preserved.",
-      "Retirement startup validation cannot share an execution with mutating backfill; Oracle CI uses separate backfill and retirement phases."
+      "Retirement startup validation cannot share an execution with mutating backfill; Oracle CI uses separate backfill and retirement phases.",
+      "InventoryService no longer injects ProductMasterDataReferenceSynchronizer: StockLocation, EquipmentSet, CertificationRecord, ExpirationRecord and Recall writes populate canonical references directly via ProductCanonicalScopeResolver; the synchronizer is retained only for historical product-reference backfill."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
