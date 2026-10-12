@@ -126,7 +126,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
         }
 
         if (productReferenceBackfillOnStartup || parityOnStartup
-                || retirementValidationOnStartup) {
+                || retirementValidationOnStartup || backfillOnStartup) {
             var productParityReport = productReferenceParity.verify();
             System.out.println(
                 "[master-data-migration] product-reference parity consistent="
