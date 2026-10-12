@@ -57,40 +57,40 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        boolean canonicalReadEnabled =
-            cutoverStatus.canonicalReadEnabled();
-
+        // Canonical reads must not activate any legacy migration service.
+        // All migration and retirement operations require explicit opt-in flags.
         if (!readinessOnStartup
                 && !backfillOnStartup
                 && !parityOnStartup
                 && !productReferenceBackfillOnStartup
-                && !retirementValidationOnStartup
-                && !canonicalReadEnabled) {
+                && !retirementValidationOnStartup) {
             return;
         }
 
-        var readiness = migration.readiness();
-        var productReferenceReadiness = productReferenceBackfill.readiness();
-
-        System.out.println(
-            "[master-data-migration] ready=" + readiness.ready()
-                + " issues=" + readiness.issues()
-        );
-
-        System.out.println(
-            "[master-data-migration] product-reference-ready="
-                + productReferenceReadiness.ready()
-                + " incomplete=" + productReferenceReadiness.incompleteByEntity()
-        );
-
-        if (backfillOnStartup) {
-            if (!readiness.ready()) {
+        if (readinessOnStartup || backfillOnStartup || retirementValidationOnStartup) {
+            var readiness = migration.readiness();
+            System.out.println(
+                "[master-data-migration] ready=" + readiness.ready()
+                    + " issues=" + readiness.issues()
+            );
+            if (backfillOnStartup && !readiness.ready()) {
                 throw new IllegalStateException(
                     "Master-data canonical backfill requested but readiness has blockers: "
                         + readiness.issues()
                 );
             }
+        }
 
+        if (productReferenceBackfillOnStartup || retirementValidationOnStartup) {
+            var productReferenceReadiness = productReferenceBackfill.readiness();
+            System.out.println(
+                "[master-data-migration] product-reference-ready="
+                    + productReferenceReadiness.ready()
+                    + " incomplete=" + productReferenceReadiness.incompleteByEntity()
+            );
+        }
+
+        if (backfillOnStartup) {
             var report = migration.backfill();
 
             System.out.println(
@@ -107,8 +107,8 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             requireParity();
         }
 
-        // Product-table shadows depend on the canonical crosswalk populated by
-        // the master-data backfill, so this phase must always run afterwards.
+        // Product-table backfill resolves IDs through the canonical directory.
+        // It is an explicit operation and runs after master-data backfill, if selected.
         if (productReferenceBackfillOnStartup) {
             var productReport = productReferenceBackfill.backfill();
             System.out.println(
@@ -121,15 +121,24 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             );
         }
 
-        var productParityReport = productReferenceParity.verify();
-        System.out.println(
-            "[master-data-migration] product-reference parity consistent="
-                + productParityReport.consistent()
-                + ", checked="
-                + productParityReport.checkedReferences()
-                + ", mismatches="
-                + productParityReport.mismatches()
-        );
+        if (productReferenceBackfillOnStartup || parityOnStartup
+                || retirementValidationOnStartup) {
+            var productParityReport = productReferenceParity.verify();
+            System.out.println(
+                "[master-data-migration] product-reference parity consistent="
+                    + productParityReport.consistent()
+                    + ", checked="
+                    + productParityReport.checkedReferences()
+                    + ", mismatches="
+                    + productParityReport.mismatches()
+            );
+            if (!productParityReport.consistent()) {
+                throw new IllegalStateException(
+                    "Product canonical reference parity mismatch: "
+                        + productParityReport.mismatches()
+                );
+            }
+        }
 
         // Canonical reads are allowed during staged migration. Full retirement
         // validation is explicitly opt-in and must not be triggered solely
