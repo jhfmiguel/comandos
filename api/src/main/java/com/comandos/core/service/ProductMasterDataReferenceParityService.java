@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Verifies that product-domain canonical reference columns exactly match the
- * active legacy-to-canonical crosswalk before legacy foreign keys are retired.
+ * canonical directory while legacy foreign keys are retained for migration auditing.
  */
 @Service
 @Transactional(readOnly = true)
