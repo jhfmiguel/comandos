@@ -53,6 +53,38 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void reportsEveryBlockingGateWithStableActionableCodes() {
+        var gate = createGate(false, false, false, false, false, false, false, false, false);
+        var blockers = gate.retirementBlockers();
+        assertTrue(blockers.contains("LEGACY_READINESS_FAILED"));
+        assertTrue(blockers.contains("MASTER_DATA_PARITY_FAILED"));
+        assertTrue(blockers.contains("MASTER_DATA_SHADOW_WRITE_DISABLED"));
+        assertTrue(blockers.contains("PRODUCT_REFERENCE_SHADOW_DISABLED"));
+        assertTrue(blockers.contains("PRODUCT_CANONICAL_READ_DISABLED"));
+        assertTrue(blockers.contains("PRODUCT_REFERENCE_BACKFILL_INCOMPLETE"));
+        assertTrue(blockers.contains("PRODUCT_REFERENCE_PARITY_FAILED"));
+        assertTrue(blockers.contains("LEGACY_PRODUCT_ASSOCIATIONS_ACTIVE"));
+        assertTrue(blockers.contains("MASTER_DATA_CANONICAL_READ_DISABLED"));
+        org.junit.jupiter.api.Assertions.assertEquals(9, blockers.size());
+    }
+
+    @Test
+    void providesNoRetirementBlockersWhenAllNineGatesPass() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        assertTrue(gate.retirementBlockers().isEmpty());
+        assertTrue(gate.requireReadyToRetireLegacyPersistence().readyToRetireLegacyPersistence());
+    }
+
+    @Test
+    void rejectsUnavailableCutoverEvidence() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        org.junit.jupiter.api.Assertions.assertEquals(
+            List.of("CUTOVER_STATUS_UNAVAILABLE"),
+            gate.retirementBlockers(null)
+        );
+    }
+
+    @Test
     void rejectsInconsistentReportsEvenWhenTheirSummaryFlagsClaimSuccess() {
         var migration = mock(MasterDataMigrationService.class);
         var parity = mock(MasterDataParityService.class);
