@@ -47,12 +47,15 @@ class ProductCanonicalSynchronizationArchitectureTest {
     }
 
     @Test
-    void inventoryWriteAndBackfillHaveDistinctEntryPoints() throws IOException {
+    void inventoryWritesDirectlyToCanonicalIdsAndBackfillIsIsolated() throws IOException {
         String inventory = source("inventory/service/InventoryService.java");
         String synchronizer = source("core/service/ProductMasterDataReferenceSynchronizer.java");
-        assertTrue(inventory.contains("masterDataReferences.synchronizeOnWrite("));
-        assertFalse(inventory.contains("masterDataReferences.synchronizeForBackfill("));
-        assertTrue(synchronizer.contains("public boolean synchronizeOnWrite(CoreEntity entity, boolean canonicalPrimaryReadEnabled)"));
+        assertFalse(inventory.contains("masterDataReferences.synchronizeOnWrite("));
+        assertFalse(inventory.contains("ProductMasterDataReferenceSynchronizer"));
+        assertTrue(inventory.contains("synchronizeCanonicalProductWrite(entity)"));
+        assertTrue(inventory.contains("canonicalScope.organization("));
+        assertTrue(inventory.contains("canonicalScope.unit("));
+        assertTrue(synchronizer.contains("public boolean synchronizeForBackfill(CoreEntity entity)"));
     }
 
     @Test
