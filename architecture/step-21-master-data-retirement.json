@@ -3,7 +3,7 @@
   "step": "21.13-21.15",
   "blocker": {
     "step": "21.12",
-    "reason": "Step 21.12 retirement gate has not been observed passing on an Oracle run. The workflow now separates backfill from read-only retirement validation and supports public checkout of the canonical foundation; artifact availability and real data parity still require runtime evidence.",
+    "reason": "Canonical dual-write safety strengthened, but primary-write cutover remains unverified: CoreService still writes legacy tables first, and physical Oracle parity plus canonical-only mutation paths have not yet been proven. No retirement PASS has been observed.",
     "requiredGate": "legacy persistence retirement gate=PASS",
     "latestRun": "not-yet-verified-after-workflow-update",
     "latestJob": "not-yet-verified-after-workflow-update"
@@ -396,7 +396,8 @@
       "ProductMasterDataReferenceSynchronizer removed completely; historic product backfill now resolves canonical IDs internally through ProductMasterDataReferenceBackfillService with no runtime synchronize or shadow-write API. MasterDataCutoverStatusService reads its independent shadow-write gate directly from configuration.",
       "ProductMasterDataReferenceBackfillService now owns all historical product-reference mapping; deleted ProductMasterDataReferenceSynchronizer.java and its obsolete runtime/shadow methods. Architecture assertions and unit tests were migrated to the remaining explicit backfill service.",
       "MasterDataMigrationConfigurationGuard.java removed; transitional canonical read versus legacy write invariant is enforced by CanonicalMasterDataDirectory initialization instead.",
-      "Deleted temporary CanonicalMasterDataMirrorService and migrated runtime CoreService write-port adapter, migration backfill and cutover-status consumers to CanonicalMasterDataWriteService. Historical backfill uses synchronizeHistoricalBackfill, and adapter regression tests were moved to the canonical writer type."
+      "Deleted temporary CanonicalMasterDataMirrorService and migrated runtime CoreService write-port adapter, migration backfill and cutover-status consumers to CanonicalMasterDataWriteService. Historical backfill uses synchronizeHistoricalBackfill, and adapter regression tests were moved to the canonical writer type.",
+      "Step 21.12 canonical write hardening: CanonicalMasterDataWriteService refuses writes without stable persisted legacy identifiers; CoreService requires successful canonical save/delete for supported Master Data entities when canonical-read flag is enabled, and failures abort the same transaction."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
