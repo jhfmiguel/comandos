@@ -39,14 +39,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductMasterDataReferenceSynchronizer {
 
-    private final MasterDataReferenceService references;
+    private final ProductCanonicalScopeResolver canonicalScope;
     private final boolean enabled;
 
     public ProductMasterDataReferenceSynchronizer(
-            MasterDataReferenceService references,
+            ProductCanonicalScopeResolver canonicalScope,
             @Value("${comandos.master-data.product-reference-shadow.enabled:false}")
             boolean enabled) {
-        this.references = references;
+        this.canonicalScope = canonicalScope;
         this.enabled = enabled;
     }
 
@@ -452,10 +452,21 @@ public class ProductMasterDataReferenceSynchronizer {
         if (legacyId == null) {
             throw new IllegalStateException(label + " must be persisted before canonical reference synchronization.");
         }
-        return references.resolveCanonicalId(resourceType, legacyId)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical " + label + " reference is missing for legacy id " + legacyId
-            ));
+        try {
+            return switch (resourceType) {
+                case MasterDataReferenceService.ORGANIZATION -> canonicalScope.organization(legacyId);
+                case MasterDataReferenceService.PERSON -> canonicalScope.person(legacyId);
+                case MasterDataReferenceService.UNIT -> canonicalScope.unit(legacyId);
+                default -> throw new IllegalArgumentException(
+                    "Unsupported product master-data reference type: " + resourceType
+                );
+            };
+        } catch (IllegalStateException exception) {
+            throw new IllegalStateException(
+                "Canonical " + label + " reference is missing for legacy id " + legacyId,
+                exception
+            );
+        }
     }
 
     private String optional(String resourceType, Long legacyId, String label) {
