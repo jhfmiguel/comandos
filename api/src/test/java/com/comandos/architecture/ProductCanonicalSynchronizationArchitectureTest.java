@@ -51,6 +51,25 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(synchronizer.contains("public boolean synchronizeOnWrite(CoreEntity entity, boolean canonicalPrimaryReadEnabled)"));
     }
 
+    @Test
+    void productReferenceBackfillRejectsEveryFormOfIncompleteResult() throws IOException {
+        String code = source("core/service/ProductMasterDataReferenceBackfillService.java");
+        assertTrue(code.contains("!readiness.ready()"));
+        assertTrue(code.contains("readiness.incomplete() != 0"));
+        assertTrue(code.contains("!readiness.incompleteByEntity().isEmpty()"));
+        assertTrue(code.contains("synchronizer.synchronizeForBackfill(entity)"));
+    }
+
+    @Test
+    void retirementGuardPublishesActionableEvidenceInsteadOfSkippingGates() throws IOException {
+        String code = source("core/service/MasterDataCutoverStatusService.java");
+        assertTrue(code.contains("public List<String> retirementBlockers("));
+        assertTrue(code.contains("LEGACY_READINESS_FAILED"));
+        assertTrue(code.contains("PRODUCT_REFERENCE_BACKFILL_INCOMPLETE"));
+        assertTrue(code.contains("LEGACY_PRODUCT_ASSOCIATIONS_ACTIVE"));
+        assertTrue(code.contains("MASTER_DATA_CANONICAL_READ_DISABLED"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
