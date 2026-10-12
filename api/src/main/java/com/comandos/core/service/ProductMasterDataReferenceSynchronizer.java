@@ -26,7 +26,6 @@ import com.comandos.purchase.model.PurchasePlanning;
 import com.comandos.purchase.model.ProcurementProcess;
 import com.comandos.lifecycle.model.PeriodicInspection;
 import com.comandos.lifecycle.model.ExceptionOccurrence;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -44,18 +43,9 @@ public class ProductMasterDataReferenceSynchronizer {
     private static final String UNIT = "UNIT";
 
     private final ProductCanonicalScopeResolver canonicalScope;
-    private final boolean enabled;
 
-    public ProductMasterDataReferenceSynchronizer(
-            ProductCanonicalScopeResolver canonicalScope,
-            @Value("${comandos.master-data.product-reference-shadow.enabled:false}")
-            boolean enabled) {
+    public ProductMasterDataReferenceSynchronizer(ProductCanonicalScopeResolver canonicalScope) {
         this.canonicalScope = canonicalScope;
-        this.enabled = enabled;
-    }
-
-    public boolean enabled() {
-        return enabled;
     }
 
     public boolean synchronizeForBackfill(CoreEntity entity) {
