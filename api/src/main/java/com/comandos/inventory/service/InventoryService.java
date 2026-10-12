@@ -2,7 +2,6 @@ package com.comandos.inventory.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.*;
@@ -39,12 +38,13 @@ public class InventoryService {
     private final InventoryRules rules;
     private final AccessPolicy access;
     private final AuditService audit;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
     private static final TenantId TENANT = TenantId.of("comandos");
 
     private final boolean canonicalProductReferenceReadEnabled;
+    @org.springframework.beans.factory.annotation.Value("${comandos.master-data.product-reference-shadow.enabled:false}")
+    private boolean canonicalProductReferenceShadowEnabled;
     private final InventoryLedger canonicalInventoryLedger;
     private final StockLocationRepository canonicalStockLocations;
 
@@ -54,7 +54,6 @@ public class InventoryService {
             InventoryRules rules,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData,
             @org.springframework.beans.factory.annotation.Value(
@@ -66,7 +65,6 @@ public class InventoryService {
         this.rules = rules;
         this.access = access;
         this.audit = audit;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
         this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
@@ -500,6 +498,28 @@ public class InventoryService {
         ).contains(resource);
     }
 
+    private void synchronizeCanonicalProductWrite(CoreEntity entity) {
+        if (!canonicalProductReferenceShadowEnabled && !canonicalProductReferenceReadEnabled) {
+            return;
+        }
+        if (entity instanceof StockLocation location) {
+            location.organizationCanonicalId = canonicalScope.organization(location.organizationLegacyId);
+            location.unitCanonicalId = canonicalScope.unit(location.unitLegacyId);
+        } else if (entity instanceof EquipmentSet set) {
+            set.organizationCanonicalId = canonicalScope.organization(set.organizationLegacyId);
+            set.unitCanonicalId = canonicalScope.unit(set.unitLegacyId);
+        } else if (entity instanceof CertificationRecord record) {
+            record.organizationCanonicalId = canonicalScope.organization(record.organizationLegacyId);
+            record.unitCanonicalId = canonicalScope.unit(record.unitLegacyId);
+        } else if (entity instanceof ExpirationRecord record) {
+            record.organizationCanonicalId = canonicalScope.organization(record.organizationLegacyId);
+            record.unitCanonicalId = canonicalScope.unit(record.unitLegacyId);
+        } else if (entity instanceof Recall recall) {
+            recall.organizationCanonicalId = canonicalScope.organization(recall.organizationLegacyId);
+            recall.unitCanonicalId = canonicalScope.unit(recall.unitLegacyId);
+        }
+    }
+
     private static String likeTerm(String raw) {
         return "%" +
             raw.trim()
@@ -674,10 +694,9 @@ public class InventoryService {
         rules.validate(entity, previous);
         if (validateOnly) return Map.of();
 
-        // Product entities keep their existing JPA relations during cutover, but
-        // direct master-data owners (currently StockLocation) receive stable
-        // canonical identifiers before persistence.
-        masterDataReferences.synchronizeOnWrite(entity, canonicalProductReferenceReadEnabled);
+        // Runtime product writes use the canonical directory directly.
+        // The temporary synchronizer remains exclusively for historical backfill.
+        synchronizeCanonicalProductWrite(entity);
 
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
