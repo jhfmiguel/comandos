@@ -1,7 +1,6 @@
 package com.comandos.custody.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
@@ -30,7 +29,6 @@ public class CustodyService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
@@ -39,13 +37,11 @@ public class CustodyService {
             EntityManager em,
             AccessPolicy access,
             AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
     }
