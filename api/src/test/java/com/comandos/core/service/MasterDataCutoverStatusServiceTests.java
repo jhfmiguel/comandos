@@ -25,7 +25,6 @@ class MasterDataCutoverStatusServiceTests {
         var migration = mock(MasterDataMigrationService.class);
         var parityService = mock(MasterDataParityService.class);
         var mirror = mock(CanonicalMasterDataMirrorService.class);
-        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParityService = mock(ProductMasterDataReferenceParityService.class);
@@ -37,7 +36,6 @@ class MasterDataCutoverStatusServiceTests {
             new MasterDataParityService.ParityReport(parity, 12, List.of())
         );
         when(mirror.enabled()).thenReturn(masterShadow);
-        when(synchronizer.enabled()).thenReturn(productShadow);
         when(scope.enabled()).thenReturn(productPrimary);
         when(backfill.readiness()).thenReturn(
             new ProductMasterDataReferenceBackfillService.ReadinessReport(
@@ -47,7 +45,7 @@ class MasterDataCutoverStatusServiceTests {
             new ProductMasterDataReferenceParityService.ParityReport(productParity, 12, List.of())
         );
         return new MasterDataCutoverStatusService(
-            migration, parityService, mirror, synchronizer, scope, backfill,
+            migration, parityService, mirror, productShadow, scope, backfill,
             productParityService, associationsRetired, canonicalRead
         );
     }
@@ -80,7 +78,6 @@ class MasterDataCutoverStatusServiceTests {
         var migration = mock(MasterDataMigrationService.class);
         var parity = mock(MasterDataParityService.class);
         var mirror = mock(CanonicalMasterDataMirrorService.class);
-        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParity = mock(ProductMasterDataReferenceParityService.class);
@@ -91,7 +88,6 @@ class MasterDataCutoverStatusServiceTests {
             new MasterDataParityService.ParityReport(true, 1, List.of())
         );
         when(mirror.enabled()).thenReturn(true);
-        when(synchronizer.enabled()).thenReturn(true);
         when(scope.enabled()).thenReturn(true);
         when(backfill.readiness()).thenReturn(
             new ProductMasterDataReferenceBackfillService.ReadinessReport(
@@ -102,7 +98,7 @@ class MasterDataCutoverStatusServiceTests {
             new ProductMasterDataReferenceParityService.ParityReport(true, 0, List.of())
         );
         var gate = new MasterDataCutoverStatusService(
-            migration, parity, mirror, synchronizer, scope, backfill, productParity, true, true
+            migration, parity, mirror, true, scope, backfill, productParity, true, true
         );
         assertFalse(gate.status().productReferenceParityPassed());
         assertTrue(gate.retirementBlockers().contains("PRODUCT_REFERENCE_PARITY_FAILED"));
@@ -122,7 +118,6 @@ class MasterDataCutoverStatusServiceTests {
         var migration = mock(MasterDataMigrationService.class);
         var parity = mock(MasterDataParityService.class);
         var mirror = mock(CanonicalMasterDataMirrorService.class);
-        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var productParity = mock(ProductMasterDataReferenceParityService.class);
@@ -136,7 +131,6 @@ class MasterDataCutoverStatusServiceTests {
             ))
         );
         when(mirror.enabled()).thenReturn(true);
-        when(synchronizer.enabled()).thenReturn(true);
         when(scope.enabled()).thenReturn(true);
         when(backfill.readiness()).thenReturn(
             new ProductMasterDataReferenceBackfillService.ReadinessReport(true, 12, 1, Map.of("Purchase", 1L))
@@ -146,7 +140,7 @@ class MasterDataCutoverStatusServiceTests {
         );
 
         var gate = new MasterDataCutoverStatusService(
-            migration, parity, mirror, synchronizer, scope, backfill, productParity, true, true
+            migration, parity, mirror, true, scope, backfill, productParity, true, true
         );
 
         assertFalse(gate.status().parityPassed());
@@ -160,7 +154,6 @@ class MasterDataCutoverStatusServiceTests {
         var migration = mock(MasterDataMigrationService.class);
         var parityService = mock(MasterDataParityService.class);
         var mirror = mock(CanonicalMasterDataMirrorService.class);
-        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
         var scope = mock(ProductCanonicalScopeResolver.class);
         var backfill = mock(ProductMasterDataReferenceBackfillService.class);
         var referenceParity = mock(ProductMasterDataReferenceParityService.class);
@@ -176,7 +169,6 @@ class MasterDataCutoverStatusServiceTests {
             new MasterDataParityService.ParityReport(true, 12, List.of())
         );
         when(mirror.enabled()).thenReturn(true);
-        when(synchronizer.enabled()).thenReturn(true);
         when(scope.enabled()).thenReturn(true);
         when(backfill.readiness()).thenReturn(
             new ProductMasterDataReferenceBackfillService.ReadinessReport(
@@ -187,7 +179,7 @@ class MasterDataCutoverStatusServiceTests {
             new ProductMasterDataReferenceParityService.ParityReport(true, 12, List.of())
         );
         var gate = new MasterDataCutoverStatusService(
-            migration, parityService, mirror, synchronizer, scope, backfill,
+            migration, parityService, mirror, productShadow, scope, backfill,
             referenceParity, true, true
         );
         assertFalse(gate.status().readinessPassed());
