@@ -1,5 +1,6 @@
 package com.comandos.core.service;
 
+import com.fariamiguel.tenancy.api.TenantId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,14 +13,16 @@ public class ProductCanonicalScopeResolver {
 
     public record Scope(String organizationId, String unitId) {}
 
-    private final MasterDataReferenceService references;
+    private static final TenantId TENANT = TenantId.of("comandos");
+
+    private final CanonicalMasterDataDirectory directory;
     private final boolean enabled;
 
     public ProductCanonicalScopeResolver(
-            MasterDataReferenceService references,
+            CanonicalMasterDataDirectory directory,
             @Value("${comandos.master-data.product-reference-primary-read.enabled:false}")
             boolean enabled) {
-        this.references = references;
+        this.directory = directory;
         this.enabled = enabled;
     }
 
@@ -31,11 +34,10 @@ public class ProductCanonicalScopeResolver {
         if (legacyId == null) {
             throw new IllegalArgumentException("Organization id is required.");
         }
-        return references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                legacyId)
+        return directory.findOrganization(legacyId, TENANT)
+            .map(organization -> organization.id().value())
             .orElseThrow(() -> new IllegalStateException(
-                "Canonical organization reference is missing for legacy id " + legacyId
+                "Canonical organization is missing for legacy id " + legacyId
             ));
     }
 
@@ -43,21 +45,19 @@ public class ProductCanonicalScopeResolver {
         if (legacyId == null) {
             throw new IllegalArgumentException("Person id is required.");
         }
-        return references.resolveCanonicalId(
-                MasterDataReferenceService.PERSON,
-                legacyId)
+        return directory.findPerson(legacyId, TENANT)
+            .map(person -> person.id().value())
             .orElseThrow(() -> new IllegalStateException(
-                "Canonical person reference is missing for legacy id " + legacyId
+                "Canonical person is missing for legacy id " + legacyId
             ));
     }
 
     public String unit(Long legacyId) {
         if (legacyId == null) return null;
-        return references.resolveCanonicalId(
-                MasterDataReferenceService.UNIT,
-                legacyId)
+        return directory.findUnit(legacyId, TENANT)
+            .map(unit -> unit.id().value())
             .orElseThrow(() -> new IllegalStateException(
-                "Canonical organizational unit reference is missing for legacy id " + legacyId
+                "Canonical organizational unit is missing for legacy id " + legacyId
             ));
     }
 
