@@ -24,7 +24,7 @@ public class CoreService {
     private final List<UnitScopeGuard> unitScopeGuards;
     private final AccessPolicy access;
     private final AuditService audit;
-    private final CanonicalMasterDataMirrorService masterDataMirror;
+    private final CanonicalMasterDataWritePort canonicalMasterData;
     private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder(12);
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -33,12 +33,12 @@ public class CoreService {
             List<UnitScopeGuard> unitScopeGuards,
             AccessPolicy access,
             AuditService audit,
-            CanonicalMasterDataMirrorService masterDataMirror) {
+            CanonicalMasterDataWritePort canonicalMasterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.unitScopeGuards = unitScopeGuards;
-        this.masterDataMirror = masterDataMirror;
+        this.canonicalMasterData = canonicalMasterData;
     }
 
 
@@ -366,7 +366,7 @@ public class CoreService {
         validate(entity);
         if (id == null) em.persist(entity);
         em.flush();
-        masterDataMirror.mirror(entity);
+        canonicalMasterData.synchronize(entity);
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
@@ -734,7 +734,7 @@ public class CoreService {
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
-        masterDataMirror.delete(entity);
+        canonicalMasterData.delete(entity);
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 
