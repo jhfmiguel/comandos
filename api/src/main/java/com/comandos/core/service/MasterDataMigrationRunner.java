@@ -125,8 +125,11 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             requireProductReferenceReadiness();
         }
 
+        // Product parity is enforced after explicit product backfill, or when
+        // an operator explicitly requests parity / retirement verification.
+        // Legacy-only backfill is allowed to precede product-reference backfill.
         if (productReferenceBackfillOnStartup || parityOnStartup
-                || retirementValidationOnStartup || backfillOnStartup) {
+                || retirementValidationOnStartup) {
             var productParityReport = productReferenceParity.verify();
             System.out.println(
                 "[master-data-migration] product-reference parity consistent="
