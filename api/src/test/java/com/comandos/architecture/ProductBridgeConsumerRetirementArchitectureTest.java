@@ -42,14 +42,16 @@ class ProductBridgeConsumerRetirementArchitectureTest {
     }
 
     @Test
-    void sharedSynchronizationRemainsAvailableToActiveMigrationConsumers() throws IOException {
+    void inventoryRuntimeWritesNoLongerDependOnTemporarySynchronizationBridge() throws IOException {
         String inventory = read("inventory/service/InventoryService.java");
         String synchronizer = read("core/service/ProductMasterDataReferenceSynchronizer.java");
 
-        assertTrue(inventory.contains("masterDataReferences.synchronizeOnWrite("));
-        assertFalse(inventory.contains("masterDataReferences.synchronizeForBackfill("));
-        assertFalse(inventory.contains("masterDataReferences.synchronize("));
-        assertTrue(synchronizer.contains("ProductCanonicalScopeResolver"));
+        assertFalse(inventory.contains("ProductMasterDataReferenceSynchronizer"));
+        assertFalse(inventory.contains("masterDataReferences"));
+        assertTrue(inventory.contains("synchronizeCanonicalProductWrite(entity)"));
+        assertTrue(inventory.contains("canonicalScope.organization("));
+        assertTrue(inventory.contains("canonicalScope.unit("));
+        assertTrue(synchronizer.contains("synchronizeForBackfill("));
     }
 
     private static String read(String relativePath) throws IOException {
