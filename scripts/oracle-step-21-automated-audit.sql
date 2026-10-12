@@ -3,7 +3,6 @@ set linesize 220
 set trimspool on
 set feedback on
 set verify off
-set serveroutput on size unlimited
 whenever sqlerror exit sql.sqlcode
 
 prompt ============================================================
@@ -12,6 +11,7 @@ prompt Target: FREEPDB1 / COMANDOS. No DDL or DML.
 prompt ============================================================
 
 alter session set container = FREEPDB1;
+set serveroutput on size unlimited
 
 column con_name format a20
 select sys_context('USERENV','CON_NAME') as con_name from dual;
