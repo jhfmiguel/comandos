@@ -158,7 +158,7 @@ class AuthorizationApiTests {
         return persist(org);
     }
     private StockLocation location(Organization org, OrganizationalUnit unit) {
-        var location = new StockLocation(); location.organization = org; location.unit = unit; location.name = UUID.randomUUID().toString();
+        var location = new StockLocation(); location.organizationLegacyId = org.id; location.unitLegacyId = unit == null ? null : unit.id; location.name = UUID.randomUUID().toString();
         location.type = "Warehouse"; return persist(location);
     }
     private AssetItem asset(ItemModel model, StockLocation location) {
