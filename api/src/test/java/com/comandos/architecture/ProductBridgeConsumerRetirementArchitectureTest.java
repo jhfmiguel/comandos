@@ -69,6 +69,18 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         assertTrue(adapter.contains("implements CanonicalMasterDataWritePort"));
     }
 
+    @Test
+    void canonicalMasterDataWritesFailClosedAfterCanonicalReadSwitch() throws IOException {
+        String core = read("core/service/CoreService.java");
+        String writer = read("core/service/CanonicalMasterDataWriteService.java");
+        String directory = read("core/service/CanonicalMasterDataDirectory.java");
+
+        assertTrue(core.contains("canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalStored"));
+        assertTrue(core.contains("canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalDeleted"));
+        assertTrue(writer.contains("requirePersistedIdentity(entity)"));
+        assertTrue(directory.contains("validateCanonicalReadConfiguration()"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
