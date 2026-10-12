@@ -84,7 +84,7 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
     }
 
     @Transactional
-    public boolean mirrorForBackfill(CoreEntity entity) {
+    public boolean synchronizeHistoricalBackfill(CoreEntity entity) {
         return mirrorNow(entity);
     }
 
