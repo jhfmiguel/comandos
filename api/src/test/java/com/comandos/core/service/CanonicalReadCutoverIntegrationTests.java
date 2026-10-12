@@ -34,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
     "comandos.master-data.readiness-on-startup=false",
     "comandos.master-data.backfill-on-startup=false",
     "comandos.master-data.parity-on-startup=false",
+    "comandos.master-data.retirement-validation-on-startup=false",
+    "comandos.master-data.product-reference-backfill-on-startup=false",
     "comandos.demo.seed=false"
 })
 @Transactional
