@@ -15,11 +15,14 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         "purchase/service/PurchaseService.java",
         "purchase/service/EquipmentReceivingService.java",
         "transfer/service/TransferService.java",
-        "sales/service/InventorySalesService.java"
+        "sales/service/InventorySalesService.java",
+        "reconciliation/service/InventoryCountService.java",
+        "maintenance/service/MaintenanceService.java",
+        "lifecycle/service/LifecycleService.java"
     );
 
     @Test
-    void canonicalProductConsumersHaveNoUnusedSynchronizationBridgeDependency() throws IOException {
+    void canonicalProductConsumersHaveNoRedundantSynchronizationBridgeDependency() throws IOException {
         for (String relativePath : DIRECT_CANONICAL_CONSUMERS) {
             String source = read(relativePath);
             assertFalse(source.contains("ProductMasterDataReferenceSynchronizer"),
