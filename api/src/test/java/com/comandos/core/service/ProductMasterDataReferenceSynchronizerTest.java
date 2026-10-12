@@ -452,4 +452,47 @@ class ProductMasterDataReferenceSynchronizerTest {
         assertFalse(synchronizer.synchronize(location));
         verifyNoInteractions(references);
     }
+    @Test
+    void clearsReceivingOrganizationWhenLegacyReferenceIsAbsent() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        EquipmentReceiving receiving = new EquipmentReceiving();
+        receiving.receivingOrganizationCanonicalId = "stale-organization";
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertTrue(synchronizer.synchronize(receiving));
+        assertNull(receiving.receivingOrganizationCanonicalId);
+        verifyNoInteractions(references);
+    }
+
+    @Test
+    void stockLocationRequiresOrganizationBeforeSynchronizing() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        StockLocation location = new StockLocation();
+        location.organizationCanonicalId = "previous-organization";
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, true);
+
+        assertThrows(IllegalStateException.class, () -> synchronizer.synchronize(location));
+        assertEquals("previous-organization", location.organizationCanonicalId);
+        verifyNoInteractions(references);
+    }
+
+    @Test
+    void disabledSynchronizationDoesNotOverwriteExistingCanonicalIds() {
+        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        StockLocation location = new StockLocation();
+        location.organizationLegacyId = 10L;
+        location.organizationCanonicalId = "existing-organization";
+
+        ProductMasterDataReferenceSynchronizer synchronizer =
+            new ProductMasterDataReferenceSynchronizer(references, false);
+
+        assertFalse(synchronizer.synchronize(location));
+        assertEquals("existing-organization", location.organizationCanonicalId);
+        verifyNoInteractions(references);
+    }
+
 }
