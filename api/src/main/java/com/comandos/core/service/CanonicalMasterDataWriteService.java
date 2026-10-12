@@ -25,6 +25,8 @@ import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,12 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
     private final PartyDocumentRepository documents;
     private final ProfessionalQualificationRepository qualifications;
     private final boolean enabled;
+    private PartyMasterDataFacade enterprise;
+
+    @Autowired(required = false)
+    public void setEnterprise(PartyMasterDataFacade enterprise) {
+        this.enterprise = enterprise;
+    }
 
     public CanonicalMasterDataWriteService(
             EntityManager entityManager,
@@ -103,20 +111,17 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
     private boolean mirrorNow(CoreEntity entity) {
         if (entity == null) return false;
         if (entity instanceof Person person) {
-            people.save(
-                CanonicalMasterDataMapper.person(person, TENANT)
-            );
+            var canonical = CanonicalMasterDataMapper.person(person, TENANT);
+            if (enterprise != null) enterprise.savePerson(canonical);
+            else people.save(canonical);
             return true;
         }
 
         if (entity instanceof Organization organization) {
-            organizations.save(
-                CanonicalMasterDataMapper.organization(
-                    organization,
-                    TENANT,
-                    CompanyId.of("comandos:organization:" + organization.id)
-                )
-            );
+            var canonical = CanonicalMasterDataMapper.organization(organization, TENANT,
+                CompanyId.of("comandos:organization:" + organization.id));
+            if (enterprise != null) enterprise.saveOrganization(canonical);
+            else organizations.save(canonical);
             return true;
         }
 
@@ -132,23 +137,23 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
         }
 
         if (entity instanceof PersonAddress address) {
-            contacts.save(
-                CanonicalContactMapper.address(address, TENANT)
-            );
+            var canonical = CanonicalContactMapper.address(address, TENANT);
+            if (enterprise != null) enterprise.saveAddress(canonical);
+            else contacts.save(canonical);
             return true;
         }
 
         if (entity instanceof PersonPhone phone) {
-            contacts.save(
-                CanonicalContactMapper.phone(phone, TENANT)
-            );
+            var canonical = CanonicalContactMapper.phone(phone, TENANT);
+            if (enterprise != null) enterprise.savePhone(canonical);
+            else contacts.save(canonical);
             return true;
         }
 
         if (entity instanceof PersonEmail email) {
-            contacts.save(
-                CanonicalContactMapper.email(email, TENANT)
-            );
+            var canonical = CanonicalContactMapper.email(email, TENANT);
+            if (enterprise != null) enterprise.saveEmail(canonical);
+            else contacts.save(canonical);
             return true;
         }
 
@@ -162,19 +167,16 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
         }
 
         if (entity instanceof PersonCredential credential) {
-            documents.save(
-                CanonicalPartyDocumentMapper.credential(credential, TENANT)
-            );
+            var canonical = CanonicalPartyDocumentMapper.credential(credential, TENANT);
+            if (enterprise != null) enterprise.saveDocument(canonical);
+            else documents.save(canonical);
             return true;
         }
 
         if (entity instanceof PersonQualification qualification) {
-            qualifications.save(
-                CanonicalProfessionalQualificationMapper.qualification(
-                    qualification,
-                    TENANT
-                )
-            );
+            var canonical = CanonicalProfessionalQualificationMapper.qualification(qualification, TENANT);
+            if (enterprise != null) enterprise.saveQualification(canonical);
+            else qualifications.save(canonical);
             return true;
         }
 
@@ -293,7 +295,8 @@ public class CanonicalMasterDataWriteService implements CanonicalMasterDataWrite
                     details
                 )
                 .map(role -> {
-                    roles.save(role);
+                    if (enterprise != null) enterprise.assignRole(role);
+                    else roles.save(role);
                     return true;
                 })
                 .orElse(false);
