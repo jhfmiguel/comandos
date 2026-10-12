@@ -3,10 +3,10 @@
   "step": "21.13-21.15",
   "blocker": {
     "step": "21.12",
-    "reason": "Runtime retirement proof still cannot execute because canonical Faria Miguel Maven artifacts are unavailable to COMANDOS and FARIA_MIGUEL_READ_TOKEN is not configured. Latest observed run 37636516313 initialized Oracle, checkout and Java successfully, then failed in Resolve canonical Faria Miguel Maven artifacts before COMANDOS startup.",
+    "reason": "Step 21.12 retirement gate has not been observed passing on an Oracle run. The workflow now separates backfill from read-only retirement validation and supports public checkout of the canonical foundation; artifact availability and real data parity still require runtime evidence.",
     "requiredGate": "legacy persistence retirement gate=PASS",
-    "latestRun": "37636516313",
-    "latestJob": "112844057045"
+    "latestRun": "not-yet-verified-after-workflow-update",
+    "latestJob": "not-yet-verified-after-workflow-update"
   },
   "legacyIdRetirement": {
     "step": "21.13",
@@ -385,7 +385,10 @@
       "AccessPolicy security-scope compatibility is frozen to four enumerated legacy path occurrences.",
       "CoreAccessDemoSeeder compatibility surface is frozen to eight enumerated Master Data references.",
       "CustodyResponsibility bridge is frozen to two approved legacy identifiers with mandatory canonical person reference and canonical validation directories.",
-      "CompliancePolicy Organization/OrganizationalUnit JPA associations retired pre-cutover; policy scope is scalar and canonical validation remains in ComplianceService."
+      "CompliancePolicy Organization/OrganizationalUnit JPA associations retired pre-cutover; policy scope is scalar and canonical validation remains in ComplianceService.",
+      "Legacy master-data crosswalk service and JPA registry entity retired from Java runtime; canonical master-data and product parity now use canonical repositories/directory instead of ERP_MASTER_DATA_REFERENCE.",
+      "CanonicalMasterDataMirrorService no longer performs registry upserts/deactivation; canonical delete handlers for all master-data entity types remain preserved.",
+      "Retirement startup validation cannot share an execution with mutating backfill; Oracle CI uses separate backfill and retirement phases."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
