@@ -44,14 +44,14 @@ class ProductBridgeConsumerRetirementArchitectureTest {
     @Test
     void inventoryRuntimeWritesNoLongerDependOnTemporarySynchronizationBridge() throws IOException {
         String inventory = read("inventory/service/InventoryService.java");
-        String synchronizer = read("core/service/ProductMasterDataReferenceSynchronizer.java");
+        String backfill = read("core/service/ProductMasterDataReferenceBackfillService.java");
 
         assertFalse(inventory.contains("ProductMasterDataReferenceSynchronizer"));
         assertFalse(inventory.contains("masterDataReferences"));
         assertTrue(inventory.contains("synchronizeCanonicalProductWrite(entity)"));
         assertTrue(inventory.contains("canonicalScope.organization("));
         assertTrue(inventory.contains("canonicalScope.unit("));
-        assertTrue(synchronizer.contains("synchronizeForBackfill("));
+        assertTrue(backfill.contains("synchronizeForBackfill("));
     }
 
     @Test
