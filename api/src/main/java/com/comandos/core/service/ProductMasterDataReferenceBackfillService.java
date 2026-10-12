@@ -220,7 +220,9 @@ public class ProductMasterDataReferenceBackfillService {
 
         ReadinessReport readiness = readiness();
         if (!readiness.ready() || readiness.incomplete() != 0
-                || !readiness.incompleteByEntity().isEmpty()) {
+                || readiness.incompleteByEntity() == null
+                || !readiness.incompleteByEntity().isEmpty()
+                || readiness.checked() != scanned) {
             throw new IllegalStateException(
                 "Canonical product-reference backfill blocked: checked=" + readiness.checked()
                     + ", incomplete=" + readiness.incomplete()
