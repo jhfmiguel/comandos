@@ -18,7 +18,14 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         "sales/service/InventorySalesService.java",
         "reconciliation/service/InventoryCountService.java",
         "maintenance/service/MaintenanceService.java",
-        "lifecycle/service/LifecycleService.java"
+        "lifecycle/service/LifecycleService.java",
+        "consumption/service/AmmunitionConsumptionService.java",
+        "consumption/service/ConsumableUsageService.java",
+        "custody/service/CustodyService.java",
+        "disposal/service/DisposalService.java",
+        "donation/service/DonationService.java",
+        "reservation/service/ReservationService.java",
+        "workflow/service/WorkflowService.java"
     );
 
     @Test
