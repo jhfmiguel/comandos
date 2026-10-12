@@ -191,6 +191,46 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void evidenceIncludesAllNineFlagsAndParityCounts() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        var evidence = gate.evidence();
+        assertTrue(evidence.retirementAllowed());
+        org.junit.jupiter.api.Assertions.assertEquals(9, evidence.gates().size());
+        assertTrue(evidence.gates().values().stream().allMatch(Boolean::booleanValue));
+        assertTrue(evidence.blockers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(12L, evidence.canonicalParityChecked());
+        org.junit.jupiter.api.Assertions.assertEquals(12L, evidence.productParityChecked());
+        org.junit.jupiter.api.Assertions.assertEquals(12L, evidence.productReferencesChecked());
+        org.junit.jupiter.api.Assertions.assertEquals(0, evidence.canonicalParityMismatches());
+        org.junit.jupiter.api.Assertions.assertEquals(0, evidence.productParityMismatches());
+        org.junit.jupiter.api.Assertions.assertEquals(0L, evidence.productReferencesIncomplete());
+    }
+
+    @Test
+    void evidenceReportsAllUnmetGatesWithTheirExplicitBlockers() {
+        var gate = createGate(false, false, false, false, false, false, false, false, false);
+        var evidence = gate.evidence();
+        assertFalse(evidence.retirementAllowed());
+        org.junit.jupiter.api.Assertions.assertEquals(9, evidence.gates().size());
+        assertTrue(evidence.gates().values().stream().noneMatch(Boolean::booleanValue));
+        org.junit.jupiter.api.Assertions.assertEquals(9, evidence.blockers().size());
+        org.junit.jupiter.api.Assertions.assertEquals(1L, evidence.productReferencesIncomplete());
+        org.junit.jupiter.api.Assertions.assertEquals(Map.of("StockLocation", 1L),
+            evidence.productReferencesIncompleteByEntity());
+    }
+
+    @Test
+    void evidenceIsImmutableAndFailsClosedOnMissingStatus() {
+        var gate = createGate(true, true, true, true, true, true, true, true, true);
+        var evidence = gate.evidence();
+        assertThrows(UnsupportedOperationException.class,
+            () -> evidence.gates().put("canonicalRead", false));
+        assertThrows(UnsupportedOperationException.class,
+            () -> evidence.blockers().add("FAKE"));
+        assertThrows(IllegalArgumentException.class, () -> gate.evidence(null));
+    }
+
+    @Test
     void blocksRetirementWhenAnyRequiredConditionIsFalse() {
         for (int failing = 0; failing < 9; failing++) {
             boolean[] values = {true, true, true, true, true, true, true, true, true};
