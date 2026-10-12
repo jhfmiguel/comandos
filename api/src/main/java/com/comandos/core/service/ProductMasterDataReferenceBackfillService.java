@@ -219,10 +219,12 @@ public class ProductMasterDataReferenceBackfillService {
         em.flush();
 
         ReadinessReport readiness = readiness();
-        if (!readiness.ready()) {
+        if (!readiness.ready() || readiness.incomplete() != 0
+                || !readiness.incompleteByEntity().isEmpty()) {
             throw new IllegalStateException(
-                "Canonical product-reference backfill completed with incomplete shadows: "
-                    + readiness.incompleteByEntity()
+                "Canonical product-reference backfill blocked: checked=" + readiness.checked()
+                    + ", incomplete=" + readiness.incomplete()
+                    + ", missing=" + readiness.incompleteByEntity()
             );
         }
 
