@@ -196,13 +196,13 @@ public class MasterDataMigrationService {
         long roles = 0;
         long skippedProductRoles = 0;
         for (PersonRoleAssignment assignment : all(PersonRoleAssignment.class)) {
-            if (mirror.mirror(assignment)) roles++;
+            if (mirror.mirrorForBackfill(assignment)) roles++;
             else skippedProductRoles++;
         }
 
         long roleDataRefreshes = 0;
         for (RoleData data : all(RoleData.class)) {
-            if (mirror.mirror(data)) roleDataRefreshes++;
+            if (mirror.mirrorForBackfill(data)) roleDataRefreshes++;
         }
 
         long credentials = mirrorAll(PersonCredential.class);
@@ -231,7 +231,7 @@ public class MasterDataMigrationService {
             .getResultList();
 
         for (PersonAddress entity : rows) {
-            if (mirror.mirror(entity)) mirrored++;
+            if (mirror.mirrorForBackfill(entity)) mirrored++;
         }
         return mirrored;
     }
@@ -240,7 +240,7 @@ public class MasterDataMigrationService {
             Class<T> type) {
         long mirrored = 0;
         for (T entity : all(type)) {
-            if (mirror.mirror(entity)) mirrored++;
+            if (mirror.mirrorForBackfill(entity)) mirrored++;
         }
         return mirrored;
     }
