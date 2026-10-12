@@ -367,14 +367,29 @@ public class CoreService {
         }
         access.requireEntity("core/" + resource, action, entity);
         validate(entity);
+        // Existing records have a stable business identifier already. When
+        // canonical mode is active, persist the authoritative representation
+        // before flushing any pending legacy changes. Both stores participate
+        // in the same Spring transaction; a failure rolls the operation back.
+        boolean canonicalRequired = canonicalReadEnabled && isCanonicalMasterData(entity);
+        if (canonicalRequired && id != null) {
+            requireCanonicalWrite(entity);
+        }
         if (id == null) em.persist(entity);
         em.flush();
-        boolean canonicalStored = canonicalMasterData.synchronize(entity);
-        if (canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalStored) {
-            throw new IllegalStateException(
-                "Canonical master-data persistence is required for "
-                    + entity.getClass().getSimpleName() + " id=" + entity.id
-            );
+
+        // New legacy rows acquire their compatible numeric identifier from
+        // Oracle. Until IDs are allocated in the canonical layer, creation
+        // cannot be canonical-first and must remain a transactional cutover
+        // operation, not an independent legacy-only write.
+        if (id == null || !canonicalRequired) {
+            boolean canonicalStored = canonicalMasterData.synchronize(entity);
+            if (canonicalRequired && !canonicalStored) {
+                throw new IllegalStateException(
+                    "Canonical master-data persistence is required for "
+                        + entity.getClass().getSimpleName() + " id=" + entity.id
+                );
+            }
         }
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
@@ -751,6 +766,15 @@ public class CoreService {
             );
         }
         audit.record("core/" + resource, id, "DELETE", before, null);
+    }
+
+    private void requireCanonicalWrite(CoreEntity entity) {
+        if (!canonicalMasterData.synchronize(entity)) {
+            throw new IllegalStateException(
+                "Canonical master-data write failed for "
+                    + entity.getClass().getSimpleName() + " id=" + entity.id
+            );
+        }
     }
 
     private static boolean isCanonicalMasterData(CoreEntity entity) {
