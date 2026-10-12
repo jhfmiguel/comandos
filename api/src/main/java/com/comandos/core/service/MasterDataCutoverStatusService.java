@@ -145,6 +145,34 @@ public class MasterDataCutoverStatusService {
         return List.copyOf(blockers);
     }
 
+    public record RetirementAssessment(
+        boolean ready,
+        List<String> blockers,
+        long legacyReadinessIssues,
+        long masterDataParityMismatches,
+        long productReferencesChecked,
+        long productReferencesIncomplete,
+        long productReferenceParityMismatches
+    ) {}
+
+    /**
+     * Snapshot of the independent migration checks. Incomplete or unavailable
+     * evidence must never silently authorize retiring legacy persistence.
+     */
+    public RetirementAssessment assessment() {
+        CutoverStatus snapshot = status();
+        return new RetirementAssessment(
+            snapshot.readyToRetireLegacyPersistence(),
+            retirementBlockers(snapshot),
+            snapshot.readiness().issues() == null ? -1 : snapshot.readiness().issues().size(),
+            snapshot.parity().mismatches() == null ? -1 : snapshot.parity().mismatches().size(),
+            snapshot.productReferences().checked(),
+            snapshot.productReferences().incomplete(),
+            snapshot.productReferenceParity().mismatches() == null
+                ? -1 : snapshot.productReferenceParity().mismatches().size()
+        );
+    }
+
     public CutoverStatus requireReadyToRetireLegacyPersistence() {
         CutoverStatus status = status();
 
