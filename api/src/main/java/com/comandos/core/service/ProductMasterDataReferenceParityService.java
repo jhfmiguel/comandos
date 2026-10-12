@@ -263,6 +263,20 @@ public class ProductMasterDataReferenceParityService {
 
         // Canonical IDs are the authoritative expected values. An absent
         // shadow value remains a mismatch even when the canonical entity exists.
+        if (!canonicalScope.persistedCanonicalExists(ref.resourceType(), legacyId)) {
+            mismatches.add(new Mismatch(
+                entity.getClass().getSimpleName(),
+                entity.id,
+                ref.canonicalField(),
+                ref.resourceType(),
+                legacyId,
+                expectedId,
+                actual,
+                "Canonical reference resolves through the directory but its persisted canonical record is missing."
+            ));
+            return;
+        }
+
         if (!expectedId.equals(actual)) {
             mismatches.add(new Mismatch(
                 entity.getClass().getSimpleName(),
