@@ -63,6 +63,15 @@ public class ProductMasterDataReferenceSynchronizer {
         return synchronizeNow(entity);
     }
 
+    /**
+     * Synchronizes product write references when shadow write or canonical
+     * primary read is enabled. Backfill remains a separate explicit operation.
+     */
+    public boolean synchronizeOnWrite(CoreEntity entity, boolean canonicalPrimaryReadEnabled) {
+        if (!enabled && !canonicalPrimaryReadEnabled) return false;
+        return synchronizeNow(entity);
+    }
+
     private boolean synchronizeNow(CoreEntity entity) {
         if (entity instanceof StockLocation location) {
             synchronizeLocation(location);
