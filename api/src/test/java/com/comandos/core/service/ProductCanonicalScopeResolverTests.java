@@ -43,6 +43,30 @@ class ProductCanonicalScopeResolverTests {
     }
 
     @Test
+    void persistedParityDoesNotAcceptLegacyDirectoryProjections() {
+        var directory = mock(CanonicalMasterDataDirectory.class);
+        var resolver = new ProductCanonicalScopeResolver(directory, false);
+        when(directory.containsPersistedCanonicalOrganization(7L, TENANT)).thenReturn(false);
+        when(directory.containsPersistedCanonicalPerson(5L, TENANT)).thenReturn(true);
+        when(directory.containsPersistedCanonicalUnit(9L, TENANT)).thenReturn(true);
+
+        org.junit.jupiter.api.Assertions.assertFalse(
+            resolver.persistedCanonicalExists("ORGANIZATION", 7L)
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(
+            resolver.persistedCanonicalExists("PERSON", 5L)
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(
+            resolver.persistedCanonicalExists("UNIT", 9L)
+        );
+        org.junit.jupiter.api.Assertions.assertFalse(
+            resolver.persistedCanonicalExists("UNIT", null)
+        );
+        assertThrows(IllegalArgumentException.class,
+            () -> resolver.persistedCanonicalExists("UNKNOWN", 1L));
+    }
+
+    @Test
     void failsClosedIfCanonicalRecordDoesNotExist() {
         var directory = mock(CanonicalMasterDataDirectory.class);
         when(directory.findOrganization(7L, TENANT)).thenReturn(Optional.empty());
