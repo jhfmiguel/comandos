@@ -81,13 +81,10 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             }
         }
 
-        if (productReferenceBackfillOnStartup || retirementValidationOnStartup) {
-            var productReferenceReadiness = productReferenceBackfill.readiness();
-            System.out.println(
-                "[master-data-migration] product-reference-ready="
-                    + productReferenceReadiness.ready()
-                    + " incomplete=" + productReferenceReadiness.incompleteByEntity()
-            );
+        // A retirement check must not start with incomplete product references.
+        // Backfill can legitimately be requested to repair that state.
+        if (retirementValidationOnStartup && !productReferenceBackfillOnStartup) {
+            requireProductReferenceReadiness();
         }
 
         if (backfillOnStartup) {
@@ -119,6 +116,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                     + ", details="
                     + productReport.synchronizedByEntity()
             );
+            requireProductReferenceReadiness();
         }
 
         if (productReferenceBackfillOnStartup || parityOnStartup
@@ -147,6 +145,22 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
             System.out.println(
                 "[master-data-migration] legacy persistence retirement gate=PASS"
+            );
+        }
+    }
+
+    private void requireProductReferenceReadiness() {
+        var readiness = productReferenceBackfill.readiness();
+        System.out.println(
+            "[master-data-migration] product-reference-ready="
+                + readiness.ready() + " incomplete=" + readiness.incompleteByEntity()
+        );
+        if (!readiness.ready() || readiness.incomplete() != 0
+                || readiness.incompleteByEntity() == null
+                || readiness.incompleteByEntity().values().stream()
+                    .anyMatch(count -> count == null || count != 0)) {
+            throw new IllegalStateException(
+                "Product canonical references remain incomplete: " + readiness
             );
         }
     }
