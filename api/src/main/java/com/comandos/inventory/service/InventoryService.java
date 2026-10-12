@@ -599,12 +599,6 @@ public class InventoryService {
                 if (legacyId == null && field.required()) {
                     bad(field.label() + " is required.");
                 }
-                if (entity instanceof Recall recall) {
-            result.put("organizationCanonicalId", recall.organizationCanonicalId);
-            result.put("unitCanonicalId", recall.unitCanonicalId);
-            result.put("organizationId", recall.organizationLegacyId);
-            result.put("unitId", recall.unitLegacyId);
-        }
         if (entity instanceof CertificationRecord certification) {
                     if ("organizationId".equals(field.name())) {
                         certification.organizationLegacyId = legacyId;
