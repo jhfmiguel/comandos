@@ -2,7 +2,6 @@ package com.comandos.disposal.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.disposal.dto.DisposalContract.*;
@@ -31,19 +30,16 @@ public class DisposalService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public DisposalService(EntityManager em, AccessPolicy access, AuditService audit,
-            ProductMasterDataReferenceSynchronizer masterDataReferences,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
         this.access = access;
         this.audit = audit;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
     }
