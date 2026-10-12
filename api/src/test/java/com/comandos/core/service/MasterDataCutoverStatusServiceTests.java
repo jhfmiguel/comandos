@@ -53,6 +53,44 @@ class MasterDataCutoverStatusServiceTests {
     }
 
     @Test
+    void rejectsInconsistentReportsEvenWhenTheirSummaryFlagsClaimSuccess() {
+        var migration = mock(MasterDataMigrationService.class);
+        var parity = mock(MasterDataParityService.class);
+        var mirror = mock(CanonicalMasterDataMirrorService.class);
+        var synchronizer = mock(ProductMasterDataReferenceSynchronizer.class);
+        var scope = mock(ProductCanonicalScopeResolver.class);
+        var backfill = mock(ProductMasterDataReferenceBackfillService.class);
+        var productParity = mock(ProductMasterDataReferenceParityService.class);
+
+        when(migration.readiness()).thenReturn(
+            new MasterDataMigrationService.ReadinessReport(true, List.of())
+        );
+        when(parity.verify()).thenReturn(
+            new MasterDataParityService.ParityReport(true, 12, List.of(
+                new MasterDataParityService.ParityMismatch("person", "1", "canonical-1", "mismatch")
+            ))
+        );
+        when(mirror.enabled()).thenReturn(true);
+        when(synchronizer.enabled()).thenReturn(true);
+        when(scope.enabled()).thenReturn(true);
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(true, 12, 1, Map.of("Purchase", 1L))
+        );
+        when(productParity.verify()).thenReturn(
+            new ProductMasterDataReferenceParityService.ParityReport(true, 12, List.of())
+        );
+
+        var gate = new MasterDataCutoverStatusService(
+            migration, parity, mirror, synchronizer, scope, backfill, productParity, true, true
+        );
+
+        assertFalse(gate.status().parityPassed());
+        assertFalse(gate.status().productReferencesReady());
+        assertFalse(gate.status().readyToRetireLegacyPersistence());
+        assertThrows(IllegalStateException.class, gate::requireReadyToRetireLegacyPersistence);
+    }
+
+    @Test
     void passesWhenAllNineConditionsAreTrue() {
         var gate = createGate(true, true, true, true, true, true, true, true, true);
         assertTrue(gate.requireReadyToRetireLegacyPersistence().readyToRetireLegacyPersistence());
