@@ -14,6 +14,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.comandos.security.service.AccessPolicy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(properties = {
@@ -42,6 +46,7 @@ class CanonicalReadCutoverIntegrationTests {
     @Autowired MasterDataParityService parity;
     @Autowired PersonRepository people;
     @Autowired CanonicalCoreReadService reads;
+    @MockitoBean AccessPolicy access;
 
     @Test
     void readsBusinessFieldsFromCanonicalPersistenceWhenCutoverIsEnabled() {
@@ -78,6 +83,8 @@ class CanonicalReadCutoverIntegrationTests {
         entityManager.clear();
 
         var view = reads.get("people", legacy.id);
+        verify(access).requireAny("core/people", "READ");
+        verify(access).requireEntity(eq("core/people"), eq("READ"), any());
 
         assertThat(view.get("id")).isEqualTo(legacy.id);
         assertThat(view.get("fullName")).isEqualTo("Nome Canonico");
