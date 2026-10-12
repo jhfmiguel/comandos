@@ -752,19 +752,23 @@ public class CoreService {
                 );
             }
         }
+        // Delete from canonical persistence first while the legacy entity is
+        // still available for deterministic IDs and role/contact mappings.
+        // Any subsequent legacy JPA failure rolls back the transaction.
+        boolean canonicalRequired = canonicalReadEnabled && isCanonicalMasterData(entity);
+        boolean canonicalDeleted = canonicalMasterData.delete(entity);
+        if (canonicalRequired && !canonicalDeleted) {
+            throw new IllegalStateException(
+                "Canonical master-data deletion is required for "
+                    + entity.getClass().getSimpleName() + " id=" + entity.id
+            );
+        }
         if (entity instanceof PersonAddress address) {
             em.lock(address.person, LockModeType.PESSIMISTIC_WRITE);
             address.archived = true;
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
-        boolean canonicalDeleted = canonicalMasterData.delete(entity);
-        if (canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalDeleted) {
-            throw new IllegalStateException(
-                "Canonical master-data deletion is required for "
-                    + entity.getClass().getSimpleName() + " id=" + entity.id
-            );
-        }
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 
