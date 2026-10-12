@@ -54,7 +54,7 @@ class MasterDataMigrationRunnerTests {
     }
 
     @Test
-    void masterDataBackfillAlsoChecksProductParity() {
+    void masterDataBackfillDoesNotPrematurelyCheckProductParity() {
         when(migration.readiness()).thenReturn(
             new MasterDataMigrationService.ReadinessReport(true, java.util.List.of())
         );
@@ -66,13 +66,10 @@ class MasterDataMigrationRunnerTests {
         when(parity.verify()).thenReturn(
             new MasterDataParityService.ParityReport(true, 0, java.util.List.of())
         );
-        when(productParity.verify()).thenReturn(
-            new ProductMasterDataReferenceParityService.ParityReport(false, 1, java.util.List.of())
-        );
-        assertThrows(IllegalStateException.class,
-            () -> runner(false, true, false, false, false)
-                .run(new DefaultApplicationArguments()));
-        verify(productParity).verify();
+        runner(false, true, false, false, false).run(new DefaultApplicationArguments());
+        verify(migration).backfill();
+        verify(parity).verify();
+        verifyNoInteractions(backfill, productParity);
     }
 
     @Test
