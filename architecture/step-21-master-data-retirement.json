@@ -3,7 +3,7 @@
   "step": "21.13-21.15",
   "blocker": {
     "step": "21.12",
-    "reason": "Canonical write-before-legacy ordering is implemented for updates and deletes, but new Master Data creation still allocates its identifier in legacy Oracle and canonical-only primary persistence has not been completed. Oracle cutover proof remains unverified.",
+    "reason": "Source-code extraction is the objective; historical Oracle data need not be preserved. Remaining generic legacy JPA models/CoreService and product operational consumers still need consolidation and tests; do not claim full cutover completed merely from facade delegation.",
     "requiredGate": "legacy persistence retirement gate=PASS",
     "latestRun": "not-yet-verified-after-workflow-update",
     "latestJob": "not-yet-verified-after-workflow-update"
@@ -338,7 +338,7 @@
   },
   "legacyMasterDataCode": {
     "step": "21.15",
-    "status": "local-cleanup-complete-blocked-by-21.12",
+    "status": "partial-code-extraction-in-progress",
     "noRepositoryPackage": true,
     "compatibilityFiles": [
       "api/src/main/java/com/comandos/core/controller/CoreController.java",
@@ -398,7 +398,8 @@
       "MasterDataMigrationConfigurationGuard.java removed; transitional canonical read versus legacy write invariant is enforced by CanonicalMasterDataDirectory initialization instead.",
       "Deleted temporary CanonicalMasterDataMirrorService and migrated runtime CoreService write-port adapter, migration backfill and cutover-status consumers to CanonicalMasterDataWriteService. Historical backfill uses synchronizeHistoricalBackfill, and adapter regression tests were moved to the canonical writer type.",
       "Step 21.12 canonical write hardening: CanonicalMasterDataWriteService refuses writes without stable persisted legacy identifiers; CoreService requires successful canonical save/delete for supported Master Data entities when canonical-read flag is enabled, and failures abort the same transaction.",
-      "Canonical read mode writes updates and deletes to canonical repositories before legacy JPA flush/removal; the single transaction fails closed on canonical error. New records still require legacy-generated numeric identifiers for HTTP and relationship compatibility, so canonical-only create is not yet complete."
+      "Canonical read mode writes updates and deletes to canonical repositories before legacy JPA flush/removal; the single transaction fails closed on canonical error. New records still require legacy-generated numeric identifiers for HTTP and relationship compatibility, so canonical-only create is not yet complete.",
+      "COMANDOS production canonical reads for party snapshots, roles, documents and qualifications now use Faria Miguel PartyMasterDataFacade. CanonicalMasterDataWriteService delegates generic person/organization/contact/role/document/qualification writes and child deletions to that facade when Spring wiring provides it; product-specific organizational unit persistence remains in scope. No historical data migration performed."
     ],
     "remainingCompatibilityConfirmedRequiredUntilCutover": [
       "CoreController/CoreService write compatibility",
