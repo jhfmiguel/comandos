@@ -207,6 +207,9 @@ public class ProductMasterDataReferenceParityService {
             }
         }
 
+        if (checked < 0) {
+            throw new IllegalStateException("Invalid product canonical parity reference count.");
+        }
         return new ParityReport(
             mismatches.isEmpty(),
             checked,
