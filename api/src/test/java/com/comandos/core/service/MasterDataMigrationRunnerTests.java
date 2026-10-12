@@ -43,6 +43,41 @@ class MasterDataMigrationRunnerTests {
     }
 
     @Test
+    void productBackfillRejectsIncompleteReferencesBeforeParity() {
+        when(backfill.backfill()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.BackfillReport(
+                2, 1, java.util.Map.of("Purchase", 1L)
+            )
+        );
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(
+                false, 2, 1, java.util.Map.of("Purchase", 1L)
+            )
+        );
+        assertThrows(IllegalStateException.class,
+            () -> runner(false, false, false, true, false)
+                .run(new DefaultApplicationArguments()));
+        verifyNoInteractions(productParity);
+    }
+
+    @Test
+    void retirementRejectsIncompleteProductReferencesWithoutRunningBackfill() {
+        when(migration.readiness()).thenReturn(
+            new MasterDataMigrationService.ReadinessReport(true, java.util.List.of())
+        );
+        when(backfill.readiness()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.ReadinessReport(
+                false, 2, 1, java.util.Map.of("Custody", 1L)
+            )
+        );
+        assertThrows(IllegalStateException.class,
+            () -> runner(false, false, false, false, true)
+                .run(new DefaultApplicationArguments()));
+        verify(backfill, never()).backfill();
+        verifyNoInteractions(productParity);
+    }
+
+    @Test
     void explicitProductParityFailsClosedWhenDiscrepanciesExist() {
         when(backfill.readiness()).thenReturn(
             new ProductMasterDataReferenceBackfillService.ReadinessReport(
