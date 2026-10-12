@@ -50,7 +50,6 @@ public class CanonicalMasterDataMirrorService {
     private final PartyRoleRepository roles;
     private final PartyDocumentRepository documents;
     private final ProfessionalQualificationRepository qualifications;
-    private final MasterDataReferenceService references;
     private final boolean enabled;
 
     public CanonicalMasterDataMirrorService(
@@ -62,7 +61,6 @@ public class CanonicalMasterDataMirrorService {
             PartyRoleRepository roles,
             PartyDocumentRepository documents,
             ProfessionalQualificationRepository qualifications,
-            MasterDataReferenceService references,
             @Value("${comandos.master-data.shadow-write.enabled:false}") boolean enabled) {
         this.entityManager = entityManager;
         this.people = people;
@@ -72,7 +70,6 @@ public class CanonicalMasterDataMirrorService {
         this.roles = roles;
         this.documents = documents;
         this.qualifications = qualifications;
-        this.references = references;
         this.enabled = enabled;
     }
 
@@ -97,11 +94,6 @@ public class CanonicalMasterDataMirrorService {
             var canonical = people.save(
                 CanonicalMasterDataMapper.person(person, TENANT)
             );
-            track(
-                MasterDataReferenceService.PERSON,
-                person.id,
-                canonical.id().value()
-            );
             return true;
         }
 
@@ -112,11 +104,6 @@ public class CanonicalMasterDataMirrorService {
                     TENANT,
                     CompanyId.of("comandos:organization:" + organization.id)
                 )
-            );
-            track(
-                MasterDataReferenceService.ORGANIZATION,
-                organization.id,
-                canonical.id().value()
             );
             return true;
         }
@@ -129,22 +116,12 @@ public class CanonicalMasterDataMirrorService {
                     CompanyId.of("comandos:organization:" + unit.organization.id)
                 )
             );
-            track(
-                MasterDataReferenceService.UNIT,
-                unit.id,
-                canonical.id().value()
-            );
             return true;
         }
 
         if (entity instanceof PersonAddress address) {
             var canonical = contacts.save(
                 CanonicalContactMapper.address(address, TENANT)
-            );
-            track(
-                MasterDataReferenceService.ADDRESS,
-                address.id,
-                canonical.id().value()
             );
             return true;
         }
@@ -153,22 +130,12 @@ public class CanonicalMasterDataMirrorService {
             var canonical = contacts.save(
                 CanonicalContactMapper.phone(phone, TENANT)
             );
-            track(
-                MasterDataReferenceService.PHONE,
-                phone.id,
-                canonical.id().value()
-            );
             return true;
         }
 
         if (entity instanceof PersonEmail email) {
             var canonical = contacts.save(
                 CanonicalContactMapper.email(email, TENANT)
-            );
-            track(
-                MasterDataReferenceService.EMAIL,
-                email.id,
-                canonical.id().value()
             );
             return true;
         }
@@ -186,11 +153,6 @@ public class CanonicalMasterDataMirrorService {
             var canonical = documents.save(
                 CanonicalPartyDocumentMapper.credential(credential, TENANT)
             );
-            track(
-                MasterDataReferenceService.CREDENTIAL,
-                credential.id,
-                canonical.id().value()
-            );
             return true;
         }
 
@@ -200,11 +162,6 @@ public class CanonicalMasterDataMirrorService {
                     qualification,
                     TENANT
                 )
-            );
-            track(
-                MasterDataReferenceService.QUALIFICATION,
-                qualification.id,
-                canonical.id().value()
             );
             return true;
         }
@@ -221,69 +178,6 @@ public class CanonicalMasterDataMirrorService {
             people.delete(
                 TENANT,
                 BusinessId.of("comandos:person:" + person.id)
-            );
-            deactivate(MasterDataReferenceService.PERSON, person.id);
-            return true;
-        }
-
-        if (entity instanceof Organization organization) {
-            organizations.delete(
-                TENANT,
-                BusinessId.of("comandos:organization:" + organization.id)
-            );
-            deactivate(MasterDataReferenceService.ORGANIZATION, organization.id);
-            return true;
-        }
-
-        if (entity instanceof OrganizationalUnit unit) {
-            units.delete(
-                TENANT,
-                OrganizationalUnitId.of("comandos:unit:" + unit.id)
-            );
-            deactivate(MasterDataReferenceService.UNIT, unit.id);
-            return true;
-        }
-
-        if (entity instanceof PersonAddress address) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-address:" + address.id)
-            );
-            deactivate(MasterDataReferenceService.ADDRESS, address.id);
-            return true;
-        }
-
-        if (entity instanceof PersonPhone phone) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-phone:" + phone.id)
-            );
-            deactivate(MasterDataReferenceService.PHONE, phone.id);
-            return true;
-        }
-
-        if (entity instanceof PersonEmail email) {
-            contacts.deletePartyContact(
-                TENANT,
-                BusinessId.of("comandos:person-email:" + email.id)
-            );
-            deactivate(MasterDataReferenceService.EMAIL, email.id);
-            return true;
-        }
-
-        if (entity instanceof PersonRoleAssignment assignment) {
-            if (CanonicalPartyRoleMapper.roleType(assignment.role).isEmpty()) {
-                return false;
-            }
-            roles.delete(
-                TENANT,
-                BusinessId.of(
-                    "comandos:person-role-assignment:" + assignment.id
-                )
-            );
-            deactivate(
-                MasterDataReferenceService.PARTY_ROLE,
-                assignment.id
             );
             return true;
         }
@@ -303,18 +197,6 @@ public class CanonicalMasterDataMirrorService {
                     "comandos:person-credential:" + credential.id
                 )
             );
-            deactivate(MasterDataReferenceService.CREDENTIAL, credential.id);
-            return true;
-        }
-
-        if (entity instanceof PersonQualification qualification) {
-            qualifications.delete(
-                TENANT,
-                BusinessId.of(
-                    "comandos:person-qualification:" + qualification.id
-                )
-            );
-            deactivate(MasterDataReferenceService.QUALIFICATION, qualification.id);
             return true;
         }
 
@@ -335,40 +217,9 @@ public class CanonicalMasterDataMirrorService {
                 )
                 .map(role -> {
                     var canonical = roles.save(role);
-                    track(
-                        MasterDataReferenceService.PARTY_ROLE,
-                        assignment.id,
-                        canonical.id().value()
-                    );
                     return true;
                 })
                 .orElse(false);
-    }
-
-    private void track(
-            String resourceType,
-            Long legacyId,
-            String canonicalId) {
-        if (legacyId == null || legacyId <= 0) {
-            throw new IllegalStateException(
-                "Legacy master-data entity must be persisted before crosswalk tracking."
-            );
-        }
-        references.upsert(
-            resourceType,
-            legacyId,
-            canonicalId,
-            "Synchronized by canonical master-data mirror"
-        );
-    }
-
-    private void deactivate(String resourceType, Long legacyId) {
-        if (legacyId == null || legacyId <= 0) return;
-        references.deactivate(
-            resourceType,
-            legacyId,
-            "Deactivated by legacy master-data deletion"
-        );
     }
 
     private Map<String, String> roleData(Long assignmentId) {
