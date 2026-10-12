@@ -90,9 +90,13 @@ public class MasterDataCutoverStatusService {
             && productReferenceReport.incomplete() == 0
             && productReferenceReport.incompleteByEntity() != null
             && productReferenceReport.incompleteByEntity().values().stream().allMatch(count -> count != null && count == 0);
+        // An empty product domain is legitimate; when it is not empty every
+        // persisted product row must contribute its expected reference checks.
         boolean productReferenceParityPassed = productReferenceParityReport.consistent()
             && productReferenceParityReport.mismatches() != null
-            && productReferenceParityReport.mismatches().isEmpty();
+            && productReferenceParityReport.mismatches().isEmpty()
+            && (productReferenceReport.checked() == 0
+                || productReferenceParityReport.checkedReferences() >= productReferenceReport.checked());
 
         return new CutoverStatus(
             readinessPassed,
