@@ -464,51 +464,15 @@ class ProductMasterDataReferenceSynchronizerTest {
     }
 
     @Test
-    void canonicalWriteIsSkippedWhenBothFeatureFlagsAreDisabled() {
-        var resolver = mock(ProductCanonicalScopeResolver.class);
-        var location = new StockLocation();
-        location.organizationLegacyId = 10L;
-        location.organizationCanonicalId = "preserved";
-        var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, false);
-
-        assertFalse(synchronizer.synchronizeOnWrite(location, false));
-        assertEquals("preserved", location.organizationCanonicalId);
-        verifyNoInteractions(resolver);
-    }
-
-    @Test
-    void canonicalWriteRunsWhenPrimaryReadEnabledAndShadowDisabled() {
+    void historicalBackfillBypassesDisabledRuntimeShadowFlag() {
         var resolver = mock(ProductCanonicalScopeResolver.class);
         when(resolver.organization(10L)).thenReturn("canonical-org-10");
         var location = new StockLocation();
         location.organizationLegacyId = 10L;
         var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, false);
 
-        assertTrue(synchronizer.synchronizeOnWrite(location, true));
-        assertEquals("canonical-org-10", location.organizationCanonicalId);
-    }
-
-    @Test
-    void canonicalWriteRunsWhenShadowEnabledAndPrimaryReadDisabled() {
-        var resolver = mock(ProductCanonicalScopeResolver.class);
-        when(resolver.organization(10L)).thenReturn("canonical-org-10");
-        var location = new StockLocation();
-        location.organizationLegacyId = 10L;
-        var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, true);
-
-        assertTrue(synchronizer.synchronizeOnWrite(location, false));
-        assertEquals("canonical-org-10", location.organizationCanonicalId);
-    }
-
-    @Test
-    void canonicalWriteRunsWhenBothFlagsAreEnabled() {
-        var resolver = mock(ProductCanonicalScopeResolver.class);
-        when(resolver.organization(10L)).thenReturn("canonical-org-10");
-        var location = new StockLocation();
-        location.organizationLegacyId = 10L;
-        var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, true);
-
-        assertTrue(synchronizer.synchronizeOnWrite(location, true));
+        assertFalse(synchronizer.synchronize(location));
+        assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("canonical-org-10", location.organizationCanonicalId);
     }
 
