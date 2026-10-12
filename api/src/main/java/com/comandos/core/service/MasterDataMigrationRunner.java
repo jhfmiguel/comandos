@@ -131,7 +131,10 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 + productParityReport.mismatches()
         );
 
-        if (retirementValidationOnStartup || canonicalReadEnabled) {
+        // Canonical reads are allowed during staged migration. Full retirement
+        // validation is explicitly opt-in and must not be triggered solely
+        // by enabling the canonical read feature flag.
+        if (retirementValidationOnStartup) {
             cutoverStatus.requireReadyToRetireLegacyPersistence();
             System.out.println(
                 "[master-data-migration] legacy persistence retirement gate=PASS"
