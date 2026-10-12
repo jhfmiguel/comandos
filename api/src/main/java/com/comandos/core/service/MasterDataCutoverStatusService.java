@@ -81,7 +81,9 @@ public class MasterDataCutoverStatusService {
             && readinessReport.issues() != null
             && readinessReport.issues().stream().noneMatch(issue ->
                 issue == null || "BLOCKER".equalsIgnoreCase(issue.severity()));
-        boolean parityPassed = parityReport.consistent() && parityReport.mismatches() != null
+        boolean parityPassed = parityReport.consistent()
+            && parityReport.checked() >= 0
+            && parityReport.mismatches() != null
             && parityReport.mismatches().isEmpty();
         boolean shadowWriteEnabled = mirror.enabled();
         boolean productReferenceShadowEnabled = productReferences.enabled();
