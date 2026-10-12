@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
@@ -133,6 +135,10 @@ class CanonicalMasterDataMirrorServiceTests {
     }
 
     private CanonicalMasterDataMirrorService service(boolean enabled) {
+        when(people.save(any())).thenAnswer(returnsFirstArg());
+        when(organizations.save(any())).thenAnswer(returnsFirstArg());
+        when(units.save(any())).thenAnswer(returnsFirstArg());
+        when(qualifications.save(any())).thenAnswer(returnsFirstArg());
         return new CanonicalMasterDataMirrorService(
             entityManager,
             people,
