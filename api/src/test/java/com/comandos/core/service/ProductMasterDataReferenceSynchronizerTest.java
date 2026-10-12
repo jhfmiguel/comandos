@@ -30,11 +30,9 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesOrganizationAndUnitForStockLocation() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("org-canonical-10"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 20L))
-            .thenReturn(Optional.of("unit-canonical-20"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(10L)).thenReturn("org-canonical-10");
+        when(canonicalScope.unit(20L)).thenReturn("unit-canonical-20");
 
         Organization organization = new Organization();
         organization.id = 10L;
@@ -46,7 +44,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.unitLegacyId = unit.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
@@ -55,9 +53,8 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void clearsUnitCanonicalIdWhenLocationHasNoUnit() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("org-canonical-10"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(10L)).thenReturn("org-canonical-10");
 
         Organization organization = new Organization();
         organization.id = 10L;
@@ -67,7 +64,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.unitCanonicalId = "stale-unit";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
@@ -76,9 +73,8 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void failsWhenCanonicalOrganizationReferenceIsMissing() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.empty());
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(10L)).thenThrow(new IllegalStateException("Canonical record missing for legacy id 10"));
 
         Organization organization = new Organization();
         organization.id = 10L;
@@ -87,7 +83,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.organizationLegacyId = organization.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         IllegalStateException error = assertThrows(
             IllegalStateException.class,
@@ -99,23 +95,20 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void ignoresIndirectInventoryEntities() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertFalse(synchronizer.synchronize(new StockMovement()));
-        verifyNoInteractions(references);
+        verifyNoInteractions(canonicalScope);
     }
 
     @Test
     void synchronizesPurchaseMasterDataReferences() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("buyer-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 11L))
-            .thenReturn(Optional.of("supplier-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 20L))
-            .thenReturn(Optional.of("origin-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(10L)).thenReturn("buyer-org");
+        when(canonicalScope.organization(11L)).thenReturn("supplier-org");
+        when(canonicalScope.person(20L)).thenReturn("origin-person");
 
         Organization buyer = new Organization();
         buyer.id = 10L;
@@ -130,7 +123,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         purchase.originPersonLegacyId = origin.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(purchase));
         assertEquals("buyer-org", purchase.buyerOrganizationCanonicalId);
@@ -140,15 +133,14 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesOptionalReceivingOrganization() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 30L))
-            .thenReturn(Optional.of("receiving-org"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(30L)).thenReturn("receiving-org");
 
         EquipmentReceiving receiving = new EquipmentReceiving();
         receiving.receivingOrganizationLegacyId = 30L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(receiving));
         assertEquals("receiving-org", receiving.receivingOrganizationCanonicalId);
@@ -156,11 +148,9 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void clearsOptionalPurchaseSupplierReference() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("buyer-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 20L))
-            .thenReturn(Optional.of("origin-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(10L)).thenReturn("buyer-org");
+        when(canonicalScope.person(20L)).thenReturn("origin-person");
 
         Organization buyer = new Organization();
         buyer.id = 10L;
@@ -173,7 +163,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         purchase.supplierOrganizationCanonicalId = "stale-supplier";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(purchase));
         assertNull(purchase.supplierOrganizationCanonicalId);
@@ -181,13 +171,10 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesInventoryTransferScope() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 40L))
-            .thenReturn(Optional.of("transfer-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 41L))
-            .thenReturn(Optional.of("source-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 42L))
-            .thenReturn(Optional.of("destination-unit"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(40L)).thenReturn("transfer-org");
+        when(canonicalScope.unit(41L)).thenReturn("source-unit");
+        when(canonicalScope.unit(42L)).thenReturn("destination-unit");
 
         Organization organization = new Organization();
         organization.id = 40L;
@@ -202,7 +189,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         transfer.destinationUnitLegacyId = destination.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(transfer));
         assertEquals("transfer-org", transfer.organizationCanonicalId);
@@ -212,17 +199,12 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesCustodyReferences() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 50L))
-            .thenReturn(Optional.of("custody-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 51L))
-            .thenReturn(Optional.of("custody-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 52L))
-            .thenReturn(Optional.of("recipient-person"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 53L))
-            .thenReturn(Optional.of("recipient-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 54L))
-            .thenReturn(Optional.of("authorizer-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(50L)).thenReturn("custody-org");
+        when(canonicalScope.unit(51L)).thenReturn("custody-unit");
+        when(canonicalScope.person(52L)).thenReturn("recipient-person");
+        when(canonicalScope.unit(53L)).thenReturn("recipient-unit");
+        when(canonicalScope.person(54L)).thenReturn("authorizer-person");
 
         Organization organization = new Organization(); organization.id = 50L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 51L;
@@ -238,7 +220,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         custody.authorizerLegacyId = authorizer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(custody));
         assertEquals("custody-org", custody.organizationCanonicalId);
@@ -250,15 +232,11 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesDonationReferences() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 60L))
-            .thenReturn(Optional.of("donation-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 61L))
-            .thenReturn(Optional.of("donation-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 62L))
-            .thenReturn(Optional.of("donor-person"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 63L))
-            .thenReturn(Optional.of("donee-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(60L)).thenReturn("donation-org");
+        when(canonicalScope.unit(61L)).thenReturn("donation-unit");
+        when(canonicalScope.person(62L)).thenReturn("donor-person");
+        when(canonicalScope.person(63L)).thenReturn("donee-person");
 
         Organization organization = new Organization(); organization.id = 60L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 61L;
@@ -272,7 +250,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         donation.doneeLegacyId = donee.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(donation));
         assertEquals("donation-org", donation.organizationCanonicalId);
@@ -283,13 +261,10 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesSaleReferences() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 70L))
-            .thenReturn(Optional.of("sale-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 71L))
-            .thenReturn(Optional.of("sale-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 72L))
-            .thenReturn(Optional.of("buyer-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(70L)).thenReturn("sale-org");
+        when(canonicalScope.unit(71L)).thenReturn("sale-unit");
+        when(canonicalScope.person(72L)).thenReturn("buyer-person");
 
         Organization organization = new Organization(); organization.id = 70L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 71L;
@@ -301,7 +276,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         sale.buyerLegacyId = buyer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(sale));
         assertEquals("sale-org", sale.organizationCanonicalId);
@@ -311,17 +286,15 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesOperationalScopeEntities() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 80L))
-            .thenReturn(Optional.of("ops-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 81L))
-            .thenReturn(Optional.of("ops-unit"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(80L)).thenReturn("ops-org");
+        when(canonicalScope.unit(81L)).thenReturn("ops-unit");
 
         Organization organization = new Organization(); organization.id = 80L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 81L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         WorkOrder workOrder = new WorkOrder();
         workOrder.organizationLegacyId = organization.id;
@@ -361,15 +334,11 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void synchronizesRemainingMasterDataReferences() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 90L))
-            .thenReturn(Optional.of("remaining-org"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 91L))
-            .thenReturn(Optional.of("remaining-unit"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 92L))
-            .thenReturn(Optional.of("responsible-person"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 93L))
-            .thenReturn(Optional.of("authorizer-person"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(90L)).thenReturn("remaining-org");
+        when(canonicalScope.unit(91L)).thenReturn("remaining-unit");
+        when(canonicalScope.person(92L)).thenReturn("responsible-person");
+        when(canonicalScope.person(93L)).thenReturn("authorizer-person");
 
         Organization organization = new Organization(); organization.id = 90L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 91L;
@@ -377,7 +346,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 93L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         AmmunitionConsumption ammunition = new AmmunitionConsumption();
         ammunition.organizationLegacyId = organization.id;
@@ -421,9 +390,8 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void backfillBypassesRuntimeShadowFlag() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 100L))
-            .thenReturn(Optional.of("backfill-org"));
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
+        when(canonicalScope.organization(100L)).thenReturn("backfill-org");
 
         Organization organization = new Organization();
         organization.id = 100L;
@@ -432,7 +400,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         planning.organizationLegacyId = organization.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, false);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
 
         assertFalse(synchronizer.synchronize(planning));
         assertNull(planning.organizationCanonicalId);
@@ -443,56 +411,56 @@ class ProductMasterDataReferenceSynchronizerTest {
 
     @Test
     void runtimeFlagCanDisableSynchronization() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, false);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
 
         StockLocation location = new StockLocation();
 
         assertFalse(synchronizer.synchronize(location));
-        verifyNoInteractions(references);
+        verifyNoInteractions(canonicalScope);
     }
     @Test
     void clearsReceivingOrganizationWhenLegacyReferenceIsAbsent() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         EquipmentReceiving receiving = new EquipmentReceiving();
         receiving.receivingOrganizationCanonicalId = "stale-organization";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertTrue(synchronizer.synchronize(receiving));
         assertNull(receiving.receivingOrganizationCanonicalId);
-        verifyNoInteractions(references);
+        verifyNoInteractions(canonicalScope);
     }
 
     @Test
     void stockLocationRequiresOrganizationBeforeSynchronizing() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         StockLocation location = new StockLocation();
         location.organizationCanonicalId = "previous-organization";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
 
         assertThrows(IllegalStateException.class, () -> synchronizer.synchronize(location));
         assertEquals("previous-organization", location.organizationCanonicalId);
-        verifyNoInteractions(references);
+        verifyNoInteractions(canonicalScope);
     }
 
     @Test
     void disabledSynchronizationDoesNotOverwriteExistingCanonicalIds() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
+        ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         StockLocation location = new StockLocation();
         location.organizationLegacyId = 10L;
         location.organizationCanonicalId = "existing-organization";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(references, false);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
 
         assertFalse(synchronizer.synchronize(location));
         assertEquals("existing-organization", location.organizationCanonicalId);
-        verifyNoInteractions(references);
+        verifyNoInteractions(canonicalScope);
     }
 
 }
