@@ -1,6 +1,5 @@
 package com.comandos.purchase.service;
 
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.ItemModel;
@@ -27,7 +26,6 @@ public class EquipmentReceivingService {
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
-    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
     private static final TenantId TENANT = TenantId.of("comandos");
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
@@ -41,7 +39,6 @@ public class EquipmentReceivingService {
         PurchaseRepository purchaseRepository,
         PurchaseItemRepository purchaseItemRepository,
         EntityManager em,
-        ProductMasterDataReferenceSynchronizer masterDataReferences,
         ProductCanonicalScopeResolver canonicalScope,
         CanonicalMasterDataDirectory masterData
     ) {
@@ -52,7 +49,6 @@ public class EquipmentReceivingService {
         this.purchaseRepository = purchaseRepository;
         this.purchaseItemRepository = purchaseItemRepository;
         this.em = em;
-        this.masterDataReferences = masterDataReferences;
         this.canonicalScope = canonicalScope;
         this.masterData = masterData;
     }
