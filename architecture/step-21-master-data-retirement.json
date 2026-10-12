@@ -333,8 +333,7 @@
       "api/src/main/java/com/comandos/core/model/PersonContactType.java",
       "api/src/main/java/com/comandos/core/model/OrganizationNature.java",
       "api/src/main/java/com/comandos/core/model/OrganizationalUnitType.java",
-      "api/src/main/java/com/comandos/core/model/EconomicActivity.java",
-      "api/src/main/java/com/comandos/core/model/MasterDataReference.java"
+      "api/src/main/java/com/comandos/core/model/EconomicActivity.java"
     ]
   },
   "legacyMasterDataCode": {
