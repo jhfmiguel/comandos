@@ -1,5 +1,8 @@
 package com.comandos.core.service;
 
+import com.fariamiguel.enterprise.common.BusinessId;
+import com.fariamiguel.tenancy.api.OrganizationalUnitId;
+import com.fariamiguel.tenancy.api.TenantId;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -8,18 +11,23 @@ import static org.mockito.Mockito.*;
 
 class ProductCanonicalScopeResolverTest {
 
-    @Test
-    void resolvesOrganizationUnitAndPersonFromCrosswalk() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("org-10"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.UNIT, 20L))
-            .thenReturn(Optional.of("unit-20"));
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 30L))
-            .thenReturn(Optional.of("person-30"));
+    private static final TenantId TENANT = TenantId.of("comandos");
 
-        ProductCanonicalScopeResolver resolver =
-            new ProductCanonicalScopeResolver(references, true);
+    @Test
+    void resolvesOrganizationUnitAndPersonFromCanonicalDirectory() {
+        CanonicalMasterDataDirectory directory = mock(CanonicalMasterDataDirectory.class);
+        var organization = mock(com.fariamiguel.enterprise.organization.Organization.class);
+        var unit = mock(com.fariamiguel.tenancy.api.OrganizationalUnit.class);
+        var person = mock(com.fariamiguel.enterprise.people.Person.class);
+
+        when(organization.id()).thenReturn(BusinessId.of("org-10"));
+        when(unit.id()).thenReturn(OrganizationalUnitId.of("unit-20"));
+        when(person.id()).thenReturn(BusinessId.of("person-30"));
+        when(directory.findOrganization(10L, TENANT)).thenReturn(Optional.of(organization));
+        when(directory.findUnit(20L, TENANT)).thenReturn(Optional.of(unit));
+        when(directory.findPerson(30L, TENANT)).thenReturn(Optional.of(person));
+
+        ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
 
         assertTrue(resolver.enabled());
         assertEquals("org-10", resolver.organization(10L));
@@ -33,12 +41,12 @@ class ProductCanonicalScopeResolverTest {
 
     @Test
     void allowsOrganizationOnlyScope() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.ORGANIZATION, 10L))
-            .thenReturn(Optional.of("org-10"));
+        CanonicalMasterDataDirectory directory = mock(CanonicalMasterDataDirectory.class);
+        var organization = mock(com.fariamiguel.enterprise.organization.Organization.class);
+        when(organization.id()).thenReturn(BusinessId.of("org-10"));
+        when(directory.findOrganization(10L, TENANT)).thenReturn(Optional.of(organization));
 
-        ProductCanonicalScopeResolver resolver =
-            new ProductCanonicalScopeResolver(references, true);
+        ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
 
         var scope = resolver.scope(10L, null);
         assertEquals("org-10", scope.organizationId());
@@ -46,13 +54,11 @@ class ProductCanonicalScopeResolverTest {
     }
 
     @Test
-    void failsFastWhenCanonicalCrosswalkIsMissing() {
-        MasterDataReferenceService references = mock(MasterDataReferenceService.class);
-        when(references.resolveCanonicalId(MasterDataReferenceService.PERSON, 30L))
-            .thenReturn(Optional.empty());
+    void failsFastWhenCanonicalRecordIsMissing() {
+        CanonicalMasterDataDirectory directory = mock(CanonicalMasterDataDirectory.class);
+        when(directory.findPerson(30L, TENANT)).thenReturn(Optional.empty());
 
-        ProductCanonicalScopeResolver resolver =
-            new ProductCanonicalScopeResolver(references, true);
+        ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
 
         IllegalStateException error = assertThrows(
             IllegalStateException.class,
