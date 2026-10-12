@@ -115,7 +115,7 @@ public class MasterDataMigrationRunner implements ApplicationRunner {
                 "[master-data-migration] product-reference backfill completed: scanned="
                     + productReport.scanned()
                     + ", synchronized="
-                    + productReport.synchronized()
+                    + productReport.synchronizedCount()
                     + ", details="
                     + productReport.synchronizedByEntity()
             );
