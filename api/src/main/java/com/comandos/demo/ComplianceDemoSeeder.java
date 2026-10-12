@@ -26,11 +26,11 @@ public class ComplianceDemoSeeder implements ApplicationRunner {
         Organization organization = em.createQuery("select o from Organization o where o.acronym='SSP-DEMO'", Organization.class)
             .setMaxResults(1).getResultStream().findFirst().orElse(null);
         if (organization == null) return;
-        Long count = em.createQuery("select count(p) from CompliancePolicy p where p.organization.id=:org and p.unit is null", Long.class)
+        Long count = em.createQuery("select count(p) from CompliancePolicy p where p.organizationId=:org and p.unitId is null", Long.class)
             .setParameter("org", organization.id).getSingleResult();
         if (count > 0) return;
         CompliancePolicy policy = new CompliancePolicy();
-        policy.organization = organization;
+        policy.organizationId = organization.id;
         policy.expirationWarningDays = 30;
         policy.maintenanceWarningDays = 30;
         policy.regulatoryWarningDays = 30;
