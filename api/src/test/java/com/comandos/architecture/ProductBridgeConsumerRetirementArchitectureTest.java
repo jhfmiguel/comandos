@@ -75,7 +75,9 @@ class ProductBridgeConsumerRetirementArchitectureTest {
         String writer = read("core/service/CanonicalMasterDataWriteService.java");
         String directory = read("core/service/CanonicalMasterDataDirectory.java");
 
-        assertTrue(core.contains("canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalStored"));
+        assertTrue(core.contains("canonicalRequired && id != null"));
+        assertTrue(core.contains("requireCanonicalWrite(entity)"));
+        assertTrue(core.contains("canonicalRequired && !canonicalStored"));
         assertTrue(core.contains("canonicalReadEnabled && isCanonicalMasterData(entity) && !canonicalDeleted"));
         assertTrue(writer.contains("requirePersistedIdentity(entity)"));
         assertTrue(directory.contains("validateCanonicalReadConfiguration()"));
