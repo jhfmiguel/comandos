@@ -8,6 +8,7 @@ import com.fariamiguel.enterprise.contact.ContactRepository;
 import com.fariamiguel.enterprise.organization.OrganizationRepository;
 import com.fariamiguel.enterprise.party.PartyKind;
 import com.fariamiguel.enterprise.party.PartyRef;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import com.fariamiguel.enterprise.people.PersonRepository;
 import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitId;
@@ -41,6 +42,12 @@ public class CanonicalMasterDataDirectory {
     private final OrganizationalUnitRepository canonicalUnits;
     private final ContactRepository canonicalContacts;
     private final boolean canonicalReadEnabled;
+    private PartyMasterDataFacade enterprise;
+
+    @Autowired(required = false)
+    public void setEnterprise(PartyMasterDataFacade enterprise) {
+        this.enterprise = enterprise;
+    }
 
     @Value("${comandos.master-data.shadow-write.enabled:false}")
     private boolean legacyWriteSynchronizationEnabled;
@@ -107,8 +114,9 @@ public class CanonicalMasterDataDirectory {
         if (id <= 0) return Optional.empty();
 
         if (canonicalReadEnabled) {
-            return canonicalPeople
-                .find(tenantId, BusinessId.of("comandos:person:" + id))
+            return (enterprise == null
+                ? canonicalPeople.find(tenantId, BusinessId.of("comandos:person:" + id))
+                : enterprise.findPerson(tenantId, BusinessId.of("comandos:person:" + id)))
                 .map(person -> enrichCanonicalPerson(person, tenantId));
         }
 
@@ -136,10 +144,9 @@ public class CanonicalMasterDataDirectory {
         if (id <= 0) return Optional.empty();
 
         if (canonicalReadEnabled) {
-            return canonicalOrganizations.find(
-                tenantId,
-                BusinessId.of("comandos:organization:" + id)
-            );
+            return enterprise == null
+                ? canonicalOrganizations.find(tenantId, BusinessId.of("comandos:organization:" + id))
+                : enterprise.findOrganization(tenantId, BusinessId.of("comandos:organization:" + id));
         }
 
         Organization source = entityManager.find(Organization.class, id);

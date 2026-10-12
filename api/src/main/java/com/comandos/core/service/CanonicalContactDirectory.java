@@ -14,6 +14,8 @@ import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fariamiguel.enterprise.party.PartyMasterDataFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,12 @@ public class CanonicalContactDirectory {
     private final EntityManager entityManager;
     private final ContactRepository canonicalContacts;
     private final boolean canonicalReadEnabled;
+    private PartyMasterDataFacade enterprise;
+
+    @Autowired(required = false)
+    public void setEnterprise(PartyMasterDataFacade enterprise) {
+        this.enterprise = enterprise;
+    }
 
     public CanonicalContactDirectory(
             EntityManager entityManager,
@@ -46,7 +54,9 @@ public class CanonicalContactDirectory {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalContacts.addresses(tenantId, personRef(personId));
+            return enterprise == null
+                ? canonicalContacts.addresses(tenantId, personRef(personId))
+                : enterprise.addresses(tenantId, personRef(personId));
         }
 
         return entityManager.createQuery(
@@ -65,7 +75,9 @@ public class CanonicalContactDirectory {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalContacts.phones(tenantId, personRef(personId));
+            return enterprise == null
+                ? canonicalContacts.phones(tenantId, personRef(personId))
+                : enterprise.phones(tenantId, personRef(personId));
         }
 
         return entityManager.createQuery(
@@ -83,7 +95,9 @@ public class CanonicalContactDirectory {
         if (personId <= 0) return List.of();
 
         if (canonicalReadEnabled) {
-            return canonicalContacts.emails(tenantId, personRef(personId));
+            return enterprise == null
+                ? canonicalContacts.emails(tenantId, personRef(personId))
+                : enterprise.emails(tenantId, personRef(personId));
         }
 
         return entityManager.createQuery(
