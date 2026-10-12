@@ -45,7 +45,7 @@ class CanonicalMasterDataMirrorServiceTests {
         person.fullName = "Pessoa";
         person.active = true;
 
-        assertFalse(mirror.mirror(person));
+        assertFalse(mirror.synchronize(person));
         verify(people, never()).save(any());
     }
 
@@ -66,8 +66,8 @@ class CanonicalMasterDataMirrorServiceTests {
         organization.active = true;
         organization.publicOrganization = false;
 
-        assertTrue(mirror.mirror(person));
-        assertTrue(mirror.mirror(organization));
+        assertTrue(mirror.synchronize(person));
+        assertTrue(mirror.synchronize(organization));
 
         verify(people).save(any());
         verify(organizations).save(any());
@@ -90,7 +90,7 @@ class CanonicalMasterDataMirrorServiceTests {
         unit.type = "OPERATIONAL";
         unit.active = true;
 
-        assertTrue(mirror.mirror(unit));
+        assertTrue(mirror.synchronize(unit));
         verify(units).save(any());
     }
 
@@ -108,7 +108,7 @@ class CanonicalMasterDataMirrorServiceTests {
         qualification.validUntil = LocalDate.of(2030, 1, 1);
         qualification.status = "ACTIVE";
 
-        assertTrue(mirror.mirror(qualification));
+        assertTrue(mirror.synchronize(qualification));
         verify(qualifications).save(any());
     }
 
