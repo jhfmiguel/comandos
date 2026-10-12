@@ -1,6 +1,7 @@
 package com.comandos.demo;
 
 import com.comandos.inventory.model.ItemModel;
+import com.comandos.core.model.Organization;
 import com.comandos.purchase.model.*;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -52,8 +53,10 @@ public class PurchaseFlowDemoVerifier implements ApplicationRunner {
     }
 
     private void verifyProcurement(Purchase purchase) {
-        boolean publicOnerous = purchase.buyerOrganization != null
-            && Boolean.TRUE.equals(purchase.buyerOrganization.publicOrganization)
+        Organization buyer = purchase.buyerOrganizationLegacyId == null ? null
+            : em.find(Organization.class, purchase.buyerOrganizationLegacyId);
+        boolean publicOnerous = buyer != null
+            && Boolean.TRUE.equals(buyer.publicOrganization)
             && purchase.acquisitionType == AcquisitionType.ONEROUS;
         if (!publicOnerous) return;
 
