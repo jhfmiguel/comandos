@@ -45,7 +45,7 @@ class ProductCanonicalSynchronizationArchitectureTest {
         String migration = source("core/service/MasterDataMigrationService.java");
         assertFalse(migration.contains("mirror.mirror("));
         assertTrue(migration.contains("mirror.mirrorForBackfill("));
-        String mirror = source("core/service/CanonicalMasterDataMirrorService.java");
+        String mirror = source("core/service/CanonicalMasterDataWriteService.java");
         assertTrue(mirror.contains("public boolean mirrorForBackfill(CoreEntity entity)"));
     }
 
@@ -156,7 +156,7 @@ class ProductCanonicalSynchronizationArchitectureTest {
         Path entity = Path.of("src/main/java/com/comandos/core/model/MasterDataReference.java");
         assertFalse(Files.exists(service));
         assertFalse(Files.exists(entity));
-        assertFalse(source("core/service/CanonicalMasterDataMirrorService.java")
+        assertFalse(source("core/service/CanonicalMasterDataWriteService.java")
             .contains("MasterDataReferenceService"));
         assertFalse(source("core/service/MasterDataParityService.java")
             .contains("MasterDataReferenceService"));
