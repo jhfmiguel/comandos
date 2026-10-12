@@ -380,15 +380,17 @@ public class CanonicalMasterDataMirrorService {
 
         Map<String, String> values = new LinkedHashMap<>();
 
-        entityManager.createQuery(
+        var query = entityManager.createQuery(
                 "select d from RoleData d "
                     + "where d.personRole.id=:assignmentId "
-                    + "and (:excludedDetailId is null or d.id <> :excludedDetailId) "
+                    + (excludedDetailId == null ? "" : "and d.id <> :excludedDetailId ")
                     + "order by d.id",
                 RoleData.class)
-            .setParameter("assignmentId", assignmentId)
-            .setParameter("excludedDetailId", excludedDetailId)
-            .getResultList()
+            .setParameter("assignmentId", assignmentId);
+        if (excludedDetailId != null) {
+            query.setParameter("excludedDetailId", excludedDetailId);
+        }
+        query.getResultList()
             .forEach(data -> {
                 if (data.key != null && !data.key.isBlank()
                         && data.value != null && !data.value.isBlank()) {
