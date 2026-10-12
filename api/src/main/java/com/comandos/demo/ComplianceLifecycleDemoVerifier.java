@@ -46,12 +46,17 @@ public class ComplianceLifecycleDemoVerifier implements ApplicationRunner {
         var policies = em.createQuery("select p from CompliancePolicy p", CompliancePolicy.class).getResultList();
         require(!policies.isEmpty(), "Compliance regression requires a preventive policy.");
         for (CompliancePolicy policy : policies) {
-            require(policy.organization != null, "Compliance policy requires organization scope.");
+            require(policy.organizationId != null, "Compliance policy requires organization scope.");
             require(policy.expirationWarningDays != null && policy.expirationWarningDays >= 0, "Expiration warning window must be non-negative.");
             require(policy.maintenanceWarningDays != null && policy.maintenanceWarningDays >= 0, "Maintenance warning window must be non-negative.");
             require(policy.regulatoryWarningDays != null && policy.regulatoryWarningDays >= 0, "Regulatory warning window must be non-negative.");
             require(policy.inspectionIntervalDays != null && policy.inspectionIntervalDays > 0, "Inspection interval must be positive.");
-            if (policy.unit != null) require(policy.unit.organization.id.equals(policy.organization.id), "Compliance policy unit must belong to its organization.");
+            if (policy.unitId != null) {
+                var unit = em.find(com.comandos.core.model.OrganizationalUnit.class, policy.unitId);
+                require(unit != null && unit.organization != null
+                    && unit.organization.id.equals(policy.organizationId),
+                    "Compliance policy unit must belong to its organization.");
+            }
         }
     }
 
@@ -72,7 +77,7 @@ public class ComplianceLifecycleDemoVerifier implements ApplicationRunner {
     private void verifyExpirationRecords() {
         LocalDate today = LocalDate.now();
         for (ExpirationRecord record : em.createQuery("select e from ExpirationRecord e", ExpirationRecord.class).getResultList()) {
-            require(record.organization != null && record.expirationDate != null && notBlank(record.type) && notBlank(record.status),
+            require(record.organizationLegacyId != null && record.expirationDate != null && notBlank(record.type) && notBlank(record.status),
                 "Expiration record must preserve scope, type, date and status.");
             require((record.asset == null) != (record.lot == null), "Expiration record must reference exactly one asset or lot.");
             if (record.expirationDate.isBefore(today)) {
