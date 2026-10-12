@@ -290,7 +290,10 @@ public class CanonicalMasterDataMirrorService {
 
         if (entity instanceof RoleData roleData) {
             return roleData.personRole != null
-                && mirrorRoleAssignment(roleData.personRole);
+                && mirrorRoleAssignment(
+                    roleData.personRole,
+                    roleData(roleData.personRole.id, roleData.id)
+                );
         }
 
         if (entity instanceof PersonCredential credential) {
@@ -319,10 +322,16 @@ public class CanonicalMasterDataMirrorService {
     }
 
     private boolean mirrorRoleAssignment(PersonRoleAssignment assignment) {
+        return mirrorRoleAssignment(assignment, roleData(assignment.id));
+    }
+
+    private boolean mirrorRoleAssignment(
+            PersonRoleAssignment assignment,
+            Map<String, String> details) {
         return CanonicalPartyRoleMapper.assignment(
                     assignment,
                     TENANT,
-                    roleData(assignment.id)
+                    details
                 )
                 .map(role -> {
                     var canonical = roles.save(role);
@@ -363,15 +372,22 @@ public class CanonicalMasterDataMirrorService {
     }
 
     private Map<String, String> roleData(Long assignmentId) {
+        return roleData(assignmentId, null);
+    }
+
+    private Map<String, String> roleData(Long assignmentId, Long excludedDetailId) {
         if (assignmentId == null || assignmentId <= 0) return Map.of();
 
         Map<String, String> values = new LinkedHashMap<>();
 
         entityManager.createQuery(
                 "select d from RoleData d "
-                    + "where d.personRole.id=:assignmentId order by d.id",
+                    + "where d.personRole.id=:assignmentId "
+                    + "and (:excludedDetailId is null or d.id <> :excludedDetailId) "
+                    + "order by d.id",
                 RoleData.class)
             .setParameter("assignmentId", assignmentId)
+            .setParameter("excludedDetailId", excludedDetailId)
             .getResultList()
             .forEach(data -> {
                 if (data.key != null && !data.key.isBlank()
