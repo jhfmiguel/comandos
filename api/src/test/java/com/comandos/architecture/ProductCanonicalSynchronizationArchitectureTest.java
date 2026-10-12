@@ -70,6 +70,16 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(code.contains("MASTER_DATA_CANONICAL_READ_DISABLED"));
     }
 
+    @Test
+    void cutoverEvidenceSnapshotIsAvailableWithoutRelaxingRetirementGuard() throws IOException {
+        String code = source("core/service/MasterDataCutoverStatusService.java");
+        assertTrue(code.contains("public record RetirementAssessment("));
+        assertTrue(code.contains("public RetirementAssessment assessment()"));
+        assertTrue(code.contains("retirementBlockers(snapshot)"));
+        assertTrue(code.contains("snapshot.productReferences().incomplete()"));
+        assertTrue(code.contains("requireReadyToRetireLegacyPersistence()"));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
