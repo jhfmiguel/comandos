@@ -103,7 +103,9 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(runner.contains("if (retirementValidationOnStartup)"));
         assertFalse(runner.contains("retirementValidationOnStartup || canonicalReadEnabled"));
         assertTrue(runner.contains("cutoverStatus.requireReadyToRetireLegacyPersistence()"));
-        assertTrue(runner.contains("cutoverStatus.canonicalReadEnabled()"));
+        assertFalse(runner.contains("cutoverStatus.canonicalReadEnabled()"));
+        assertTrue(runner.contains("if (productReferenceBackfillOnStartup || parityOnStartup"));
+        assertTrue(runner.contains("Product canonical reference parity mismatch:"));
     }
 
     @Test
