@@ -106,6 +106,18 @@ class ProductCanonicalSynchronizationArchitectureTest {
         assertTrue(runner.contains("cutoverStatus.canonicalReadEnabled()"));
     }
 
+    @Test
+    void productParityUsesCanonicalDirectoryInsteadOfCrosswalkRegistry() throws IOException {
+        String parity = source("core/service/ProductMasterDataReferenceParityService.java");
+        assertFalse(parity.contains("MasterDataReferenceService"));
+        assertFalse(parity.contains("resolveCanonicalId("));
+        assertTrue(parity.contains("private final ProductCanonicalScopeResolver canonicalScope"));
+        assertTrue(parity.contains("canonicalScope.organization(legacyId)"));
+        assertTrue(parity.contains("canonicalScope.person(legacyId)"));
+        assertTrue(parity.contains("canonicalScope.unit(legacyId)"));
+        assertTrue(parity.contains("Product canonical reference differs from the canonical directory."));
+    }
+
     private static String source(String relativePath) throws IOException {
         return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
     }
