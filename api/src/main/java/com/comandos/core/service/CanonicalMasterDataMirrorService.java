@@ -182,6 +182,59 @@ public class CanonicalMasterDataMirrorService {
             return true;
         }
 
+        if (entity instanceof Organization organization) {
+            organizations.delete(
+                TENANT,
+                BusinessId.of("comandos:organization:" + organization.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof OrganizationalUnit unit) {
+            units.delete(
+                TENANT,
+                OrganizationalUnitId.of("comandos:unit:" + unit.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonAddress address) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-address:" + address.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonPhone phone) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-phone:" + phone.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonEmail email) {
+            contacts.deletePartyContact(
+                TENANT,
+                BusinessId.of("comandos:person-email:" + email.id)
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonRoleAssignment assignment) {
+            if (CanonicalPartyRoleMapper.roleType(assignment.role).isEmpty()) {
+                return false;
+            }
+            roles.delete(
+                TENANT,
+                BusinessId.of(
+                    "comandos:person-role-assignment:" + assignment.id
+                )
+            );
+            return true;
+        }
+
         if (entity instanceof RoleData roleData) {
             return roleData.personRole != null
                 && mirrorRoleAssignment(
@@ -195,6 +248,16 @@ public class CanonicalMasterDataMirrorService {
                 TENANT,
                 BusinessId.of(
                     "comandos:person-credential:" + credential.id
+                )
+            );
+            return true;
+        }
+
+        if (entity instanceof PersonQualification qualification) {
+            qualifications.delete(
+                TENANT,
+                BusinessId.of(
+                    "comandos:person-qualification:" + qualification.id
                 )
             );
             return true;
