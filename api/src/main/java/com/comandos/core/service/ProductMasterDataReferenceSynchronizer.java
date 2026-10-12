@@ -482,46 +482,23 @@ public class ProductMasterDataReferenceSynchronizer {
     }
 
     private void synchronizeReceiving(EquipmentReceiving receiving) {
-        if (receiving.receivingOrganizationLegacyId == null) {
-            receiving.receivingOrganizationCanonicalId = null;
-            return;
-        }
-
-        receiving.receivingOrganizationCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                receiving.receivingOrganizationLegacyId)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical receiving organization reference is missing for legacy id "
-                    + receiving.receivingOrganizationLegacyId
-            ));
+        receiving.receivingOrganizationCanonicalId = optional(
+            MasterDataReferenceService.ORGANIZATION,
+            receiving.receivingOrganizationLegacyId,
+            "receiving organization"
+        );
     }
 
     private void synchronizeLocation(StockLocation location) {
-        if (location.organizationLegacyId == null) {
-            throw new IllegalStateException(
-                "Stock location requires a persisted organization before canonical reference synchronization."
-            );
-        }
-
-        location.organizationCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.ORGANIZATION,
-                location.organizationLegacyId)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical organization reference is missing for legacy id "
-                    + location.organizationLegacyId
-            ));
-
-        if (location.unitLegacyId == null) {
-            location.unitCanonicalId = null;
-            return;
-        }
-
-        location.unitCanonicalId = references.resolveCanonicalId(
-                MasterDataReferenceService.UNIT,
-                location.unitLegacyId)
-            .orElseThrow(() -> new IllegalStateException(
-                "Canonical organizational unit reference is missing for legacy id "
-                    + location.unitLegacyId
-            ));
+        location.organizationCanonicalId = require(
+            MasterDataReferenceService.ORGANIZATION,
+            location.organizationLegacyId,
+            "stock location organization"
+        );
+        location.unitCanonicalId = optional(
+            MasterDataReferenceService.UNIT,
+            location.unitLegacyId,
+            "stock location unit"
+        );
     }
 }
