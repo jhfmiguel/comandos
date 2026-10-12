@@ -35,7 +35,7 @@ class ProductMasterDataRetirementManifestTest {
             );
         }
 
-        assertEquals(18, retired);
+        assertEquals(26, retired);
         assertEquals(EXPECTED_PRIMARY, primary);
     }
 
