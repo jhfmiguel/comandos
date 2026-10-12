@@ -2,7 +2,6 @@ package com.comandos.donation.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.donation.dto.DonationContract.*;
@@ -27,12 +26,12 @@ import com.fariamiguel.tenancy.api.TenantId;
 public class DonationService {
  private static final int PAGE_SIZE=20; private static final TenantId TENANT=TenantId.of("comandos");
  private final EntityManager em; private final AccessPolicy access; private final AuditService audit;
- private final ProductMasterDataReferenceSynchronizer masterDataReferences; private final ProductCanonicalScopeResolver canonicalScope;
+ private final ProductCanonicalScopeResolver canonicalScope;
  private final CanonicalMasterDataDirectory masterData;
 
  @org.springframework.beans.factory.annotation.Autowired
- public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductMasterDataReferenceSynchronizer masterDataReferences,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
-  this.em=em;this.access=access;this.audit=audit;this.masterDataReferences=masterDataReferences;this.canonicalScope=canonicalScope;this.masterData=masterData;
+ public DonationService(EntityManager em,AccessPolicy access,AuditService audit,ProductCanonicalScopeResolver canonicalScope,CanonicalMasterDataDirectory masterData){
+  this.em=em;this.access=access;this.audit=audit;this.canonicalScope=canonicalScope;this.masterData=masterData;
  }
 
  public Page<StockOption> stock(long organizationId,Long unitId,String kind,String search,int page){
