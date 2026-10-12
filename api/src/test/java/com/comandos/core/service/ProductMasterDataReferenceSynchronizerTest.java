@@ -44,7 +44,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.unitLegacyId = unit.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
@@ -64,7 +64,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.unitCanonicalId = "stale-unit";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("org-canonical-10", location.organizationCanonicalId);
@@ -83,7 +83,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.organizationLegacyId = organization.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         IllegalStateException error = assertThrows(
             IllegalStateException.class,
@@ -97,7 +97,7 @@ class ProductMasterDataReferenceSynchronizerTest {
     void ignoresIndirectInventoryEntities() {
         ProductCanonicalScopeResolver canonicalScope = mock(ProductCanonicalScopeResolver.class);
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertFalse(synchronizer.synchronizeForBackfill(new StockMovement()));
         verifyNoInteractions(canonicalScope);
@@ -123,7 +123,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         purchase.originPersonLegacyId = origin.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(purchase));
         assertEquals("buyer-org", purchase.buyerOrganizationCanonicalId);
@@ -140,7 +140,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         receiving.receivingOrganizationLegacyId = 30L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(receiving));
         assertEquals("receiving-org", receiving.receivingOrganizationCanonicalId);
@@ -163,7 +163,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         purchase.supplierOrganizationCanonicalId = "stale-supplier";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(purchase));
         assertNull(purchase.supplierOrganizationCanonicalId);
@@ -189,7 +189,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         transfer.destinationUnitLegacyId = destination.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(transfer));
         assertEquals("transfer-org", transfer.organizationCanonicalId);
@@ -220,7 +220,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         custody.authorizerLegacyId = authorizer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(custody));
         assertEquals("custody-org", custody.organizationCanonicalId);
@@ -250,7 +250,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         donation.doneeLegacyId = donee.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(donation));
         assertEquals("donation-org", donation.organizationCanonicalId);
@@ -276,7 +276,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         sale.buyerLegacyId = buyer.id;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(sale));
         assertEquals("sale-org", sale.organizationCanonicalId);
@@ -294,7 +294,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 81L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         WorkOrder workOrder = new WorkOrder();
         workOrder.organizationLegacyId = organization.id;
@@ -346,7 +346,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 93L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         AmmunitionConsumption ammunition = new AmmunitionConsumption();
         ammunition.organizationLegacyId = organization.id;
@@ -395,9 +395,8 @@ class ProductMasterDataReferenceSynchronizerTest {
         PurchasePlanning planning = new PurchasePlanning();
         planning.organizationLegacyId = 100L;
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, false);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
-        assertFalse(synchronizer.enabled());
         assertTrue(synchronizer.synchronizeForBackfill(planning));
         assertEquals("backfill-org", planning.organizationCanonicalId);
     }
@@ -409,7 +408,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         receiving.receivingOrganizationCanonicalId = "stale-organization";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertTrue(synchronizer.synchronizeForBackfill(receiving));
         assertNull(receiving.receivingOrganizationCanonicalId);
@@ -423,7 +422,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         location.organizationCanonicalId = "previous-organization";
 
         ProductMasterDataReferenceSynchronizer synchronizer =
-            new ProductMasterDataReferenceSynchronizer(canonicalScope, true);
+            new ProductMasterDataReferenceSynchronizer(canonicalScope);
 
         assertThrows(IllegalStateException.class, () -> synchronizer.synchronizeForBackfill(location));
         assertEquals("previous-organization", location.organizationCanonicalId);
@@ -436,7 +435,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         when(resolver.organization(10L)).thenReturn("canonical-org-10");
         var location = new StockLocation();
         location.organizationLegacyId = 10L;
-        var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver, false);
+        var synchronizer = new ProductMasterDataReferenceSynchronizer(resolver);
         assertTrue(synchronizer.synchronizeForBackfill(location));
         assertEquals("canonical-org-10", location.organizationCanonicalId);
     }
