@@ -5,6 +5,8 @@ import com.comandos.audit.model.AuditRecord;
 import com.comandos.audit.model.AuditReference;
 import com.fariamiguel.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.AccountPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.*;
@@ -46,9 +48,20 @@ public class AuditService {
     public Actor actor() {
         var current = actors.currentActor();
 
-        return current.authenticated()
-            ? new Actor(numericActorId(current.id()), current.displayName(), "ACCOUNT")
-            : new Actor(null, null, "UNAUTHENTICATED");
+        if (!current.authenticated()) {
+            return new Actor(null, null, "UNAUTHENTICATED");
+        }
+
+        // The canonical CurrentActor carries the human-readable display name.
+        // Audit actorLogin must preserve the authenticated local account login,
+        // even when the associated person has a different display name.
+        String login = current.displayName();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof AccountPrincipal principal) {
+            login = principal.getUsername();
+        }
+        return new Actor(numericActorId(current.id()), login, "ACCOUNT");
     }
 
     private static Long numericActorId(String value) {
