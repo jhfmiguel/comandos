@@ -258,6 +258,8 @@ public class ProductMasterDataReferenceParityService {
             return;
         }
 
+        // Canonical IDs are the authoritative expected values. An absent
+        // shadow value remains a mismatch even when the canonical entity exists.
         if (!expectedId.equals(actual)) {
             mismatches.add(new Mismatch(
                 entity.getClass().getSimpleName(),
