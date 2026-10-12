@@ -50,10 +50,10 @@ public class MasterDataReferenceService {
         MasterDataReference reference = findEntity(type, legacyId)
             .orElseGet(MasterDataReference::new);
 
-        if (reference.id == null) {
+        boolean isNew = reference.id == null;
+        if (isNew) {
             reference.resourceType = type;
             reference.legacyId = legacyId;
-            entityManager.persist(reference);
         }
 
         reference.canonicalId = canonical;
@@ -62,6 +62,9 @@ public class MasterDataReferenceService {
         reference.lastSynchronizedAt = LocalDateTime.now();
         reference.migrationNote = normalizeNote(note);
 
+        if (isNew) {
+            entityManager.persist(reference);
+        }
         entityManager.flush();
         return reference;
     }
