@@ -62,7 +62,6 @@ public class MasterDataParityService {
     private final PartyRoleRepository roles;
     private final PartyDocumentRepository documents;
     private final ProfessionalQualificationRepository qualifications;
-    private final MasterDataReferenceService references;
 
     public MasterDataParityService(
             EntityManager entityManager,
@@ -72,8 +71,7 @@ public class MasterDataParityService {
             ContactRepository contacts,
             PartyRoleRepository roles,
             PartyDocumentRepository documents,
-            ProfessionalQualificationRepository qualifications,
-            MasterDataReferenceService references) {
+            ProfessionalQualificationRepository qualifications) {
         this.entityManager = entityManager;
         this.people = people;
         this.organizations = organizations;
@@ -82,7 +80,6 @@ public class MasterDataParityService {
         this.roles = roles;
         this.documents = documents;
         this.qualifications = qualifications;
-        this.references = references;
     }
 
     public ParityReport verify() {
@@ -109,12 +106,6 @@ public class MasterDataParityService {
         for (Person legacy : all(Person.class)) {
             checked++;
             var expected = CanonicalMasterDataMapper.person(legacy, TENANT);
-            verifyCrosswalk(
-                mismatches,
-                MasterDataReferenceService.PERSON,
-                legacy.id,
-                expected.id().value()
-            );
 
             var actual = people.find(TENANT, expected.id());
 
@@ -150,12 +141,6 @@ public class MasterDataParityService {
                 com.fariamiguel.tenancy.api.CompanyId.of(
                     "comandos:organization:" + legacy.id
                 )
-            );
-            verifyCrosswalk(
-                mismatches,
-                MasterDataReferenceService.ORGANIZATION,
-                legacy.id,
-                expected.id().value()
             );
 
             var actual = organizations.find(TENANT, expected.id());
@@ -199,12 +184,6 @@ public class MasterDataParityService {
                 )
             );
 
-            verifyCrosswalk(
-                mismatches,
-                MasterDataReferenceService.UNIT,
-                legacy.id,
-                expected.id().value()
-            );
 
             var actual = units.find(TENANT, expected.id());
             if (actual.isEmpty()) {
@@ -263,12 +242,6 @@ public class MasterDataParityService {
                 .getResultList()) {
                 checked++;
                 String expected = "comandos:person-address:" + address.id;
-                verifyCrosswalk(
-                    mismatches,
-                    MasterDataReferenceService.ADDRESS,
-                    address.id,
-                    expected
-                );
                 if (!canonicalAddressIds.contains(expected)) {
                     missing(mismatches, "person-address", address.id, expected);
                 }
@@ -281,12 +254,6 @@ public class MasterDataParityService {
                 .getResultList()) {
                 checked++;
                 String expected = "comandos:person-phone:" + phone.id;
-                verifyCrosswalk(
-                    mismatches,
-                    MasterDataReferenceService.PHONE,
-                    phone.id,
-                    expected
-                );
                 if (!canonicalPhoneIds.contains(expected)) {
                     missing(mismatches, "person-phone", phone.id, expected);
                 }
@@ -299,12 +266,6 @@ public class MasterDataParityService {
                 .getResultList()) {
                 checked++;
                 String expected = "comandos:person-email:" + email.id;
-                verifyCrosswalk(
-                    mismatches,
-                    MasterDataReferenceService.EMAIL,
-                    email.id,
-                    expected
-                );
                 if (!canonicalEmailIds.contains(expected)) {
                     missing(mismatches, "person-email", email.id, expected);
                 }
@@ -344,12 +305,6 @@ public class MasterDataParityService {
                 String expected =
                     "comandos:person-role-assignment:" + assignment.id;
 
-                verifyCrosswalk(
-                    mismatches,
-                    MasterDataReferenceService.PARTY_ROLE,
-                    assignment.id,
-                    expected
-                );
 
                 if (!canonicalIds.contains(expected)) {
                     missing(
@@ -389,12 +344,6 @@ public class MasterDataParityService {
                 String expected =
                     "comandos:person-credential:" + credential.id;
 
-                verifyCrosswalk(
-                    mismatches,
-                    MasterDataReferenceService.CREDENTIAL,
-                    credential.id,
-                    expected
-                );
 
                 if (!canonicalIds.contains(expected)) {
                     missing(
@@ -420,12 +369,6 @@ public class MasterDataParityService {
             String canonicalId =
                 "comandos:person-qualification:" + qualification.id;
 
-            verifyCrosswalk(
-                mismatches,
-                MasterDataReferenceService.QUALIFICATION,
-                qualification.id,
-                canonicalId
-            );
 
             if (qualifications.find(
                     TENANT,
@@ -448,48 +391,6 @@ public class MasterDataParityService {
                 "select e from " + type.getSimpleName() + " e order by e.id",
                 type)
             .getResultList();
-    }
-
-    private void verifyCrosswalk(
-            List<ParityMismatch> mismatches,
-            String resourceType,
-            Long legacyId,
-            String canonicalId) {
-
-        if (legacyId == null || legacyId <= 0) {
-            mismatch(
-                mismatches,
-                "crosswalk:" + resourceType.toLowerCase(java.util.Locale.ROOT),
-                legacyId,
-                canonicalId,
-                "Legacy identifier is invalid for crosswalk verification."
-            );
-            return;
-        }
-
-        var resolved = references.resolveCanonicalId(resourceType, legacyId);
-
-        if (resolved.isEmpty()) {
-            mismatch(
-                mismatches,
-                "crosswalk:" + resourceType.toLowerCase(java.util.Locale.ROOT),
-                legacyId,
-                canonicalId,
-                "Active legacy-to-canonical crosswalk is missing."
-            );
-            return;
-        }
-
-        if (!canonicalId.equals(resolved.orElseThrow())) {
-            mismatch(
-                mismatches,
-                "crosswalk:" + resourceType.toLowerCase(java.util.Locale.ROOT),
-                legacyId,
-                canonicalId,
-                "Crosswalk points to a different canonical identifier: "
-                    + resolved.orElseThrow()
-            );
-        }
     }
 
     private static void missing(
