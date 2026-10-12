@@ -75,123 +75,123 @@ public class ProductMasterDataReferenceParityService {
 
     private static final List<Spec> SPECS = List.of(
         new Spec(StockLocation.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(EquipmentSet.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(EquipmentSetOperation.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(CertificationRecord.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(ExpirationRecord.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(Recall.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(Purchase.class, List.of(
-            ref("buyerOrganizationLegacyId", "buyerOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("supplierOrganizationLegacyId", "supplierOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("originPersonLegacyId", "originPersonCanonicalId", MasterDataReferenceService.PERSON)
+            ref("buyerOrganizationLegacyId", "buyerOrganizationCanonicalId", "ORGANIZATION"),
+            ref("supplierOrganizationLegacyId", "supplierOrganizationCanonicalId", "ORGANIZATION"),
+            ref("originPersonLegacyId", "originPersonCanonicalId", "PERSON")
         )),
         new Spec(EquipmentReceiving.class, List.of(
-            ref("receivingOrganizationLegacyId", "receivingOrganizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+            ref("receivingOrganizationLegacyId", "receivingOrganizationCanonicalId", "ORGANIZATION")
         )),
         new Spec(ProcurementProcess.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION")
         )),
         new Spec(Custody.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("recipientLegacyId", "recipientCanonicalId", MasterDataReferenceService.PERSON),
-            ref("recipientUnitLegacyId", "recipientUnitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("authorizerLegacyId", "authorizerCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT"),
+            ref("recipientLegacyId", "recipientCanonicalId", "PERSON"),
+            ref("recipientUnitLegacyId", "recipientUnitCanonicalId", "UNIT"),
+            ref("authorizerLegacyId", "authorizerCanonicalId", "PERSON")
         )),
         new Spec(CustodyResponsibility.class, List.of(
-            ref("responsiblePersonLegacyId", "responsiblePersonCanonicalId", MasterDataReferenceService.PERSON)
+            ref("responsiblePersonLegacyId", "responsiblePersonCanonicalId", "PERSON")
         )),
         new Spec(Donation.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("donorLegacyId", "donorCanonicalId", MasterDataReferenceService.PERSON),
-            ref("doneeLegacyId", "doneeCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT"),
+            ref("donorLegacyId", "donorCanonicalId", "PERSON"),
+            ref("doneeLegacyId", "doneeCanonicalId", "PERSON")
         )),
         new Spec(InventorySale.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("buyerLegacyId", "buyerCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT"),
+            ref("buyerLegacyId", "buyerCanonicalId", "PERSON")
         )),
         new Spec(InventoryTransfer.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("sourceUnitLegacyId", "sourceUnitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("destinationUnitLegacyId", "destinationUnitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("sourceUnitLegacyId", "sourceUnitCanonicalId", "UNIT"),
+            ref("destinationUnitLegacyId", "destinationUnitCanonicalId", "UNIT")
         )),
         new Spec(MaintenancePlan.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(WorkOrder.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(ApprovalWorkflow.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(AmmunitionConsumption.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("responsibleLegacyId", "responsibleCanonicalId", MasterDataReferenceService.PERSON),
-            ref("authorizerLegacyId", "authorizerCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT"),
+            ref("responsibleLegacyId", "responsibleCanonicalId", "PERSON"),
+            ref("authorizerLegacyId", "authorizerCanonicalId", "PERSON")
         )),
         new Spec(ConsumableUsage.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT),
-            ref("responsibleLegacyId", "responsibleCanonicalId", MasterDataReferenceService.PERSON),
-            ref("authorizerLegacyId", "authorizerCanonicalId", MasterDataReferenceService.PERSON)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT"),
+            ref("responsibleLegacyId", "responsibleCanonicalId", "PERSON"),
+            ref("authorizerLegacyId", "authorizerCanonicalId", "PERSON")
         )),
         new Spec(DisposalProcess.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(InventoryReservation.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(InventoryCount.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(PurchasePlanning.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION")
         )),
         new Spec(PeriodicInspection.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         )),
         new Spec(ExceptionOccurrence.class, List.of(
-            ref("organizationLegacyId", "organizationCanonicalId", MasterDataReferenceService.ORGANIZATION),
-            ref("unitLegacyId", "unitCanonicalId", MasterDataReferenceService.UNIT)
+            ref("organizationLegacyId", "organizationCanonicalId", "ORGANIZATION"),
+            ref("unitLegacyId", "unitCanonicalId", "UNIT")
         ))
     );
 
     private final EntityManager em;
-    private final MasterDataReferenceService references;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
     public ProductMasterDataReferenceParityService(
             EntityManager em,
-            MasterDataReferenceService references) {
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
-        this.references = references;
+        this.canonicalScope = canonicalScope;
     }
 
     public ParityReport verify() {
@@ -234,8 +234,17 @@ public class ProductMasterDataReferenceParityService {
             return;
         }
 
-        var expected = references.resolveCanonicalId(ref.resourceType(), legacyId);
-        if (expected.isEmpty()) {
+        String expectedId;
+        try {
+            expectedId = switch (ref.resourceType()) {
+                case "ORGANIZATION" -> canonicalScope.organization(legacyId);
+                case "PERSON" -> canonicalScope.person(legacyId);
+                case "UNIT" -> canonicalScope.unit(legacyId);
+                default -> throw new IllegalArgumentException(
+                    "Unsupported canonical master-data reference: " + ref.resourceType()
+                );
+            };
+        } catch (IllegalStateException missingCanonical) {
             mismatches.add(new Mismatch(
                 entity.getClass().getSimpleName(),
                 entity.id,
@@ -244,12 +253,11 @@ public class ProductMasterDataReferenceParityService {
                 legacyId,
                 null,
                 actual,
-                "Active crosswalk entry is missing."
+                "Canonical master-data entity cannot be resolved: " + missingCanonical.getMessage()
             ));
             return;
         }
 
-        String expectedId = expected.orElseThrow();
         if (!expectedId.equals(actual)) {
             mismatches.add(new Mismatch(
                 entity.getClass().getSimpleName(),
@@ -259,7 +267,7 @@ public class ProductMasterDataReferenceParityService {
                 legacyId,
                 expectedId,
                 actual,
-                "Canonical product reference differs from the active crosswalk."
+                "Product canonical reference differs from the canonical directory."
             ));
         }
     }
