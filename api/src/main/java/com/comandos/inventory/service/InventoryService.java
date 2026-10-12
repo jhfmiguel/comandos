@@ -3,7 +3,7 @@ package com.comandos.inventory.service;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
-import com.comandos.core.service.MasterDataReferenceService;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.core.service.CanonicalMasterDataDirectory;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
@@ -40,7 +40,7 @@ public class InventoryService {
     private final AccessPolicy access;
     private final AuditService audit;
     private final ProductMasterDataReferenceSynchronizer masterDataReferences;
-    private final MasterDataReferenceService canonicalReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
     private static final TenantId TENANT = TenantId.of("comandos");
 
@@ -55,7 +55,7 @@ public class InventoryService {
             AccessPolicy access,
             AuditService audit,
             ProductMasterDataReferenceSynchronizer masterDataReferences,
-            MasterDataReferenceService canonicalReferences,
+            ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData,
             @org.springframework.beans.factory.annotation.Value(
                 "${comandos.master-data.product-reference-primary-read.enabled:false}"
@@ -67,7 +67,7 @@ public class InventoryService {
         this.access = access;
         this.audit = audit;
         this.masterDataReferences = masterDataReferences;
-        this.canonicalReferences = canonicalReferences;
+        this.canonicalScope = canonicalScope;
         this.masterData = masterData;
         this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
         this.canonicalInventoryLedger = canonicalInventoryLedger;
@@ -351,13 +351,7 @@ public class InventoryService {
         if (scoped) {
             if (canonicalProductReferenceReadEnabled
                     && usesCanonicalLocationScope(resource)) {
-                String canonicalOrganizationId = canonicalReferences.resolveCanonicalId(
-                        MasterDataReferenceService.ORGANIZATION,
-                        organizationId)
-                    .orElseThrow(() -> new IllegalStateException(
-                        "Canonical organization reference is missing for legacy id "
-                            + organizationId
-                    ));
+                String canonicalOrganizationId = canonicalScope.organization(organizationId);
                 clauses.add(organizationPath + " = :organizationCanonicalId");
                 parameters.put("organizationCanonicalId", canonicalOrganizationId);
             } else {
@@ -428,13 +422,7 @@ public class InventoryService {
         );
 
         if (organizationCanonicalId != null) {
-            Long legacyOrganizationId = canonicalReferences.resolveLegacyId(
-                    MasterDataReferenceService.ORGANIZATION,
-                    organizationCanonicalId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "Unknown canonical organization id: "
-                        + organizationCanonicalId
-                ));
+            Long legacyOrganizationId = validatedLegacyOrganizationId(organizationCanonicalId);
             assertCompatibleLegacyId(
                 normalized.get("organizationId"),
                 legacyOrganizationId,
@@ -444,12 +432,7 @@ public class InventoryService {
         }
 
         if (unitCanonicalId != null) {
-            Long legacyUnitId = canonicalReferences.resolveLegacyId(
-                    MasterDataReferenceService.UNIT,
-                    unitCanonicalId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "Unknown canonical unit id: " + unitCanonicalId
-                ));
+            Long legacyUnitId = validatedLegacyUnitId(unitCanonicalId);
             assertCompatibleLegacyId(
                 normalized.get("unitId"),
                 legacyUnitId,
@@ -459,6 +442,30 @@ public class InventoryService {
         }
 
         return normalized;
+    }
+
+    private Long validatedLegacyOrganizationId(String canonicalId) {
+        long legacyId = CanonicalMasterDataDirectory.legacyOrganizationId(
+            com.fariamiguel.enterprise.common.BusinessId.of(canonicalId)
+        );
+        if (!canonicalId.equals(canonicalScope.organization(legacyId))) {
+            throw new IllegalArgumentException(
+                "Canonical organization identifier does not match the persisted organization: " + canonicalId
+            );
+        }
+        return legacyId;
+    }
+
+    private Long validatedLegacyUnitId(String canonicalId) {
+        long legacyId = CanonicalMasterDataDirectory.legacyUnitId(
+            com.fariamiguel.tenancy.api.OrganizationalUnitId.of(canonicalId)
+        );
+        if (!canonicalId.equals(canonicalScope.unit(legacyId))) {
+            throw new IllegalArgumentException(
+                "Canonical unit identifier does not match the persisted unit: " + canonicalId
+            );
+        }
+        return legacyId;
     }
 
     private void assertCompatibleLegacyId(
