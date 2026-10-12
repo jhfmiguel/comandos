@@ -173,6 +173,79 @@ public class MasterDataCutoverStatusService {
         );
     }
 
+    /**
+     * Immutable operational evidence for a cutover decision. A snapshot is
+     * computed once, so the reported gates and their blockers are consistent.
+     * No migration or destructive operation is triggered by this method.
+     */
+    public record CutoverEvidence(
+        boolean retirementAllowed,
+        java.util.Map<String, Boolean> gates,
+        java.util.List<String> blockers,
+        long canonicalParityChecked,
+        int canonicalParityMismatches,
+        long productReferencesChecked,
+        long productReferencesIncomplete,
+        java.util.Map<String, Long> productReferencesIncompleteByEntity,
+        long productParityChecked,
+        int productParityMismatches,
+        java.util.List<MasterDataMigrationService.ReadinessIssue> readinessIssues,
+        java.util.List<MasterDataParityService.ParityMismatch> canonicalMismatches,
+        java.util.List<ProductMasterDataReferenceParityService.ParityMismatch> productMismatches
+    ) {}
+
+    public CutoverEvidence evidence() {
+        return evidence(status());
+    }
+
+    public CutoverEvidence evidence(CutoverStatus current) {
+        if (current == null) throw new IllegalArgumentException("Cutover status is required");
+        java.util.Map<String, Boolean> gates = new java.util.LinkedHashMap<>();
+        gates.put("legacyReadiness", current.readinessPassed());
+        gates.put("canonicalParity", current.parityPassed());
+        gates.put("masterShadowWrite", current.shadowWriteEnabled());
+        gates.put("productShadowWrite", current.productReferenceShadowEnabled());
+        gates.put("productPrimaryRead", current.productReferencePrimaryReadEnabled());
+        gates.put("productBackfill", current.productReferencesReady());
+        gates.put("productParity", current.productReferenceParityPassed());
+        gates.put("legacyProductAssociationsRetired", current.legacyProductAssociationsRetired());
+        gates.put("canonicalRead", current.canonicalReadEnabled());
+
+        var legacyReadiness = current.readiness();
+        var legacyParity = current.parity();
+        var productReadiness = current.productReferences();
+        var productParity = current.productReferenceParity();
+        var issues = legacyReadiness == null || legacyReadiness.issues() == null
+            ? java.util.List.<MasterDataMigrationService.ReadinessIssue>of()
+            : java.util.List.copyOf(legacyReadiness.issues());
+        var mismatches = legacyParity == null || legacyParity.mismatches() == null
+            ? java.util.List.<MasterDataParityService.ParityMismatch>of()
+            : java.util.List.copyOf(legacyParity.mismatches());
+        var productMismatches = productParity == null || productParity.mismatches() == null
+            ? java.util.List.<ProductMasterDataReferenceParityService.ParityMismatch>of()
+            : java.util.List.copyOf(productParity.mismatches());
+        var incomplete = productReadiness == null || productReadiness.incompleteByEntity() == null
+            ? java.util.Map.<String, Long>of()
+            : java.util.Map.copyOf(productReadiness.incompleteByEntity());
+
+        var blockers = retirementBlockers(current);
+        return new CutoverEvidence(
+            current.readyToRetireLegacyPersistence() && blockers.isEmpty(),
+            java.util.Collections.unmodifiableMap(gates),
+            blockers,
+            legacyParity == null ? 0L : legacyParity.checked(),
+            mismatches.size(),
+            productReadiness == null ? 0L : productReadiness.checked(),
+            productReadiness == null ? 0L : productReadiness.incomplete(),
+            incomplete,
+            productParity == null ? 0L : productParity.checked(),
+            productMismatches.size(),
+            issues,
+            mismatches,
+            productMismatches
+        );
+    }
+
     public CutoverStatus requireReadyToRetireLegacyPersistence() {
         CutoverStatus status = status();
 
