@@ -36,7 +36,7 @@ public class MasterDataCutoverStatusService {
 
     private final MasterDataMigrationService migration;
     private final MasterDataParityService parity;
-    private final CanonicalMasterDataMirrorService mirror;
+    private final CanonicalMasterDataWriteService mirror;
     private final boolean productReferenceShadowWriteEnabled;
     private final ProductCanonicalScopeResolver productCanonicalScope;
     private final ProductMasterDataReferenceBackfillService productReferenceBackfill;
@@ -47,7 +47,7 @@ public class MasterDataCutoverStatusService {
     public MasterDataCutoverStatusService(
             MasterDataMigrationService migration,
             MasterDataParityService parity,
-            CanonicalMasterDataMirrorService mirror,
+            CanonicalMasterDataWriteService mirror,
             @Value("${comandos.master-data.product-reference-shadow.enabled:false}")
             boolean productReferenceShadowWriteEnabled,
             ProductCanonicalScopeResolver productCanonicalScope,
