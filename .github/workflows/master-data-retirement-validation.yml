@@ -183,7 +183,15 @@ jobs:
           set -euo pipefail
           for i in {1..180}; do
             if grep -q "legacy persistence retirement gate=PASS" /tmp/comandos-master-data-retirement.log 2>/dev/null; then
-              echo "Step 21.12 retirement gate passed."
+              # CI uses seeded Oracle product data: an empty parity report is
+              # not valid retirement evidence in this seeded environment.
+              product_checked="$(sed -nE 's/.*product-reference parity consistent=true, checked=([0-9]+).*/\\1/p' /tmp/comandos-master-data-retirement.log | tail -1)"
+              if [[ -z "$product_checked" || "$product_checked" -eq 0 ]]; then
+                echo "::error::Retirement gate emitted no nonempty seeded-product parity evidence."
+                cat /tmp/comandos-master-data-retirement.log
+                exit 1
+              fi
+              echo "Step 21.12 retirement gate passed; seeded product references checked=$product_checked."
               cat /tmp/comandos-master-data-retirement.log
               exit 0
             fi
