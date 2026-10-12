@@ -49,6 +49,11 @@ class MasterDataMigrationRunnerTests {
                 true, 1, 0, java.util.Map.of()
             )
         );
+        when(backfill.backfill()).thenReturn(
+            new ProductMasterDataReferenceBackfillService.BackfillReport(
+                1, 1, java.util.Map.of()
+            )
+        );
         when(productParity.verify()).thenReturn(
             new ProductMasterDataReferenceParityService.ParityReport(
                 false, 1, java.util.List.of()
