@@ -1,10 +1,11 @@
 package com.comandos.documents.service;
 
 import com.comandos.audit.service.AuditService;
-import com.comandos.documents.api.DocumentStorage;
 import com.comandos.documents.dto.ProcessAttachmentContract.*;
 import com.comandos.documents.model.ProcessAttachment;
 import com.comandos.security.service.AccessPolicy;
+import com.fariamiguel.documents.api.DocumentStorage;
+import com.fariamiguel.documents.api.DocumentWrite;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.io.ByteArrayInputStream;
@@ -56,7 +57,13 @@ public class ProcessAttachmentService {
         policy.validateFile(contentType, bytes.length);
         String cleanTitle = clean(title, 255, "Attachment title");
         String cleanFileName = cleanFileName(fileName);
-        var stored = storage.store(cleanFileName, contentType, new ByteArrayInputStream(bytes), bytes.length);
+        var stored = storage.store(new DocumentWrite(
+            cleanFileName,
+            contentType,
+            bytes.length,
+            null,
+            new ByteArrayInputStream(bytes)
+        ));
         var actor = audit.actor();
         var attachment = new ProcessAttachment();
         attachment.processType = type;
@@ -69,10 +76,10 @@ public class ProcessAttachmentService {
         attachment.contentType = stored.contentType();
         attachment.fileSize = stored.size();
         attachment.checksum = stored.checksum();
-        attachment.storageId = stored.id();
+        attachment.storageId = stored.id().toString();
         attachment.versionNumber = 1;
         attachment.currentVersion = true;
-        attachment.uploadedAt = stored.createdAt();
+        attachment.uploadedAt = Instant.now();
         attachment.uploadedById = actor.id();
         attachment.uploadedByLogin = actor.login();
         em.persist(attachment);
@@ -92,7 +99,13 @@ public class ProcessAttachmentService {
         policy.validateFile(contentType, bytes.length);
         String cleanTitle = title == null || title.isBlank() ? current.title : clean(title, 255, "Attachment title");
         String cleanFileName = cleanFileName(fileName);
-        var stored = storage.store(cleanFileName, contentType, new ByteArrayInputStream(bytes), bytes.length);
+        var stored = storage.store(new DocumentWrite(
+            cleanFileName,
+            contentType,
+            bytes.length,
+            null,
+            new ByteArrayInputStream(bytes)
+        ));
         var actor = audit.actor();
         current.currentVersion = false;
         current.retiredAt = Instant.now();
@@ -107,11 +120,11 @@ public class ProcessAttachmentService {
         next.contentType = stored.contentType();
         next.fileSize = stored.size();
         next.checksum = stored.checksum();
-        next.storageId = stored.id();
+        next.storageId = stored.id().toString();
         next.versionNumber = current.versionNumber + 1;
         next.supersedes = current;
         next.currentVersion = true;
-        next.uploadedAt = stored.createdAt();
+        next.uploadedAt = Instant.now();
         next.uploadedById = actor.id();
         next.uploadedByLogin = actor.login();
         em.persist(next);
@@ -171,8 +184,10 @@ public class ProcessAttachmentService {
     }
 
     private byte[] read(String storageId) {
-        try (var input = storage.open(storageId)) {
+        try (var input = storage.open(UUID.fromString(storageId))) {
             return input.readAllBytes();
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("Stored attachment ID is invalid.", exception);
         } catch (IOException exception) {
             throw new IllegalStateException("Could not read stored attachment.", exception);
         }

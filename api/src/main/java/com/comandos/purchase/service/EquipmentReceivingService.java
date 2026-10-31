@@ -1,6 +1,8 @@
 package com.comandos.purchase.service;
 
 import com.comandos.core.model.Organization;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.ItemModel;
 import com.comandos.purchase.dto.EquipmentReceivingContract;
 import com.comandos.purchase.model.*;
@@ -24,7 +26,10 @@ public class EquipmentReceivingService {
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final EntityManager em;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public EquipmentReceivingService(
         EquipmentReceivingRepository receivingRepository,
         EquipmentReceivingItemRepository itemRepository,
@@ -32,7 +37,9 @@ public class EquipmentReceivingService {
         ReceivingIncorporationRepository incorporationRepository,
         PurchaseRepository purchaseRepository,
         PurchaseItemRepository purchaseItemRepository,
-        EntityManager em
+        EntityManager em,
+        ProductMasterDataReferenceSynchronizer masterDataReferences,
+        ProductCanonicalScopeResolver canonicalScope
     ) {
         this.receivingRepository = receivingRepository;
         this.itemRepository = itemRepository;
@@ -41,6 +48,31 @@ public class EquipmentReceivingService {
         this.purchaseRepository = purchaseRepository;
         this.purchaseItemRepository = purchaseItemRepository;
         this.em = em;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+    }
+
+    @Deprecated
+    EquipmentReceivingService(
+        EquipmentReceivingRepository receivingRepository,
+        EquipmentReceivingItemRepository itemRepository,
+        ReceivingSerialRepository serialRepository,
+        ReceivingIncorporationRepository incorporationRepository,
+        PurchaseRepository purchaseRepository,
+        PurchaseItemRepository purchaseItemRepository,
+        EntityManager em
+    ) {
+        this(
+            receivingRepository,
+            itemRepository,
+            serialRepository,
+            incorporationRepository,
+            purchaseRepository,
+            purchaseItemRepository,
+            em,
+            null,
+            null
+        );
     }
 
     public List<EquipmentReceivingContract.View> list(Long acquisitionId) {
@@ -100,7 +132,13 @@ public class EquipmentReceivingService {
             if (organization == null) {
                 throw new IllegalArgumentException("Organization not found: " + request.receivingOrganizationId());
             }
-            receiving.receivingOrganization = organization;
+            receiving.receivingOrganizationLegacyId = organization.id;
+            receiving.receivingOrganizationName = organization.name;
+            if (canonicalScope != null) {
+                receiving.receivingOrganizationCanonicalId = canonicalScope.organization(organization.id);
+            } else if (masterDataReferences != null) {
+                masterDataReferences.synchronizeForBackfill(receiving);
+            }
         }
 
         receiving.receivingUnit = clean(request.receivingUnit());
@@ -347,13 +385,24 @@ public class EquipmentReceivingService {
                 })
                 .toList();
 
+        String receivingOrganizationName = receiving.receivingOrganizationName;
+        if (receivingOrganizationName == null && receiving.receivingOrganizationLegacyId != null) {
+            Organization legacyOrganization = em.find(
+                Organization.class,
+                receiving.receivingOrganizationLegacyId
+            );
+            receivingOrganizationName = legacyOrganization == null
+                ? null
+                : legacyOrganization.name;
+        }
+
         return new EquipmentReceivingContract.View(
             receiving.id,
             receiving.sourceType,
             receiving.acquisition == null ? null : receiving.acquisition.id,
             receiving.acquisition == null ? null : receiving.acquisition.purchaseNumber,
-            receiving.receivingOrganization == null ? null : receiving.receivingOrganization.id,
-            receiving.receivingOrganization == null ? null : receiving.receivingOrganization.name,
+            receiving.receivingOrganizationLegacyId,
+            receivingOrganizationName,
             receiving.receivingUnit,
             receiving.receivingLocation,
             receiving.deliveryDocumentNumber,

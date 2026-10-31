@@ -1,15 +1,17 @@
 package com.comandos.workflow.service;
 
-import com.comandos.audit.api.AuditRecorder;
-import com.comandos.core.api.PlatformPage;
+import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
-import com.comandos.security.api.AuthorizationService;
-import com.comandos.security.api.CurrentActor;
-import com.comandos.security.api.CurrentActorProvider;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.comandos.security.service.AccessPolicy;
+import com.fariamiguel.security.api.CurrentActor;
+import com.fariamiguel.security.api.CurrentActorProvider;
 import com.comandos.workflow.api.*;
 import com.comandos.workflow.model.ApprovalWorkflow;
 import com.comandos.workflow.model.ApprovalWorkflowEvent;
+import com.fariamiguel.core.api.PlatformPage;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -20,20 +22,33 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
-public class WorkflowService implements WorkflowGateway {
+public class WorkflowService implements SensitiveWorkflowGateway {
     private final EntityManager em;
-    private final AuthorizationService access;
-    private final AuditRecorder audit;
+    private final AccessPolicy access;
+    private final AuditService audit;
     private final CurrentActorProvider actors;
     private final WorkflowPolicy policy;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public WorkflowService(EntityManager em, AuthorizationService access, AuditRecorder audit,
-            CurrentActorProvider actors, WorkflowPolicy policy) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
+            CurrentActorProvider actors, WorkflowPolicy policy,
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.actors = actors;
         this.policy = policy;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+    }
+
+    @Deprecated
+    WorkflowService(EntityManager em, AccessPolicy access, AuditService audit,
+            CurrentActorProvider actors, WorkflowPolicy policy) {
+        this(em, access, audit, actors, policy, null, null);
     }
 
     @Transactional
@@ -45,14 +60,21 @@ public class WorkflowService implements WorkflowGateway {
         String operationType = WorkflowPolicy.normalize(r.operationType());
         policy.rule(operationType);
         String resource = WorkflowPolicy.normalizeResource(r.resource());
-        access.require(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
+        access.requireScope(resource, policy.permissionForTransition(WorkflowPolicy.REQUESTED), r.organizationId(), r.unitId());
 
-        var w = new ApprovalWorkflow();
-        w.organization = find(Organization.class, r.organizationId());
-        w.unit = r.unitId() == null ? null : find(OrganizationalUnit.class, r.unitId());
-        if (w.unit != null && !w.unit.organization.id.equals(w.organization.id)) {
+        Organization organization = find(Organization.class, r.organizationId());
+        OrganizationalUnit unit = r.unitId() == null
+            ? null
+            : find(OrganizationalUnit.class, r.unitId());
+        if (unit != null && !unit.organization.id.equals(organization.id)) {
             bad("Unit does not belong to organization.");
         }
+
+        var w = new ApprovalWorkflow();
+        w.organizationLegacyId = organization.id;
+        w.unitLegacyId = unit == null ? null : unit.id;
+        w.organizationCanonicalId = canonicalScope.organization(organization.id);
+        w.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
         if (r.recordId() != null && r.recordId() <= 0) {
             bad("Record id must be positive when informed.");
         }
@@ -64,8 +86,15 @@ public class WorkflowService implements WorkflowGateway {
         w.justification = requiredJustification(r.justification());
         w.requestedAt = LocalDateTime.now();
         CurrentActor actor = requiredActor();
-        w.requestedById = actor.accountId();
-        w.requestedByLogin = actor.login();
+        w.requestedById = actorId(actor);
+        w.requestedByLogin = actor.displayName();
+        if (masterDataReferences != null) {
+            if (canonicalScope != null && canonicalScope.enabled()) {
+                masterDataReferences.synchronizeForBackfill(w);
+            } else {
+                masterDataReferences.synchronize(w);
+            }
+        }
         em.persist(w);
         em.flush();
 
@@ -103,22 +132,18 @@ public class WorkflowService implements WorkflowGateway {
 
     @Transactional
     public WorkflowView bindRecordId(long id, long recordId) {
-        if (recordId <= 0) {
-            bad("Record id must be positive.");
-        }
+        if (recordId <= 0) bad("Record id must be positive.");
         var w = locked(id);
         if (!WorkflowPolicy.EXECUTED.equals(w.status)) {
             conflict("Record can only be linked while workflow is EXECUTED.");
         }
         if (w.recordId != null) {
-            if (w.recordId == recordId) {
-                return view(w);
-            }
+            if (w.recordId == recordId) return view(w);
             conflict("Workflow is already linked to another record.");
         }
 
-        access.require(w.resource, policy.permissionForTransition(WorkflowPolicy.EXECUTED),
-            w.organization.id, w.unit == null ? null : w.unit.id);
+        access.requireScope(w.resource, policy.permissionForTransition(WorkflowPolicy.EXECUTED),
+            w.organizationLegacyId, w.unitLegacyId);
         requiredActor();
         var before = view(w);
         w.recordId = recordId;
@@ -130,21 +155,28 @@ public class WorkflowService implements WorkflowGateway {
 
     public WorkflowView get(long id) {
         var w = find(ApprovalWorkflow.class, id);
-        access.require(w.resource, "READ", w.organization.id, w.unit == null ? null : w.unit.id);
+        access.requireScope(w.resource, "READ", w.organizationLegacyId, w.unitLegacyId);
         return view(w);
     }
 
     public PlatformPage<WorkflowView> list(long org, Long unit, String status, int page) {
-        access.require("inventory/assets", "READ", org, unit);
-        String where = " where w.organization.id=:o" + (unit == null ? "" : " and w.unit.id=:u")
+        access.requireScope("inventory/assets", "READ", org, unit);
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(org, unit) : null;
+        String where = " where "
+            + (canonical ? "w.organizationCanonicalId" : "w.organizationLegacyId")
+            + "=:o"
+            + (unit == null ? "" : " and "
+                + (canonical ? "w.unitCanonicalId" : "w.unitLegacyId")
+                + "=:u")
             + (blank(status) ? "" : " and w.status=:s");
         var q = em.createQuery("select w from ApprovalWorkflow w" + where + " order by w.id desc", ApprovalWorkflow.class);
         var c = em.createQuery("select count(w) from ApprovalWorkflow w" + where, Long.class);
-        q.setParameter("o", org);
-        c.setParameter("o", org);
+        q.setParameter("o", canonical ? scope.organizationId() : org);
+        c.setParameter("o", canonical ? scope.organizationId() : org);
         if (unit != null) {
-            q.setParameter("u", unit);
-            c.setParameter("u", unit);
+            q.setParameter("u", canonical ? scope.unitId() : unit);
+            c.setParameter("u", canonical ? scope.unitId() : unit);
         }
         if (!blank(status)) {
             String normalizedStatus = WorkflowPolicy.normalizeStatus(status);
@@ -159,8 +191,8 @@ public class WorkflowService implements WorkflowGateway {
         var w = locked(id);
         policy.rule(w.operationType);
         policy.requireTransition(w.status, target);
-        access.require(w.resource, policy.permissionForTransition(target),
-            w.organization.id, w.unit == null ? null : w.unit.id);
+        access.requireScope(w.resource, policy.permissionForTransition(target),
+            w.organizationLegacyId, w.unitLegacyId);
 
         String reason = requiredTransitionJustification(transition);
         CurrentActor actor = requiredActor();
@@ -170,19 +202,13 @@ public class WorkflowService implements WorkflowGateway {
         w.status = target;
 
         if (WorkflowPolicy.AUTHORIZED.equals(target)) {
-            w.authorityId = actor.accountId();
-            w.authorityLogin = actor.login();
+            w.authorityId = actorId(actor);
+            w.authorityLogin = actor.displayName();
             w.authorizedAt = now;
         }
-        if (WorkflowPolicy.EXECUTED.equals(target)) {
-            w.executedAt = now;
-        }
-        if (WorkflowPolicy.CONCLUDED.equals(target)) {
-            w.concludedAt = now;
-        }
-        if (WorkflowPolicy.CANCELLED.equals(target)) {
-            w.cancelledAt = now;
-        }
+        if (WorkflowPolicy.EXECUTED.equals(target)) w.executedAt = now;
+        if (WorkflowPolicy.CONCLUDED.equals(target)) w.concludedAt = now;
+        if (WorkflowPolicy.CANCELLED.equals(target)) w.cancelledAt = now;
 
         event(w, from, target, reason, actor, now);
         em.flush();
@@ -199,8 +225,8 @@ public class WorkflowService implements WorkflowGateway {
         e.toStatus = to;
         e.justification = requiredJustification(reason);
         e.occurredAt = occurredAt == null ? LocalDateTime.now() : occurredAt;
-        e.actorId = actor.accountId();
-        e.actorLogin = actor.login();
+        e.actorId = actorId(actor);
+        e.actorLogin = actor.displayName();
         em.persist(e);
     }
 
@@ -213,38 +239,44 @@ public class WorkflowService implements WorkflowGateway {
             .map(e -> new WorkflowEventView(e.id, e.fromStatus, e.toStatus, e.justification,
                 e.occurredAt.toString(), e.actorLogin))
             .toList();
-        return new WorkflowView(w.id, w.organization.id, w.unit == null ? null : w.unit.id,
+        return new WorkflowView(w.id, w.organizationLegacyId, w.unitLegacyId,
             w.operationType, w.resource, w.recordId, w.status, w.justification, w.requestedAt.toString(),
             w.requestedByLogin, w.authorityLogin, s(w.authorizedAt), s(w.executedAt),
             s(w.concludedAt), s(w.cancelledAt), events);
     }
 
     private ApprovalWorkflow locked(long id) {
-        if (id <= 0) {
-            bad("Workflow id must be positive.");
-        }
+        if (id <= 0) bad("Workflow id must be positive.");
         var w = em.find(ApprovalWorkflow.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (w == null) {
-            notFound();
-        }
+        if (w == null) notFound();
         return w;
     }
 
     private <T> T find(Class<T> type, long id) {
         var value = em.find(type, id);
-        if (value == null) {
-            notFound();
-        }
+        if (value == null) notFound();
         return value;
     }
 
     private CurrentActor requiredActor() {
-        CurrentActor actor = actors.current();
-        if (actor == null || !actor.authenticated() || blank(actor.login())) {
+        CurrentActor actor = actors.currentActor();
+        if (actor == null || !actor.authenticated() || blank(actor.displayName())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                 "An authenticated and identified actor is required for workflow transitions.");
         }
         return actor;
+    }
+
+    private static Long actorId(CurrentActor actor) {
+        if (actor == null || actor.id() == null || actor.id().isBlank()
+                || "anonymous".equalsIgnoreCase(actor.id())) {
+            return null;
+        }
+        try {
+            return Long.valueOf(actor.id());
+        } catch (NumberFormatException ignored) {
+            return Integer.toUnsignedLong(actor.id().hashCode());
+        }
     }
 
     private static String requiredTransitionJustification(WorkflowTransition transition) {
@@ -255,13 +287,9 @@ public class WorkflowService implements WorkflowGateway {
     }
 
     private static String requiredJustification(String value) {
-        if (blank(value)) {
-            bad("Justification is required.");
-        }
+        if (blank(value)) bad("Justification is required.");
         String justification = value.trim();
-        if (justification.length() > 2000) {
-            bad("Justification must contain at most 2000 characters.");
-        }
+        if (justification.length() > 2000) bad("Justification must contain at most 2000 characters.");
         return justification;
     }
 

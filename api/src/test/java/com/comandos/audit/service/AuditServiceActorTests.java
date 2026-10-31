@@ -4,6 +4,7 @@ import com.comandos.security.api.CurrentActor;
 import com.comandos.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +23,8 @@ class AuditServiceActorTests {
         var service = new AuditService(
             mock(EntityManager.class),
             mock(AccessPolicy.class),
-            actors
+            actors,
+            List.of()
         );
 
         var actor = service.actor();
@@ -40,7 +42,8 @@ class AuditServiceActorTests {
         var service = new AuditService(
             mock(EntityManager.class),
             mock(AccessPolicy.class),
-            actors
+            actors,
+            List.of()
         );
 
         var actor = service.actor();

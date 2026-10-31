@@ -29,6 +29,7 @@ function useResourceOptions(
     filters: Record<string, string> = {}
 ) {
     const filterKey = JSON.stringify(filters);
+    const stableFilters = React.useMemo<Record<string, string>>(() => JSON.parse(filterKey), [filterKey]);
     const [options, setOptions] = React.useState<ErpRecord[]>([]);
     const [error, setError] = React.useState("");
 
@@ -41,7 +42,7 @@ function useResourceOptions(
             0,
             controller.signal,
             organizationId,
-            filters,
+            stableFilters,
             100
         ).then(result => {
             if (!controller.signal.aborted) {
@@ -53,7 +54,7 @@ function useResourceOptions(
         });
 
         return () => controller.abort();
-    }, [service, resource, organizationId, filterKey]);
+    }, [service, resource, organizationId, stableFilters]);
 
     return { options, error };
 }
@@ -91,7 +92,9 @@ export function EquipmentSetComponentsEditor({
 
     React.useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setLoading(true);
+        });
 
         service.list(
             "equipment-set-components",
@@ -358,7 +361,9 @@ export function CategoryCharacteristicsEditor({
 
     React.useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setLoading(true);
+        });
 
         service.list(
             "category-characteristics",
@@ -591,7 +596,9 @@ export function CharacteristicValuesEditor({
 
     React.useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
+        queueMicrotask(() => {
+            if (!controller.signal.aborted) setLoading(true);
+        });
 
         const load = async () => {
             let categoryId = ownerType === "model" ? owner.categoryId : null;

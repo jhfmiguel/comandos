@@ -1,6 +1,8 @@
 package com.comandos.sales.service;
 
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.inventory.model.*;
 import com.comandos.reconciliation.model.InventoryCountItem;
 import com.comandos.sales.dto.SalesContract.*;
@@ -29,7 +31,27 @@ public class InventorySalesService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
-    public InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) { this.em = em; this.access = access; this.audit = audit; }
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InventorySalesService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+    }
+
+    @Deprecated
+    InventorySalesService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null, null);
+    }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
         access.requireScope("sales", "READ", organizationId, unitId);
@@ -40,8 +62,14 @@ public class InventorySalesService {
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
         String expiry = assets ? "e.validUntil" : "e.lot.validUntil";
-        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where e.location.organization.id = :organization"
-            + (unitId == null ? "" : " and e.location.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unitLegacyId")
+                + " = :unit")
             + (assets ? " and e.status = 'AVAILABLE'" : " and e.available > 0")
             + " and (" + expiry + " is null or " + expiry + " >= :today)"
             + " and (lower(" + code + ") like :search escape '!' or lower(" + model + ".name) like :search escape '!'"
@@ -49,8 +77,8 @@ public class InventorySalesService {
         String term = "%" + search.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
         var query = em.createQuery("select e" + from + " order by e.id", CoreEntity.class);
         var count = em.createQuery("select count(e)" + from, Long.class);
-        for (var q : List.of(query, count)) q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
-        if (unitId != null) for (var q : List.of(query, count)) q.setParameter("unit", unitId);
+        for (var q : List.of(query, count)) q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
+        if (unitId != null) for (var q : List.of(query, count)) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(e -> {
             if (e instanceof AssetItem a) return new StockOption("ASSET", a.id, a.assetCode, a.model.name, a.model.sku,
                 a.location.name, a.model.unitOfMeasure, "1", decimal(a.model.listPrice));
@@ -64,8 +92,6 @@ public class InventorySalesService {
     public SaleView finalizeSale(FinalizeRequest request) {
         validateRequest(request);
         access.requireScope("sales", "CREATE", request.organizationId(), request.unitId());
-        // Same lock order as inventory registration: catalog, then organization.
-        // This also protects prices, expiry dates and manual availability changes.
         em.createQuery("select c from ItemCategory c order by c.id", ItemCategory.class)
             .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
         var organization = locked(Organization.class, request.organizationId());
@@ -82,16 +108,21 @@ public class InventorySalesService {
         access.requireEntity("core/people", "READ", buyer);
         if (!organization.active || !buyer.active) bad("Organization and buyer must be active.");
         var sale = new InventorySale();
-        sale.organization = organization;
-        sale.unit = unit;
+        sale.organizationLegacyId = organization.id;
+        sale.unitLegacyId = unit == null ? null : unit.id;
+        sale.buyerLegacyId = buyer.id;
+        if (canonicalScope != null) {
+            sale.organizationCanonicalId = canonicalScope.organization(organization.id);
+            sale.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            sale.buyerCanonicalId = canonicalScope.person(buyer.id);
+        }
         sale.unitName = unit == null ? null : unit.name;
-        sale.buyer = buyer;
         sale.organizationName = organization.name;
         sale.buyerName = buyer.fullName;
         sale.paymentMethod = request.paymentMethod();
-        sale.processNumber = request.processNumber() == null || request.processNumber().isBlank() ? null : request.processNumber().trim();
-        sale.legalBasis = request.legalBasis() == null || request.legalBasis().isBlank() ? null : request.legalBasis().trim();
-        sale.documentReference = request.documentReference() == null || request.documentReference().isBlank() ? null : request.documentReference().trim();
+        sale.processNumber = request.processNumber().trim();
+        sale.legalBasis = request.legalBasis().trim();
+        sale.documentReference = request.documentReference().trim();
         sale.finalizedAt = LocalDateTime.now();
         sale.withdrawnAt = sale.finalizedAt;
         sale.withdrawnByLogin = audit.actor().login();
@@ -174,12 +205,19 @@ public class InventorySalesService {
         access.requireScope("sales", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId);
         pagination(page);
-        String from = " from InventorySale s where s.organization.id = :organization" + (unitId == null ? "" : " and s.unit.id = :unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from InventorySale s where "
+            + (canonical ? "s.organizationCanonicalId" : "s.organizationLegacyId")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "s.unitCanonicalId" : "s.unitLegacyId")
+                + " = :unit");
         var query = em.createQuery("select s" + from + " order by s.id desc", InventorySale.class);
         var count = em.createQuery("select count(s)" + from, Long.class);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId);
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         var rows = query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList();
         return new Page<>(rows.stream().map(this::view).toList(), count.getSingleResult(), page, PAGE_SIZE);
@@ -250,9 +288,9 @@ public class InventorySalesService {
             .setParameter("sale", sale.id).getResultList().stream().map(i -> new LineView(i.id, i.model.id,
                 i.asset == null ? null : i.asset.id, i.lot == null ? null : i.lot.id, i.location.id, i.movement.id,
                 i.modelName, i.sku, i.stockCode, i.locationName, i.unitOfMeasure, decimal(i.quantity), decimal(i.unitPrice), decimal(i.subtotal))).toList();
-        return new SaleView(sale.id, sale.organization.id, sale.organizationName, sale.buyer.id, sale.buyerName,
+        return new SaleView(sale.id, sale.organizationLegacyId, sale.organizationName, sale.buyerLegacyId, sale.buyerName,
             sale.paymentMethod.name(), sale.status, sale.finalizedAt.toString(), decimal(sale.total), items, sale.finalizedById, sale.finalizedByLogin,
-            sale.unit == null ? null : sale.unit.id, sale.unitName, returns(sale.id));
+            sale.unitLegacyId, sale.unitName, returns(sale.id));
     }
 
     private List<ReturnView> returns(long saleId){return em.createQuery("select r from SaleReturn r where r.sale.id=:id order by r.id",SaleReturn.class).setParameter("id",saleId).getResultList().stream().map(this::returnView).toList();}
@@ -266,6 +304,13 @@ public class InventorySalesService {
     private void validateRequest(FinalizeRequest request) {
         if (request == null || request.organizationId() == null || request.buyerId() == null || request.paymentMethod() == null)
             bad("Organization, buyer and payment method are required.");
+        if (request.processNumber() == null || request.processNumber().isBlank()
+                || request.legalBasis() == null || request.legalBasis().isBlank()
+                || request.documentReference() == null || request.documentReference().isBlank())
+            bad("Process number, legal basis and document reference are required.");
+        if (request.processNumber().trim().length() > 255) bad("Process number is too long.");
+        if (request.legalBasis().trim().length() > 500) bad("Legal basis is too long.");
+        if (request.documentReference().trim().length() > 1000) bad("Document reference is too long.");
         try {
             if (request.requestId() == null || !UUID.fromString(request.requestId()).toString().equals(request.requestId()))
                 bad("A canonical UUID request ID is required.");
@@ -287,10 +332,12 @@ public class InventorySalesService {
             bad("Amounts must be nonnegative with at most 15 integer and 4 decimal digits; quantities must be positive.");
     }
     private static String fingerprint(FinalizeRequest request) {
-        var value = new StringBuilder().append(request.organizationId()).append('|').append(request.buyerId()).append('|').append(request.paymentMethod());
+        var value = new StringBuilder().append(request.organizationId()).append('|').append(request.buyerId()).append('|').append(request.paymentMethod())
+            .append("|process:").append(request.processNumber().trim())
+            .append("|basis:").append(request.legalBasis().trim())
+            .append("|document:").append(request.documentReference().trim());
         for (var item : request.items()) value.append('|').append(item.assetId()).append(':').append(item.balanceId())
             .append(':').append(item.quantity().stripTrailingZeros().toPlainString()).append(':').append(item.expectedUnitPrice().stripTrailingZeros().toPlainString());
-        // Preserve fingerprints of earlier organization-wide requests.
         if (request.unitId() != null) value.append("|unit:").append(request.unitId());
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.toString().getBytes(StandardCharsets.UTF_8))); }
         catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
@@ -303,9 +350,16 @@ public class InventorySalesService {
         return unit;
     }
     private void validateLocation(StockLocation location, long organizationId, Long unitId) {
-        access.requireScope("sales", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
-        if (!location.organization.id.equals(organizationId)) bad("All stock must belong to the selected organization.");
-        if (unitId != null && (location.unit == null || !unitId.equals(location.unit.id)))
+        access.requireScope("sales", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("All stock must belong to the selected organization and unit.");
+            }
+            return;
+        }
+        if (!location.organizationLegacyId.equals(organizationId)) bad("All stock must belong to the selected organization.");
+        if (unitId != null && (location.unitLegacyId == null || !unitId.equals(location.unitLegacyId)))
             bad("All stock must belong to the selected unit.");
     }
     private <T> T locked(Class<T> type, Long id) {

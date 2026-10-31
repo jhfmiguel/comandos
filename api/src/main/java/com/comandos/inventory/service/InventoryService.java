@@ -2,6 +2,8 @@ package com.comandos.inventory.service;
 
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.service.CoreCatalog;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.MasterDataReferenceService;
 import com.comandos.inventory.model.*;
 import com.comandos.reservation.model.ReservationStatusType;
 import com.comandos.reconciliation.model.InventoryCountResultType;
@@ -28,7 +30,47 @@ public class InventoryService {
     private final InventoryRules rules;
     private final AccessPolicy access;
     private final AuditService audit;
-    public InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) { this.em = em; this.rules = rules; this.access = access; this.audit = audit; }
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final MasterDataReferenceService canonicalReferences;
+    private final boolean canonicalProductReferenceReadEnabled;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InventoryService(
+            EntityManager em,
+            InventoryRules rules,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            MasterDataReferenceService canonicalReferences,
+            @org.springframework.beans.factory.annotation.Value(
+                "${comandos.master-data.product-reference-primary-read.enabled:false}"
+            ) boolean canonicalProductReferenceReadEnabled) {
+        this.em = em;
+        this.rules = rules;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalReferences = canonicalReferences;
+        this.canonicalProductReferenceReadEnabled = canonicalProductReferenceReadEnabled;
+    }
+
+    InventoryService(
+            EntityManager em,
+            InventoryRules rules,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences) {
+        this(em, rules, access, audit, masterDataReferences, null, false);
+    }
+
+    /**
+     * Transitional constructor kept for focused unit tests that do not exercise
+     * canonical product-reference shadowing.
+     */
+    @Deprecated
+    InventoryService(EntityManager em, InventoryRules rules, AccessPolicy access, AuditService audit) {
+        this(em, rules, access, audit, null, null, false);
+    }
 
     public record PageResult(List<Map<String, Object>> content, long totalElements, int page, int size) {}
 
@@ -239,13 +281,19 @@ public class InventoryService {
         String organizationPath =
             switch (resource) {
                 case "locations" ->
-                    "e.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.organizationCanonicalId"
+                        : "e.organizationLegacyId";
                 case "assets",
                      "balances",
                      "movements" ->
-                    "e.location.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.location.organizationCanonicalId"
+                        : "e.location.organizationLegacyId";
                 case "regulatory-controls" ->
-                    "e.asset.location.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.asset.location.organizationCanonicalId"
+                        : "e.asset.location.organizationLegacyId";
                 case "expirations",
                      "certifications",
                      "recalls" ->
@@ -257,7 +305,9 @@ public class InventoryService {
                 case "equipment-set-components" ->
                     "e.equipmentSet.organization.id";
                 case "lots" ->
-                    "e.openingLocation.organization.id";
+                    canonicalProductReferenceReadEnabled
+                        ? "e.openingLocation.organizationCanonicalId"
+                        : "e.openingLocation.organizationLegacyId";
                 default ->
                     null;
             };
@@ -267,8 +317,26 @@ public class InventoryService {
             organizationPath != null;
 
         if (scoped) {
-            clauses.add(organizationPath + " = :organizationId");
-            parameters.put("organizationId", organizationId);
+            if (canonicalProductReferenceReadEnabled
+                    && usesCanonicalLocationScope(resource)) {
+                if (canonicalReferences == null) {
+                    throw new IllegalStateException(
+                        "Canonical product-reference reads require MasterDataReferenceService."
+                    );
+                }
+                String canonicalOrganizationId = canonicalReferences.resolveCanonicalId(
+                        MasterDataReferenceService.ORGANIZATION,
+                        organizationId)
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Canonical organization reference is missing for legacy id "
+                            + organizationId
+                    ));
+                clauses.add(organizationPath + " = :organizationCanonicalId");
+                parameters.put("organizationCanonicalId", canonicalOrganizationId);
+            } else {
+                clauses.add(organizationPath + " = :organizationId");
+                parameters.put("organizationId", organizationId);
+            }
         }
 
         clauses.add(
@@ -315,6 +383,90 @@ public class InventoryService {
         );
     }
 
+    private Map<String, Object> normalizeCanonicalLocationInput(
+            String resource,
+            Map<String, Object> input) {
+        if (!"locations".equals(resource) || input == null
+                || (!input.containsKey("organizationCanonicalId")
+                    && !input.containsKey("unitCanonicalId"))) {
+            return input;
+        }
+        if (canonicalReferences == null) {
+            throw new IllegalStateException(
+                "Canonical location input requires MasterDataReferenceService."
+            );
+        }
+
+        Map<String, Object> normalized = new LinkedHashMap<>(input);
+        String organizationCanonicalId = textValue(
+            normalized.remove("organizationCanonicalId")
+        );
+        String unitCanonicalId = textValue(
+            normalized.remove("unitCanonicalId")
+        );
+
+        if (organizationCanonicalId != null) {
+            Long legacyOrganizationId = canonicalReferences.resolveLegacyId(
+                    MasterDataReferenceService.ORGANIZATION,
+                    organizationCanonicalId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Unknown canonical organization id: "
+                        + organizationCanonicalId
+                ));
+            assertCompatibleLegacyId(
+                normalized.get("organizationId"),
+                legacyOrganizationId,
+                "organization"
+            );
+            normalized.put("organizationId", legacyOrganizationId);
+        }
+
+        if (unitCanonicalId != null) {
+            Long legacyUnitId = canonicalReferences.resolveLegacyId(
+                    MasterDataReferenceService.UNIT,
+                    unitCanonicalId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Unknown canonical unit id: " + unitCanonicalId
+                ));
+            assertCompatibleLegacyId(
+                normalized.get("unitId"),
+                legacyUnitId,
+                "unit"
+            );
+            normalized.put("unitId", legacyUnitId);
+        }
+
+        return normalized;
+    }
+
+    private void assertCompatibleLegacyId(
+            Object supplied,
+            Long expected,
+            String label) {
+        if (supplied == null) return;
+        Long legacyId = integer(supplied, false);
+        if (!Objects.equals(legacyId, expected)) {
+            bad("Canonical and legacy " + label + " references disagree.");
+        }
+    }
+
+    private static String textValue(Object raw) {
+        if (raw == null) return null;
+        String value = String.valueOf(raw).trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    private static boolean usesCanonicalLocationScope(String resource) {
+        return Set.of(
+            "locations",
+            "assets",
+            "balances",
+            "movements",
+            "regulatory-controls",
+            "lots"
+        ).contains(resource);
+    }
+
     private static String likeTerm(String raw) {
         return "%" +
             raw.trim()
@@ -357,6 +509,7 @@ public class InventoryService {
     }
 
     private Map<String, Object> save(String resource, Long id, Map<String, Object> data, String packaging, boolean validateOnly) {
+        data = normalizeCanonicalLocationInput(resource, data);
         var spec = InventoryCatalog.get(resource);
         String action = id == null ? "CREATE" : "UPDATE";
         access.requireAny("inventory/" + resource, action);
@@ -401,6 +554,21 @@ public class InventoryService {
             if (id != null && (entity instanceof Recall || entity instanceof RecallItem)
                     && field.name().equals("description") && !data.containsKey("description")) continue;
             Object raw = data.get(field.name());
+            if (entity instanceof StockLocation location
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                Long legacyId = raw == null ? null : integer(raw, false);
+                if (legacyId == null && field.required()) bad(field.label() + " is required.");
+                if (legacyId != null) {
+                    CoreEntity reference = findReference(field.reference(), legacyId);
+                    access.requireEntity(field.reference(), "READ", reference);
+                }
+                if ("organizationId".equals(field.name())) {
+                    location.organizationLegacyId = legacyId;
+                } else {
+                    location.unitLegacyId = legacyId;
+                }
+                continue;
+            }
             if (entity instanceof AssetItem && Set.of("assetCode", "serialNumber", "internalCode").contains(field.name()) && raw instanceof String text)
                 raw = AssetIdentity.normalize(text);
             Object value = parse(field, raw);
@@ -425,6 +593,18 @@ public class InventoryService {
         access.requireEntity("inventory/" + resource, action, entity);
         rules.validate(entity, previous);
         if (validateOnly) return Map.of();
+
+        // Product entities keep their existing JPA relations during cutover, but
+        // direct master-data owners (currently StockLocation) receive stable
+        // canonical identifiers before persistence.
+        if (masterDataReferences != null) {
+            if (canonicalProductReferenceReadEnabled) {
+                masterDataReferences.synchronizeForBackfill(entity);
+            } else {
+                masterDataReferences.synchronize(entity);
+            }
+        }
+
         if (id == null) {
             // Batch review reports duplicates per field separately. All actual creates
             // share this check under the catalog lock, before stock or audit writes.
@@ -650,13 +830,33 @@ public class InventoryService {
         result.put("label", label(entity));
         if (entity instanceof ItemModel model) result.put("modelFamily", model.category.family);
         Map<String, String> labels = new LinkedHashMap<>();
+        if (entity instanceof StockLocation location) {
+            result.put("organizationCanonicalId", location.organizationCanonicalId);
+            result.put("unitCanonicalId", location.unitCanonicalId);
+            result.put("organizationId", location.organizationLegacyId);
+            result.put("unitId", location.unitLegacyId);
+            Organization organization = location.organizationLegacyId == null
+                ? null : em.find(Organization.class, location.organizationLegacyId);
+            OrganizationalUnit unit = location.unitLegacyId == null
+                ? null : em.find(OrganizationalUnit.class, location.unitLegacyId);
+            if (organization != null) labels.put("organizationId", label(organization));
+            if (unit != null) labels.put("unitId", label(unit));
+        }
         if (entity instanceof AssetItem asset) {
-            result.put("organizationId", asset.location.organization.id);
-            result.put("unitId", asset.location.unit == null ? null : asset.location.unit.id);
-            labels.put("organizationId", label(asset.location.organization));
-            if (asset.location.unit != null) labels.put("unitId", label(asset.location.unit));
+            result.put("organizationId", asset.location.organizationLegacyId);
+            result.put("unitId", asset.location.unitLegacyId);
+            Organization organization = asset.location.organizationLegacyId == null
+                ? null : em.find(Organization.class, asset.location.organizationLegacyId);
+            OrganizationalUnit unit = asset.location.unitLegacyId == null
+                ? null : em.find(OrganizationalUnit.class, asset.location.unitLegacyId);
+            if (organization != null) labels.put("organizationId", label(organization));
+            if (unit != null) labels.put("unitId", label(unit));
         }
         for (var field : spec.fields()) {
+            if (entity instanceof StockLocation
+                    && Set.of("organizationId", "unitId").contains(field.name())) {
+                continue;
+            }
             Object value = read(entity, field.property());
             if (value instanceof CoreEntity ref) { result.put(field.name(), ref.id); labels.put(field.name(), label(ref)); }
             else result.put(field.name(), value instanceof BigDecimal decimal ? decimal.toPlainString() : value);

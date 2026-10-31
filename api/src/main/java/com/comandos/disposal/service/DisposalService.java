@@ -4,6 +4,8 @@ import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.CoreEntity;
 import com.comandos.core.model.Organization;
 import com.comandos.core.model.OrganizationalUnit;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.disposal.dto.DisposalContract.*;
 import com.comandos.disposal.model.*;
 import com.comandos.inventory.model.*;
@@ -26,9 +28,19 @@ public class DisposalService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    @org.springframework.beans.factory.annotation.Autowired
+    public DisposalService(EntityManager em, AccessPolicy access, AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em; this.access = access; this.audit = audit; this.masterDataReferences = masterDataReferences; this.canonicalScope = canonicalScope;
+    }
+
+    @Deprecated
+    DisposalService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String kind, String search, int page) {
@@ -38,8 +50,14 @@ public class DisposalService {
         if (!assets && !"LOT".equals(kind)) bad("Stock kind must be ASSET or LOT.");
         String model = assets ? "e.model" : "e.lot.model";
         String code = assets ? "e.assetCode" : "e.lot.lotNumber";
-        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where e.location.organization.id=:organization"
-            + (unitId == null ? "" : " and e.location.unit.id=:unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from " + (assets ? "AssetItem" : "StockBalance") + " e where "
+            + (canonical ? "e.location.organizationCanonicalId" : "e.location.organizationLegacyId")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "e.location.unitCanonicalId" : "e.location.unitLegacyId")
+                + "=:unit")
             + (assets ? " and e.status='AVAILABLE'" : " and e.available>0")
             + (assets ? "" : " and e.reserved=0")
             + " and not exists (select c.id from InventoryCount c where c.location.id=e.location.id and c.status.code in ('OPEN','COUNTED'))"
@@ -48,8 +66,8 @@ public class DisposalService {
         var query = em.createQuery("select e" + from + " order by e.id", CoreEntity.class);
         var count = em.createQuery("select count(e)" + from, Long.class);
         for (Query candidate : List.of(query, count)) {
-            candidate.setParameter("organization", organizationId).setParameter("search", escaped(search));
-            if (unitId != null) candidate.setParameter("unit", unitId);
+            candidate.setParameter("organization", canonical ? scope.organizationId() : organizationId).setParameter("search", escaped(search));
+            if (unitId != null) candidate.setParameter("unit", canonical ? scope.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(row -> {
             if (row instanceof AssetItem asset) return new StockOption("ASSET", asset.id, asset.assetCode, asset.model.name,
@@ -77,16 +95,22 @@ public class DisposalService {
             if (!existing.get().requestFingerprint.equals(fingerprint)) conflict("This request ID was already used for a different disposal.");
             return view(existing.get());
         }
-        boolean duplicate = !em.createQuery("select p.id from DisposalProcess p where p.organization.id=:organization and p.processNumber=:number", Long.class)
+        boolean duplicate = !em.createQuery("select p.id from DisposalProcess p where p.organizationLegacyId=:organization and p.processNumber=:number", Long.class)
             .setParameter("organization", organization.id).setParameter("number", request.processNumber().trim()).setMaxResults(1).getResultList().isEmpty();
         if (duplicate) conflict("A disposal process with this number already exists in the organization.");
 
         DisposalProcess process = new DisposalProcess();
-        process.organization = organization; process.unit = unit; process.organizationName = organization.name;
+        process.organizationLegacyId = organization.id; process.unitLegacyId = unit == null ? null : unit.id;
+        if (canonicalScope != null) {
+            process.organizationCanonicalId = canonicalScope.organization(organization.id);
+            process.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+        }
+        process.organizationName = organization.name;
         process.unitName = unit == null ? null : unit.name; process.processNumber = request.processNumber().trim();
         process.reason = request.reason().trim(); process.finalizedAt = LocalDateTime.now();
         var actor = audit.actor(); process.finalizedById = actor.id(); process.finalizedByLogin = actor.login();
-        process.requestId = request.requestId(); process.requestFingerprint = fingerprint; em.persist(process);
+        process.requestId = request.requestId(); process.requestFingerprint = fingerprint;
+        em.persist(process);
 
         if (destructionRequested(request)) {
             Destruction destruction = new Destruction(); destruction.process = process;
@@ -103,10 +127,20 @@ public class DisposalService {
 
     public Page<DisposalView> list(long organizationId, Long unitId, int page) {
         access.requireScope("disposals", "READ", organizationId, unitId); selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from DisposalProcess p where p.organization.id=:organization" + (unitId == null ? "" : " and p.unit.id=:unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var scope = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from DisposalProcess p where "
+            + (canonical ? "p.organizationCanonicalId" : "p.organizationLegacyId")
+            + "=:organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "p.unitCanonicalId" : "p.unitLegacyId")
+                + "=:unit");
         var query = em.createQuery("select p" + from + " order by p.id desc", DisposalProcess.class);
         var count = em.createQuery("select count(p)" + from, Long.class);
-        for (Query candidate : List.of(query, count)) { candidate.setParameter("organization", organizationId); if (unitId != null) candidate.setParameter("unit", unitId); }
+        for (Query candidate : List.of(query, count)) {
+            candidate.setParameter("organization", canonical ? scope.organizationId() : organizationId);
+            if (unitId != null) candidate.setParameter("unit", canonical ? scope.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
     }
@@ -151,8 +185,8 @@ public class DisposalService {
             .setParameter("id", process.id).getResultList().stream().map(item -> new LineView(item.id,
                 item.asset == null ? null : item.asset.id, item.lot == null ? null : item.lot.id, item.modelName, item.sku,
                 item.stockCode, item.locationName, item.unitOfMeasure, decimal(item.quantity), item.movement.id)).toList();
-        return new DisposalView(process.id, process.organization.id, process.organizationName,
-            process.unit == null ? null : process.unit.id, process.unitName, process.processNumber, process.reason,
+        return new DisposalView(process.id, process.organizationLegacyId, process.organizationName,
+            process.unitLegacyId, process.unitName, process.processNumber, process.reason,
             process.status, process.finalizedAt.toString(), process.finalizedById, process.finalizedByLogin,
             destruction.map(value -> value.method).orElse(null), destruction.map(value -> value.destroyedAt.toString()).orElse(null),
             destruction.map(value -> value.certificate).orElse(null), items);
@@ -160,11 +194,20 @@ public class DisposalService {
 
     private void scope(StockLocation location, DisposalProcess process) {
         if (!Boolean.TRUE.equals(location.active)) bad("Stock location must be active.");
-        access.requireScope("disposals", "CREATE", location.organization.id, location.unit == null ? null : location.unit.id);
-        access.requireScope("disposals", "APPROVE", location.organization.id, location.unit == null ? null : location.unit.id);
-        if (!location.organization.id.equals(process.organization.id) || process.unit != null
-                && (location.unit == null || !location.unit.id.equals(process.unit.id)))
+        access.requireScope("disposals", "CREATE", process.organizationLegacyId, process.unitLegacyId);
+        access.requireScope("disposals", "APPROVE", process.organizationLegacyId, process.unitLegacyId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            if (!location.matchesCanonicalScope(
+                    process.organizationCanonicalId,
+                    process.unitCanonicalId)) {
+                bad("Every item must belong to the selected organization and unit.");
+            }
+        } else if (!location.organizationLegacyId.equals(process.organizationLegacyId)
+                || process.unitLegacyId != null
+                    && (location.unitLegacyId == null
+                        || !location.unitLegacyId.equals(process.unitLegacyId))) {
             bad("Every item must belong to the selected organization and unit.");
+        }
         // Opening a count locks the same organization, so its snapshot cannot race this check.
         long activeCounts = em.createQuery("select count(c) from InventoryCount c where c.location.id=:location"
                 + " and c.status.code in ('OPEN','COUNTED')", Long.class)

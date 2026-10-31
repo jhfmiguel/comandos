@@ -4,6 +4,7 @@ import com.comandos.security.api.CurrentActorProvider;
 import com.comandos.security.service.AccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -16,7 +17,8 @@ class AuditServiceFilterValidationTests {
         return new AuditService(
             mock(EntityManager.class),
             mock(AccessPolicy.class),
-            mock(CurrentActorProvider.class)
+            mock(CurrentActorProvider.class),
+            List.of()
         );
     }
 

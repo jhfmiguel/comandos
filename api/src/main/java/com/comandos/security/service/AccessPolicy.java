@@ -2,18 +2,19 @@ package com.comandos.security.service;
 
 import com.comandos.core.config.PlatformProperties;
 import com.comandos.core.model.*;
+import com.fariamiguel.security.api.AccessDeniedException;
+import com.fariamiguel.security.api.ResourceAccessPolicy;
+import com.fariamiguel.security.api.ScopeGrant;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
-public class AccessPolicy {
+public class AccessPolicy implements ResourceAccessPolicy {
     private final EntityManager em;
     private final boolean enabled;
     private static final Set<String> ACCESS_RESOURCES = Set.of("core/users", "core/profile-levels", "core/permission-resources", "core/permission-actions", "core/profiles", "core/permissions", "core/user-profiles", "core/profile-permissions");
@@ -81,6 +82,23 @@ public class AccessPolicy {
 
     public AccessView current() { return new AccessView(enabled, enabled ? grants() : List.of()); }
 
+    public Set<ScopeGrant> currentScopeGrants() {
+        if (!enabled) return Set.of(ScopeGrant.system());
+
+        return grants().stream()
+            .map(grant -> switch (grant.scope()) {
+                case "SYSTEM" -> ScopeGrant.system();
+                case "ORGANIZATION" -> ScopeGrant.organization(String.valueOf(grant.organizationId()));
+                case "UNIT" -> ScopeGrant.unit(
+                    String.valueOf(grant.organizationId()),
+                    String.valueOf(grant.unitId())
+                );
+                default -> null;
+            })
+            .filter(Objects::nonNull)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     private List<Grant> grants() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof AccountPrincipal principal)) return List.of();
@@ -101,24 +119,24 @@ public class AccessPolicy {
             case "core/units" -> new Scope("organization.id", "id");
             case "core/person-roles" -> new Scope("organization.id", "unit.id");
             case "core/role-data" -> new Scope("personRole.organization.id", "personRole.unit.id");
-            case "inventory/locations" -> new Scope("organization.id", "unit.id");
-            case "inventory/assets", "inventory/balances", "inventory/movements" -> new Scope("location.organization.id", "location.unit.id");
-            case "inventory/regulatory-controls" -> new Scope("asset.location.organization.id", "asset.location.unit.id");
+            case "inventory/locations" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "inventory/assets", "inventory/balances", "inventory/movements" -> new Scope("location.organizationLegacyId", "location.unitLegacyId");
+            case "inventory/regulatory-controls" -> new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
             case "inventory/expirations", "inventory/certifications", "inventory/recalls" -> new Scope("organization.id", "unit.id");
             case "inventory/recall-items" -> new Scope("recall.organization.id", "recall.unit.id");
             case "inventory/equipment-sets" -> new Scope("organization.id", "unit.id");
             case "inventory/equipment-set-components" -> new Scope("equipmentSet.organization.id", "equipmentSet.unit.id");
-            case "inventory/lots" -> new Scope("openingLocation.organization.id", "openingLocation.unit.id");
-            case "inventory/item-values" -> new Scope("asset.location.organization.id", "asset.location.unit.id");
-            case "sales" -> new Scope("organization.id", "unit.id");
-            case "custodies" -> new Scope("organization.id", "unit.id");
-            case "ammunition-consumptions" -> new Scope("organization.id", "unit.id");
-            case "donations" -> new Scope("organization.id", "unit.id");
-            case "transfers" -> new Scope("organization.id", "sourceUnit.id");
-            case "disposals" -> new Scope("organization.id", "unit.id");
-            case "maintenance" -> new Scope("organization.id", "unit.id");
-            case "reservations" -> new Scope("organization.id", "unit.id");
-            case "inventory-counts" -> new Scope("organization.id", "unit.id");
+            case "inventory/lots" -> new Scope("openingLocation.organizationLegacyId", "openingLocation.unitLegacyId");
+            case "inventory/item-values" -> new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
+            case "sales" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "custodies" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "ammunition-consumptions" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "donations" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "transfers" -> new Scope("organizationLegacyId", "sourceUnitLegacyId");
+            case "disposals" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "maintenance" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "reservations" -> new Scope("organizationLegacyId", "unitLegacyId");
+            case "inventory-counts" -> new Scope("organizationLegacyId", "unitLegacyId");
             default -> new Scope(null, null);
         };
     }
@@ -162,12 +180,19 @@ public class AccessPolicy {
             .toList();
     }
 
+    @Override
+    public boolean can(String resource, String action) { return canAny(resource, action); }
+
     public boolean canAny(String resource, String action) { return !enabled || !matching(resource, action, scope(resource)).isEmpty(); }
     public List<String> actions(String resource) {
         return List.of("READ", "CREATE", "UPDATE", "DELETE").stream().filter(action -> canAny(resource, action)).toList();
     }
+    @Override
+    public void require(String resource, String action) { requireAny(resource, action); }
+
     public void requireAny(String resource, String action) { if (!canAny(resource, action)) denied(); }
 
+    @Override
     public String predicate(String resource, String action, String alias) {
         return predicate(resource, action, alias, scope(resource));
     }
@@ -185,13 +210,17 @@ public class AccessPolicy {
         }).toList()) + ")";
     }
 
-    public void requireEntity(String resource, String action, CoreEntity entity) {
+    @Override
+    public void requireEntity(String resource, String action, Object entity) {
+        if (!(entity instanceof CoreEntity coreEntity)) {
+            throw new IllegalArgumentException("COMANDOS scoped access requires a CoreEntity during the migration period.");
+        }
         if (CORE_PARAMETER_PARENT_RESOURCES.containsKey(resource) || INVENTORY_PARAMETER_RESOURCES.contains(resource)) {
             requireAny(resource, action);
             return;
         }
         var scope = scope(resource);
-        requireScope(resource, action, scope, idAt(entity, scope.organizationPath()), idAt(entity, scope.unitPath()));
+        requireScope(resource, action, scope, idAt(coreEntity, scope.organizationPath()), idAt(coreEntity, scope.unitPath()));
     }
     public void requireScope(String resource, String action, Long organizationId, Long unitId) {
         requireScope(resource, action, scope(resource), organizationId, unitId);
@@ -230,5 +259,9 @@ public class AccessPolicy {
         String action = switch (method) { case "GET", "HEAD" -> "READ"; case "POST" -> "CREATE"; case "PUT" -> "UPDATE"; case "DELETE" -> "DELETE"; default -> "DENIED"; };
         return canAny(resource, action);
     }
-    private static void denied() { throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission for this operation or scope."); }
+    private static void denied() {
+        throw new AccessDeniedException(
+            "You do not have permission for this operation or scope."
+        );
+    }
 }

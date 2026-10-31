@@ -2,6 +2,7 @@ package com.comandos.core.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fariamiguel.core.api.PlatformPage;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class PlatformPageTests {
 
     @Test
-    void pageCopiesContentAndCalculatesNavigation() {
+    void pageCopiesContentAndCalculatesNavigationThroughSharedContract() {
         var source = new ArrayList<>(List.of("a", "b"));
 
         var page = new PlatformPage<>(source, 25, 1, 10);
@@ -19,10 +20,7 @@ class PlatformPageTests {
         assertEquals(3, page.totalPages());
         assertTrue(page.hasPrevious());
         assertTrue(page.hasNext());
-        assertThrows(
-            UnsupportedOperationException.class,
-            () -> page.content().add("x")
-        );
+        assertThrows(UnsupportedOperationException.class, () -> page.content().add("x"));
     }
 
     @Test
@@ -37,17 +35,8 @@ class PlatformPageTests {
 
     @Test
     void invalidPaginationMetadataIsRejected() {
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new PlatformPage<>(List.of(), -1, 0, 20)
-        );
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new PlatformPage<>(List.of(), 0, -1, 20)
-        );
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new PlatformPage<>(List.of(), 0, 0, 0)
-        );
+        assertThrows(IllegalArgumentException.class, () -> new PlatformPage<>(List.of(), -1, 0, 20));
+        assertThrows(IllegalArgumentException.class, () -> new PlatformPage<>(List.of(), 0, -1, 20));
+        assertThrows(IllegalArgumentException.class, () -> new PlatformPage<>(List.of(), 0, 0, 0));
     }
 }

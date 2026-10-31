@@ -9,13 +9,16 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "erp_sale")
 public class InventorySale extends CoreEntity {
-    @ManyToOne(optional = false) @JoinColumn(name = "organization_id", nullable = false)
-    public Organization organization;
-    @ManyToOne @JoinColumn(name = "unit_id")
-    public OrganizationalUnit unit;
+    @Column(name = "organization_id", nullable = false)
+    public Long organizationLegacyId;
+    @Column(name = "unit_id")
+    public Long unitLegacyId;
     @Column public String unitName;
-    @ManyToOne(optional = false) @JoinColumn(name = "buyer_id", nullable = false)
-    public Person buyer;
+    @Column(name = "buyer_id", nullable = false)
+    public Long buyerLegacyId;
+    @Column(name = "organization_canonical_id", length = 128) public String organizationCanonicalId;
+    @Column(name = "unit_canonical_id", length = 128) public String unitCanonicalId;
+    @Column(name = "buyer_canonical_id", length = 128) public String buyerCanonicalId;
     @Column(nullable = false) public String organizationName;
     @Column(nullable = false) public String buyerName;
     @Enumerated(EnumType.STRING) @Column(nullable = false) public PaymentMethod paymentMethod;

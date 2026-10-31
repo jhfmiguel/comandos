@@ -2,6 +2,8 @@ package com.comandos.custody.service;
 
 import com.comandos.audit.service.AuditService;
 import com.comandos.core.model.*;
+import com.comandos.core.service.ProductMasterDataReferenceSynchronizer;
+import com.comandos.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
 import com.comandos.inventory.model.*;
@@ -24,16 +26,39 @@ public class CustodyService {
     private final EntityManager em;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final ProductMasterDataReferenceSynchronizer masterDataReferences;
+    private final ProductCanonicalScopeResolver canonicalScope;
 
-    public CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
-        this.em = em; this.access = access; this.audit = audit;
+    @org.springframework.beans.factory.annotation.Autowired
+    public CustodyService(
+            EntityManager em,
+            AccessPolicy access,
+            AuditService audit,
+            ProductMasterDataReferenceSynchronizer masterDataReferences,
+            ProductCanonicalScopeResolver canonicalScope) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.masterDataReferences = masterDataReferences;
+        this.canonicalScope = canonicalScope;
+    }
+
+    @Deprecated
+    CustodyService(EntityManager em, AccessPolicy access, AuditService audit) {
+        this(em, access, audit, null, null);
     }
 
     public Page<StockOption> stock(long organizationId, Long unitId, String search, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from AssetItem a where a.location.organization.id = :organization"
-            + (unitId == null ? "" : " and a.location.unit.id = :unit")
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from AssetItem a where "
+            + (canonical ? "a.location.organizationCanonicalId" : "a.location.organizationLegacyId")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "a.location.unitCanonicalId" : "a.location.unitLegacyId")
+                + " = :unit")
             + " and a.status = 'AVAILABLE'"
             + " and not exists (select c.id from EquipmentSetComponent c where c.asset = a and c.equipmentSet.active = true)"
             + " and (a.validUntil is null or a.validUntil >= :today)"
@@ -43,8 +68,8 @@ public class CustodyService {
         var count = em.createQuery("select count(a)" + from, Long.class);
         String term = escaped(search);
         for (var q : List.of(query, count)) {
-            q.setParameter("organization", organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
-            if (unitId != null) q.setParameter("unit", unitId);
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId).setParameter("today", LocalDate.now()).setParameter("search", term);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
         }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream()
             .map(a -> new StockOption(a.id, a.assetCode, a.serialNumber, a.model.name, a.location.name)).toList(),
@@ -96,8 +121,18 @@ public class CustodyService {
         var deliveredAt = LocalDateTime.now();
         var dueAt = parseDueAt(request.dueAt(), deliveredAt);
         var custody = new Custody();
-        custody.organization = organization; custody.unit = unit; custody.recipient = recipient; custody.authorizer = authorizer;
-        custody.recipientUnit = recipientUnit;
+        custody.organizationLegacyId = organization.id;
+        custody.unitLegacyId = unit == null ? null : unit.id;
+        custody.recipientLegacyId = recipient == null ? null : recipient.id;
+        custody.recipientUnitLegacyId = recipientUnit == null ? null : recipientUnit.id;
+        custody.authorizerLegacyId = authorizer.id;
+        if (canonicalScope != null) {
+            custody.organizationCanonicalId = canonicalScope.organization(organization.id);
+            custody.unitCanonicalId = canonicalScope.unit(unit == null ? null : unit.id);
+            custody.recipientCanonicalId = recipient == null ? null : canonicalScope.person(recipient.id);
+            custody.recipientUnitCanonicalId = recipientUnit == null ? null : canonicalScope.unit(recipientUnit.id);
+            custody.authorizerCanonicalId = canonicalScope.person(authorizer.id);
+        }
         custody.organizationName = organization.name; custody.unitName = unit == null ? null : unit.name;
         custody.recipientName = recipient == null ? recipientUnit.name : recipient.fullName; custody.authorizerName = authorizer.fullName;
         custody.purpose = request.purpose().trim(); custody.deliveredAt = deliveredAt; custody.dueAt = dueAt;
@@ -225,10 +260,20 @@ public class CustodyService {
     public Page<CustodyView> list(long organizationId, Long unitId, int page) {
         access.requireScope("custodies", "READ", organizationId, unitId);
         selectedUnit(organizationId, unitId); pagination(page);
-        String from = " from Custody c where c.organization.id = :organization" + (unitId == null ? "" : " and c.unit.id = :unit");
+        boolean canonical = canonicalScope != null && canonicalScope.enabled();
+        var canonicalIds = canonical ? canonicalScope.scope(organizationId, unitId) : null;
+        String from = " from Custody c where "
+            + (canonical ? "c.organizationCanonicalId" : "c.organizationLegacyId")
+            + " = :organization"
+            + (unitId == null ? "" : " and "
+                + (canonical ? "c.unitCanonicalId" : "c.unitLegacyId")
+                + " = :unit");
         var query = em.createQuery("select c" + from + " order by c.id desc", Custody.class);
         var count = em.createQuery("select count(c)" + from, Long.class);
-        for (var q : List.of(query, count)) { q.setParameter("organization", organizationId); if (unitId != null) q.setParameter("unit", unitId); }
+        for (var q : List.of(query, count)) {
+            q.setParameter("organization", canonical ? canonicalIds.organizationId() : organizationId);
+            if (unitId != null) q.setParameter("unit", canonical ? canonicalIds.unitId() : unitId);
+        }
         return new Page<>(query.setFirstResult(page * PAGE_SIZE).setMaxResults(PAGE_SIZE).getResultList().stream().map(this::view).toList(),
             count.getSingleResult(), page, PAGE_SIZE);
     }
@@ -270,19 +315,26 @@ public class CustodyService {
             .setParameter("custody", custody.id).getResultList().stream().map(r -> new ReturnView(r.id, text(r.returnedAt),
                 r.returnedById, r.returnedByLogin, em.createQuery("select i.custodyItem.id from CustodyReturnItem i where i.custodyReturn.id = :return order by i.id", Long.class)
                     .setParameter("return", r.id).getResultList())).toList();
-        return new CustodyView(custody.id, custody.organization.id, custody.organizationName,
-            custody.unit == null ? null : custody.unit.id, custody.unitName,
-            custody.recipient == null ? null : custody.recipient.id,
-            custody.recipientUnit == null ? null : custody.recipientUnit.id,
-            custody.recipientUnit == null ? "PERSON" : "UNIT", custody.recipientName,
-            custody.authorizer.id, custody.authorizerName, custody.purpose, custody.status, text(custody.deliveredAt),
+        return new CustodyView(custody.id, custody.organizationLegacyId, custody.organizationName,
+            custody.unitLegacyId, custody.unitName,
+            custody.recipientLegacyId,
+            custody.recipientUnitLegacyId,
+            custody.recipientUnitLegacyId == null ? "PERSON" : "UNIT", custody.recipientName,
+            custody.authorizerLegacyId, custody.authorizerName, custody.purpose, custody.status, text(custody.deliveredAt),
             text(custody.dueAt), text(custody.completedAt), custody.issuedById, custody.issuedByLogin, items, returns);
     }
 
     private void validateAsset(AssetItem asset, long organizationId, Long unitId, boolean equipmentSetIssue) {
-        access.requireScope("custodies", "CREATE", asset.location.organization.id, asset.location.unit == null ? null : asset.location.unit.id);
-        if (!asset.location.organization.id.equals(organizationId) || unitId != null && (asset.location.unit == null || !unitId.equals(asset.location.unit.id)))
+        access.requireScope("custodies", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!asset.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Every asset must belong to the selected organization and unit.");
+            }
+        } else if (!asset.location.organizationLegacyId.equals(organizationId)
+                || unitId != null && (asset.location.unitLegacyId == null || !unitId.equals(asset.location.unitLegacyId))) {
             bad("Every asset must belong to the selected organization and unit.");
+        }
         if (!AssetStatus.AVAILABLE.name().equals(asset.status)) conflict("Asset " + asset.assetCode + " is no longer available.");
         if (asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())) bad("Expired assets cannot be issued in custody.");
         if (!equipmentSetIssue && countActiveSets(asset.id) > 0)
@@ -297,11 +349,16 @@ public class CustodyService {
     }
 
     private void validateBalance(StockBalance balance, BigDecimal quantity, long organizationId, Long unitId) {
-        access.requireScope("custodies", "CREATE", balance.location.organization.id,
-            balance.location.unit == null ? null : balance.location.unit.id);
-        if (!balance.location.organization.id.equals(organizationId) || unitId != null
-                && (balance.location.unit == null || !unitId.equals(balance.location.unit.id)))
+        access.requireScope("custodies", "CREATE", organizationId, unitId);
+        if (canonicalScope != null && canonicalScope.enabled()) {
+            var ids = canonicalScope.scope(organizationId, unitId);
+            if (!balance.location.matchesCanonicalScope(ids.organizationId(), ids.unitId())) {
+                bad("Every stock balance must belong to the selected organization and unit.");
+            }
+        } else if (!balance.location.organizationLegacyId.equals(organizationId) || unitId != null
+                && (balance.location.unitLegacyId == null || !unitId.equals(balance.location.unitLegacyId))) {
             bad("Every stock balance must belong to the selected organization and unit.");
+        }
         if (balance.lot.validUntil != null && balance.lot.validUntil.isBefore(LocalDate.now()))
             bad("Expired stock cannot be issued in custody.");
         if (balance.available.compareTo(quantity) < 0) conflict("The equipment set quantity is no longer available.");

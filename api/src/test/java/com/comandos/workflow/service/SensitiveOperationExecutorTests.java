@@ -11,6 +11,7 @@ import com.comandos.workflow.api.SensitiveOperationResult;
 import com.comandos.workflow.api.WorkflowTransition;
 import com.comandos.workflow.api.WorkflowView;
 import com.comandos.workflow.model.ApprovalWorkflow;
+import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -122,7 +123,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         GuardSpy(List<String> calls) {
-            super(null, new WorkflowPolicy());
+            super(null, new WorkflowPolicy(new DefaultWorkflowEngine()));
             this.calls = calls;
         }
 
@@ -145,7 +146,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         WorkflowSpy(List<String> calls) {
-            super(null, null, null, null, new WorkflowPolicy());
+            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()));
             this.calls = calls;
         }
 

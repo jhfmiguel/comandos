@@ -2,6 +2,8 @@ package com.comandos.notifications.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fariamiguel.notifications.api.NotificationMessage;
+import com.fariamiguel.notifications.api.NotificationSender;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,7 +50,17 @@ class NotificationApiContractTests {
     @Test
     void senderReceivesCompleteMessage() {
         var captured = new AtomicReference<NotificationMessage>();
-        NotificationSender sender = captured::set;
+        NotificationSender sender = new NotificationSender() {
+            @Override
+            public boolean supports(String channel) {
+                return "PUSH".equals(channel);
+            }
+
+            @Override
+            public void send(NotificationMessage message) {
+                captured.set(message);
+            }
+        };
 
         var message = new NotificationMessage(
             "PUSH",
@@ -58,6 +70,7 @@ class NotificationApiContractTests {
             Map.of("priority", "high")
         );
 
+        assertTrue(sender.supports(message.channel()));
         sender.send(message);
 
         assertSame(message, captured.get());

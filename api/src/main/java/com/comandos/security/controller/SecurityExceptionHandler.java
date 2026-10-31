@@ -1,7 +1,7 @@
 package com.comandos.security.controller;
 
 import com.comandos.core.web.ApiProblems;
-import com.comandos.security.api.AccessDeniedException;
+import com.fariamiguel.security.api.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;

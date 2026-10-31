@@ -1,104 +1,141 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Button } from "components/common/button";
-import { Message } from "components/common/message";
-import { httpClient } from "api/http";
+import * as React from "react"
+import { usePathname, useRouter } from "next/navigation"
 import {
-    isGranted,
-    type PlatformSession
-} from "platform/auth-model";
-import { productDefinition } from "platform/product";
+    AuthSessionProvider,
+    useAuthSession
+} from "@faria-miguel/platform/auth-session"
+import type { PlatformSession } from "@faria-miguel/platform/auth"
+
+import { Button } from "components/common/button"
+import { Message } from "components/common/message"
+import { httpClient } from "api/http"
+import { productDefinition } from "platform/product"
 
 interface SessionContextValue {
-    session: PlatformSession | null;
-    refresh: () => Promise<void>;
-    signOut: () => Promise<void>;
+    session: PlatformSession | null
+    refresh: () => Promise<void>
+    signOut: () => Promise<void>
     can: (
         resource: string,
         action: string,
         organizationId?: number,
         unitId?: number
-    ) => boolean;
+    ) => boolean
 }
-const SessionContext = React.createContext<SessionContextValue | null>(null);
+
+const SessionContext = React.createContext<SessionContextValue | null>(null)
 
 export function useSession() {
-    const context = React.useContext(SessionContext);
-    if (!context) throw new Error("SessionProvider is required.");
-    return context;
+    const context = React.useContext(SessionContext)
+    if (!context) throw new Error("SessionProvider is required.")
+    return context
 }
 
-export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const [session, setSession] = React.useState<PlatformSession | null>(null);
-    const [error, setError] = React.useState("");
-    const pathname = usePathname();
-    const router = useRouter();
-    const refresh = React.useCallback(async () => {
-        try {
-            const response = await httpClient.get<PlatformSession>("/api/auth/session");
-            setSession(response.data); setError("");
-        } catch {
-            setSession(null);
-            setError("Unable to reach the API. Make sure the backend is running and retry.");
-        }
-    }, []);
+function ComandosSessionOverlay({ children }: { children: React.ReactNode }) {
+    const {
+        session,
+        loading,
+        error,
+        refresh,
+        signOut: sharedSignOut,
+        can: sharedCan
+    } = useAuthSession()
+
+    const pathname = usePathname()
+    const router = useRouter()
+
     React.useEffect(() => {
-        const controller = new AbortController();
-        httpClient.get<PlatformSession>("/api/auth/session", { signal: controller.signal }).then(response => {
-            if (!controller.signal.aborted) { setSession(response.data); setError(""); }
-        }).catch(() => {
-            if (!controller.signal.aborted) setError("Unable to reach the API. Make sure the backend is running and retry.");
-        });
-        const expired = () => { setSession(null); void refresh(); };
-        const accessChanged = () => { void refresh(); };
-        window.addEventListener("session-expired", expired);
-        window.addEventListener("access-changed", accessChanged);
-        window.addEventListener("focus", accessChanged);
+        const refreshSession = () => {
+            void refresh()
+        }
+
+        window.addEventListener("session-expired", refreshSession)
+        window.addEventListener("access-changed", refreshSession)
+        window.addEventListener("focus", refreshSession)
+
         return () => {
-            controller.abort();
-            window.removeEventListener("session-expired", expired);
-            window.removeEventListener("access-changed", accessChanged);
-            window.removeEventListener("focus", accessChanged);
-        };
-    }, [refresh]);
+            window.removeEventListener("session-expired", refreshSession)
+            window.removeEventListener("access-changed", refreshSession)
+            window.removeEventListener("focus", refreshSession)
+        }
+    }, [refresh])
+
     React.useEffect(() => {
         if (
-            session?.requireLogin
+            !loading
+            && session?.requireLogin
             && !session.user
             && pathname !== productDefinition.loginPath
         ) {
             router.replace(
                 `${productDefinition.loginPath}?returnTo=${encodeURIComponent(pathname)}`
-            );
+            )
         }
-    }, [session, pathname, router]);
-    async function signOut() {
-        await httpClient.post("/api/auth/logout");
-        await refresh();
-        router.replace(productDefinition.loginPath);
-    }
-    const canDisplay =
-        pathname === productDefinition.loginPath
-        || session && (!session.requireLogin || session.user);
-    const can = (
+    }, [loading, session, pathname, router])
+
+    const signOut = React.useCallback(async () => {
+        await sharedSignOut()
+        router.replace(productDefinition.loginPath)
+    }, [sharedSignOut, router])
+
+    const can = React.useCallback((
         resource: string,
         action: string,
         organizationId?: number,
         unitId?: number
-    ) => isGranted(session, {
+    ) => sharedCan({
         resource,
         action,
         organizationId,
         unitId
-    });
-    return <SessionContext.Provider value={{ session, refresh, signOut, can }}>
-        {canDisplay ? <>
-            {pathname !== productDefinition.loginPath && !session?.requireLogin && <Message type="info" text="Setup mode: sign-in is optional. Create an access account before enabling protected access." />}
-            {children}
-        </> : <main className="max-w-lg mx-auto p-6">
-            {error ? <><Message type="error" text={error} /><Button onClick={() => { setError(""); void refresh(); }}>Retry</Button></> : <p role="status">Checking session…</p>}
-        </main>}
-    </SessionContext.Provider>;
+    }), [sharedCan])
+
+    const canDisplay =
+        pathname === productDefinition.loginPath
+        || Boolean(session && (!session.requireLogin || session.user))
+
+    return (
+        <SessionContext.Provider value={{ session, refresh, signOut, can }}>
+            {canDisplay ? (
+                <>
+                    {pathname !== productDefinition.loginPath && !session?.requireLogin && (
+                        <Message
+                            type="info"
+                            text="Setup mode: sign-in is optional. Create an access account before enabling protected access."
+                        />
+                    )}
+                    {children}
+                </>
+            ) : (
+                <main className="max-w-lg mx-auto p-6">
+                    {error ? (
+                        <>
+                            <Message type="error" text={error} />
+                            <Button onClick={() => void refresh()}>Retry</Button>
+                        </>
+                    ) : (
+                        <p role="status">
+                            {loading ? "Checking session…" : "Redirecting to sign-in…"}
+                        </p>
+                    )}
+                </main>
+            )}
+        </SessionContext.Provider>
+    )
+}
+
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+    return (
+        <AuthSessionProvider
+            client={httpClient}
+            sessionEndpoint="/api/auth/session"
+            logoutEndpoint="/api/auth/logout"
+        >
+            <ComandosSessionOverlay>
+                {children}
+            </ComandosSessionOverlay>
+        </AuthSessionProvider>
+    )
 }

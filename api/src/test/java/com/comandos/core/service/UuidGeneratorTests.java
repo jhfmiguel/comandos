@@ -1,5 +1,6 @@
 package com.comandos.core.service;
 
+import com.fariamiguel.core.service.UuidGenerator;
 import java.util.HashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class UuidGeneratorTests {
     @Test
-    void generatesNonNullUniqueUuids() {
+    void consumesCanonicalUuidGeneratorImplementation() {
         var generator = new UuidGenerator();
         var generated = new HashSet<UUID>();
 

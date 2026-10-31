@@ -24,19 +24,41 @@ public class CoreService {
     private final List<UnitScopeGuard> unitScopeGuards;
     private final AccessPolicy access;
     private final AuditService audit;
+    private final CanonicalMasterDataMirrorService masterDataMirror;
     private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder(12);
 
-    public CoreService(EntityManager em, List<UnitScopeGuard> unitScopeGuards, AccessPolicy access, AuditService audit) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public CoreService(
+            EntityManager em,
+            List<UnitScopeGuard> unitScopeGuards,
+            AccessPolicy access,
+            AuditService audit,
+            CanonicalMasterDataMirrorService masterDataMirror) {
         this.em = em;
         this.access = access;
         this.audit = audit;
         this.unitScopeGuards = unitScopeGuards;
+        this.masterDataMirror = masterDataMirror;
     }
 
-    public record PageResult(List<Map<String, Object>> content, long totalElements,
-                             int page, int size) {}
+    /**
+     * Transitional constructor kept for focused unit tests while the canonical
+     * persistence mirror becomes mandatory in the Spring runtime.
+     */
+    @Deprecated
+    CoreService(
+            EntityManager em,
+            List<UnitScopeGuard> unitScopeGuards,
+            AccessPolicy access,
+            AuditService audit) {
+        this.em = em;
+        this.access = access;
+        this.audit = audit;
+        this.unitScopeGuards = unitScopeGuards;
+        this.masterDataMirror = null;
+    }
 
-    public PageResult list(
+    public CorePageResult list(
             String resource,
             String search,
             int page,
@@ -213,7 +235,7 @@ public class CoreService {
             count.setParameter(name, value);
         });
 
-        return new PageResult(
+        return new CorePageResult(
             query
                 .setFirstResult(page * size)
                 .setMaxResults(size)
@@ -360,6 +382,9 @@ public class CoreService {
         validate(entity);
         if (id == null) em.persist(entity);
         em.flush();
+        if (masterDataMirror != null) {
+            masterDataMirror.mirror(entity);
+        }
         var result = view(spec, entity);
         var auditResult = new LinkedHashMap<>(result);
         if (entity instanceof SystemUser && input.get("password") instanceof String password && !password.isEmpty()) auditResult.put("passwordChanged", true);
@@ -638,46 +663,6 @@ public class CoreService {
         return activity;
     }
 
-    public record PersonRegistration(
-            Map<String, Object> person,
-            List<Map<String, Object>> addresses,
-            List<Map<String, Object>> phones,
-            List<Map<String, Object>> emails) {}
-
-    @Transactional
-    public Map<String, Object> savePersonWithContacts(PersonRegistration registration) {
-        if (registration == null || registration.person() == null) {
-            bad("Person data is required.");
-        }
-
-        Map<String, Object> person = save("people", null, registration.person());
-        long personId = ((Number) person.get("id")).longValue();
-
-        int addressCount = savePersonContacts("person-addresses", personId, registration.addresses());
-        int phoneCount = savePersonContacts("person-phones", personId, registration.phones());
-        int emailCount = savePersonContacts("person-emails", personId, registration.emails());
-
-        Map<String, Object> result = new LinkedHashMap<>(person);
-        result.put("addressesCreated", addressCount);
-        result.put("phonesCreated", phoneCount);
-        result.put("emailsCreated", emailCount);
-        return result;
-    }
-
-    private int savePersonContacts(String resource, long personId, List<Map<String, Object>> contacts) {
-        if (contacts == null || contacts.isEmpty()) return 0;
-
-        for (Map<String, Object> contact : contacts) {
-            if (contact == null) continue;
-            Map<String, Object> data = new LinkedHashMap<>(contact);
-            data.put("personId", personId);
-            data.remove("id");
-            data.remove("version");
-            save(resource, null, data);
-        }
-        return contacts.size();
-    }
-
     @Transactional
     public void delete(String resource, long id, Long version) {
         access.requireAny("core/" + resource, "DELETE");
@@ -767,6 +752,9 @@ public class CoreService {
             address.primaryAddress = false;
         } else em.remove(entity);
         em.flush();
+        if (masterDataMirror != null) {
+            masterDataMirror.delete(entity);
+        }
         audit.record("core/" + resource, id, "DELETE", before, null);
     }
 

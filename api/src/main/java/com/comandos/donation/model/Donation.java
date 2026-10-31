@@ -7,10 +7,14 @@ import java.util.Locale;
 
 @Entity @Table(name = "erp_donation")
 public class Donation extends CoreEntity {
-    @ManyToOne(optional=false) @JoinColumn(name="organization_id", nullable=false) public Organization organization;
-    @ManyToOne @JoinColumn(name="unit_id") public OrganizationalUnit unit;
-    @ManyToOne(optional=false) @JoinColumn(name="donor_id", nullable=false) public Person donor;
-    @ManyToOne(optional=false) @JoinColumn(name="donee_id", nullable=false) public Person donee;
+    @Column(name="organization_id", nullable=false) public Long organizationLegacyId;
+    @Column(name="unit_id") public Long unitLegacyId;
+    @Column(name="donor_id", nullable=false) public Long donorLegacyId;
+    @Column(name="donee_id", nullable=false) public Long doneeLegacyId;
+    @Column(name="organization_canonical_id", length=128) public String organizationCanonicalId;
+    @Column(name="unit_canonical_id", length=128) public String unitCanonicalId;
+    @Column(name="donor_canonical_id", length=128) public String donorCanonicalId;
+    @Column(name="donee_canonical_id", length=128) public String doneeCanonicalId;
     @Column(nullable=false) public String organizationName;
     @Column public String unitName;
     @Column(nullable=false) public String donorName;

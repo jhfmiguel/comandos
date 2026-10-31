@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-05",
+  "purpose": "Track product-domain foreign keys that still depend on legacy COMANDOS master-data JPA entities before canonical persistence retirement.",
+  "canonicalReferenceCrosswalk": "erp_master_data_reference",
+  "states": [
+    "legacy-jpa-association",
+    "canonical-id-shadow",
+    "canonical-id-primary",
+    "retired"
+  ],
+  "references": [
+    {
+      "entity": "StockLocation",
+      "path": "api/src/main/java/com/comandos/inventory/model/StockLocation.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "StockMovement",
+      "path": "api/src/main/java/com/comandos/inventory/model/StockMovement.java",
+      "fields": [
+        "location"
+      ],
+      "state": "retired",
+      "note": "No direct master-data association remains; organization and unit scope are derived through StockLocation."
+    },
+    {
+      "entity": "Purchase",
+      "path": "api/src/main/java/com/comandos/purchase/model/Purchase.java",
+      "fields": [
+        "buyerOrganizationLegacyId",
+        "supplierOrganizationLegacyId",
+        "originPersonLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy buyer/supplier Organization and origin Person JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "EquipmentReceiving",
+      "path": "api/src/main/java/com/comandos/purchase/model/EquipmentReceiving.java",
+      "fields": [
+        "receivingOrganizationLegacyId"
+      ],
+      "state": "retired",
+      "note": "The Organization JPA association was removed. receiving_organization_id remains only as a scalar compatibility bridge while receivingOrganizationCanonicalId is primary."
+    },
+    {
+      "entity": "Custody",
+      "path": "api/src/main/java/com/comandos/custody/model/Custody.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId",
+        "recipientLegacyId",
+        "recipientUnitLegacyId",
+        "authorizerLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "Donation",
+      "path": "api/src/main/java/com/comandos/donation/model/Donation.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId",
+        "donorLegacyId",
+        "doneeLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "InventorySale",
+      "path": "api/src/main/java/com/comandos/sales/model/InventorySale.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId",
+        "buyerLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "InventoryTransfer",
+      "path": "api/src/main/java/com/comandos/transfer/model/InventoryTransfer.java",
+      "fields": [
+        "organizationLegacyId",
+        "sourceUnitLegacyId",
+        "destinationUnitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "WorkOrder",
+      "path": "api/src/main/java/com/comandos/maintenance/model/WorkOrder.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "ApprovalWorkflow",
+      "path": "api/src/main/java/com/comandos/workflow/model/ApprovalWorkflow.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "AmmunitionConsumption",
+      "path": "api/src/main/java/com/comandos/consumption/model/AmmunitionConsumption.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId",
+        "responsibleLegacyId",
+        "authorizerLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization, unit, responsible Person and authorizer Person JPA associations were removed. Scalar legacy ids remain as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "ConsumableUsage",
+      "path": "api/src/main/java/com/comandos/consumption/model/ConsumableUsage.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId",
+        "responsibleLegacyId",
+        "authorizerLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "DisposalProcess",
+      "path": "api/src/main/java/com/comandos/disposal/model/DisposalProcess.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Legacy master-data JPA associations were removed. Scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "InventoryReservation",
+      "path": "api/src/main/java/com/comandos/reservation/model/InventoryReservation.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "InventoryCount",
+      "path": "api/src/main/java/com/comandos/reconciliation/model/InventoryCount.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired"
+    },
+    {
+      "entity": "PurchasePlanning",
+      "path": "api/src/main/java/com/comandos/purchase/model/PurchasePlanning.java",
+      "fields": [
+        "organizationLegacyId"
+      ],
+      "state": "retired",
+      "note": "The Organization JPA association was removed. organization_id remains only as a scalar compatibility bridge while organizationCanonicalId is primary."
+    },
+    {
+      "entity": "PeriodicInspection",
+      "path": "api/src/main/java/com/comandos/lifecycle/model/PeriodicInspection.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    },
+    {
+      "entity": "ExceptionOccurrence",
+      "path": "api/src/main/java/com/comandos/lifecycle/model/ExceptionOccurrence.java",
+      "fields": [
+        "organizationLegacyId",
+        "unitLegacyId"
+      ],
+      "state": "retired",
+      "note": "Organization and unit JPA associations were removed; scalar legacy ids remain only as compatibility bridges while canonical ids are primary."
+    }
+  ],
+  "retirementRule": "All entries must reach canonical-id-primary or retired before legacy master-data persistence can be removed."
+}

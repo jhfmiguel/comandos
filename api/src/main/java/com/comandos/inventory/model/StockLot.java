@@ -1,12 +1,9 @@
 package com.comandos.inventory.model;
 
 import com.comandos.core.model.CoreEntity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "erp_stock_lot", uniqueConstraints = {@UniqueConstraint(columnNames = {"model_id", "opening_location_id", "lot_number"})})
@@ -23,7 +20,8 @@ public class StockLot extends CoreEntity {
     public BigDecimal initialQuantity = BigDecimal.ZERO;
     @Column(name = "available_quantity", nullable = false, precision = 19, scale = 4)
     public BigDecimal availableQuantity = BigDecimal.ZERO;
-    @Lob @Column public String openingPackaging;
+    @Column(length = 4000)
+    public String openingPackaging;
     @Column(name = "valid_until", nullable = true)
     public LocalDate validUntil;
     @Column(name = "condition", nullable = false, length = 100)

@@ -17,6 +17,7 @@ class StockMovementReferenceTypeTests {
             "DONATION",
             "DISPOSAL",
             "AMMUNITION_CONSUMPTION",
+            "CONSUMABLE_USAGE",
             "SALE",
             "SALE_RETURN",
             "INVENTORY_COUNT"

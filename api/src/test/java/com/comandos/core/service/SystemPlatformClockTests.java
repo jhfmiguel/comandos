@@ -1,5 +1,6 @@
 package com.comandos.core.service;
 
+import com.fariamiguel.core.service.SystemPlatformClock;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class SystemPlatformClockTests {
     @Test
-    void returnsCurrentInstant() {
+    void consumesCanonicalPlatformClockImplementation() {
         var clock = new SystemPlatformClock();
         var before = Instant.now();
 

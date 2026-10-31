@@ -149,7 +149,7 @@ export default function DashboardPage() {
     }, []);
 
     React.useEffect(() => {
-        void load();
+        queueMicrotask(() => void load());
     }, [load]);
 
     const movementPoints = chartPoints(data.trend.map(item => Number(item.movements)));

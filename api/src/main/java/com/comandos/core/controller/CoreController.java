@@ -2,6 +2,9 @@ package com.comandos.core.controller;
 
 import com.comandos.core.service.CoreCatalog;
 import com.comandos.core.service.CoreService;
+import com.comandos.core.service.CanonicalCoreReadService;
+import com.comandos.core.service.CorePageResult;
+import com.comandos.core.service.PersonRegistrationService;
 import com.comandos.core.service.CepService;
 import com.comandos.security.service.AccessPolicy;
 
@@ -15,16 +18,22 @@ import org.springframework.web.bind.annotation.*;
 public class CoreController {
 	
     private final CoreService service;
+    private final CanonicalCoreReadService canonicalReads;
+    private final PersonRegistrationService registrations;
     private final AccessPolicy access;
     private final CepService cep;
     
     public CoreController(
-    		CoreService service, 
-    		AccessPolicy access,
+            CoreService service,
+            CanonicalCoreReadService canonicalReads,
+            PersonRegistrationService registrations,
+            AccessPolicy access,
             CepService cep
-    ) { 
-    	this.service = service; 
-    	this.access = access;
+    ) {
+        this.service = service;
+        this.canonicalReads = canonicalReads;
+        this.registrations = registrations;
+        this.access = access;
         this.cep = cep;
     }
 
@@ -52,18 +61,28 @@ public class CoreController {
     @PostMapping("/people/with-contacts")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createPersonWithContacts(
-            @RequestBody CoreService.PersonRegistration registration) {
-        return service.savePersonWithContacts(registration);
+            @RequestBody PersonRegistrationService.PersonRegistration registration) {
+        return registrations.save(registration);
     }
 
     @GetMapping("/{resource}")
-    public CoreService.PageResult list(
+    public CorePageResult list(
     		@PathVariable String resource,
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long organizationId,
             @RequestParam Map<String, String> params) {
+        if (canonicalReads.supports(resource)) {
+            return canonicalReads.list(
+                resource,
+                search,
+                page,
+                size,
+                organizationId,
+                params
+            );
+        }
         return service.list(resource, search, page, size, organizationId, params);
         
     }
@@ -74,6 +93,9 @@ public class CoreController {
     		@PathVariable String resource, 
     		@PathVariable long id) {
     	
+        if (canonicalReads.supports(resource)) {
+            return canonicalReads.get(resource, id);
+        }
         return service.get(resource, id);
         
     }

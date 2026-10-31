@@ -296,8 +296,12 @@ public class InventoryRules {
                 bad("System protection cannot be removed.");
         }
         if (entity instanceof StockLocation location) {
-            if (location.unit != null && !Objects.equals(location.unit.organization.id, location.organization.id)) bad("Unit must belong to the selected organization.");
-            if (!previous.isEmpty() && !Objects.equals(previous.get("organizationId"), location.organization.id))
+            if (location.unitLegacyId != null) {
+                OrganizationalUnit unit = em.find(OrganizationalUnit.class, location.unitLegacyId);
+                if (unit == null || !Objects.equals(unit.organization.id, location.organizationLegacyId))
+                    bad("Unit must belong to the selected organization.");
+            }
+            if (!previous.isEmpty() && !Objects.equals(previous.get("organizationId"), location.organizationLegacyId))
                 bad("Location organization cannot be changed. Register a new location instead.");
         }
         if (entity instanceof EquipmentSet set) {
@@ -559,8 +563,8 @@ public class InventoryRules {
 
     private static void validateScope(Organization organization, OrganizationalUnit unit, AssetItem asset, StockLot lot) {
         StockLocation location = asset != null ? asset.location : lot.openingLocation;
-        if (!location.organization.id.equals(organization.id)) bad("The controlled item must belong to the selected organization.");
-        if (unit != null && (location.unit == null || !location.unit.id.equals(unit.id)))
+        if (!location.organizationLegacyId.equals(organization.id)) bad("The controlled item must belong to the selected organization.");
+        if (unit != null && !Objects.equals(location.unitLegacyId, unit.id))
             bad("The controlled item must belong to the selected unit.");
         if (unit != null && !unit.organization.id.equals(organization.id)) bad("Unit must belong to the selected organization.");
     }

@@ -1,5 +1,6 @@
 package com.comandos.security.service;
 
+import com.fariamiguel.security.api.ScopeGrant;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,10 +9,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SpringCurrentActorProviderTests {
+    private final AccessPolicy access = mock(AccessPolicy.class);
     private final SpringCurrentActorProvider provider =
-        new SpringCurrentActorProvider();
+        new SpringCurrentActorProvider(access);
 
     @AfterEach
     void clearSecurityContext() {
@@ -19,14 +23,15 @@ class SpringCurrentActorProviderTests {
     }
 
     @Test
-    void returnsAnonymousWhenAuthenticationIsMissing() {
-        var actor = provider.current();
+    void returnsCanonicalAnonymousActorWhenAuthenticationIsMissing() {
+        var actor = provider.currentActor();
 
         assertFalse(actor.authenticated());
+        assertEquals("anonymous", actor.id());
     }
 
     @Test
-    void returnsAccountIdentityFromAuthenticatedPrincipal() {
+    void exposesComandosAccountThroughCanonicalCurrentActor() {
         var principal =
             new AccountPrincipal(42L, 3L, "operator", "hash");
         var authentication =
@@ -37,10 +42,16 @@ class SpringCurrentActorProviderTests {
             );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        var actor = provider.current();
+        when(access.currentScopeGrants()).thenReturn(
+            java.util.Set.of(ScopeGrant.organization("10"))
+        );
+
+        var actor = provider.currentActor();
 
         assertTrue(actor.authenticated());
-        assertEquals(42L, actor.accountId());
-        assertEquals("operator", actor.login());
+        assertEquals("42", actor.id());
+        assertEquals("operator", actor.displayName());
+        assertTrue(actor.hasScope("10", null));
+        assertFalse(actor.hasScope("20", null));
     }
 }
