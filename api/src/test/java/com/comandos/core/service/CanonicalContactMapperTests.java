@@ -1,13 +1,15 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CanonicalContactMapper;
+import com.fariamiguel.app.core.service.CanonicalMasterDataMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.comandos.core.model.Person;
-import com.comandos.core.model.PersonAddress;
-import com.comandos.core.model.PersonContactType;
-import com.comandos.core.model.PersonEmail;
-import com.comandos.core.model.PersonPhone;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.core.model.PersonAddress;
+import com.fariamiguel.app.core.model.PersonContactType;
+import com.fariamiguel.app.core.model.PersonEmail;
+import com.fariamiguel.app.core.model.PersonPhone;
 import com.fariamiguel.enterprise.contact.ContactPurpose;
 import com.fariamiguel.tenancy.api.TenantId;
 import java.util.List;

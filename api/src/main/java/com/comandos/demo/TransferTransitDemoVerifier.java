@@ -1,10 +1,10 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.AssetStatus;
-import com.comandos.inventory.model.StockMovementNature;
-import com.comandos.transfer.model.InventoryTransfer;
-import com.comandos.transfer.model.InventoryTransferItem;
-import com.comandos.transfer.model.TransferTransitState;
+import com.fariamiguel.app.inventory.model.AssetStatus;
+import com.fariamiguel.app.inventory.model.StockMovementNature;
+import com.fariamiguel.app.transfer.model.InventoryTransfer;
+import com.fariamiguel.app.transfer.model.InventoryTransferItem;
+import com.fariamiguel.app.transfer.model.TransferTransitState;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

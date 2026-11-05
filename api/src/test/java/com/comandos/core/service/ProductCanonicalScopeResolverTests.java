@@ -1,5 +1,8 @@
 package com.comandos.core.service;
 
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,6 +35,7 @@ class ProductCanonicalScopeResolverTests {
         when(directory.findPerson(5L, TENANT)).thenReturn(Optional.of(person));
 
         var resolver = new ProductCanonicalScopeResolver(directory, true);
+        resolver.configureProductTenant("comandos");
         assertEquals("comandos:organization:7", resolver.organization(7L));
         assertEquals("comandos:person:5", resolver.person(5L));
         assertEquals("comandos:unit:9", resolver.unit(9L));
@@ -47,6 +51,7 @@ class ProductCanonicalScopeResolverTests {
         var directory = mock(CanonicalMasterDataDirectory.class);
         when(directory.findOrganization(7L, TENANT)).thenReturn(Optional.empty());
         var resolver = new ProductCanonicalScopeResolver(directory, true);
+        resolver.configureProductTenant("comandos");
         assertThrows(IllegalArgumentException.class, () -> resolver.organization(null));
         assertThrows(IllegalStateException.class, () -> resolver.organization(7L));
     }

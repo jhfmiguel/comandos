@@ -1,6 +1,7 @@
 package com.comandos.consumption.model;
 
-import com.comandos.core.model.CoreEntity;
+import com.fariamiguel.app.core.model.CoreEntity;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.*;
 import java.math.BigDecimal;

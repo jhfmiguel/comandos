@@ -1,10 +1,10 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.AssetStatus;
-import com.comandos.inventory.model.StockMovementNature;
-import com.comandos.sales.model.InventorySale;
-import com.comandos.sales.model.InventorySaleItem;
-import com.comandos.sales.model.SaleReturnItem;
+import com.fariamiguel.app.inventory.model.AssetStatus;
+import com.fariamiguel.app.inventory.model.StockMovementNature;
+import com.fariamiguel.app.sales.model.InventorySale;
+import com.fariamiguel.app.sales.model.InventorySaleItem;
+import com.fariamiguel.app.sales.model.SaleReturnItem;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

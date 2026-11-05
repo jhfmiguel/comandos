@@ -1,7 +1,7 @@
 package com.comandos.inventory.service;
 
 import com.comandos.inventory.model.AmmunitionBox;
-import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.ComandosAccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,9 +15,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class AmmunitionBoxService {
     private final EntityManager em;
-    private final AccessPolicy access;
+    private final ComandosAccessPolicy access;
 
-    public AmmunitionBoxService(EntityManager em, AccessPolicy access) {
+    public AmmunitionBoxService(EntityManager em, ComandosAccessPolicy access) {
         this.em = em;
         this.access = access;
     }
@@ -31,7 +31,7 @@ public class AmmunitionBoxService {
         var clauses = new java.util.ArrayList<String>();
         var parameters = new LinkedHashMap<String, Object>();
         clauses.add(access.predicate("inventory/lots", "READ", "b",
-            new AccessPolicy.Scope("location.organizationLegacyId", "location.unitLegacyId")));
+            new ComandosAccessPolicy.Scope("location.organizationLegacyId", "location.unitLegacyId")));
         if (organizationId != null) {
             clauses.add("b.location.organizationLegacyId = :organizationId");
             parameters.put("organizationId", organizationId);

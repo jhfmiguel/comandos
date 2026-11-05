@@ -1,6 +1,6 @@
 package com.comandos.inventory.service;
-import com.comandos.inventory.model.AssetItem;import org.junit.jupiter.api.Test;import org.springframework.web.server.ResponseStatusException;import static org.junit.jupiter.api.Assertions.*;
-class EquipmentStatePolicyTests{private final EquipmentStatePolicy policy=new EquipmentStatePolicy();
+import com.fariamiguel.app.inventory.model.AssetItem;import org.junit.jupiter.api.Test;import org.springframework.web.server.ResponseStatusException;import static org.junit.jupiter.api.Assertions.*;
+class EquipmentStatePolicyTests{private final ComandosEquipmentStatePolicy policy=new ComandosEquipmentStatePolicy();
  @Test void custodyRequiresAvailableAsset(){var a=new AssetItem();a.status="IN_MAINTENANCE";assertThrows(ResponseStatusException.class,()->policy.require(a,"CUSTODY"));a.status="AVAILABLE";assertDoesNotThrow(()->policy.require(a,"CUSTODY"));}
  @Test void maintenanceAllowsBlockedAsset(){var a=new AssetItem();a.status="BLOCKED";assertDoesNotThrow(()->policy.require(a,"MAINTENANCE"));}
  @Test void inspectionUsesCanonicalLifecycleStates(){var a=new AssetItem();for(String status:new String[]{"CUSTODIED","IN_MAINTENANCE"}){a.status=status;assertDoesNotThrow(()->policy.require(a,"INSPECTION"));}for(String status:new String[]{"IN_CUSTODY","MAINTENANCE"}){a.status=status;assertThrows(ResponseStatusException.class,()->policy.require(a,"INSPECTION"));}}

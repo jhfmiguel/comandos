@@ -1,6 +1,6 @@
 package com.comandos.demo;
 
-import com.comandos.core.model.PersonRoleAssignment;
+import com.fariamiguel.app.core.model.PersonRoleAssignment;
 import com.comandos.custody.model.Custody;
 import com.comandos.custody.model.CustodyResponsibility;
 import jakarta.persistence.EntityManager;

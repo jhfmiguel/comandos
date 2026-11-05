@@ -1,9 +1,0 @@
-package com.comandos.lifecycle.model;
-import com.comandos.core.model.*;import com.comandos.inventory.model.*;import jakarta.persistence.*;import java.time.LocalDateTime;
-@Entity @Table(name="erp_periodic_inspection") public class PeriodicInspection extends CoreEntity{
- @Column(name="organization_id",nullable=false)public Long organizationLegacyId;@Column(name="unit_id")public Long unitLegacyId;@Column(name="organization_canonical_id",length=128)public String organizationCanonicalId;@Column(name="unit_canonical_id",length=128)public String unitCanonicalId;
- @ManyToOne(optional=false)@JoinColumn(name="asset_id")public AssetItem asset;@Column(nullable=false,length=2000)public String checklist;
- @Column(nullable=false,length=30)public String result;@Column(length=2000)public String damages;@Column(nullable=false)public LocalDateTime inspectedAt;
- @Column(nullable=false)public Long responsibleId;@Column(nullable=false)public String responsibleLogin;@Column public Long approvedById;@Column public String approvedByLogin;
- @Column public LocalDateTime approvedAt;@Column public Long generatedWorkOrderId;
-}

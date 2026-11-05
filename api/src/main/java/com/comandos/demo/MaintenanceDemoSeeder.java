@@ -1,16 +1,16 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.AssetItem;
-import com.comandos.inventory.model.AssetStatus;
-import com.comandos.inventory.model.StockMovement;
-import com.comandos.inventory.model.StockMovementNature;
-import com.comandos.inventory.model.StockMovementReferenceType;
-import com.comandos.maintenance.model.Diagnosis;
-import com.comandos.maintenance.model.ExecutedService;
-import com.comandos.maintenance.model.FunctionalTest;
-import com.comandos.maintenance.model.MaintenancePart;
-import com.comandos.maintenance.model.MaintenancePlan;
-import com.comandos.maintenance.model.WorkOrder;
+import com.fariamiguel.app.inventory.model.AssetItem;
+import com.fariamiguel.app.inventory.model.AssetStatus;
+import com.fariamiguel.app.inventory.model.StockMovement;
+import com.fariamiguel.app.inventory.model.StockMovementNature;
+import com.fariamiguel.app.inventory.model.StockMovementReferenceType;
+import com.fariamiguel.app.maintenance.model.Diagnosis;
+import com.fariamiguel.app.maintenance.model.ExecutedService;
+import com.fariamiguel.app.maintenance.model.FunctionalTest;
+import com.fariamiguel.app.maintenance.model.MaintenancePart;
+import com.fariamiguel.app.maintenance.model.MaintenancePlan;
+import com.fariamiguel.app.maintenance.model.WorkOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
@@ -66,11 +66,11 @@ public class MaintenanceDemoSeeder implements ApplicationRunner {
         entityManager.persist(issue);
 
         var organization = entityManager.find(
-            com.comandos.core.model.Organization.class,
+            com.fariamiguel.app.core.model.Organization.class,
             asset.location.organizationLegacyId
         );
         var unit = asset.location.unitLegacyId == null ? null : entityManager.find(
-            com.comandos.core.model.OrganizationalUnit.class,
+            com.fariamiguel.app.core.model.OrganizationalUnit.class,
             asset.location.unitLegacyId
         );
 

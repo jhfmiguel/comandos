@@ -1,4 +1,5 @@
 package com.comandos.inventory.model;
+import com.fariamiguel.app.inventory.model.StockLocation;
 
 import jakarta.persistence.Column;
 import org.junit.jupiter.api.Test;

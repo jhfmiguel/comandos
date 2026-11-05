@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
-import com.comandos.core.model.Person;
-import com.comandos.core.model.SystemUser;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.core.model.SystemUser;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import tools.jackson.databind.JsonNode;
@@ -93,7 +93,7 @@ class LifecycleWorkflowReportApiTests {
         String path = "workflows/" + created.get("id").asLong();
         assertEquals("REQUESTED", created.get("status").asText());
         assertEquals("TRANSFER", created.get("operationType").asText());
-        assertStatus(400, "POST", path + "/execute", null);
+        assertStatus(409, "POST", path + "/execute", null);
         String previous = "REQUESTED";
         int events = 1;
         for (String action : List.of("analyze", "authorize", "execute", "conclude")) {
@@ -104,7 +104,7 @@ class LifecycleWorkflowReportApiTests {
             var event = moved.get("events").get(events - 1);
             assertEquals(previous, event.get("fromStatus").asText());
             assertEquals(target, event.get("toStatus").asText());
-            assertStatus(400, "POST", path + "/" + action, null);
+            assertStatus(409, "POST", path + "/" + action, null);
             assertEquals(events, ok("GET", path, null).get("events").size());
             previous = target;
         }
@@ -116,7 +116,7 @@ class LifecycleWorkflowReportApiTests {
         assertEquals("CONCLUDED", conclusion.get("after").get("status").asText());
         assertEquals(login, conclusion.get("event").get("actorLogin").asText());
         for (String field : List.of("authorizedAt", "executedAt", "concludedAt")) assertFalse(finished.get(field).isNull());
-        assertStatus(400, "POST", path + "/cancel", null);
+        assertStatus(409, "POST", path + "/cancel", null);
         assertEquals(1, ok("GET", "workflows?" + s.query() + "&status=concluded", null).get("totalElements").asInt());
         assertEquals(0, ok("GET", "workflows?" + s.query() + "&status=requested", null).get("totalElements").asInt());
         assertEquals(5, ok("GET", "armament-reports/history?resource=approval-workflows&recordId=" + created.get("id").asLong(), null).size());
@@ -132,11 +132,11 @@ class LifecycleWorkflowReportApiTests {
         assertEquals(0, ok("GET", "workflows?" + s.query(), null).get("totalElements").asInt());
         data.put("unitId", s.unit());
         String path = "workflows/" + create("workflows", data).get("id").asLong();
-        var cancelled = ok("POST", path + "/cancel", null);
+        var cancelled = ok("POST", path + "/cancel", Map.of("justification", "Request cancelled after review"));
         assertEquals("CANCELLED", cancelled.get("status").asText());
         assertFalse(cancelled.get("cancelledAt").isNull());
-        assertStatus(400, "POST", path + "/cancel", null);
-        assertStatus(400, "POST", path + "/analyze", null);
+        assertStatus(409, "POST", path + "/cancel", null);
+        assertStatus(409, "POST", path + "/analyze", null);
         assertEquals(2, ok("GET", path, null).get("events").size());
     }
 
@@ -155,18 +155,30 @@ class LifecycleWorkflowReportApiTests {
         assertEquals(login, inspection.get("responsibleLogin").asText());
         assertEquals("BLOCKED", assetStatus(s));
         String path = "lifecycle/inspections/" + inspection.get("id").asLong() + "/approve";
+        ok("PUT", "lifecycle/inspections/" + inspection.get("id").asLong() + "/checklist",
+            Map.of("items", List.of(Map.of(
+                "order", 1,
+                "code", "SAFETY",
+                "label", "Safety checks",
+                "required", true,
+                "result", "APPROVED"))));
         var approved = ok("POST", path, null);
         assertEquals(login, approved.get("approvedByLogin").asText());
         assertEquals(approved, ok("POST", path, null));
         assertEquals(1, ok("GET", "lifecycle/inspections?" + s.query(), null).get("totalElements").asInt());
-        assertEquals(2, ok("GET", "armament-reports/history?resource=periodic-inspections&recordId=" + inspection.get("id").asLong(), null).size());
+        assertEquals(3, ok("GET", "armament-reports/history?resource=periodic-inspections&recordId=" + inspection.get("id").asLong(), null).size());
         assertStatus(404, "POST", "lifecycle/inspections/9223372036854775807/approve", null);
     }
 
     @Test
     void maintenanceCannotBeBypassedByLifecycleOperations() throws Exception {
         var s=setup();
-        var recovery=create("lifecycle/occurrences",Map.of("organizationId",s.organization(),"unitId",s.unit(),"assetId",s.asset(),"type","RECOVERY","description","Located"));
+        long missingOccurrenceId = create("lifecycle/occurrences", Map.of(
+            "organizationId", s.organization(), "unitId", s.unit(),
+            "assetId", s.asset(), "type", "LOSS",
+            "description", "Asset reported missing before recovery"
+        )).get("id").asLong();
+        var recovery=create("lifecycle/occurrences",Map.of("organizationId",s.organization(),"unitId",s.unit(),"assetId",s.asset(),"type","RECOVERY","description","Located","documentReference","RECOVERY-REPORT-002","relatedOccurrenceId",missingOccurrenceId));
         ok("POST","maintenance/orders",Map.of("requestId",unique(),"organizationId",s.organization(),"unitId",s.unit(),"assetId",s.asset(),"reason","Repair"));
         for(String result:List.of("APPROVED","FAILED","MAINTENANCE_REQUIRED"))assertStatus(409,"POST","lifecycle/inspections",Map.of("organizationId",s.organization(),"unitId",s.unit(),"assetId",s.asset(),"checklist","Inspect","result",result,"generateMaintenance",true));
         assertStatus(409,"POST","lifecycle/occurrences",Map.of("organizationId",s.organization(),"unitId",s.unit(),"assetId",s.asset(),"type","DAMAGE","description","Damage"));
@@ -202,8 +214,11 @@ class LifecycleWorkflowReportApiTests {
         assertEquals("MISSING", assetStatus(s));
         assertEquals(2, ok("GET", "armament-reports/history?resource=exception-occurrences&recordId=" + occurrence.get("id").asLong(), null).size());
         var recovery = create("lifecycle/occurrences", Map.of("organizationId", s.organization(), "unitId", s.unit(),
-            "assetId", s.asset(), "type", "RECOVERY", "description", "Located"));
-        ok("POST", "lifecycle/occurrences/" + recovery.get("id").asLong() + "/resolve", null);
+            "assetId", s.asset(), "type", "RECOVERY", "description", "Located", "documentReference", "RECOVERY-REPORT-001", "relatedOccurrenceId", occurrence.get("id").asLong()));
+        ok("POST", "lifecycle/occurrences/" + recovery.get("id").asLong() + "/investigate",
+            Map.of("investigation", "Asset located and identity verified"));
+        ok("POST", "lifecycle/occurrences/" + recovery.get("id").asLong() + "/resolve",
+            Map.of("investigation", "Recovery confirmed", "documentReference", "RECOVERY-REPORT-001"));
         assertEquals("AVAILABLE", assetStatus(s));
         assertEquals(2, ok("GET", "lifecycle/occurrences?" + s.query(), null).get("totalElements").asInt());
     }

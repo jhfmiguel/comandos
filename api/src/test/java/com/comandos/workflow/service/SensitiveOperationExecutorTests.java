@@ -1,16 +1,19 @@
 package com.comandos.workflow.service;
+import com.fariamiguel.app.workflow.service.SensitiveOperationExecutor;
+import com.fariamiguel.app.workflow.service.WorkflowApprovalGuard;
+import com.fariamiguel.app.workflow.service.WorkflowService;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.comandos.workflow.api.SensitiveOperation;
-import com.comandos.workflow.api.SensitiveOperationCommand;
-import com.comandos.workflow.api.SensitiveOperationResult;
-import com.comandos.workflow.api.WorkflowTransition;
-import com.comandos.workflow.api.WorkflowView;
-import com.comandos.workflow.model.ApprovalWorkflow;
+import com.fariamiguel.app.workflow.api.SensitiveOperation;
+import com.fariamiguel.app.workflow.api.SensitiveOperationCommand;
+import com.fariamiguel.app.workflow.api.SensitiveOperationResult;
+import com.fariamiguel.app.workflow.api.WorkflowTransition;
+import com.fariamiguel.app.workflow.api.WorkflowView;
+import com.fariamiguel.app.workflow.model.ApprovalWorkflow;
 import com.fariamiguel.workflow.service.DefaultWorkflowEngine;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +126,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         GuardSpy(List<String> calls) {
-            super(null, new WorkflowPolicy(new DefaultWorkflowEngine()), null);
+            super(null, new ComandosWorkflowPolicy(new DefaultWorkflowEngine()), null);
             this.calls = calls;
         }
 
@@ -146,7 +149,7 @@ class SensitiveOperationExecutorTests {
         private final List<String> calls;
 
         WorkflowSpy(List<String> calls) {
-            super(null, null, null, null, new WorkflowPolicy(new DefaultWorkflowEngine()), null, null);
+            super(null, null, null, null, new ComandosWorkflowPolicy(new DefaultWorkflowEngine()), null, null);
             this.calls = calls;
         }
 

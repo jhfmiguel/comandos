@@ -1,4 +1,6 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
 
 import com.fariamiguel.enterprise.common.BusinessId;
 import com.fariamiguel.tenancy.api.OrganizationalUnitId;
@@ -28,6 +30,7 @@ class ProductCanonicalScopeResolverTest {
         when(directory.findPerson(30L, TENANT)).thenReturn(Optional.of(person));
 
         ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
+        resolver.configureProductTenant("comandos");
 
         assertTrue(resolver.enabled());
         assertEquals("org-10", resolver.organization(10L));
@@ -47,6 +50,7 @@ class ProductCanonicalScopeResolverTest {
         when(directory.findOrganization(10L, TENANT)).thenReturn(Optional.of(organization));
 
         ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
+        resolver.configureProductTenant("comandos");
 
         var scope = resolver.scope(10L, null);
         assertEquals("org-10", scope.organizationId());
@@ -59,6 +63,7 @@ class ProductCanonicalScopeResolverTest {
         when(directory.findPerson(30L, TENANT)).thenReturn(Optional.empty());
 
         ProductCanonicalScopeResolver resolver = new ProductCanonicalScopeResolver(directory, true);
+        resolver.configureProductTenant("comandos");
 
         IllegalStateException error = assertThrows(
             IllegalStateException.class,

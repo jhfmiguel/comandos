@@ -1,7 +1,7 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.AssetStatus;
-import com.comandos.lifecycle.model.ExceptionOccurrence;
+import com.fariamiguel.app.inventory.model.AssetStatus;
+import com.fariamiguel.app.lifecycle.model.ExceptionOccurrence;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Map;

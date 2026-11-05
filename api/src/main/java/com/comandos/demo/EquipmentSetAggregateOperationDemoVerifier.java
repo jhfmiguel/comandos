@@ -1,13 +1,13 @@
 package com.comandos.demo;
 
-import com.comandos.consumption.model.ConsumableUsage;
-import com.comandos.disposal.model.DisposalProcess;
-import com.comandos.donation.model.Donation;
-import com.comandos.inventory.model.EquipmentSet;
-import com.comandos.inventory.model.EquipmentSetComponent;
-import com.comandos.inventory.model.EquipmentSetOperation;
-import com.comandos.inventory.model.EquipmentSetOperationComponent;
-import com.comandos.maintenance.model.WorkOrder;
+import com.fariamiguel.app.consumption.model.ConsumableUsage;
+import com.fariamiguel.app.disposal.model.DisposalProcess;
+import com.fariamiguel.app.donation.model.Donation;
+import com.fariamiguel.app.inventory.model.EquipmentSet;
+import com.fariamiguel.app.inventory.model.EquipmentSetComponent;
+import com.fariamiguel.app.inventory.model.EquipmentSetOperation;
+import com.fariamiguel.app.inventory.model.EquipmentSetOperationComponent;
+import com.fariamiguel.app.maintenance.model.WorkOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

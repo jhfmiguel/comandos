@@ -1,0 +1,15 @@
+﻿ITEM 21.12 - DIAGNOSTICO DE RETIRADA DAS BRIDGES
+
+Commit: 2fa6ed82771e96a0f6136b0f049b8c403c74934e
+Data: 2026-10-12 17:27:12
+
+Testes: 63
+Falhas: 0
+Erros: 0
+Dependencias legadas encontradas: @(                                                                         ).Count
+
+OBSERVACOES:
+- Testes executados com as configuracoes existentes.
+- Nenhum dado do Oracle foi alterado por este script.
+- A paridade com dados reais do Oracle nao foi comprovada.
+- A exclusao das bridges exige validar os consumidores restantes.

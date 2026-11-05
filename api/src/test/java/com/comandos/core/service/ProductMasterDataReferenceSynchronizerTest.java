@@ -1,25 +1,28 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
 
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
-import com.comandos.inventory.model.StockLocation;
-import com.comandos.inventory.model.StockMovement;
-import com.comandos.purchase.model.EquipmentReceiving;
-import com.comandos.purchase.model.Purchase;
-import com.comandos.transfer.model.InventoryTransfer;
+import com.comandos.inventory.service.ProductMasterDataReferenceSynchronizer;
+
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.core.model.OrganizationalUnit;
+import com.fariamiguel.app.inventory.model.StockLocation;
+import com.fariamiguel.app.inventory.model.StockMovement;
+import com.fariamiguel.app.purchase.model.EquipmentReceiving;
+import com.fariamiguel.app.purchase.model.Purchase;
+import com.fariamiguel.app.transfer.model.InventoryTransfer;
 import com.comandos.custody.model.Custody;
-import com.comandos.donation.model.Donation;
-import com.comandos.sales.model.InventorySale;
-import com.comandos.maintenance.model.WorkOrder;
-import com.comandos.workflow.model.ApprovalWorkflow;
-import com.comandos.disposal.model.DisposalProcess;
-import com.comandos.reservation.model.InventoryReservation;
-import com.comandos.reconciliation.model.InventoryCount;
+import com.fariamiguel.app.donation.model.Donation;
+import com.fariamiguel.app.sales.model.InventorySale;
+import com.fariamiguel.app.maintenance.model.WorkOrder;
+import com.fariamiguel.app.workflow.model.ApprovalWorkflow;
+import com.fariamiguel.app.disposal.model.DisposalProcess;
+import com.fariamiguel.app.reservation.model.InventoryReservation;
+import com.fariamiguel.app.reconciliation.model.InventoryCount;
 import com.comandos.consumption.model.AmmunitionConsumption;
-import com.comandos.consumption.model.ConsumableUsage;
-import com.comandos.purchase.model.PurchasePlanning;
-import com.comandos.lifecycle.model.PeriodicInspection;
-import com.comandos.lifecycle.model.ExceptionOccurrence;
+import com.fariamiguel.app.consumption.model.ConsumableUsage;
+import com.fariamiguel.app.purchase.model.PurchasePlanning;
+import com.fariamiguel.app.lifecycle.model.PeriodicInspection;
+import com.fariamiguel.app.lifecycle.model.ExceptionOccurrence;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -114,7 +117,7 @@ class ProductMasterDataReferenceSynchronizerTest {
         buyer.id = 10L;
         Organization supplier = new Organization();
         supplier.id = 11L;
-        com.comandos.core.model.Person origin = new com.comandos.core.model.Person();
+        com.fariamiguel.app.core.model.Person origin = new com.fariamiguel.app.core.model.Person();
         origin.id = 20L;
 
         Purchase purchase = new Purchase();
@@ -154,7 +157,7 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         Organization buyer = new Organization();
         buyer.id = 10L;
-        com.comandos.core.model.Person origin = new com.comandos.core.model.Person();
+        com.fariamiguel.app.core.model.Person origin = new com.fariamiguel.app.core.model.Person();
         origin.id = 20L;
 
         Purchase purchase = new Purchase();
@@ -208,9 +211,9 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         Organization organization = new Organization(); organization.id = 50L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 51L;
-        com.comandos.core.model.Person recipient = new com.comandos.core.model.Person(); recipient.id = 52L;
+        com.fariamiguel.app.core.model.Person recipient = new com.fariamiguel.app.core.model.Person(); recipient.id = 52L;
         OrganizationalUnit recipientUnit = new OrganizationalUnit(); recipientUnit.id = 53L;
-        com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 54L;
+        com.fariamiguel.app.core.model.Person authorizer = new com.fariamiguel.app.core.model.Person(); authorizer.id = 54L;
 
         Custody custody = new Custody();
         custody.organizationLegacyId = organization.id;
@@ -240,8 +243,8 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         Organization organization = new Organization(); organization.id = 60L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 61L;
-        com.comandos.core.model.Person donor = new com.comandos.core.model.Person(); donor.id = 62L;
-        com.comandos.core.model.Person donee = new com.comandos.core.model.Person(); donee.id = 63L;
+        com.fariamiguel.app.core.model.Person donor = new com.fariamiguel.app.core.model.Person(); donor.id = 62L;
+        com.fariamiguel.app.core.model.Person donee = new com.fariamiguel.app.core.model.Person(); donee.id = 63L;
 
         Donation donation = new Donation();
         donation.organizationLegacyId = organization.id;
@@ -268,7 +271,7 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         Organization organization = new Organization(); organization.id = 70L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 71L;
-        com.comandos.core.model.Person buyer = new com.comandos.core.model.Person(); buyer.id = 72L;
+        com.fariamiguel.app.core.model.Person buyer = new com.fariamiguel.app.core.model.Person(); buyer.id = 72L;
 
         InventorySale sale = new InventorySale();
         sale.organizationLegacyId = organization.id;
@@ -342,8 +345,8 @@ class ProductMasterDataReferenceSynchronizerTest {
 
         Organization organization = new Organization(); organization.id = 90L;
         OrganizationalUnit unit = new OrganizationalUnit(); unit.id = 91L;
-        com.comandos.core.model.Person responsible = new com.comandos.core.model.Person(); responsible.id = 92L;
-        com.comandos.core.model.Person authorizer = new com.comandos.core.model.Person(); authorizer.id = 93L;
+        com.fariamiguel.app.core.model.Person responsible = new com.fariamiguel.app.core.model.Person(); responsible.id = 92L;
+        com.fariamiguel.app.core.model.Person authorizer = new com.fariamiguel.app.core.model.Person(); authorizer.id = 93L;
 
         ProductMasterDataReferenceSynchronizer synchronizer =
             new ProductMasterDataReferenceSynchronizer(canonicalScope, true);

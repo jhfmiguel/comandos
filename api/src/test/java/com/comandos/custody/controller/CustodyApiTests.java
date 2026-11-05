@@ -79,7 +79,7 @@ class CustodyApiTests {
             assertEquals(s.first(), found.body().get("content").get(0).get("id").asLong());
         }
         assertEquals(0, request("GET", path + "&filter.assetCode=nonexistent", null).body().get("totalElements").asInt());
-        assertEquals(0, request("GET", "inventory/assets?filter.unit=" + unique(), null).body().get("totalElements").asInt());
+        assertEquals(400, request("GET", "inventory/assets?filter.unit=" + unique(), null).status());
         assertEquals(400, request("GET", path + "&page=-1", null).status());
         var issued = request("POST", "custodies", issue(s, List.of(s.first())));
         assertEquals(200, issued.status(), issued.raw());
@@ -101,18 +101,35 @@ class CustodyApiTests {
         var s = setup();
         long receivingUnit = create("core/units", Map.of("organizationId", s.organization(), "code", unique(),
             "name", "Receiving battalion", "type", "Unit"));
+        long responsibleRole = create("core/roles", Map.of(
+            "code", "CUSTODY_RESPONSIBLE",
+            "name", "Custody responsible"));
+
+        long responsibilityAssignment = create("core/person-roles", Map.of(
+            "personId", s.recipient(),
+            "roleId", responsibleRole,
+            "organizationId", s.organization(),
+            "unitId", receivingUnit,
+            "startDate", java.time.LocalDate.now().minusDays(1).toString(),
+            "status", "ACTIVE"));
+
         var data = issue(s, List.of(s.first(), s.second()));
-        data.remove("recipientId"); data.put("recipientUnitId", receivingUnit);
-        var issued = request("POST", "custodies", data);
+        data.remove("recipientId");
+        data.remove("recipientType");
+        data.put("recipientUnitId", receivingUnit);
+        data.put("responsiblePersonId", s.recipient());
+        data.put("responsibilityRoleAssignmentId", responsibilityAssignment);
+        data.put("custodyScope", "COLLECTIVE");
+        var issued = request("POST", "custodies/institutional", data);
         assertEquals(200, issued.status(), issued.raw());
         long id = issued.body().get("id").asLong();
         assertTrue(issued.body().get("recipientId").isNull());
         assertEquals("UNIT", issued.body().get("recipientType").asText());
         assertEquals(receivingUnit, issued.body().get("recipientUnitId").asLong());
         assertEquals(s.unit(), issued.body().get("unitId").asLong());
-        assertEquals(id, request("POST", "custodies", data).body().get("id").asLong());
+        assertEquals(id, request("POST", "custodies/institutional", data).body().get("id").asLong());
         data.put("recipientUnitId", s.unit());
-        assertEquals(409, request("POST", "custodies", data).status());
+        assertEquals(400, request("POST", "custodies/institutional", data).status());
         jdbc.update("update erp_organizational_unit set name = 'Renamed battalion' where id = ?", receivingUnit);
         var detail = request("GET", "custodies/" + id, null);
         assertEquals("Receiving battalion", detail.body().get("recipientName").asText());
@@ -164,7 +181,7 @@ class CustodyApiTests {
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_ISSUE' and location_id = ?", Long.class, s.location()));
         assertEquals("CUSTODIED", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.first()));
         var retry = request("POST", "custodies", data); assertEquals(custody, retry.body().get("id").asLong());
-        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name_name = 'custodies' and record_id = ? and action = 'ISSUE'", Long.class, custody));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'custodies' and record_id = ? and action = 'ISSUE'", Long.class, custody));
         long firstItem = issued.body().get("items").get(0).get("id").asLong();
         long secondItem = issued.body().get("items").get(1).get("id").asLong();
         var firstReturn = Map.of("requestId", unique(), "itemIds", List.of(firstItem));
@@ -177,7 +194,7 @@ class CustodyApiTests {
         assertEquals("RETURNED", completed.body().get("status").asText()); assertFalse(completed.body().get("completedAt").isNull());
         assertEquals(2, completed.body().get("returns").size());
         assertEquals(2L, jdbc.queryForObject("select count(*) from erp_stock_movement where nature = 'CUSTODY_RETURN' and location_id = ?", Long.class, s.location()));
-        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name_name = 'custodies' and record_id = ? and action = 'RETURN'", Long.class, custody));
+        assertEquals(2L, jdbc.queryForObject("select count(*) from erp_audit_record where resource_name = 'custodies' and record_id = ? and action = 'RETURN'", Long.class, custody));
         com.comandos.audit.controller.AuditTraceAssertions.trace(port,"custodies",custody,"assetId="+s.first()+"&unitId="+s.unit(),"ISSUE","RETURN","RETURN");
     }
 

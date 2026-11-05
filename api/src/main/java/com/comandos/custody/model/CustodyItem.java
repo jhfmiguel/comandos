@@ -1,14 +1,14 @@
 package com.comandos.custody.model;
 
-import com.comandos.core.model.CoreEntity;
+import com.fariamiguel.app.core.model.CoreEntity;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "erp_custody_item", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"custody_id", "asset_id"}),
-    @UniqueConstraint(columnNames = {"custody_id", "balance_id", "equipment_set_id"})
+    @UniqueConstraint(columnNames = {"custody_id", "asset_id"})
 })
 public class CustodyItem extends CoreEntity {
     @ManyToOne(optional = false) @JoinColumn(name = "custody_id", nullable = false)

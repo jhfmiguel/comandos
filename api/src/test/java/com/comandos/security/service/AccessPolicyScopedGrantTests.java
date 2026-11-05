@@ -1,4 +1,5 @@
 package com.comandos.security.service;
+import com.fariamiguel.app.security.service.AccountPrincipal;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -44,7 +45,7 @@ class AccessPolicyScopedGrantTests {
         assertFalse(policy.canScope("sales", "READ", 10L, null));
     }
 
-    private AccessPolicy policyWithRows(List<Object[]> rows) {
+    private ComandosAccessPolicy policyWithRows(List<Object[]> rows) {
         var em = mock(EntityManager.class);
         @SuppressWarnings("unchecked")
         TypedQuery<Object[]> query = mock(TypedQuery.class);
@@ -61,6 +62,6 @@ class AccessPolicyScopedGrantTests {
             )
         );
 
-        return new AccessPolicy(em, true, true);
+        return new ComandosAccessPolicy(em, true, true);
     }
 }

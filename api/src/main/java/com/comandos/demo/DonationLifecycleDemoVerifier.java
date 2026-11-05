@@ -1,6 +1,6 @@
 package com.comandos.demo;
 
-import com.comandos.donation.model.*;
+import com.fariamiguel.app.donation.model.*;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.boot.ApplicationArguments;

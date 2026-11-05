@@ -44,7 +44,7 @@ class ProductBridgeConsumerRetirementArchitectureTest {
     @Test
     void sharedSynchronizationRemainsAvailableToActiveMigrationConsumers() throws IOException {
         String inventory = read("inventory/service/InventoryService.java");
-        String synchronizer = read("core/service/ProductMasterDataReferenceSynchronizer.java");
+        String synchronizer = read("inventory/service/ProductMasterDataReferenceSynchronizer.java");
 
         assertTrue(inventory.contains("masterDataReferences.synchronizeOnWrite("));
         assertFalse(inventory.contains("masterDataReferences.synchronizeForBackfill("));
@@ -53,6 +53,8 @@ class ProductBridgeConsumerRetirementArchitectureTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return Files.readString(Path.of("src/main/java/com/comandos").resolve(relativePath));
+        Path local=Path.of("src/main/java/com/comandos").resolve(relativePath);
+        Path shared=Path.of("../../faria-miguel/backend/faria-miguel-core/src/main/java/com/fariamiguel/app").resolve(relativePath);
+        return Files.readString(Files.exists(local)?local:shared);
     }
 }

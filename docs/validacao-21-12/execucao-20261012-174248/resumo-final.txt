@@ -1,0 +1,16 @@
+﻿FARIA MIGUEL / COMANDOS
+ITEM 21.12 - VALIDACAO CORRIGIDA
+
+Commit: 2fa6ed82771e96a0f6136b0f049b8c403c74934e
+Data: 2026-10-12 17:43:19
+
+Compilacao: APROVADA
+Testes executados: 63
+Falhas: 0
+Erros: 0
+
+Paridade Oracle real: NAO EXECUTADA
+Retirada definitiva das bridges: PENDENTE
+
+Diretorio dos relatorios:
+C:\workspace\faria-miguel\comandos\docs\validacao-21-12\execucao-20261012-174248

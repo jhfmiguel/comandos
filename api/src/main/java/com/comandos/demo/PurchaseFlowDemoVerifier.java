@@ -1,8 +1,8 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.ItemModel;
-import com.comandos.core.model.Organization;
-import com.comandos.purchase.model.*;
+import com.fariamiguel.app.inventory.model.ItemModel;
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.purchase.model.*;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;

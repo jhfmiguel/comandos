@@ -1,4 +1,5 @@
 package com.comandos.core.config;
+import com.fariamiguel.app.core.config.PlatformProperties;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,11 +1,11 @@
 package com.comandos.demo;
 
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.Person;
-import com.comandos.inventory.model.ItemModel;
-import com.comandos.inventory.model.StockLocation;
-import com.comandos.inventory.model.StockLot;
-import com.comandos.purchase.model.*;
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.inventory.model.ItemModel;
+import com.fariamiguel.app.inventory.model.StockLocation;
+import com.fariamiguel.app.inventory.model.StockLot;
+import com.fariamiguel.app.purchase.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

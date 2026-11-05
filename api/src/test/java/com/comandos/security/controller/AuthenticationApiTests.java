@@ -1,6 +1,6 @@
 package com.comandos.security.controller;
 
-import com.comandos.core.service.CoreService;
+import com.fariamiguel.app.core.service.CoreService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +14,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:authentication-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:authentication-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "erp.security.require-login=true", "logging.level.root=WARN", "debug=false"
 })
 class AuthenticationApiTests {

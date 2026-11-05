@@ -1,4 +1,5 @@
 package com.comandos.inventory.model;
+import com.fariamiguel.app.inventory.model.StockMovementReferenceType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -21,7 +22,7 @@ class StockMovementReferenceTypeTests {
             "SALE",
             "SALE_RETURN",
             "INVENTORY_COUNT"
-        ), Set.of(java.util.Arrays.stream(StockMovementReferenceType.values())
+        ), Set.of(java.util.stream.Stream.concat(java.util.Arrays.stream(StockMovementReferenceType.values()), java.util.Arrays.stream(SecurityStockMovementReferenceType.values()))
             .map(Enum::name)
             .toArray(String[]::new)));
     }

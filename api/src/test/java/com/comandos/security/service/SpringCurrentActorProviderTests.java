@@ -1,4 +1,6 @@
 package com.comandos.security.service;
+import com.fariamiguel.app.security.service.SpringCurrentActorProvider;
+import com.fariamiguel.app.security.service.AccountPrincipal;
 
 import com.fariamiguel.security.api.ScopeGrant;
 import org.junit.jupiter.api.AfterEach;
@@ -13,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SpringCurrentActorProviderTests {
-    private final AccessPolicy access = mock(AccessPolicy.class);
+    private final ComandosAccessPolicy access = mock(ComandosAccessPolicy.class);
     private final SpringCurrentActorProvider provider =
         new SpringCurrentActorProvider(access);
 

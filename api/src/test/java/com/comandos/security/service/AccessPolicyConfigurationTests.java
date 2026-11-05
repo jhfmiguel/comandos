@@ -15,13 +15,13 @@ class AccessPolicyConfigurationTests {
 
         assertThrows(
             IllegalStateException.class,
-            () -> new AccessPolicy(em, true, false)
+            () -> new ComandosAccessPolicy(em, true, false)
         );
     }
 
     @Test
     void disabledPermissionsAllowAnyScope() {
-        var policy = new AccessPolicy(mock(EntityManager.class), false, false);
+        var policy = new ComandosAccessPolicy(mock(EntityManager.class), false, false);
 
         assertTrue(policy.canScope("sales", "DELETE", 10L, 20L));
         assertDoesNotThrow(() ->

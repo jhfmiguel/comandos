@@ -1,7 +1,7 @@
 package com.comandos.inventory.service;
 
-import com.comandos.audit.api.AuditReferenceEnricher;
-import com.comandos.inventory.model.StockLocation;
+import com.fariamiguel.app.audit.api.AuditReferenceEnricher;
+import com.fariamiguel.app.inventory.model.StockLocation;
 import jakarta.persistence.EntityManager;
 import java.util.function.BiConsumer;
 import org.springframework.stereotype.Component;

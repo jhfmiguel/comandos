@@ -1,9 +1,10 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CanonicalPartyDocumentMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.comandos.core.model.Person;
-import com.comandos.core.model.PersonCredential;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.core.model.PersonCredential;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.enterprise.party.PartyDocumentType;
 import com.fariamiguel.tenancy.api.TenantId;

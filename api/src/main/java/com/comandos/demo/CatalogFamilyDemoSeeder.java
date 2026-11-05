@@ -1,5 +1,6 @@
 package com.comandos.demo;
 
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -134,8 +135,8 @@ public class CatalogFamilyDemoSeeder implements ApplicationRunner {
             model = new ItemModel();
             model.category = category;
             model.brand = brand;
-            model.armamentType = type;
-            model.armamentClassification = classification;
+            model.extensionValues.put("armamentType",type);
+            model.extensionValues.put("armamentClassification",classification);
             model.name = modelName;
             model.unitOfMeasure = unit;
             model.manufacturerCode = sku;
@@ -146,9 +147,11 @@ public class CatalogFamilyDemoSeeder implements ApplicationRunner {
         } else {
             model.category = category;
             model.brand = brand;
-            model.armamentType = type;
-            model.armamentClassification = classification;
+            model.extensionValues.put("armamentType",type);
+            model.extensionValues.put("armamentClassification",classification);
         }
+        em.flush();
+        com.comandos.inventory.model.ArmamentModelDetails.of(em,model);
         return model;
     }
 

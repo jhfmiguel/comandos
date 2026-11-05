@@ -2,7 +2,7 @@ package com.comandos.audit.service;
 
 import com.fariamiguel.security.api.CurrentActor;
 import com.fariamiguel.security.api.CurrentActorProvider;
-import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.ComandosAccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -22,9 +22,9 @@ class AuditServiceActorTests {
         when(current.displayName()).thenReturn("operator");
         when(actors.currentActor()).thenReturn(current);
 
-        var service = new AuditService(
+        var service = new ComandosAuditService(
             mock(EntityManager.class),
-            mock(AccessPolicy.class),
+            mock(ComandosAccessPolicy.class),
             actors,
             List.of()
         );
@@ -41,9 +41,9 @@ class AuditServiceActorTests {
         var actors = mock(CurrentActorProvider.class);
         when(actors.currentActor()).thenReturn(CurrentActor.anonymous());
 
-        var service = new AuditService(
+        var service = new ComandosAuditService(
             mock(EntityManager.class),
-            mock(AccessPolicy.class),
+            mock(ComandosAccessPolicy.class),
             actors,
             List.of()
         );

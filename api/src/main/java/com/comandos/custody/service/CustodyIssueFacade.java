@@ -1,8 +1,8 @@
 package com.comandos.custody.service;
 
-import com.comandos.core.service.CanonicalMasterDataDirectory;
-import com.comandos.core.service.CanonicalPartyRoleDirectory;
-import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.CanonicalPartyRoleDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
 import jakarta.persistence.EntityManager;

@@ -1,13 +1,13 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.StockMovementNature;
-import com.comandos.inventory.model.StockMovementReferenceType;
-import com.comandos.maintenance.model.Diagnosis;
-import com.comandos.maintenance.model.ExecutedService;
-import com.comandos.maintenance.model.FunctionalTest;
-import com.comandos.maintenance.model.MaintenancePart;
-import com.comandos.maintenance.model.MaintenancePlan;
-import com.comandos.maintenance.model.WorkOrder;
+import com.fariamiguel.app.inventory.model.StockMovementNature;
+import com.fariamiguel.app.inventory.model.StockMovementReferenceType;
+import com.fariamiguel.app.maintenance.model.Diagnosis;
+import com.fariamiguel.app.maintenance.model.ExecutedService;
+import com.fariamiguel.app.maintenance.model.FunctionalTest;
+import com.fariamiguel.app.maintenance.model.MaintenancePart;
+import com.fariamiguel.app.maintenance.model.MaintenancePlan;
+import com.fariamiguel.app.maintenance.model.WorkOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

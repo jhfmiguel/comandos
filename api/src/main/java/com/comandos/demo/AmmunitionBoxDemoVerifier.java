@@ -1,10 +1,10 @@
 package com.comandos.demo;
 
 import com.comandos.inventory.model.AmmunitionBox;
-import com.comandos.inventory.model.ItemModel;
-import com.comandos.inventory.model.StockLocation;
-import com.comandos.inventory.model.StockLot;
-import com.comandos.inventory.service.StockIntakeService;
+import com.fariamiguel.app.inventory.model.ItemModel;
+import com.fariamiguel.app.inventory.model.StockLocation;
+import com.fariamiguel.app.inventory.model.StockLot;
+import com.comandos.inventory.service.AmmunitionStockIntakeService;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -24,9 +24,9 @@ public class AmmunitionBoxDemoVerifier implements ApplicationRunner {
     private static final String LOT_NUMBER = "BOX-REGRESSION-2026-001";
 
     private final EntityManager em;
-    private final StockIntakeService intake;
+    private final AmmunitionStockIntakeService intake;
 
-    public AmmunitionBoxDemoVerifier(EntityManager em, StockIntakeService intake) {
+    public AmmunitionBoxDemoVerifier(EntityManager em, AmmunitionStockIntakeService intake) {
         this.em = em;
         this.intake = intake;
     }
@@ -43,13 +43,13 @@ public class AmmunitionBoxDemoVerifier implements ApplicationRunner {
             .setMaxResults(1)
             .getResultStream().findFirst().orElseThrow(() -> fail("demo ammunition location is missing"));
 
-        var request = new StockIntakeService.BoxesRequest(
+        var request = new AmmunitionStockIntakeService.BoxesRequest(
             REQUEST_ID,
             model.id,
             location.id,
             LOT_NUMBER,
             null,
-            List.of(new StockIntakeService.BoxRow("2", "50"), new StockIntakeService.BoxRow("3", "20")),
+            List.of(new AmmunitionStockIntakeService.BoxRow("2", "50"), new AmmunitionStockIntakeService.BoxRow("3", "20")),
             "7"
         );
 

@@ -40,7 +40,7 @@ class AccessPolicyScopeTest {
             String resource,
             String organizationPath,
             String unitPath) {
-        AccessPolicy.Scope scope = AccessPolicy.scope(resource);
+        ComandosAccessPolicy.Scope scope = ComandosAccessPolicy.scope(resource);
         assertEquals(organizationPath, scope.organizationPath());
         assertEquals(unitPath, scope.unitPath());
     }

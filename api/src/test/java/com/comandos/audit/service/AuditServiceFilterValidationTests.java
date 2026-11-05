@@ -1,7 +1,7 @@
 package com.comandos.audit.service;
 
 import com.fariamiguel.security.api.CurrentActorProvider;
-import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.ComandosAccessPolicy;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
@@ -13,10 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 class AuditServiceFilterValidationTests {
-    private AuditService service() {
-        return new AuditService(
+    private ComandosAuditService service() {
+        return new ComandosAuditService(
             mock(EntityManager.class),
-            mock(AccessPolicy.class),
+            mock(ComandosAccessPolicy.class),
             mock(CurrentActorProvider.class),
             List.of()
         );

@@ -1,4 +1,5 @@
 package com.comandos.security.service;
+import com.fariamiguel.app.security.service.AccountPrincipal;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -44,7 +45,7 @@ class AccessPolicyRevocationTests {
             )
         );
 
-        var policy = new AccessPolicy(em, true, true);
+        var policy = new ComandosAccessPolicy(em, true, true);
 
         assertTrue(policy.canScope("sales", "READ", 10L, 20L));
 

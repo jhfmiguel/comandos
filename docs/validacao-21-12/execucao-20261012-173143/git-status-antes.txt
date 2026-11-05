@@ -1,0 +1,3 @@
+﻿ M infrastructure/docker/compose.yml
+?? docs/validacao-21-12/
+?? reports/

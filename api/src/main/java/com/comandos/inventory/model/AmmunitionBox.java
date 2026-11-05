@@ -1,6 +1,8 @@
 package com.comandos.inventory.model;
+import com.fariamiguel.app.inventory.model.StockLocation;
+import com.fariamiguel.app.inventory.model.StockLot;
 
-import com.comandos.core.model.CoreEntity;
+import com.fariamiguel.app.core.model.CoreEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

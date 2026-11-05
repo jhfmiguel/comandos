@@ -1,4 +1,5 @@
 package com.comandos.identity.service;
+import com.fariamiguel.app.identity.service.JpaIdentityDirectory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,7 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.enterprise.people.Person;
 import java.util.Set;
@@ -27,7 +28,7 @@ class JpaIdentityDirectoryActiveFlagTests {
         when(person.status()).thenReturn(null);
         when(canonical.findPerson(eq(1L), any())).thenReturn(Optional.of(person));
 
-        var subject = new JpaIdentityDirectory(canonical).find("COMANDOS", "1").orElseThrow();
+        var subject = new JpaIdentityDirectory(null, canonical, "comandos").find("COMANDOS", "1").orElseThrow();
         assertEquals("false", subject.attributes().get("active"));
         assertFalse(Boolean.parseBoolean(subject.attributes().get("active")));
     }

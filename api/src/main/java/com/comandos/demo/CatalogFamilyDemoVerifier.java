@@ -1,5 +1,6 @@
 package com.comandos.demo;
 
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -80,11 +81,11 @@ public class CatalogFamilyDemoVerifier implements ApplicationRunner {
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Catalog family has no test model: " + family));
 
-        if (model.brand == null || model.armamentType == null || model.armamentClassification == null) {
+        if (model.brand == null || com.comandos.inventory.model.ArmamentModelDetails.of(em,model).armamentType == null || com.comandos.inventory.model.ArmamentModelDetails.of(em,model).armamentClassification == null) {
             throw new IllegalStateException("Catalog model is not fully classified: " + family + "/" + model.sku);
         }
-        if (!category.id.equals(model.armamentType.category.id)
-            || !model.armamentType.id.equals(model.armamentClassification.type.id)) {
+        if (!category.id.equals(com.comandos.inventory.model.ArmamentModelDetails.of(em,model).armamentType.category.id)
+            || !com.comandos.inventory.model.ArmamentModelDetails.of(em,model).armamentType.id.equals(com.comandos.inventory.model.ArmamentModelDetails.of(em,model).armamentClassification.type.id)) {
             throw new IllegalStateException("Catalog chained selection is inconsistent: " + family + "/" + model.sku);
         }
         if (model.listPrice == null || model.listPrice.signum() < 0 || blank(model.unitOfMeasure) || blank(model.sku)) {

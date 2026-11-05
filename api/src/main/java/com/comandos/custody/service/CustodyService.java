@@ -1,12 +1,13 @@
 package com.comandos.custody.service;
 
-import com.comandos.audit.service.AuditService;
-import com.comandos.core.service.CanonicalMasterDataDirectory;
-import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.comandos.audit.service.ComandosAuditService;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
 import com.comandos.custody.dto.CustodyContract.*;
 import com.comandos.custody.model.*;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
-import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.ComandosAccessPolicy;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -27,16 +28,16 @@ public class CustodyService {
     private static final int PAGE_SIZE = 20;
     private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
-    private final AccessPolicy access;
-    private final AuditService audit;
+    private final ComandosAccessPolicy access;
+    private final ComandosAuditService audit;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
     public CustodyService(
             EntityManager em,
-            AccessPolicy access,
-            AuditService audit,
+            ComandosAccessPolicy access,
+            ComandosAuditService audit,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
@@ -123,6 +124,8 @@ public class CustodyService {
             return view(existing.get());
         }
         var recipient = request.recipientId() == null ? null : person(request.recipientId());
+        if (request.recipientUnitId() != null)
+            access.requireScope("core/units", "READ", organization.id(), request.recipientUnitId());
         var recipientUnit = request.recipientUnitId() == null
             ? null
             : selectedUnit(organization.id(), request.recipientUnitId());
@@ -167,8 +170,8 @@ public class CustodyService {
             validateAsset(asset, organization.id(), request.unitId(), false);
             createAssetItem(custody, asset, null, null, deliveredAt);
             stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
-            asset.status = AssetStatus.CUSTODIED.name();
+                "before", Map.of("status", asset.status), "after", Map.of("status", SecurityAssetStatus.CUSTODIED.name())));
+            asset.status = SecurityAssetStatus.CUSTODIED.name();
         }
         Set<Long> selectedAssets = new HashSet<>(values(request.assetIds()));
         int expanded = selectedAssets.size();
@@ -186,8 +189,8 @@ public class CustodyService {
                     var asset = locked(AssetItem.class, component.asset.id); validateAsset(asset, organization.id(), request.unitId(), true);
                     createAssetItem(custody, asset, set, component.role, deliveredAt);
                     stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                        "before", Map.of("status", asset.status), "after", Map.of("status", AssetStatus.CUSTODIED.name())));
-                    asset.status = AssetStatus.CUSTODIED.name();
+                        "before", Map.of("status", asset.status), "after", Map.of("status", SecurityAssetStatus.CUSTODIED.name())));
+                    asset.status = SecurityAssetStatus.CUSTODIED.name();
                 } else {
                     var balance = locked(StockBalance.class, component.balance.id);
                     validateBalance(balance, component.quantity, organization.id(), request.unitId());
@@ -240,14 +243,14 @@ public class CustodyService {
             String nextStatus = null;
             StockMovement movement;
             if (asset != null) {
-                if (!AssetStatus.CUSTODIED.name().equals(asset.status)) conflict("Asset " + item.assetCode + " is no longer marked as custodied.");
+                if (!SecurityAssetStatus.CUSTODIED.name().equals(asset.status)) conflict("Asset " + item.assetCode + " is no longer marked as custodied.");
                 nextStatus = condition.blocksAvailability || asset.validUntil != null && asset.validUntil.isBefore(LocalDate.now())
                     ? AssetStatus.BLOCKED.name() : AssetStatus.AVAILABLE.name();
-                movement = movement(asset, StockMovementNature.CUSTODY_RETURN.name(), BigDecimal.ONE, returnedAt, StockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
+                movement = movement(asset, SecurityStockMovementNature.CUSTODY_RETURN.name(), BigDecimal.ONE, returnedAt, SecurityStockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
                 asset.status = nextStatus;
                 if (Set.of("GOOD", "NEEDS_INSPECTION", "DAMAGED").contains(condition.code)) asset.condition = condition.code;
             } else {
-                movement = movement(balance, StockMovementNature.CUSTODY_RETURN.name(), item.quantity, returnedAt, StockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
+                movement = movement(balance, SecurityStockMovementNature.CUSTODY_RETURN.name(), item.quantity, returnedAt, SecurityStockMovementReferenceType.CUSTODY_RETURN.name(), returned.id);
                 if (condition.blocksAvailability) balance.blocked = balance.blocked.add(item.quantity);
                 else balance.available = balance.available.add(item.quantity);
                 balance.lot.availableQuantity = balance.lot.availableQuantity.add(item.quantity);
@@ -258,7 +261,7 @@ public class CustodyService {
             returnItem.inspectedById = actor.id(); returnItem.inspectedByLogin = actor.login(); em.persist(returnItem);
             item.returnedAt = returnedAt;
             if (asset != null) stockChanges.add(Map.of("resource", "inventory/assets", "recordId", asset.id,
-                "before", Map.of("status", AssetStatus.CUSTODIED.name()), "after", Map.of("status", nextStatus)));
+                "before", Map.of("status", SecurityAssetStatus.CUSTODIED.name()), "after", Map.of("status", nextStatus)));
             else stockChanges.add(Map.of("resource", "inventory/balances", "recordId", balance.id,
                 "quantity", item.quantity.toPlainString()));
         }
@@ -325,7 +328,7 @@ public class CustodyService {
                 inspection == null || inspection.conditionType == null ? null : inspection.conditionType.blocksAvailability,
                 inspection == null ? null : inspection.inspectionNotes,
                 inspection == null ? null : inspection.id,
-                inspection == null ? null : em.createQuery("select w.id from WorkOrder w where w.custodyReturnItem.id = :source", Long.class)
+                inspection == null ? null : em.createQuery("select w.id from WorkOrderCustodyDetails w where w.custodyReturnItem.id = :source", Long.class)
                     .setParameter("source", inspection.id).getResultStream().findFirst().orElse(null)); }).toList();
         var returns = em.createQuery("select r from CustodyReturn r where r.custody.id = :custody order by r.id", CustodyReturn.class)
             .setParameter("custody", custody.id).getResultList().stream().map(r -> new ReturnView(r.id, text(r.returnedAt),
@@ -397,7 +400,7 @@ public class CustodyService {
 
     private void createAssetItem(Custody custody, AssetItem asset, EquipmentSet set, String role, LocalDateTime at) {
         var item = new CustodyItem(); item.custody = custody; item.asset = asset; item.equipmentSet = set;
-        item.location = asset.location; item.issueMovement = movement(asset, StockMovementNature.CUSTODY_ISSUE.name(), BigDecimal.ONE.negate(), at, StockMovementReferenceType.CUSTODY.name(), custody.id);
+        item.location = asset.location; item.issueMovement = movement(asset, SecurityStockMovementNature.CUSTODY_ISSUE.name(), BigDecimal.ONE.negate(), at, SecurityStockMovementReferenceType.CUSTODY.name(), custody.id);
         item.modelName = asset.model.name; item.assetCode = asset.assetCode; item.serialNumber = asset.serialNumber;
         item.locationName = asset.location.name; item.equipmentSetCode = set == null ? null : set.code;
         item.equipmentSetName = set == null ? null : set.name; item.componentRole = role; item.quantity = BigDecimal.ONE; em.persist(item);
@@ -406,7 +409,7 @@ public class CustodyService {
     private void createBalanceItem(Custody custody, StockBalance balance, EquipmentSet set, String role,
             BigDecimal quantity, LocalDateTime at) {
         var item = new CustodyItem(); item.custody = custody; item.balance = balance; item.equipmentSet = set;
-        item.location = balance.location; item.issueMovement = movement(balance, StockMovementNature.CUSTODY_ISSUE.name(), quantity.negate(), at, StockMovementReferenceType.CUSTODY.name(), custody.id);
+        item.location = balance.location; item.issueMovement = movement(balance, SecurityStockMovementNature.CUSTODY_ISSUE.name(), quantity.negate(), at, SecurityStockMovementReferenceType.CUSTODY.name(), custody.id);
         item.modelName = balance.lot.model.name; item.assetCode = balance.lot.lotNumber; item.locationName = balance.location.name;
         item.equipmentSetCode = set.code; item.equipmentSetName = set.name; item.componentRole = role;
         item.quantity = quantity; em.persist(item);

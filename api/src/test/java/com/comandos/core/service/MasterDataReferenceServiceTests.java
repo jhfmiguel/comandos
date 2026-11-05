@@ -1,4 +1,5 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.MasterDataReferenceService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

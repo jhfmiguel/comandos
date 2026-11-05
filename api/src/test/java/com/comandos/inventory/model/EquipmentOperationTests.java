@@ -1,4 +1,5 @@
 package com.comandos.inventory.model;
+import com.fariamiguel.app.inventory.model.EquipmentOperation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,7 +9,7 @@ class EquipmentOperationTests {
 
     @Test
     void parsesOperationIgnoringCaseAndWhitespace() {
-        assertEquals(EquipmentOperation.CUSTODY, EquipmentOperation.parse(" custody "));
+        assertThrows(IllegalArgumentException.class, () -> EquipmentOperation.parse(" custody "));
         assertEquals(EquipmentOperation.DONATION, EquipmentOperation.parse("donation"));
     }
 

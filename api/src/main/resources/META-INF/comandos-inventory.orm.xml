@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.2">
+  <entity class="com.fariamiguel.app.inventory.model.StockLot" name="StockLot" access="FIELD" metadata-complete="true">
+    <table name="erp_stock_lot">
+      <unique-constraint><column-name>model_id</column-name><column-name>opening_location_id</column-name><column-name>lot_number</column-name></unique-constraint>
+    </table>
+    <attributes>
+      <basic name="lotNumber" optional="false"><column name="lot_number" nullable="false" length="255"/></basic>
+      <basic name="initialQuantity" optional="false"><column name="initial_quantity" nullable="false" precision="19" scale="4"/></basic>
+      <basic name="availableQuantity" optional="false"><column name="available_quantity" nullable="false" precision="19" scale="4"/></basic>
+      <basic name="openingPackaging"><column name="opening_packaging" length="4000"/></basic>
+      <basic name="validUntil"><column name="valid_until"/></basic>
+      <basic name="condition" optional="false"><column name="condition" nullable="false" length="100"/></basic>
+      <basic name="status" optional="false"><column name="status" nullable="false" length="100"/></basic>
+      <many-to-one name="model" optional="false"><join-column name="model_id" nullable="false"/></many-to-one>
+      <many-to-one name="openingLocation" optional="false"><join-column name="opening_location_id" nullable="false"/></many-to-one>
+    </attributes>
+  </entity>
+</entity-mappings>

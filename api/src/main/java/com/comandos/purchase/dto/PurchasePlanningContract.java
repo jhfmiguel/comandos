@@ -1,6 +1,6 @@
 package com.comandos.purchase.dto;
 
-import com.comandos.purchase.model.PurchasePlanningStatus;
+import com.fariamiguel.app.purchase.model.PurchasePlanningStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

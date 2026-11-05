@@ -1,9 +1,10 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CanonicalProfessionalQualificationMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.comandos.core.model.Person;
-import com.comandos.core.model.PersonQualification;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.core.model.PersonQualification;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.tenancy.api.TenantId;
 import java.time.LocalDate;
@@ -28,7 +29,7 @@ class CanonicalProfessionalQualificationMapperTests {
         var mapped = CanonicalProfessionalQualificationMapper.qualification(source, TENANT);
 
         assertEquals("comandos:person-qualification:77", mapped.id().value());
-        assertEquals("comandos:person:10", mapped.person().id().value());
+        assertEquals("comandos:person:10", mapped.party().id().value());
         assertEquals("Instrutor de Armamento", mapped.category());
         assertEquals(LocalDate.of(2030, 6, 30), mapped.validUntil());
         assertEquals(LifecycleStatus.ACTIVE, mapped.status());

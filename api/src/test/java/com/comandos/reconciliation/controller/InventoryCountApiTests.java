@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;import java.math.*;i
          if (sold) {
              long buyer = create("core/people", Map.of("personType", "INDIVIDUAL", "fullName", "Buyer", "active", true));
              var sale = request("POST", "sales", Map.of("requestId", uuid(), "organizationId", s.org(), "unitId", s.unit(), "buyerId", buyer,
-                 "paymentMethod", "PIX", "items", List.of(Map.of("assetId", s.asset(), "quantity", 1, "expectedUnitPrice", "1"))));
+                 "paymentMethod", "PIX", "processNumber", "COUNT-" + uuid(), "legalBasis", "Integration test sale after inventory count", "documentReference", "COUNT-DOC-" + uuid(), "items", List.of(Map.of("assetId", s.asset(), "quantity", 1, "expectedUnitPrice", "1"))));
              assertEquals(200, sale.status(), sale.raw());
          } else {
              long destinationUnit = create("core/units", Map.of("organizationId", s.org(), "code", uuid(), "name", "Destination", "type", "Unit"));

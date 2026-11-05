@@ -1,16 +1,16 @@
 package com.comandos.demo;
 
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationalUnit;
-import com.comandos.disposal.model.Destruction;
-import com.comandos.disposal.model.DisposalItem;
-import com.comandos.disposal.model.DisposalProcess;
-import com.comandos.inventory.model.AssetItem;
-import com.comandos.inventory.model.AssetStatus;
-import com.comandos.inventory.model.StockLocation;
-import com.comandos.inventory.model.StockMovement;
-import com.comandos.inventory.model.StockMovementNature;
-import com.comandos.inventory.model.StockMovementReferenceType;
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.core.model.OrganizationalUnit;
+import com.fariamiguel.app.disposal.model.Destruction;
+import com.fariamiguel.app.disposal.model.DisposalItem;
+import com.fariamiguel.app.disposal.model.DisposalProcess;
+import com.fariamiguel.app.inventory.model.AssetItem;
+import com.fariamiguel.app.inventory.model.AssetStatus;
+import com.fariamiguel.app.inventory.model.StockLocation;
+import com.fariamiguel.app.inventory.model.StockMovement;
+import com.fariamiguel.app.inventory.model.StockMovementNature;
+import com.fariamiguel.app.inventory.model.StockMovementReferenceType;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

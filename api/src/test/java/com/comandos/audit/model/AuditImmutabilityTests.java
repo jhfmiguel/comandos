@@ -1,4 +1,6 @@
 package com.comandos.audit.model;
+import com.fariamiguel.app.audit.model.AuditRecord;
+import com.fariamiguel.app.audit.model.AuditReference;
 
 import java.lang.reflect.InvocationTargetException;
 import org.junit.jupiter.api.Test;

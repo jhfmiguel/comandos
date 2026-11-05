@@ -1,13 +1,13 @@
 package com.comandos.purchase.service;
 
-import com.comandos.core.service.ProductCanonicalScopeResolver;
-import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
 import com.comandos.purchase.dto.PurchasePlanningContract.CreateRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.StatusRequest;
 import com.comandos.purchase.dto.PurchasePlanningContract.View;
-import com.comandos.purchase.model.PurchasePlanning;
-import com.comandos.purchase.model.PurchasePlanningStatus;
-import com.comandos.purchase.repository.PurchasePlanningRepository;
+import com.fariamiguel.app.purchase.model.PurchasePlanning;
+import com.fariamiguel.app.purchase.model.PurchasePlanningStatus;
+import com.fariamiguel.app.purchase.repository.PurchasePlanningRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
@@ -90,10 +90,10 @@ public class PurchasePlanningService {
             throw new IllegalArgumentException("Organization is required.");
         }
         var rows = canonicalScope.enabled()
-            ? repository.findByOrganizationCanonicalIdOrderByCreatedAtDesc(
+            ? repository.findForOrganization("organizationCanonicalId", 
                 canonicalScope.organization(organizationId)
             )
-            : repository.findByOrganizationLegacyIdOrderByCreatedAtDesc(organizationId);
+            : repository.findForOrganization("organizationLegacyId", organizationId);
 
         return rows.stream()
             .map(this::view)

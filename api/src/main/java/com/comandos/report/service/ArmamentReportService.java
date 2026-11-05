@@ -1,16 +1,16 @@
 package com.comandos.report.service;
 
-import com.comandos.audit.model.AuditRecord;
-import com.comandos.core.service.CanonicalMasterDataDirectory;
-import com.comandos.core.service.ProductCanonicalScopeResolver;
-import com.comandos.inventory.model.AssetItem;
-import com.comandos.inventory.model.ExpirationRecord;
-import com.comandos.inventory.model.StockBalance;
-import com.comandos.lifecycle.model.ExceptionOccurrence;
-import com.comandos.reconciliation.model.InventoryCount;
+import com.fariamiguel.app.audit.model.AuditRecord;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.inventory.model.AssetItem;
+import com.fariamiguel.app.inventory.model.ExpirationRecord;
+import com.fariamiguel.app.inventory.model.StockBalance;
+import com.fariamiguel.app.lifecycle.model.ExceptionOccurrence;
+import com.fariamiguel.app.reconciliation.model.InventoryCount;
 import com.comandos.report.dto.ArmamentReportContract.*;
-import com.comandos.security.service.AccessPolicy;
-import com.comandos.workflow.model.ApprovalWorkflow;
+import com.comandos.security.service.ComandosAccessPolicy;
+import com.fariamiguel.app.workflow.model.ApprovalWorkflow;
 import com.fariamiguel.tenancy.api.TenantId;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -29,13 +29,13 @@ public class ArmamentReportService {
     private static final TenantId TENANT = TenantId.of("comandos");
 
     private final EntityManager em;
-    private final AccessPolicy access;
+    private final ComandosAccessPolicy access;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
     public ArmamentReportService(
             EntityManager em,
-            AccessPolicy access,
+            ComandosAccessPolicy access,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
@@ -130,14 +130,14 @@ public class ArmamentReportService {
         Scope scope = scope("a", true, org, unit);
         String searchClause = search == null || search.isBlank()
             ? ""
-            : " and (lower(a.assetCode) like :q or lower(coalesce(a.serialNumber,'')) like :q or lower(a.model.name) like :q)";
+            : " and (locate(:q, lower(a.assetCode)) > 0 or locate(:q, lower(coalesce(a.serialNumber,''))) > 0 or locate(:q, lower(a.model.name)) > 0)";
 
         var query = em.createQuery(
             "select a from AssetItem a where " + scope.clause() + searchClause + " order by a.id desc",
             AssetItem.class);
         bindScope(query, scope);
         if (!searchClause.isEmpty()) {
-            query.setParameter("q", "%" + search.trim().toLowerCase(Locale.ROOT) + "%");
+            query.setParameter("q", search.trim().toLowerCase(Locale.ROOT));
         }
 
         return query.setMaxResults(200).getResultList().stream()

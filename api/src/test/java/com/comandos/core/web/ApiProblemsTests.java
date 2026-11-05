@@ -1,4 +1,5 @@
 package com.comandos.core.web;
+import com.fariamiguel.app.core.web.ApiProblems;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

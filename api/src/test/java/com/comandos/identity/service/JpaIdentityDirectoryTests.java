@@ -1,4 +1,5 @@
 package com.comandos.identity.service;
+import com.fariamiguel.app.identity.service.JpaIdentityDirectory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.comandos.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
 import com.fariamiguel.enterprise.people.Person;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import java.util.Set;
@@ -21,7 +22,7 @@ class JpaIdentityDirectoryTests {
     void returnsEmptyWhenCanonicalPersonDoesNotExist() {
         var canonical = mock(CanonicalMasterDataDirectory.class);
         when(canonical.findPerson(eq(99L), any())).thenReturn(Optional.empty());
-        assertFalse(new JpaIdentityDirectory(canonical).find("COMANDOS", "99").isPresent());
+        assertFalse(new JpaIdentityDirectory(null, canonical, "comandos").find("COMANDOS", "99").isPresent());
     }
 
     @Test
@@ -36,7 +37,7 @@ class JpaIdentityDirectoryTests {
         when(person.status()).thenReturn(LifecycleStatus.ACTIVE);
         when(canonical.findPerson(eq(7L), any())).thenReturn(Optional.of(person));
 
-        var subject = new JpaIdentityDirectory(canonical).find("comandos", "7").orElseThrow();
+        var subject = new JpaIdentityDirectory(null, canonical, "comandos").find("comandos", "7").orElseThrow();
         assertEquals("COMANDOS", subject.provider());
         assertEquals("7", subject.subject());
         assertEquals("Example Person", subject.displayName());
@@ -49,7 +50,7 @@ class JpaIdentityDirectoryTests {
 
     @Test
     void rejectsUnknownProviderAndMalformedSubjects() {
-        var directory = new JpaIdentityDirectory(mock(CanonicalMasterDataDirectory.class));
+        var directory = new JpaIdentityDirectory(null, mock(CanonicalMasterDataDirectory.class), "comandos");
         assertTrue(directory.find("SSP", "7").isEmpty());
         assertTrue(directory.find("COMANDOS", "not-a-number").isEmpty());
         assertTrue(directory.find("COMANDOS", "0").isEmpty());

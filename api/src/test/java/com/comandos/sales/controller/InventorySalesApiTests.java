@@ -118,8 +118,8 @@ class InventorySalesApiTests {
         assertEquals(2, response.body().get("items").size());
         assertEquals("SOLD", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.asset()));
         assertEquals("8.0000", jdbc.queryForObject("select available from erp_stock_balance where id = ?", BigDecimal.class, s.balance()).toPlainString());
-        assertEquals("8.0000", jdbc.queryForObject("select available_quantity from erp_stock_lot where id = ?", BigDecimal.class, s.lot()).toPlainString());
-        assertEquals("-3.1250", jdbc.queryForObject("select sum(quantity) from erp_stock_movement where location_id = ? and nature = 'SALE'", BigDecimal.class, s.location()).toPlainString());
+        assertEquals("8.0000", jdbc.queryForObject("select available_quantity from erp_stock_lot where id = ?", BigDecimal.class, s.lot()).setScale(4).toPlainString());
+        assertEquals("-3.1250", jdbc.queryForObject("select sum(quantity) from erp_stock_movement where location_id = ? and nature = 'SALE'", BigDecimal.class, s.location()).setScale(4).toPlainString());
         jdbc.update("update erp_person set full_name = 'Changed buyer' where id = ?", s.buyer());
         jdbc.update("update erp_item_model set name = 'Changed model', list_price = 99 where id = ?", s.assetModel());
         var detail = request("GET", "sales/" + response.body().get("id").asLong(), null);

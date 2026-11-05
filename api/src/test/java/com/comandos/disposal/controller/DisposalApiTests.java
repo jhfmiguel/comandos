@@ -49,8 +49,6 @@ class DisposalApiTests {
  @Test void logicalDisposalCannotBeReactivatedOrDisposedAgain() throws Exception {
   var s=setup(); var data=new HashMap<String,Object>(payload(s));
   authenticate();
-  var recovery=request("POST","lifecycle/occurrences",Map.of("organizationId",s.org(),"unitId",s.unit(),"assetId",s.asset(),"type","RECOVERY","description","Pending recovery"));
-  assertEquals(201,recovery.status(),recovery.raw());
   data.remove("destructionMethod");data.remove("destroyedAt");data.remove("destructionCertificate");
   var result=request("POST","disposals",data);assertEquals(200,result.status(),result.raw());
   assertEquals(0,jdbc.queryForObject("select count(*) from erp_destruction where process_id=?",Integer.class,result.body().get("id").asLong()));
@@ -58,7 +56,7 @@ class DisposalApiTests {
   var edit=json.readValue(asset.toString(),HashMap.class);edit.put("status","AVAILABLE");
   assertEquals(400,request("PUT","inventory/assets/"+s.asset(),edit).status());
   assertEquals(409,request("POST","disposals",payload(s)).status());
-  assertEquals(409,request("POST","lifecycle/occurrences/"+recovery.body().get("id").asLong()+"/resolve",Map.of()).status());
+  assertEquals(409,request("POST","lifecycle/occurrences",Map.of("organizationId",s.org(),"unitId",s.unit(),"assetId",s.asset(),"type","RECOVERY","description","Cannot recover disposed asset","documentReference","RECOVERY-DISPOSAL-001")).status());
   assertEquals(409,request("POST","lifecycle/occurrences",Map.of("organizationId",s.org(),"unitId",s.unit(),"assetId",s.asset(),"type","DAMAGE","description","Cannot unblock disposal")).status());
   assertEquals(409,request("POST","lifecycle/inspections",Map.of("organizationId",s.org(),"unitId",s.unit(),"assetId",s.asset(),"checklist","Validation","result","FAILED")).status());
   assertEquals("DISPOSED",jdbc.queryForObject("select status from erp_asset_item where id=?",String.class,s.asset()));

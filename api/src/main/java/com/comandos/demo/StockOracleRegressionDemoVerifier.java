@@ -1,11 +1,11 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.StockBalance;
-import com.comandos.inventory.model.StockLot;
-import com.comandos.inventory.model.StockMovement;
-import com.comandos.reconciliation.model.InventoryCountItem;
-import com.comandos.reservation.model.ReservationItem;
-import com.comandos.transfer.model.InventoryTransferItem;
+import com.fariamiguel.app.inventory.model.StockBalance;
+import com.fariamiguel.app.inventory.model.StockLot;
+import com.fariamiguel.app.inventory.model.StockMovement;
+import com.fariamiguel.app.reconciliation.model.InventoryCountItem;
+import com.fariamiguel.app.reservation.model.ReservationItem;
+import com.fariamiguel.app.transfer.model.InventoryTransferItem;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;

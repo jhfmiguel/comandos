@@ -1,14 +1,15 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CanonicalMasterDataMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import com.comandos.core.model.EconomicActivity;
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.OrganizationNature;
-import com.comandos.core.model.OrganizationalUnit;
-import com.comandos.core.model.OrganizationalUnitType;
-import com.comandos.core.model.Person;
+import com.fariamiguel.app.core.model.EconomicActivity;
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.core.model.OrganizationNature;
+import com.fariamiguel.app.core.model.OrganizationalUnit;
+import com.fariamiguel.app.core.model.OrganizationalUnitType;
+import com.fariamiguel.app.core.model.Person;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.tenancy.api.CompanyId;
 import com.fariamiguel.tenancy.api.TenantId;

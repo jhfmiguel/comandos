@@ -1,4 +1,8 @@
 package com.comandos.workflow.api;
+import com.fariamiguel.app.workflow.api.WorkflowEventView;
+import com.fariamiguel.app.workflow.api.WorkflowRequest;
+import com.fariamiguel.app.workflow.api.WorkflowView;
+import com.fariamiguel.app.workflow.api.WorkflowTransition;
 
 import com.fariamiguel.core.api.PlatformPage;
 import static org.junit.jupiter.api.Assertions.*;

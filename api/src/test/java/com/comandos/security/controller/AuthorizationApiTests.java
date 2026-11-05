@@ -1,9 +1,10 @@
 package com.comandos.security.controller;
 
-import com.comandos.core.model.*;
+import com.fariamiguel.app.core.model.*;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
-import com.comandos.sales.model.InventorySale;
-import com.comandos.sales.model.PaymentMethod;
+import com.fariamiguel.app.sales.model.InventorySale;
+import com.fariamiguel.app.sales.model.PaymentMethod;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:h2:mem:authorization-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:authorization-tests;MODE=Oracle;DB_CLOSE_DELAY=-1",
     "erp.security.require-login=true", "erp.security.enforce-permissions=true", "logging.level.root=WARN", "debug=false"
 })
 class AuthorizationApiTests {
@@ -42,7 +43,7 @@ class AuthorizationApiTests {
         var f = fixture(); login(f);
         assertEquals(403, request("GET", "/api/erp/custodies/by-asset/" + f.asset(), null).status());
         grant(f, "inventory/assets", "READ", "UNIT", f.unit());
-        var result = request("GET", "/api/erp/inventory/assets?filter.unit=Main&size=1", null);
+        var result = request("GET", "/api/erp/inventory/assets?organizationId=" + f.organization() + "&filter.unit=Main&size=1", null);
         assertEquals(200, result.status(), result.raw());
         assertEquals(1, result.body().get("totalElements").asInt());
         assertEquals(f.asset(), result.body().get("content").get(0).get("id").asLong());
@@ -86,7 +87,7 @@ class AuthorizationApiTests {
         var created = request("POST", "/api/erp/workflows", workflow);
         assertEquals(201, created.status(), created.raw());
         String path = "/api/erp/workflows/" + created.body().get("id").asLong();
-        assertEquals(200, request("POST", path + "/analyze", null).status());
+        var analysis = request("POST", path + "/analyze", Map.of("justification", "Inspection reviewed")); assertEquals(200, analysis.status(), analysis.raw());
         jdbc.update("delete from erp_profile_permission where id=?", update);
         assertEquals(403, request("POST", path + "/authorize", null).status());
         assertEquals("ANALYZED", request("GET", path, null).body().get("status").asText());
@@ -430,7 +431,7 @@ class AuthorizationApiTests {
         )).status());
 
         assertEquals(201, request("POST", "/api/erp/core/economic-activities", Map.of(
-            "code", "AUTH-ACTIVITY-" + UUID.randomUUID(),
+            "code", "EA-" + UUID.randomUUID().toString().replace("-", ""),
             "description", "Atividade econômica de teste",
             "active", true
         )).status());
@@ -519,7 +520,11 @@ class AuthorizationApiTests {
         for (long forbidden : List.of(siblingAsset, unassignedAsset, f.otherAsset())) {
             data.put("items", List.of(Map.of("assetId", f.asset(), "quantity", "1", "expectedUnitPrice", "10"),
                 Map.of("assetId", forbidden, "quantity", "1", "expectedUnitPrice", "10")));
-            assertEquals(403, request("POST", "/api/erp/sales", data).status());
+            var invalidSale = request("POST", "/api/erp/sales", data); assertEquals(400, invalidSale.status(), invalidSale.raw()); assertTrue(
+    invalidSale.raw().contains("All stock must belong to the selected organization.")
+        || invalidSale.raw().contains("All stock must belong to the selected unit."),
+    invalidSale.raw()
+);
             assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, f.asset()));
             assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, forbidden));
         }
@@ -588,15 +593,52 @@ class AuthorizationApiTests {
     @Test
     void custodyReceivingUnitRequiresReadPermissionWithoutChangingIssuingScope() throws Exception {
         var f = fixture();
+
+        long responsibilityAssignment = tx.execute(status -> {
+            var role = em.createQuery(
+                "select r from PersonRole r where r.code=:code",
+                PersonRole.class
+            ).setParameter("code", "CUSTODY_RESPONSIBLE")
+             .getResultStream().findFirst().orElse(null);
+
+            if (role == null) {
+                role = new PersonRole();
+                role.code = "CUSTODY_RESPONSIBLE";
+                role.name = "Institutional custody responsible";
+                persist(role);
+            }
+
+            var assignment = new PersonRoleAssignment();
+            assignment.person = em.find(Person.class, f.person());
+            assignment.role = role;
+            assignment.organization = em.find(Organization.class, f.organization());
+            assignment.unit = em.find(OrganizationalUnit.class, f.unit());
+            assignment.startDate = java.time.LocalDate.now().minusDays(1);
+            assignment.status = "ACTIVE";
+            persist(assignment);
+            em.flush();
+
+            return assignment.id;
+        });
+
         for (String action : List.of("READ", "CREATE", "RETURN")) grant(f, "custodies", action, "UNIT", f.unit());
         grant(f, "core/people", "READ", "SYSTEM", null); login(f);
-        var data = Map.of("requestId", UUID.randomUUID().toString(), "organizationId", f.organization(),
-            "unitId", f.unit(), "recipientUnitId", f.unit(), "authorizerId", f.person(),
-            "purpose", "Unit custody", "assetIds", List.of(f.asset()));
-        assertEquals(403, request("POST", "/api/erp/custodies", data).status());
+        var data = new HashMap<String, Object>(Map.of(
+            "requestId", UUID.randomUUID().toString(),
+            "organizationId", f.organization(),
+            "unitId", f.unit(),
+            "recipientUnitId", f.unit(),
+            "authorizerId", f.person(),
+            "purpose", "Unit custody",
+            "assetIds", List.of(f.asset())
+        ));
+        data.put("responsiblePersonId", f.person());
+        data.put("responsibilityRoleAssignmentId", responsibilityAssignment);
+        data.put("custodyScope", "COLLECTIVE");
+        assertEquals(403, request("POST", "/api/erp/custodies/institutional", data).status());
         assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id=?", String.class, f.asset()));
         grant(f, "core/units", "READ", "UNIT", f.unit());
-        var issued = request("POST", "/api/erp/custodies", data);
+        var issued = request("POST", "/api/erp/custodies/institutional", data);
         assertEquals(200, issued.status(), issued.raw());
         assertEquals("UNIT", issued.body().get("recipientType").asText());
         long custody = issued.body().get("id").asLong();
@@ -623,7 +665,7 @@ class AuthorizationApiTests {
             "recipientId", f.person(), "authorizerId", f.person(), "purpose", "Service duty", "assetIds", List.of(f.asset())));
         assertEquals(403, request("POST", "/api/erp/custodies", data).status());
         data.put("unitId", f.unit()); data.put("assetIds", List.of(f.asset(), f.otherAsset()));
-        assertEquals(403, request("POST", "/api/erp/custodies", data).status());
+        var invalidCustody = request("POST", "/api/erp/custodies", data); assertEquals(400, invalidCustody.status(), invalidCustody.raw()); assertTrue(invalidCustody.raw().contains("Every asset must belong to the selected organization and unit."), invalidCustody.raw());
         assertEquals("AVAILABLE", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, f.asset()));
         data.put("assetIds", List.of(f.asset()));
         var issued = request("POST", "/api/erp/custodies", data); assertEquals(200, issued.status(), issued.raw());

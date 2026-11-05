@@ -1,6 +1,6 @@
 package com.comandos.consumption.model;
 
-import com.comandos.core.model.*;
+import com.fariamiguel.app.core.model.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

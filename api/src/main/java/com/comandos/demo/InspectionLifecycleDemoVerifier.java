@@ -1,9 +1,9 @@
 package com.comandos.demo;
 
-import com.comandos.lifecycle.model.OperationAttachment;
-import com.comandos.lifecycle.model.PeriodicInspection;
-import com.comandos.lifecycle.model.PeriodicInspectionItem;
-import com.comandos.maintenance.model.WorkOrder;
+import com.fariamiguel.app.lifecycle.model.OperationAttachment;
+import com.fariamiguel.app.lifecycle.model.PeriodicInspection;
+import com.fariamiguel.app.lifecycle.model.PeriodicInspectionItem;
+import com.fariamiguel.app.maintenance.model.WorkOrder;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.HashSet;

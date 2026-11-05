@@ -1,0 +1,15 @@
+﻿{
+    "Etapa":  "21.12",
+    "Data":  "2026-10-12 17:31:43",
+    "Commit":  "2fa6ed82771e96a0f6136b0f049b8c403c74934e",
+    "Compilacao":  "APROVADA",
+    "Testes":  "NAO EXECUTADOS",
+    "TotalTestes":  0,
+    "Falhas":  0,
+    "Erros":  0,
+    "Bridges":  11,
+    "Dependencias":  227,
+    "LegacyId":  680,
+    "Oracle":  "NAO VALIDADO",
+    "Cutover":  "NAO COMPROVADO"
+}

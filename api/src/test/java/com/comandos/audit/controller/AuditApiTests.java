@@ -1,6 +1,6 @@
 package com.comandos.audit.controller;
 
-import com.comandos.core.service.CoreService;
+import com.fariamiguel.app.core.service.CoreService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +24,7 @@ class AuditApiTests {
     @Autowired JdbcTemplate jdbc;
     @Autowired TransactionTemplate tx;
     @Autowired jakarta.persistence.EntityManager em;
-    @Autowired com.comandos.audit.service.AuditService audit;
+    @Autowired com.comandos.audit.service.ComandosAuditService audit;
     private final JsonMapper json = JsonMapper.builder().build();
     private final HttpClient client = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).build();
     record Result(int status, JsonNode body, String raw) {}
@@ -68,9 +68,9 @@ class AuditApiTests {
         long id = event.get("id").asLong();
         assertEquals(1, jdbc.queryForObject("select count(*) from erp_audit_reference where event_id=? and kind='inventory/assets'", Integer.class, id));
         tx.executeWithoutResult(status -> {
-            var stored = em.find(com.comandos.audit.model.AuditRecord.class, id);
+            var stored = em.find(com.fariamiguel.app.audit.model.AuditRecord.class, id);
             stored.action = "ALTERED"; stored.afterJson = "{}";
-            var reference = em.createQuery("select r from AuditReference r where r.eventId=:id", com.comandos.audit.model.AuditReference.class)
+            var reference = em.createQuery("select r from AuditReference r where r.eventId=:id", com.fariamiguel.app.audit.model.AuditReference.class)
                 .setParameter("id", id).getResultList().getFirst();
             reference.targetId = 1L;
             em.flush();
@@ -78,9 +78,9 @@ class AuditApiTests {
         assertEquals("FINALIZE", detail(event).get("event").get("action").asText());
         assertEquals(2, detail(event).get("after").get("items").size());
         assertEquals(1, request("GET", "/api/erp/audit?" + filters, null).body().get("totalElements").asInt());
-        assertThrows(RuntimeException.class, () -> tx.executeWithoutResult(status -> em.remove(em.find(com.comandos.audit.model.AuditRecord.class, id))));
+        assertThrows(RuntimeException.class, () -> tx.executeWithoutResult(status -> em.remove(em.find(com.fariamiguel.app.audit.model.AuditRecord.class, id))));
         assertThrows(RuntimeException.class, () -> tx.executeWithoutResult(status -> em.remove(em.createQuery(
-            "select r from AuditReference r where r.eventId=:id", com.comandos.audit.model.AuditReference.class).setParameter("id", id).getResultList().getFirst())));
+            "select r from AuditReference r where r.eventId=:id", com.fariamiguel.app.audit.model.AuditReference.class).setParameter("id", id).getResultList().getFirst())));
         assertEquals(1, request("GET", "/api/erp/audit?" + filters, null).body().get("totalElements").asInt());
     }
 

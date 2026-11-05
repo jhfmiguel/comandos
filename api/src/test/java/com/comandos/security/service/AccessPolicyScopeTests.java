@@ -8,18 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class AccessPolicyScopeTests {
     @Test
     void resolvesKnownResourceScopes() {
-        var units = AccessPolicy.scope("core/units");
+        var units = ComandosAccessPolicy.scope("core/units");
         assertEquals("organization.id", units.organizationPath());
         assertEquals("id", units.unitPath());
 
-        var assets = AccessPolicy.scope("inventory/assets");
-        assertEquals("location.organization.id", assets.organizationPath());
-        assertEquals("location.unit.id", assets.unitPath());
+        var assets = ComandosAccessPolicy.scope("inventory/assets");
+        assertEquals("location.organizationLegacyId", assets.organizationPath());
+        assertEquals("location.unitLegacyId", assets.unitPath());
     }
 
     @Test
     void unknownResourceHasNoEntityScope() {
-        var scope = AccessPolicy.scope("unknown/resource");
+        var scope = ComandosAccessPolicy.scope("unknown/resource");
 
         assertNull(scope.organizationPath());
         assertNull(scope.unitPath());

@@ -1,4 +1,5 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CepService;
 
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;

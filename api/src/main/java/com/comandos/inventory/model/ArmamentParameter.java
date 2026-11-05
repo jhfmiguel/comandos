@@ -1,6 +1,6 @@
 package com.comandos.inventory.model;
 
-import com.comandos.core.model.CoreEntity;
+import com.fariamiguel.app.core.model.CoreEntity;
 import jakarta.persistence.*;
 
 @Entity

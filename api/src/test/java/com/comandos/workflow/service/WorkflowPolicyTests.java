@@ -13,74 +13,74 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 class WorkflowPolicyTests {
-    private final WorkflowPolicy policy = new WorkflowPolicy(new DefaultWorkflowEngine());
+    private final ComandosWorkflowPolicy policy = new ComandosWorkflowPolicy(new DefaultWorkflowEngine());
 
     @Test
     void exposesTheCanonicalWorkflowPathInOrder() {
         assertEquals(
             List.of(
-                WorkflowPolicy.REQUESTED,
-                WorkflowPolicy.ANALYZED,
-                WorkflowPolicy.AUTHORIZED,
-                WorkflowPolicy.EXECUTED,
-                WorkflowPolicy.CONCLUDED
+                ComandosWorkflowPolicy.REQUESTED,
+                ComandosWorkflowPolicy.ANALYZED,
+                ComandosWorkflowPolicy.AUTHORIZED,
+                ComandosWorkflowPolicy.EXECUTED,
+                ComandosWorkflowPolicy.CONCLUDED
             ),
-            WorkflowPolicy.MAIN_PATH
+            ComandosWorkflowPolicy.MAIN_PATH
         );
-        assertFalse(policy.terminal(WorkflowPolicy.REQUESTED));
-        assertFalse(policy.terminal(WorkflowPolicy.ANALYZED));
-        assertFalse(policy.terminal(WorkflowPolicy.AUTHORIZED));
-        assertFalse(policy.terminal(WorkflowPolicy.EXECUTED));
-        assertTrue(policy.terminal(WorkflowPolicy.CONCLUDED));
-        assertTrue(policy.terminal(WorkflowPolicy.CANCELLED));
+        assertFalse(policy.terminal(ComandosWorkflowPolicy.REQUESTED));
+        assertFalse(policy.terminal(ComandosWorkflowPolicy.ANALYZED));
+        assertFalse(policy.terminal(ComandosWorkflowPolicy.AUTHORIZED));
+        assertFalse(policy.terminal(ComandosWorkflowPolicy.EXECUTED));
+        assertTrue(policy.terminal(ComandosWorkflowPolicy.CONCLUDED));
+        assertTrue(policy.terminal(ComandosWorkflowPolicy.CANCELLED));
     }
 
     @Test
     void acceptsOnlyTheLinearMainPathThroughCanonicalEngine() {
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.ANALYZED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.ANALYZED, WorkflowPolicy.AUTHORIZED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.EXECUTED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.EXECUTED, WorkflowPolicy.CONCLUDED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.REQUESTED, ComandosWorkflowPolicy.ANALYZED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.ANALYZED, ComandosWorkflowPolicy.AUTHORIZED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.EXECUTED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.EXECUTED, ComandosWorkflowPolicy.CONCLUDED));
     }
 
     @Test
     void rejectsStateSkippingBackwardsAndRepeatedTransitions() {
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.AUTHORIZED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.EXECUTED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.CONCLUDED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.ANALYZED, WorkflowPolicy.EXECUTED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.CONCLUDED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.ANALYZED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.EXECUTED, WorkflowPolicy.AUTHORIZED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.ANALYZED, WorkflowPolicy.ANALYZED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.AUTHORIZED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.EXECUTED, WorkflowPolicy.EXECUTED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.CONCLUDED, WorkflowPolicy.CONCLUDED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.REQUESTED, ComandosWorkflowPolicy.AUTHORIZED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.REQUESTED, ComandosWorkflowPolicy.EXECUTED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.REQUESTED, ComandosWorkflowPolicy.CONCLUDED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.ANALYZED, ComandosWorkflowPolicy.EXECUTED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.CONCLUDED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.ANALYZED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.EXECUTED, ComandosWorkflowPolicy.AUTHORIZED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.ANALYZED, ComandosWorkflowPolicy.ANALYZED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.AUTHORIZED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.EXECUTED, ComandosWorkflowPolicy.EXECUTED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.CONCLUDED, ComandosWorkflowPolicy.CONCLUDED));
     }
 
     @Test
     void cancellationIsAllowedOnlyBeforeTerminalState() {
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.REQUESTED, WorkflowPolicy.CANCELLED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.ANALYZED, WorkflowPolicy.CANCELLED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.CANCELLED));
-        assertDoesNotThrow(() -> policy.requireTransition(WorkflowPolicy.EXECUTED, WorkflowPolicy.CANCELLED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.CONCLUDED, WorkflowPolicy.CANCELLED));
-        assertConflict(() -> policy.requireTransition(WorkflowPolicy.CANCELLED, WorkflowPolicy.CANCELLED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.REQUESTED, ComandosWorkflowPolicy.CANCELLED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.ANALYZED, ComandosWorkflowPolicy.CANCELLED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.CANCELLED));
+        assertDoesNotThrow(() -> policy.requireTransition(ComandosWorkflowPolicy.EXECUTED, ComandosWorkflowPolicy.CANCELLED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.CONCLUDED, ComandosWorkflowPolicy.CANCELLED));
+        assertConflict(() -> policy.requireTransition(ComandosWorkflowPolicy.CANCELLED, ComandosWorkflowPolicy.CANCELLED));
     }
 
     @Test
     void normalizesOperationStatusAndPermissionResource() {
-        assertEquals("STOCK_ADJUSTMENT", WorkflowPolicy.normalize(" stock-adjustment "));
-        assertEquals(WorkflowPolicy.AUTHORIZED, WorkflowPolicy.normalizeStatus(" authorized "));
-        assertEquals("inventory/assets", WorkflowPolicy.normalizeResource(" inventory/assets "));
+        assertEquals("STOCK_ADJUSTMENT", ComandosWorkflowPolicy.normalize(" stock-adjustment "));
+        assertEquals(ComandosWorkflowPolicy.AUTHORIZED, ComandosWorkflowPolicy.normalizeStatus(" authorized "));
+        assertEquals("inventory/assets", ComandosWorkflowPolicy.normalizeResource(" inventory/assets "));
     }
 
     @Test
     void rejectsUnknownOperationsStatesAndUnsafeResources() {
         assertBadRequest(() -> policy.rule("UNKNOWN_OPERATION"));
-        assertBadRequest(() -> WorkflowPolicy.normalizeStatus("APPROVED"));
-        assertBadRequest(() -> WorkflowPolicy.normalizeResource("/inventory/assets"));
-        assertBadRequest(() -> WorkflowPolicy.normalizeResource("inventory/../assets"));
+        assertBadRequest(() -> ComandosWorkflowPolicy.normalizeStatus("APPROVED"));
+        assertBadRequest(() -> ComandosWorkflowPolicy.normalizeResource("/inventory/assets"));
+        assertBadRequest(() -> ComandosWorkflowPolicy.normalizeResource("inventory/../assets"));
     }
 
     @Test
@@ -94,12 +94,12 @@ class WorkflowPolicyTests {
 
     @Test
     void authorizationTransitionUsesExplicitApprovePermission() {
-        assertEquals("CREATE", policy.permissionForTransition(WorkflowPolicy.REQUESTED));
-        assertEquals("UPDATE", policy.permissionForTransition(WorkflowPolicy.ANALYZED));
-        assertEquals("APPROVE", policy.permissionForTransition(WorkflowPolicy.AUTHORIZED));
-        assertEquals("UPDATE", policy.permissionForTransition(WorkflowPolicy.EXECUTED));
-        assertEquals("UPDATE", policy.permissionForTransition(WorkflowPolicy.CONCLUDED));
-        assertEquals("UPDATE", policy.permissionForTransition(WorkflowPolicy.CANCELLED));
+        assertEquals("CREATE", policy.permissionForTransition(ComandosWorkflowPolicy.REQUESTED));
+        assertEquals("UPDATE", policy.permissionForTransition(ComandosWorkflowPolicy.ANALYZED));
+        assertEquals("APPROVE", policy.permissionForTransition(ComandosWorkflowPolicy.AUTHORIZED));
+        assertEquals("UPDATE", policy.permissionForTransition(ComandosWorkflowPolicy.EXECUTED));
+        assertEquals("UPDATE", policy.permissionForTransition(ComandosWorkflowPolicy.CONCLUDED));
+        assertEquals("UPDATE", policy.permissionForTransition(ComandosWorkflowPolicy.CANCELLED));
     }
 
     private void assertConflict(Runnable operation) {

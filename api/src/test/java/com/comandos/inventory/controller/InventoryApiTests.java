@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
     "logging.level.root=WARN", "debug=false"
 })
 class InventoryApiTests {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.fariamiguel.app.inventory.service.InventoryCatalog inventoryCatalog;
+
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
     private final HttpClient client = HttpClient.newHttpClient();
@@ -138,7 +141,7 @@ class InventoryApiTests {
         for (String family : families) {
             String resource = family.toLowerCase(Locale.ROOT).replace('_', '-') + "-specifications";
             var data = new HashMap<String, Object>();
-            for (var field : com.comandos.inventory.service.InventoryCatalog.get(resource).fields()) {
+            for (var field : inventoryCatalog.get(resource).fields()) {
                 data.put(field.name(), switch (field.type()) {
                     case "reference" -> field.name().equals("modelId")
                         ? ids.get(family)
@@ -452,7 +455,7 @@ class InventoryApiTests {
         assertEquals("550", created.body().get("quantity").asText());
         long lot = created.body().get("recordIds").get(0).asLong();
         com.comandos.audit.controller.AuditTraceAssertions.trace(port, "inventory/lots", lot,
-            "lotId=" + lot, "CREATE");
+            "lotId=" + lot, "CREATE", "AMMUNITION_BOXES_CREATE");
         assertEquals(550, jdbc.queryForObject("select available from erp_stock_balance where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
         assertEquals(550, jdbc.queryForObject("select quantity from erp_stock_movement where lot_id=?", java.math.BigDecimal.class, lot).intValueExact());
         assertEquals("10 x 50 + 2 x 25", request("GET", "inventory/lots/" + lot, null).body().get("openingPackaging").asText());
@@ -519,7 +522,7 @@ class InventoryApiTests {
     void catalogAndSearchCoverEveryResourceAndStockHistoryIsReadOnly() throws Exception {
         var catalog = request("GET", "inventory/catalog", null);
         assertEquals(200, catalog.status());
-        assertEquals(com.comandos.inventory.service.InventoryCatalog.RESOURCES.size(), catalog.body().size());
+        assertEquals(inventoryCatalog.resources().size(), catalog.body().size());
         for (var resource : catalog.body()) {
             var list = request("GET", "inventory/" + resource.get("key").asText() + "?search=test", null);
             assertEquals(200, list.status(), list.raw());

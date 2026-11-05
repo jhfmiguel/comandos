@@ -1,6 +1,6 @@
 package com.comandos.consumption.service;
 
-import com.comandos.core.service.UnitScopeGuard;
+import com.fariamiguel.app.core.service.UnitScopeGuard;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;

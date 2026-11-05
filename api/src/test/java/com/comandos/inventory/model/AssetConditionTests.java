@@ -1,4 +1,5 @@
 package com.comandos.inventory.model;
+import com.fariamiguel.app.inventory.model.AssetCondition;
 
 import static org.junit.jupiter.api.Assertions.*;
 

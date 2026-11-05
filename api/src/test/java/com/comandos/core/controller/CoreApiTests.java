@@ -228,7 +228,7 @@ class CoreApiTests {
     void catalogExposesAllCoreResourcesWithoutPersistenceClasses() throws Exception {
         var result = request("GET", "catalog", null);
         assertEquals(200, result.status());
-        assertEquals(18, result.body().size());
+        assertEquals(com.fariamiguel.app.core.service.CoreCatalog.RESOURCES.size(), result.body().size());
         assertFalse(result.raw().contains("com.comandos"));
         for (var resource : result.body()) {
             var page = request("GET", resource.get("key").asText() + "?search=example", null);

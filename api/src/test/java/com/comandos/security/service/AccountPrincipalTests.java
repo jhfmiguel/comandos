@@ -1,4 +1,5 @@
 package com.comandos.security.service;
+import com.fariamiguel.app.security.service.AccountPrincipal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

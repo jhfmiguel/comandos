@@ -1,7 +1,7 @@
 package com.comandos.custody.model;
 
-import com.comandos.core.model.CoreEntity;
-import com.comandos.inventory.model.StockMovement;
+import com.fariamiguel.app.core.model.CoreEntity;
+import com.fariamiguel.app.inventory.model.StockMovement;
 import jakarta.persistence.*;
 
 @Entity

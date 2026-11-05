@@ -1,6 +1,8 @@
 package com.comandos.demo;
 
+import com.fariamiguel.app.consumption.model.*;
 import com.comandos.consumption.model.*;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;

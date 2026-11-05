@@ -1,4 +1,5 @@
 package com.comandos.core.controller;
+import com.fariamiguel.app.core.controller.CoreExceptionHandler;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;

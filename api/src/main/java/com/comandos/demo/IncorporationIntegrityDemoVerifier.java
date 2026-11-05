@@ -1,10 +1,10 @@
 package com.comandos.demo;
 
-import com.comandos.inventory.model.AssetItem;
-import com.comandos.inventory.model.StockLot;
-import com.comandos.purchase.model.EquipmentReceivingItem;
-import com.comandos.purchase.model.ReceivingIncorporation;
-import com.comandos.purchase.model.ReceivingStatus;
+import com.fariamiguel.app.inventory.model.AssetItem;
+import com.fariamiguel.app.inventory.model.StockLot;
+import com.fariamiguel.app.purchase.model.EquipmentReceivingItem;
+import com.fariamiguel.app.purchase.model.ReceivingIncorporation;
+import com.fariamiguel.app.purchase.model.ReceivingStatus;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.HashMap;

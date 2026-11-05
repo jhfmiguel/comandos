@@ -1,1 +1,0 @@
-package com.comandos.transfer.controller;import com.comandos.core.controller.CoreExceptionHandler;import org.springframework.web.bind.annotation.RestControllerAdvice;@RestControllerAdvice(assignableTypes=TransferController.class)public class TransferExceptionHandler extends CoreExceptionHandler{}

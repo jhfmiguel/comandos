@@ -1,14 +1,15 @@
 package com.comandos.core.service;
+import com.fariamiguel.app.core.service.CanonicalPartyRoleMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.comandos.core.model.Organization;
-import com.comandos.core.model.Person;
-import com.comandos.core.model.PersonRole;
-import com.comandos.core.model.PersonRoleAssignment;
-import com.comandos.core.model.OrganizationalUnit;
+import com.fariamiguel.app.core.model.Organization;
+import com.fariamiguel.app.core.model.Person;
+import com.fariamiguel.app.core.model.PersonRole;
+import com.fariamiguel.app.core.model.PersonRoleAssignment;
+import com.fariamiguel.app.core.model.OrganizationalUnit;
 import com.fariamiguel.enterprise.common.LifecycleStatus;
 import com.fariamiguel.enterprise.party.PartyRoleType;
 import com.fariamiguel.tenancy.api.TenantId;

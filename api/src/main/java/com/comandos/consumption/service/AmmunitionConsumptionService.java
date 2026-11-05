@@ -1,13 +1,15 @@
 package com.comandos.consumption.service;
 
-import com.comandos.audit.service.AuditService;
+import com.comandos.audit.service.ComandosAuditService;
 import com.comandos.consumption.dto.AmmunitionConsumptionContract.*;
+import com.fariamiguel.app.consumption.model.*;
 import com.comandos.consumption.model.*;
-import com.comandos.core.model.*;
-import com.comandos.core.service.CanonicalMasterDataDirectory;
-import com.comandos.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.core.model.*;
+import com.fariamiguel.app.core.service.CanonicalMasterDataDirectory;
+import com.fariamiguel.app.core.service.ProductCanonicalScopeResolver;
+import com.fariamiguel.app.inventory.model.*;
 import com.comandos.inventory.model.*;
-import com.comandos.security.service.AccessPolicy;
+import com.comandos.security.service.ComandosAccessPolicy;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -28,13 +30,13 @@ public class AmmunitionConsumptionService {
     private static final int PAGE_SIZE = 20;
     private static final TenantId TENANT = TenantId.of("comandos");
     private final EntityManager em;
-    private final AccessPolicy access;
-    private final AuditService audit;
+    private final ComandosAccessPolicy access;
+    private final ComandosAuditService audit;
     private final ProductCanonicalScopeResolver canonicalScope;
     private final CanonicalMasterDataDirectory masterData;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public AmmunitionConsumptionService(EntityManager em, AccessPolicy access, AuditService audit,
+    public AmmunitionConsumptionService(EntityManager em, ComandosAccessPolicy access, ComandosAuditService audit,
             ProductCanonicalScopeResolver canonicalScope,
             CanonicalMasterDataDirectory masterData) {
         this.em = em;
@@ -122,7 +124,7 @@ public class AmmunitionConsumptionService {
             BigDecimal oldBalance = balance.available; BigDecimal oldLot = lot.availableQuantity;
             balance.available = oldBalance.subtract(used); lot.availableQuantity = oldLot.subtract(used);
             var movement = new StockMovement(); movement.lot = lot; movement.location = balance.location;
-            movement.nature = StockMovementNature.CONSUMPTION_DEFLAGRATION.name(); movement.referenceType = StockMovementReferenceType.AMMUNITION_CONSUMPTION.name(); movement.referenceId = consumption.id; movement.quantity = used.negate(); movement.movedAt = now; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
+            movement.nature = SecurityStockMovementNature.CONSUMPTION_DEFLAGRATION.name(); movement.referenceType = SecurityStockMovementReferenceType.AMMUNITION_CONSUMPTION.name(); movement.referenceId = consumption.id; movement.quantity = used.negate(); movement.movedAt = now; movement.operatorLogin = audit.actor().login(); movement.operatorId = audit.actor().id(); em.persist(movement);
             var item = new AmmunitionConsumptionItem(); item.consumption = consumption; item.lot = lot; item.balance = balance;
             item.location = balance.location; item.movement = movement; item.modelName = lot.model.name; item.sku = lot.model.sku;
             item.lotNumber = lot.lotNumber; item.locationName = balance.location.name; item.unitOfMeasure = lot.model.unitOfMeasure;
