@@ -45,7 +45,7 @@ export function InventorySalesPanel() {
 }
 
 export function InventorySalesWorkspace() {
-    return <Layout title="Inventory sales"><InventorySalesPanel /></Layout>;
+    return <Layout title="Inventory sales"><div className={styles.actions}><a href="/erp/sales/commercial-orders">Commercial sales orders</a></div><InventorySalesPanel /></Layout>;
 }
 
 function SalesForm({ onNewSale }: { onNewSale: () => void }) {

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.fariamiguel.app.core.service.CoreService;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import java.net.URI;
@@ -12,6 +13,8 @@ import java.net.http.*;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
@@ -21,16 +24,45 @@ import static org.junit.jupiter.api.Assertions.*;
 class InventorySalesApiTests {
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
-    private final HttpClient client = HttpClient.newHttpClient();
+    @Autowired CoreService core;
+    private final CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+    private final HttpClient client = HttpClient.newBuilder().cookieHandler(cookies).build();
     private final JsonMapper json = JsonMapper.builder().build();
+    private static final String PASSWORD = "Test-password-12345";
     record Result(int status, JsonNode body, String raw) {}
     record Setup(long organization, long buyer, long location, long asset, long lot, long balance, long assetModel) {}
 
     private Result request(String method, String path, Object body) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/erp/" + path)).header("Content-Type", "application/json");
+        if (!method.equalsIgnoreCase("GET") && !method.equalsIgnoreCase("OPTIONS")) {
+            JsonNode csrf = json.readTree(client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/csrf"))
+                    .GET().build(), HttpResponse.BodyHandlers.ofString()).body());
+            builder.header(csrf.get("headerName").asText(), csrf.get("token").asText());
+        }
         builder.method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)));
         var response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         return new Result(response.statusCode(), response.body().isBlank() ? null : json.readTree(response.body()), response.body());
+    }
+    private void login() throws Exception {
+        long person = (Long) core.save("people", null, Map.of("personType", "INDIVIDUAL", "fullName", "Sales integration actor", "active", true)).get("id");
+        String username = unique();
+        core.save("users", null, Map.of("personId", person, "login", username, "password", PASSWORD, "blocked", false));
+        JsonNode csrf = json.readTree(client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/csrf"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString()).body());
+        var response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/login"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header(csrf.get("headerName").asText(), csrf.get("token").asText())
+                .POST(HttpRequest.BodyPublishers.ofString("username=" + username + "&password=" + PASSWORD)).build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(204, response.statusCode(), response.body());
+    }
+    private void logout() throws Exception {
+        JsonNode csrf = json.readTree(client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/csrf"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString()).body());
+        var response = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/logout"))
+                .header(csrf.get("headerName").asText(), csrf.get("token").asText())
+                .POST(HttpRequest.BodyPublishers.noBody()).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(204, response.statusCode(), response.body());
     }
     private long create(String path, Map<String, Object> data) throws Exception {
         var response = request("POST", path, data);
@@ -127,6 +159,53 @@ class InventorySalesApiTests {
         assertEquals("Test model", detail.body().get("items").get(0).get("modelName").asText());
         assertEquals("12.3456", detail.body().get("items").get(0).get("unitPrice").asText());
         assertEquals(1, request("GET", "sales?organizationId=" + s.organization(), null).body().get("totalElements").asInt());
+    }
+
+    @Test
+    void genericCommercialOrderUsesScopedReservationAndSpecializedStockSale() throws Exception {
+        login();
+        var s = setup();
+        String reference = "COM-" + unique();
+        var created = request("POST", "commercial-sales/orders", Map.of(
+            "reference", reference,
+            "customerId", Long.toString(s.buyer()),
+            "organizationId", s.organization(),
+            "buyerId", s.buyer(),
+            "paymentMethod", "PIX",
+            "processNumber", "PROC-" + reference,
+            "legalBasis", "Authorized commercial sale",
+            "documentReference", "DOC-" + reference,
+            "lines", List.of(Map.of("itemId", "ASSET:" + s.asset(), "description", "Test asset",
+                "quantity", "1", "unitPrice", "12.3456"))));
+        assertEquals(200, created.status(), created.raw());
+        String id = created.body().get("id").asText();
+
+        assertEquals("SUBMITTED", request("POST", "commercial-sales/orders/" + id + "/submit", null)
+            .body().get("status").asText());
+        assertEquals(409, request("POST", "commercial-sales/orders/" + id + "/approve", null).status());
+        logout();
+        login();
+        assertEquals("APPROVED", request("POST", "commercial-sales/orders/" + id + "/approve", null)
+            .body().get("status").asText());
+        var confirmed = request("POST", "commercial-sales/orders/" + id + "/confirm", null);
+        assertEquals(200, confirmed.status(), confirmed.raw());
+        assertEquals("CONFIRMED", confirmed.body().get("status").asText());
+        assertEquals("BLOCKED", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.asset()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_inventory_reservation", Long.class));
+
+        var invoice = request("POST", "commercial-sales/orders/" + id + "/invoice", Map.of(
+            "issuedOn", "2026-11-06", "dueOn", "2026-11-13"));
+        assertEquals(200, invoice.status(), invoice.raw());
+        var delivered = request("POST", "commercial-sales/orders/" + id + "/deliveries", Map.of(
+            "reference", "DEL-" + reference,
+            "lines", List.of(Map.of("itemId", "ASSET:" + s.asset(), "quantity", "1")),
+            "metadata", Map.of()));
+        assertEquals(200, delivered.status(), delivered.raw());
+        assertEquals("SOLD", jdbc.queryForObject("select status from erp_asset_item where id = ?", String.class, s.asset()));
+        assertEquals(1L, jdbc.queryForObject("select count(*) from erp_sale where organization_id = ?", Long.class, s.organization()));
+        assertTrue(jdbc.queryForObject("select setting_value from platform_setting where value_type = 'SALES_ROUNDING_ADJUSTMENT'", String.class)
+                .contains("adjustment=0.0044"));
+        assertEquals("DELIVERED", request("GET", "commercial-sales/orders/" + id, null).body().get("status").asText());
     }
 
     @Test
