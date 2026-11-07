@@ -59,6 +59,8 @@ public class ComandosAccessPolicy extends AccessPolicy implements ResourceAccess
     public static Scope scope(String resource) {
         if ("inventory/regulatory-controls".equals(resource))
             return new Scope("asset.location.organizationLegacyId", "asset.location.unitLegacyId");
+        if (Set.of("contracts", "legal/matters", "legal/deadlines", "legal/authorities", "legal/opinions").contains(resource))
+            return new Scope("organizationLegacyId", "unitLegacyId");
         if (Set.of("custodies", "ammunition-consumptions").contains(resource))
             return new Scope("organizationLegacyId", "unitLegacyId");
         if ("consumable-usages".equals(resource)) return new Scope(null, null);

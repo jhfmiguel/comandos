@@ -11,6 +11,7 @@ import {
     ChevronDown,
     ChevronUp,
     Cog,
+    FileText,
     History,
     Home,
     LogIn,
@@ -140,6 +141,16 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                         { href: "/erp/inventory?section=inventory", label: "Inventory" },
                                         { href: "/erp/inventory?section=stock", label: "Stock" }
                                     ]}
+                                />
+
+                                <MenuItem
+                                    menuKey="contracts-legal"
+                                    href="/erp/contracts"
+                                    label="Contracts and legal"
+                                    icon={FileText}
+                                    collapsed={!open}
+                                    selectedMenu={selectedMenu}
+                                    onSelect={handleSelect}
                                 />
 
                                 <MenuItem
