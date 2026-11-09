@@ -47,6 +47,7 @@ export const translationPairs: TranslationPair[] = [
     ["Physical inventory", "Inventário físico"],
     ["Audit history", "Histórico de auditoria"],
     ["Settings", "Configurações"],
+    ["Platform configuration", "Configuração da plataforma"],
     ["Notifications", "Notificações"],
     ["Sign in", "Entrar"],
     ["Sign out", "Sair"],

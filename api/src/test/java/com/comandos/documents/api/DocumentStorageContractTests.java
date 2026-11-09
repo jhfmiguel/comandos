@@ -2,7 +2,7 @@ package com.comandos.documents.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fariamiguel.documents.api.DocumentReference;
+import com.fariamiguel.core.api.DocumentReference;
 import com.fariamiguel.documents.api.DocumentStorage;
 import com.fariamiguel.documents.api.DocumentWrite;
 import java.io.ByteArrayInputStream;

@@ -11,7 +11,7 @@
     <artifactId>comandos-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>COMANDOS API</name>
-    <description>COMANDOS - Plataforma Modular de Gestão de Segurança Pública e Privada</description>
+    <description>COMANDOS - Plataforma Modular de GestÃ£o de SeguranÃ§a PÃºblica e Privada</description>
     <properties>
         <java.version>25</java.version>
         <faria-miguel.version>0.1.0-SNAPSHOT</faria-miguel.version>
@@ -135,7 +135,7 @@
         </dependency>
         <dependency>
             <groupId>com.fariamiguel</groupId>
-            <artifactId>faria-miguel-core</artifactId>
+            <artifactId>faria-miguel-shared-business-services</artifactId>
             <version>${faria-miguel.version}</version>
         </dependency>
         <dependency>

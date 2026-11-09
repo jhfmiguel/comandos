@@ -14,8 +14,9 @@
     "selects:audit": "node scripts/check-select-standard.mjs"
   },
   "dependencies": {
-    "@faria-miguel/platform": "npm:@jhfmiguel/faria-miguel-platform@0.1.0",
-    "@faria-miguel/ui": "npm:@jhfmiguel/faria-miguel-ui@0.1.0",
+    "@faria-miguel/platform": "npm:@jhfmiguel/platform@0.1.0",
+    "@faria-miguel/configuration-console": "npm:@jhfmiguel/configuration-console@0.1.3",
+    "@faria-miguel/ui": "npm:@jhfmiguel/ui@0.1.0",
     "@4us-dev/utils": "^0.0.15",
     "@primeicons/react": "^8.0.0",
     "axios": "^1.19.0",

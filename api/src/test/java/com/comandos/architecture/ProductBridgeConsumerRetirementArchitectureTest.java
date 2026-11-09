@@ -54,7 +54,7 @@ class ProductBridgeConsumerRetirementArchitectureTest {
 
     private static String read(String relativePath) throws IOException {
         Path local=Path.of("src/main/java/com/comandos").resolve(relativePath);
-        Path shared=Path.of("../../faria-miguel/backend/faria-miguel-core/src/main/java/com/fariamiguel/app").resolve(relativePath);
+        Path shared=Path.of("../../faria-miguel/backend/shared-business-services/src/main/java/com/fariamiguel/app").resolve(relativePath);
         return Files.readString(Files.exists(local)?local:shared);
     }
 }

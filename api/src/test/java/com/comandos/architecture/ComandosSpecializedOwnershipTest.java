@@ -64,8 +64,13 @@ class ComandosSpecializedOwnershipTest {
         var dependencies = directDependencies();
 
         assertTrue(
-            dependencies.contains("com.fariamiguel:faria-miguel-core"),
+            dependencies.contains("com.fariamiguel:faria-miguel-shared-business-services"),
             "COMANDOS must depend on FARIA MIGUEL Core"
+        );
+
+        assertTrue(
+            dependencies.contains("com.fariamiguel:faria-miguel-platform"),
+            "COMANDOS must consume the FARIA MIGUEL Platform Core"
         );
 
         assertTrue(

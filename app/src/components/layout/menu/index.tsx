@@ -216,6 +216,9 @@ export const Menu: React.FC<MenuProps> = ({ open, onOpenChange }) => {
                                     <Link href="/settings" className="comandos-sidebar-popup-link" onClick={() => setUserMenuOpen(false)}>
                                         <Cog size={16} /> Settings
                                     </Link>
+                                    <Link href="/settings/platform-configuration" className="comandos-sidebar-popup-link" onClick={() => setUserMenuOpen(false)}>
+                                        <Cog size={16} /> {tr("Platform configuration")}
+                                    </Link>
                                     <button type="button" className="comandos-sidebar-popup-link">
                                         <Bell size={16} /> Notifications
                                     </button>
